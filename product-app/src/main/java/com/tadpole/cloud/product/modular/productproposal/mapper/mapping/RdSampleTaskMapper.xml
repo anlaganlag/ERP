@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdSampleTaskMapper">
+    <select id="listPage"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleTaskExtentResult">
+        SELECT distinct
+        t1.SYS_TS_TASK_CODE,t1.SYS_C_DATE,t1.SYS_L_DATE,t1.SYS_DEPT_CODE,t1.SYS_DEPT_NAME,t1.SYS_PER_CODE,t1.SYS_PER_NAME,t1.SYS_TS_TASK_STATUS,t1.SYS_TS_TASK_PROGRESS,
+        t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_NAME,t1.SYS_TS_SAMPLE_METHOD,t1.SYS_TS_FEBK_DEADLINE,t1.SYS_TS_DEADLINE,t1.SYS_TS_STYLE_REQ,t1.SYS_TS_BRAND_REQ,
+        t1.SYS_TS_MATERIAL_REQ,t1.SYS_TS_PATTERN_REQ,t1.SYS_TS_COLOR_REQ,t1.SYS_TS_SIZE_REQ,t1.SYS_TS_WEIGHT_REQ,t1.SYS_TS_PACK_QTY_REQ,t1.SYS_TS_FUNCTION_REQ,t1.SYS_TS_PARTS_REQ,
+        t1.SYS_TS_PACK_REQ,t1.SYS_TS_COMPLIANCE_REQ,t1.SYS_TS_CERTIFICATION_REQ,t1.SYS_TS_DESIGN_DOC,t1.SYS_TS_BOT_LINE_PUR_PRICE,t1.SYS_TS_FOOTNOTE,t1.SYS_TS_RELIEASE_DATE,
+        t1.SYS_TS_SUB_PER_NAME,t1.SYS_TS_SUB_PER_CODE,t1.SYS_TS_SAMP_TOD,t1.SYS_TS_CLOSE_TYPE,t1.SYS_TS_CLOSE_REASON,t1.SYS_TS_CLOSE_DATE,t1.SYS_TS_CLOSE_PER_NAME,t1.SYS_TS_CLOSE_PER_CODE,t1.SYS_TS_ACT_COMPLETE_DATE,t1.SYS_TS_LOGO_DES_POS,t1.SYS_TS_DEV_BRAND,
+        t2.SYS_DEV_METHOND,t2.SYS_TA_LEVEL,t2.SYS_TA_PA_DATE,t2.SYS_TA_LTR_DATE,t1.SYS_TS_READ,
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME
+        FROM RD_SAMPLE_TASK t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE=T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE=t4.SYS_PL_CODE
+        where 1=1 AND t1.SYS_TS_TASK_STATUS='拿样中'
+        <if test="paramCondition.sysTsSampleMethod != null and paramCondition.sysTsSampleMethod != ''">
+            AND t1.SYS_TS_SAMPLE_METHOD = #{paramCondition.sysTsSampleMethod}
+        </if>
+        <if test="paramCondition.sysTsTaskCode != null and paramCondition.sysTsTaskCode != ''">
+            AND t1.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        </if>
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t1.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+        <if test="paramCondition.sysTaCodeList != null and paramCondition.sysTaCodeList.size() > 0">
+            AND t1.SYS_TA_CODE in
+            <foreach collection="paramCondition.sysTaCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerNameList != null and paramCondition.sysPmPerNameList.size() > 0">
+            AND t4.SYS_PM_PER_NAME in
+            <foreach collection="paramCondition.sysPmPerNameList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerCodeList != null and paramCondition.sysPmPerCodeList.size() > 0">
+            AND t4.SYS_PM_PER_CODE in
+            <foreach collection="paramCondition.sysPmPerCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        UNION ALL
+
+        SELECT distinct
+        t1.SYS_TS_TASK_CODE,t1.SYS_C_DATE,t1.SYS_L_DATE,t1.SYS_DEPT_CODE,t1.SYS_DEPT_NAME,t1.SYS_PER_CODE,t1.SYS_PER_NAME,t1.SYS_TS_TASK_STATUS,t1.SYS_TS_TASK_PROGRESS,
+        t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_NAME,t1.SYS_TS_SAMPLE_METHOD,t1.SYS_TS_FEBK_DEADLINE,t1.SYS_TS_DEADLINE,t1.SYS_TS_STYLE_REQ,t1.SYS_TS_BRAND_REQ,
+        t1.SYS_TS_MATERIAL_REQ,t1.SYS_TS_PATTERN_REQ,t1.SYS_TS_COLOR_REQ,t1.SYS_TS_SIZE_REQ,t1.SYS_TS_WEIGHT_REQ,t1.SYS_TS_PACK_QTY_REQ,t1.SYS_TS_FUNCTION_REQ,t1.SYS_TS_PARTS_REQ,
+        t1.SYS_TS_PACK_REQ,t1.SYS_TS_COMPLIANCE_REQ,t1.SYS_TS_CERTIFICATION_REQ,t1.SYS_TS_DESIGN_DOC,t1.SYS_TS_BOT_LINE_PUR_PRICE,t1.SYS_TS_FOOTNOTE,t1.SYS_TS_RELIEASE_DATE,
+        t1.SYS_TS_SUB_PER_NAME,t1.SYS_TS_SUB_PER_CODE,t1.SYS_TS_SAMP_TOD,t1.SYS_TS_CLOSE_TYPE,t1.SYS_TS_CLOSE_REASON,t1.SYS_TS_CLOSE_DATE,t1.SYS_TS_CLOSE_PER_NAME,t1.SYS_TS_CLOSE_PER_CODE,t1.SYS_TS_ACT_COMPLETE_DATE,t1.SYS_TS_LOGO_DES_POS,t1.SYS_TS_DEV_BRAND,
+        t2.SYS_DEV_METHOND,t2.SYS_TA_LEVEL,t2.SYS_TA_PA_DATE,t2.SYS_TA_LTR_DATE,t1.SYS_TS_READ,
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME
+        FROM RD_SAMPLE_TASK t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE=T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE=t4.SYS_PL_CODE
+        JOIN RD_SAMPLE_PA t5 ON t1.SYS_TS_TASK_CODE=t5.SYS_TS_TASK_CODE
+        LEFT JOIN (
+        SELECT SYS_KFY_FEE_CODE,SYS_KFY_FEE_SOURCE,COUNT(1) as SYS_REGIST_SAMPLE_QTY
+        FROM RD_SAMPLE_MANAGE WHERE SYS_KFY_SUB_DATE IS NOT NULL
+        GROUP BY SYS_KFY_FEE_CODE,SYS_TS_TASK_CODE,SYS_KFY_FEE_SOURCE
+        ) t6 ON t5.SYS_FEE_APP_CODE=T6.SYS_KFY_FEE_CODE AND t6.SYS_KFY_FEE_SOURCE='购样申请'
+        WHERE 1=1 AND (t1.SYS_TS_CLOSE_TYPE='自动关闭' AND ((t5.SYS_FEE_APP_PUR_QTY > NVL(t6.SYS_REGIST_SAMPLE_QTY,0)) OR
+        (t5.SYS_FEE_APP_STATUS IN ('待审核','待审批','待补充','待支付'))))
+        <if test="paramCondition.sysTsSampleMethod != null and paramCondition.sysTsSampleMethod != ''">
+            AND t1.SYS_TS_SAMPLE_METHOD = #{paramCondition.sysTsSampleMethod}
+        </if>
+        <if test="paramCondition.sysTsTaskCode != null and paramCondition.sysTsTaskCode != ''">
+            AND t1.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        </if>
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t1.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+        <if test="paramCondition.sysTaCodeList != null and paramCondition.sysTaCodeList.size() > 0">
+            AND t1.SYS_TA_CODE in
+            <foreach collection="paramCondition.sysTaCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerNameList != null and paramCondition.sysPmPerNameList.size() > 0">
+            AND t4.SYS_PM_PER_NAME in
+            <foreach collection="paramCondition.sysPmPerNameList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerCodeList != null and paramCondition.sysPmPerCodeList.size() > 0">
+            AND t4.SYS_PM_PER_CODE in
+            <foreach collection="paramCondition.sysPmPerCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        UNION ALL
+
+        SELECT distinct
+        t1.SYS_TS_TASK_CODE,t1.SYS_C_DATE,t1.SYS_L_DATE,t1.SYS_DEPT_CODE,t1.SYS_DEPT_NAME,t1.SYS_PER_CODE,t1.SYS_PER_NAME,t1.SYS_TS_TASK_STATUS,t1.SYS_TS_TASK_PROGRESS,
+        t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_NAME,t1.SYS_TS_SAMPLE_METHOD,t1.SYS_TS_FEBK_DEADLINE,t1.SYS_TS_DEADLINE,t1.SYS_TS_STYLE_REQ,t1.SYS_TS_BRAND_REQ,
+        t1.SYS_TS_MATERIAL_REQ,t1.SYS_TS_PATTERN_REQ,t1.SYS_TS_COLOR_REQ,t1.SYS_TS_SIZE_REQ,t1.SYS_TS_WEIGHT_REQ,t1.SYS_TS_PACK_QTY_REQ,t1.SYS_TS_FUNCTION_REQ,t1.SYS_TS_PARTS_REQ,
+        t1.SYS_TS_PACK_REQ,t1.SYS_TS_COMPLIANCE_REQ,t1.SYS_TS_CERTIFICATION_REQ,t1.SYS_TS_DESIGN_DOC,t1.SYS_TS_BOT_LINE_PUR_PRICE,t1.SYS_TS_FOOTNOTE,t1.SYS_TS_RELIEASE_DATE,
+        t1.SYS_TS_SUB_PER_NAME,t1.SYS_TS_SUB_PER_CODE,t1.SYS_TS_SAMP_TOD,t1.SYS_TS_CLOSE_TYPE,t1.SYS_TS_CLOSE_REASON,t1.SYS_TS_CLOSE_DATE,t1.SYS_TS_CLOSE_PER_NAME,t1.SYS_TS_CLOSE_PER_CODE,t1.SYS_TS_ACT_COMPLETE_DATE,t1.SYS_TS_LOGO_DES_POS,t1.SYS_TS_DEV_BRAND,
+        t2.SYS_DEV_METHOND,t2.SYS_TA_LEVEL,t2.SYS_TA_PA_DATE,t2.SYS_TA_LTR_DATE,t1.SYS_TS_READ,
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME
+        FROM RD_SAMPLE_TASK t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE=T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE=t4.SYS_PL_CODE
+        JOIN RD_SAMPLE_CFB t5 ON t1.SYS_TS_TASK_CODE=t5.SYS_TS_TASK_CODE
+        LEFT JOIN RD_SAMPLE_CA t6 ON t5.SYS_CUST_FEBK_CODE=t6.SYS_CUST_FEBK_CODE
+        LEFT JOIN (
+        SELECT SYS_KFY_FEE_CODE,SYS_KFY_FEE_SOURCE,COUNT(1) as SYS_REGIST_SAMPLE_QTY
+        FROM RD_SAMPLE_MANAGE WHERE SYS_KFY_SUB_DATE IS NOT NULL
+        GROUP BY SYS_KFY_FEE_CODE,SYS_TS_TASK_CODE,SYS_KFY_FEE_SOURCE
+        ) t7 ON t6.SYS_FEE_APP_CODE=t7.SYS_KFY_FEE_CODE AND t7.SYS_KFY_FEE_SOURCE='定制申请'
+        WHERE 1=1 AND t1.SYS_TS_CLOSE_TYPE='自动关闭' AND ((t5.SYS_CF_STATUS='待开发反馈') OR (t5.SYS_CF_STATUS='开发已反馈' AND
+        t5.SYS_CF_DEV_RESULT='采纳' AND (t6.SYS_SA_AP_STATUS IN ('待上传合同','合同待审核','待更新合同','待审批','待支付') OR
+        t5.SYS_CF_SAMPLE_QTY > NVL(t7.SYS_REGIST_SAMPLE_QTY,0))))
+        <if test="paramCondition.sysTsSampleMethod != null and paramCondition.sysTsSampleMethod != ''">
+            AND t1.SYS_TS_SAMPLE_METHOD = #{paramCondition.sysTsSampleMethod}
+        </if>
+        <if test="paramCondition.sysTsTaskCode != null and paramCondition.sysTsTaskCode != ''">
+            AND t1.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        </if>
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t1.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+        <if test="paramCondition.sysTaCodeList != null and paramCondition.sysTaCodeList.size() > 0">
+            AND t1.SYS_TA_CODE in
+            <foreach collection="paramCondition.sysTaCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerNameList != null and paramCondition.sysPmPerNameList.size() > 0">
+            AND t4.SYS_PM_PER_NAME in
+            <foreach collection="paramCondition.sysPmPerNameList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerCodeList != null and paramCondition.sysPmPerCodeList.size() > 0">
+            AND t4.SYS_PM_PER_CODE in
+            <foreach collection="paramCondition.sysPmPerCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        ORDER BY SYS_TS_TASK_CODE DESC
+    </select>
+
+    <select id="detail"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleTaskExtentResult">
+        SELECT
+        t1.SYS_TS_TASK_CODE,t1.SYS_C_DATE,t1.SYS_L_DATE,t1.SYS_DEPT_CODE,t1.SYS_DEPT_NAME,t1.SYS_PER_CODE,t1.SYS_PER_NAME,t1.SYS_TS_TASK_STATUS,t1.SYS_TS_TASK_PROGRESS,
+        t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_NAME,t1.SYS_TS_SAMPLE_METHOD,t1.SYS_TS_FEBK_DEADLINE,t1.SYS_TS_DEADLINE,t1.SYS_TS_STYLE_REQ,t1.SYS_TS_BRAND_REQ,
+        t1.SYS_TS_MATERIAL_REQ,t1.SYS_TS_PATTERN_REQ,t1.SYS_TS_COLOR_REQ,t1.SYS_TS_SIZE_REQ,t1.SYS_TS_WEIGHT_REQ,t1.SYS_TS_PACK_QTY_REQ,t1.SYS_TS_FUNCTION_REQ,t1.SYS_TS_PARTS_REQ,
+        t1.SYS_TS_PACK_REQ,t1.SYS_TS_COMPLIANCE_REQ,t1.SYS_TS_CERTIFICATION_REQ,t1.SYS_TS_DESIGN_DOC,t1.SYS_TS_BOT_LINE_PUR_PRICE,t1.SYS_TS_FOOTNOTE,t1.SYS_TS_RELIEASE_DATE,
+        t1.SYS_TS_SUB_PER_NAME,t1.SYS_TS_SUB_PER_CODE,t1.SYS_TS_SAMP_TOD,t1.SYS_TS_CLOSE_TYPE,t1.SYS_TS_CLOSE_REASON,t1.SYS_TS_CLOSE_DATE,t1.SYS_TS_CLOSE_PER_NAME,t1.SYS_TS_CLOSE_PER_CODE,t1.SYS_TS_ACT_COMPLETE_DATE,t1.SYS_TS_LOGO_DES_POS,t1.SYS_TS_DEV_BRAND,
+        t2.SYS_DEV_METHOND,t2.SYS_TA_LEVEL,t2.SYS_TA_PA_DATE,t2.SYS_TA_LTR_DATE,
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME
+        FROM RD_SAMPLE_TASK t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE=T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE=t4.SYS_PL_CODE
+        where 1=1
+        <if test="paramCondition.sysTsTaskCode != null and paramCondition.sysTsTaskCode != ''">
+            AND t1.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        </if>
+        <if test="paramCondition.sysTsTaskStatus != null and paramCondition.sysTsTaskStatus != ''">
+            AND t1.SYS_TS_TASK_STATUS = #{paramCondition.sysTsTaskStatus}
+        </if>
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t1.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+
+    </select>
+
+    <select id="queryTaskCost"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleTaskTimeAndCostResult">
+        SELECT a.SYS_TA_CODE,
+               a.SYS_TS_TASK_CODE,
+               SUM(NVL(a.SYS_FEE_APP_PAY_AMOUNT, 0))                                      AS SYS_TS_PAY_FEE,
+               SUM(NVL(b.SYS_REF_REAL_AMOUNT, 0))                                         AS SYS_TS_REF_FEE,
+               SUM(NVL(a.SYS_FEE_APP_PAY_AMOUNT, 0)) - SUM(NVL(b.SYS_REF_REAL_AMOUNT, 0)) as SYS_TS_TOTAL_FEE,
+               '购样'                                                                       as SYS_TS_FEE_TYPE
+        FROM RD_SAMPLE_PA a
+                 LEFT JOIN RD_SAMPLE_RPR b ON a.SYS_FEE_APP_CODE = b.SYS_FEE_APP_CODE AND b.SYS_FEE_APP_SOURCE = '购样申请'
+        WHERE a.SYS_FEE_APP_SC != '供应商' AND a.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        GROUP BY a.SYS_FEE_APP_CODE, a.SYS_TA_CODE, a.SYS_TS_TASK_CODE
+
+        UNION ALL
+
+        SELECT a.SYS_TA_CODE,
+               a.SYS_TS_TASK_CODE,
+               SUM(NVL(a.SYS_FEE_APP_PAY_AMOUNT, 0))                                     AS SYS_TS_PAY_FEE,
+               SUM(NVL(b.SYS_REF_APP_AMOUNT, 0))                                         AS SYS_TS_REF_FEE,
+               SUM(NVL(a.SYS_FEE_APP_PAY_AMOUNT, 0)) - SUM(NVL(b.SYS_REF_APP_AMOUNT, 0)) as SYS_TS_TOTAL_FEE,
+               '购样'                                                                      as SYS_TS_FEE_TYPE
+        FROM RD_SAMPLE_PA a
+                 LEFT JOIN RD_REF_REGIST b ON a.SYS_FEE_APP_CODE = b.SYS_FEE_APP_CODE AND b.SYS_FEE_APP_SOURCE = '购样申请'
+        WHERE a.SYS_FEE_APP_SC = '供应商'
+          AND a.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        GROUP BY a.SYS_FEE_APP_CODE, a.SYS_TA_CODE, a.SYS_TS_TASK_CODE
+
+        UNION ALL
+
+        SELECT a.SYS_TA_CODE,
+               a.SYS_TS_TASK_CODE,
+               SUM(NVL(a.SYS_SA_PAY_AMOUNT, 0))                                     AS SYS_TS_PAY_FEE,
+               SUM(NVL(b.SYS_REF_APP_AMOUNT, 0))                                    AS SYS_TS_REF_FEE,
+               SUM(NVL(a.SYS_SA_PAY_AMOUNT, 0)) - SUM(NVL(b.SYS_REF_APP_AMOUNT, 0)) as SYS_TS_TOTAL_FEE,
+               '打样'                                                                 as SYS_TS_FEE_TYPE
+        FROM RD_SAMPLE_CA a
+                 JOIN RD_SAMPLE_CFB c ON a.SYS_CUST_FEBK_CODE = c.SYS_CUST_FEBK_CODE
+                 LEFT JOIN RD_REF_REGIST b ON a.SYS_FEE_APP_CODE = b.SYS_FEE_APP_CODE AND b.SYS_FEE_APP_SOURCE = '定制申请'
+        WHERE c.SYS_CF_IS_MOLD_OPEN = '否'
+          AND a.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        GROUP BY a.SYS_TA_CODE, a.SYS_TS_TASK_CODE
+
+        UNION ALL
+
+        SELECT a.SYS_TA_CODE,
+               a.SYS_TS_TASK_CODE,
+               SUM(NVL(d.SYS_MOF_PAY_AMOUNT, 0))                                     AS SYS_TS_PAY_FEE,
+               SUM(NVL(b.SYS_REF_APP_AMOUNT, 0))                                     AS SYS_TS_REF_FEE,
+               SUM(NVL(d.SYS_MOF_PAY_AMOUNT, 0)) - SUM(NVL(b.SYS_REF_APP_AMOUNT, 0)) as SYS_TS_TOTAL_FEE,
+               '开模'                                                                  as SYS_TS_FEE_TYPE
+        FROM RD_SAMPLE_CA a
+                 JOIN RD_SAMPLE_CFB c ON a.SYS_CUST_FEBK_CODE = c.SYS_CUST_FEBK_CODE
+                 JOIN RD_MOLD_OPEN_PFA d
+                      ON d.SYS_FEE_APP_CODE = a.SYS_FEE_APP_CODE AND d.SYS_CUST_FEBK_CODE = c.SYS_CUST_FEBK_CODE
+                 LEFT JOIN RD_REF_REGIST b ON a.SYS_FEE_APP_CODE = b.SYS_FEE_APP_CODE AND b.SYS_FEE_APP_SOURCE = '定制申请'
+        WHERE c.SYS_CF_IS_MOLD_OPEN = '是'
+          AND a.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        GROUP BY a.SYS_TA_CODE, a.SYS_TS_TASK_CODE
+    </select>
+
+    <select id="queryTaskTime"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleTaskResult">
+        SELECT a.SYS_TS_TASK_CODE, a.SYS_TS_RELIEASE_DATE, a.SYS_TS_DEADLINE, MAX(b.SYS_KFY_SUB_DATE) SYS_KFY_SUB_DATE
+        FROM RD_SAMPLE_TASK a
+                 LEFT JOIN RD_SAMPLE_MANAGE b ON a.SYS_TS_TASK_CODE = b.SYS_TS_TASK_CODE
+        WHERE a.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        GROUP BY a.SYS_TS_TASK_CODE, a.SYS_TS_RELIEASE_DATE, a.SYS_TS_DEADLINE
+    </select>
+    <select id="getIsTsRead" resultType="com.tadpole.cloud.product.api.productproposal.entity.RdSampleTask">
+        select * from RD_SAMPLE_TASK where  SYS_TS_TASK_CODE = #{sysTsTaskCode} AND  SYS_TS_READ IS not NULL AND SYS_TS_READ NOT LIKE '%' || #{account} ||'%'
+    </select>
+
+    <update id="updateTsRead">
+        UPDATE PRODUCT.RD_SAMPLE_TASK SET SYS_TS_READ= CASE SYS_TS_READ WHEN  NULL THEN #{account} ELSE SYS_TS_READ || ',' || #{account}  END WHERE SYS_TS_TASK_CODE=#{sysTsTaskCode}  AND ( SYS_TS_READ IS NULL OR SYS_TS_READ NOT LIKE '%' || #{account} ||'%')
+    </update>
+</mapper>

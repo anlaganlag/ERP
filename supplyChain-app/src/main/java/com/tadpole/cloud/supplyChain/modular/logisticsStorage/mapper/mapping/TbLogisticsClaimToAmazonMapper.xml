@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsClaimToAmazonMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsClaimToAmazonResult">
+        select * from tb_logistics_claim_to_amazon ${ew.customSqlSegment}
+    </select>
+
+    <select id="queryLogisticsAmazonClaimsEmail"
+            parameterType="String"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.LogisticsAmazonClaimsEmailViewModel">
+
+        SELECT
+            DISTINCT bus_Log_Tra_Mode1,
+                     plan_Name,
+                     bus_Lhr_Odd_Numb,
+                     bus_SKU,
+                     FNSKU,
+                     bus_Discrepancy
+        FROM
+                      tb_logistics_claim_to_amazon T1
+            JOIN      tb_logistics_claim_det_to_amazon T2   ON T1.pk_claim_id = T2.pk_claim_id
+            LEFT JOIN tb_logistics_pack_list T3             ON T1.bus_shipment_id = T3.shipment_id AND T1.bus_shop_name_simple = T3.shop_Name_Simple AND T1.bus_country_code = T3.country_Code
+            LEFT JOIN tb_logistics_pack_list_det T4         ON T1.bus_Shipment_ID = T4.Shipment_ID AND T2.bus_SKU = T4.Merchant_SKU
+        WHERE
+            T1.pk_claim_id = #{pkClaimID}
+
+    </select>
+
+
+    <select id="downloadLogisticsAmazonClaims"
+            parameterType="String"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.DownloadLogisticsAmazonClaimsViewModel">
+
+        SELECT
+            bus_SKU,
+            Title,
+            FNSKU,
+            bus_Send_Qty,
+            bus_Receive_Qty,
+            bus_Discrepancy
+        FROM
+                    Tb_Logistics_Claim_To_Amazon T1
+        JOIN        Tb_Logistics_Claim_Det_To_Amazon T2 ON T1.pk_Claim_ID = T2.pk_Claim_ID
+        LEFT JOIN   tb_logistics_pack_list_det T3 ON T1.bus_Shipment_ID = T3.Shipment_ID AND T2.bus_SKU = T3.Merchant_SKU
+        WHERE
+            T1.pk_claim_id = #{pkClaimID}
+
+    </select>
+</mapper>

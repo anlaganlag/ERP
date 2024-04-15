@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsProviderContactMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsProviderContactResult">
+        select * from tb_logistics_provider_contact ${ew.customSqlSegment}
+    </select>
+
+
+
+    <!--同步ERP仓库组织编码-->
+    <select id="getLogisticsProvider"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.entity.TbLogisticsProvider">
+        SELECT
+            T_BD_SUPPLIER.FSUPPLIERID,
+            T_BD_SUPPLIER.FNUMBER AS lpCode,
+            T_BD_SUPPLIER_L.FNAME AS lpName,
+            T_BD_SUPPLIER_L.FSHORTNAME AS lpSimpleName,
+            T_BD_SUPPLIERbase.FADDRESS lpAddress,
+            T_BD_SUPPLIERbase.FSOCIALCRECODE lpUniSocCreCode,
+            T_BD_SUPPLIER.FMODIFYDATE sysUpdDatetime,
+            T_BD_SUPPLIER.FFORBIDSTATUS forbid_status,
+            'K3' AS data_source
+        FROM
+            T_BD_SUPPLIER
+                LEFT OUTER JOIN T_BD_SUPPLIER_L
+                                ON T_BD_SUPPLIER.FSUPPLIERID = T_BD_SUPPLIER_L.FSUPPLIERID
+                LEFT OUTER JOIN T_BD_SUPPLIERbase
+                                ON T_BD_SUPPLIER.FSUPPLIERID = T_BD_SUPPLIERbase.FSUPPLIERID
+        WHERE
+            T_BD_SUPPLIER.FUSEORGID = 1
+          AND T_BD_SUPPLIER.FDOCUMENTSTATUS = 'C'
+          AND FPRIMARYGROUP = '133041'
+--           and T_BD_SUPPLIER.FFORBIDSTATUS = 'A'
+    </select>
+
+    <select id="getLogisticsProviderContact"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.entity.TbLogisticsProviderContact">
+        select
+            m.FNUMBER AS lpCode,
+            l.FCONTACT lpContactName,
+            l.FPOST lpContactDuty,
+            l.FTEL lpContactTel,
+            l.FEMAIL lpContactEmail,
+            m.FMODIFYDATE sysUpdDatetime,
+            'K3' AS data_source
+        from
+            t_BD_SupplierContact l
+                LEFT OUTER JOIN T_BD_SUPPLIER m on
+                m.FSUPPLIERID = l.FSUPPLIERID
+        WHERE
+            m.FUSEORGID = 1
+          AND m.FDOCUMENTSTATUS = 'C'
+          AND FPRIMARYGROUP = '133041'
+          and m.FFORBIDSTATUS = 'A'
+    </select>
+</mapper>

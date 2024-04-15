@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdRefRegistMapper">
+    <select id="listRefRegist"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdRefRegistResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+        t1.*
+        FROM RD_REF_REGIST t1
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE=t4.SYS_PL_CODE
+        where 1=1
+        <if test="paramCondition.sysFeeAppCodeList != null and paramCondition.sysFeeAppCodeList.size() > 0">
+            AND t1.SYS_FEE_APP_CODE in
+            <foreach collection="paramCondition.sysFeeAppCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysFeeAppCode != null and paramCondition.sysFeeAppCode != ''">
+            AND t1.SYS_FEE_APP_CODE = #{paramCondition.sysFeeAppCode}
+        </if>
+        <if test="paramCondition.sysFeeAppSource != null and paramCondition.sysFeeAppSource != ''">
+            AND t1.SYS_FEE_APP_SOURCE = #{paramCondition.sysFeeAppSource}
+        </if>
+
+    </select>
+
+    <select id="listPage" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdRefRegistResult">
+        SELECT t1.SYS_PL_CODE,t1.SYS_SPU,
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME
+        FROM RD_REF_REGIST t1
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE=t4.SYS_PL_CODE
+        where 1=1
+        <if test="paramCondition.sysRefAppStatus != null and paramCondition.sysRefAppStatus != ''">
+            AND t1.SYS_REF_APP_STATUS = #{paramCondition.sysRefAppStatus}
+        </if>
+        <if test="paramCondition.sysRefAppStatusList != null and paramCondition.sysRefAppStatusList.size() > 0">
+            AND t1.SYS_REF_APP_STATUS in
+            <foreach collection="paramCondition.sysRefAppStatusList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by t1.SYS_PL_CODE,t1.SYS_SPU,
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE,t4.SYS_PM_PER_NAME
+
+    </select>
+
+    <select id="listPageDetail"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdRefRegistResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t4.SYS_PL_NAME,t4.SYS_SHORT_CODE,t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+        t6.SYS_CUST_FEBK_CODE,t2.SYS_TS_TASK_NAME,t2.SYS_TS_SAMPLE_METHOD,
+        decode(t1.SYS_REF_TYPE,'首单退款',t1.SYS_REF_TYPE,'订单量退款',t1.SYS_REF_TYPE ||'-'||t1.SYS_REF_CONDITION || '
+        PCS','订单金额退款',t1.SYS_REF_TYPE ||'-'||t1.SYS_REF_CONDITION || ' RMB') AS SYS_REF_CONDITION_VIEW,
+        'CW28-退款单-'||t1.SYS_REF_PUR_PER_NAME||'-'||TO_CHAR(SYSDATE, 'YYYY-MM-DD') AS SYS_TITLE,t1.SYS_TA_CODE ||'-'||
+        REPLACE(REPLACE(t2.SYS_TS_TASK_NAME,'】',''),'【','')||'退款' AS SYS_SUMMARY,
+        t1.*
+        FROM RD_REF_REGIST t1
+        JOIN RD_SAMPLE_TASK t2 ON t1.SYS_TS_TASK_CODE=t2.SYS_TS_TASK_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE=t4.SYS_PL_CODE
+        LEFT JOIN RD_SAMPLE_CA t5 ON t1.SYS_FEE_APP_CODE=t5.SYS_FEE_APP_CODE
+        LEFT JOIN RD_SAMPLE_CFB t6 ON t5.SYS_CUST_FEBK_CODE=t6.SYS_CUST_FEBK_CODE
+        where 1=1
+        <if test="paramCondition.sysRefAppStatus != null and paramCondition.sysRefAppStatus != ''">
+            AND t1.SYS_REF_APP_STATUS = #{paramCondition.sysRefAppStatus}
+        </if>
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t1.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+        <if test="paramCondition.sysPlCode != null and paramCondition.sysPlCode != ''">
+            AND t1.SYS_PL_CODE = #{paramCondition.sysPlCode}
+        </if>
+        <if test="paramCondition.sysSpu != null and paramCondition.sysSpu != ''">
+            AND t1.SYS_SPU = #{paramCondition.sysSpu}
+        </if>
+        <if test="paramCondition.sysRefAppStatusList != null and paramCondition.sysRefAppStatusList.size() > 0">
+            AND t1.SYS_REF_APP_STATUS in
+            <foreach collection="paramCondition.sysRefAppStatusList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+
+    <select id="listPageStatisticsRefRegist"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdRefRegistResult">
+        SELECT t1.SYS_TA_CODE,t1.SYS_PL_CODE,t1.SYS_SPU,
+               t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t3.SYS_PM_PER_CODE,
+               t3.SYS_PM_PER_NAME,
+               t4.SYS_PL_NAME,
+               t4.SYS_SHORT_CODE,
+               t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,
+               t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+               t1.SYS_REF_APP_STATUS
+        FROM RD_REF_REGIST t1
+                 JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+                 JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE = t4.SYS_PL_CODE
+        where 1 = 1
+        group by t1.SYS_TA_CODE,t1.SYS_PL_CODE,t1.SYS_SPU,
+                 t3.SYS_PRO_NAME, t3.SYS_STYLE, t3.SYS_MAIN_MATERIAL, t3.SYS_BRAND, t3.SYS_MODEL, t3.SYS_PM_PER_CODE,
+                 t3.SYS_PM_PER_NAME,
+                 t4.SYS_PL_NAME, t4.SYS_SHORT_CODE, t4.SYS_PM_PER_CODE, t4.SYS_PM_PER_NAME,
+                 t1.SYS_REF_APP_STATUS
+    </select>
+
+</mapper>

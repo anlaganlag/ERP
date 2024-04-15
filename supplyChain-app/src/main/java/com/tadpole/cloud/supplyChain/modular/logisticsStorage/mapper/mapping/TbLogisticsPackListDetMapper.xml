@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsPackListDetMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackListDetResult">
+        select * from tb_logistics_pack_list_det ${ew.customSqlSegment}
+    </select>
+    <update id="updateShipmentRealStatus">
+        MERGE INTO Tb_Logistics_Pack_List_Det  T1
+        USING Tb_Bsc_Overseas_Way_Ship_Status_Analysis_New  T2
+        ON (T1.shipment_id = T2.shipment_id AND T1.merchant_sku = T2.sku )
+        WHEN MATCHED THEN
+            UPDATE SET T1.shipment_real_status = '已完成' WHERE T1.shipment_real_status = '进行中'
+    </update>
+</mapper>

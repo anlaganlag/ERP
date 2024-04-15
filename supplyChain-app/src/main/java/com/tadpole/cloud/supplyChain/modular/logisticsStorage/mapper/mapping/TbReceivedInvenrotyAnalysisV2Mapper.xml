@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbReceivedInvenrotyAnalysisV2Mapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbReceivedInvenrotyAnalysisV2Result">
+        select * from Tb_Received_Invenroty_Analysis_V2 ${ew.customSqlSegment}
+    </select>
+
+    <update id="syncTbReceivedInvenrotyAnalysisV2" >
+
+        INSERT INTO Tb_Received_Invenroty_Analysis_V2 (ITEM_SKU,COUNTRY_CODE,SHOP_NAME_SIMPLE,SHIPMENT_ID,QUANTITY)
+
+        SELECT SKU,
+               SYS_SITE,
+               SYS_SHOPS_NAME,
+               FBA_SHIPMENT_ID,
+               SUM(QUANTITY) AS QUANTITY
+        FROM (     SELECT DISTINCT SKU,
+                                   SYS_SITE,
+                                   SYS_SHOPS_NAME,
+                                   TRUNC(BUSINESS_DATE),
+                                   QUANTITY,
+                                   REFERENCE_ID FBA_SHIPMENT_ID
+                   FROM WAREHOUSE.INVENTORY_LEDGER_DETAILED WHERE EVENT_TYPE='Receipts'
+             )
+        GROUP BY SKU,
+                 SYS_SITE,
+                 SYS_SHOPS_NAME,
+                 FBA_SHIPMENT_ID
+    </update>
+</mapper>

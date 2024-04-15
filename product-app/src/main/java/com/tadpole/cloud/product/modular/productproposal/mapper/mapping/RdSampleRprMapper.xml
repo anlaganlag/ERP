@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdSampleRprMapper">
+    <select id="listSampleRpr" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleRprResult">
+        SELECT *
+        FROM RD_SAMPLE_RPR t1
+        where 1=1
+        <if test="paramCondition.sysFeeAppCodeList != null and paramCondition.sysFeeAppCodeList.size() > 0">
+            AND t1.SYS_FEE_APP_CODE in
+            <foreach collection="paramCondition.sysFeeAppCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysFeeAppCode != null and paramCondition.sysFeeAppCode != ''">
+            AND t1.SYS_FEE_APP_CODE = #{paramCondition.sysFeeAppCode}
+        </if>
+        <if test="paramCondition.sysFeeAppSource != null and paramCondition.sysFeeAppSource != ''">
+            AND t1.SYS_FEE_APP_SOURCE = #{paramCondition.sysFeeAppSource}
+        </if>
+
+    </select>
+
+</mapper>

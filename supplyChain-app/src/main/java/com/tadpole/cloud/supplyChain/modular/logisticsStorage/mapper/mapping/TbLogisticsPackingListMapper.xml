@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsPackingListMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackingListResult">
+        select * from tb_logistics_packing_list ${ew.customSqlSegment}
+    </select>
+
+    <select id="getClearanceData" parameterType="String" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbClearancModel">
+        SELECT
+            a.pack_Code AS packCode,
+            a.SKU AS sku,
+            SUM(a.Quantity) AS qty,
+            b.Invoice_Norm AS invoiceNorm,
+            b.Model AS model,
+            b.mat_Set_Attributes AS matSetAttributes,
+            b.mat_Qty_Unit AS matQtyUnit,
+            a.pack_det_box_num AS packDetBoxNum,
+            b.Com_Brand AS comBrand,
+            b.Invoice_Pro_Name AS invoiceProName,
+            a.mate_Code
+        FROM
+            tb_logistics_packing_list_det2 a
+            LEFT JOIN  mcms_base_data.RP_MATERIAL b ON a.mate_Code = b.MATERIAL_CODE
+        WHERE  a.pack_Code = #{packCode}
+        GROUP BY
+            a.pack_Code,
+            a.SKU,
+            b.Invoice_Norm,
+            b.Model,
+            pack_Det_Box_Num,
+            b.mat_Set_Attributes,
+            b.mat_Qty_Unit,
+            b.Com_Brand,
+            b.Invoice_Pro_Name,
+            a.mate_Code
+    </select>
+
+
+
+    <select id="queryPage" parameterType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.params.TbLogisticsShipmentReportParam"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsShipmentReportResult">
+
+        SELECT
+            TO_CHAR(Fba_Turn_Date, 'YYYY-MM-DD')AS fbaTurnDateStr,
+            Fba_Turn_Date  AS fbaTurnDate,
+            t1.pack_Code AS packCode,
+            t1.shop_Name_Simple AS shopNameSimple ,
+            t1.country_Code AS countryCode ,
+            Com_Warehouse_Name  AS comWarehouseName,
+            pack_Store_House_Name  AS packStoreHouseName ,
+            t7.Shipment_ID AS shipmentID,
+            t7.Ship_To AS shipTo,
+            NVL(shippedproduct, 0) as shippedProduct ,
+            NVL(unshippedproduct, 0) as unShippedProduct ,
+            NVL(returnproduct, 0) as returnProduct,
+            NVL(productsum, 0) as productSum ,
+            NVL(shippedbox, 0) as shippedBox ,
+            NVL(unshippedbox, 0) as unShippedBox,
+            NVL(returnbox, 0) as returnBox,
+            NVL(boxsum, 0) as boxSum
+        FROM Tb_Logistics_Packing_List  t1
+
+        LEFT JOIN
+        (
+            SELECT
+                t3.PACK_CODE ,
+                SUM(CASE WHEN t3.pack_Det_Box_Plan_State = '已申请' THEN t4.Quantity ELSE 0 END) AS shippedproduct,
+                SUM(CASE WHEN t3.pack_Det_Box_Plan_State = '未申请' THEN t4.Quantity ELSE 0 END) AS unshippedproduct,
+                SUM(CASE WHEN t3.pack_Det_Box_Plan_State = '退回' THEN t4.Quantity ELSE 0 END) AS returnproduct,
+                SUM(t4.Quantity) AS productsum,
+                COUNT(DISTINCT CASE WHEN t3.pack_Det_Box_Plan_State = '已申请' THEN t3.PACK_DET_BOX_NUM ELSE NULL END) AS shippedbox,
+                COUNT(DISTINCT CASE WHEN t3.pack_Det_Box_Plan_State = '未申请' THEN t3.PACK_DET_BOX_NUM ELSE NULL END) AS unshippedbox,
+                COUNT(DISTINCT CASE WHEN t3.pack_Det_Box_Plan_State = '退回' THEN t3.PACK_DET_BOX_NUM ELSE NULL END) AS returnbox,
+                COUNT(DISTINCT t3.PACK_DET_BOX_NUM ) AS boxsum
+            FROM Tb_Logistics_Packing_List_Det1 t3
+            JOIN  Tb_Logistics_Packing_List_Det2  t4  ON t4.pack_Code = t3.pack_Code AND t3.pack_Det_Box_Num=t4.pack_Det_Box_Num
+            GROUP BY  t3.pack_Code
+        )  t2   ON t1.pack_Code = t2.pack_Code
+
+        LEFT JOIN  Tb_Logistics_Pack_List_Box_Rec t7 ON t7.Pack_Code = t1.pack_Code
+
+        WHERE Fba_Turn_Date IS NOT NULL
+
+        <if test="reqVO != null">
+            <if test="reqVO.shopPlatName != null and reqVO.shopPlatName !=''">
+                AND t1.SHOP_PLAT_NAME = #{reqVO.shopPlatName}
+            </if>
+
+            <if test="reqVO.shopNameSimple != null and reqVO.shopNameSimple !=''">
+                AND t7.shop_Name_Simple = #{reqVO.shopNameSimple}
+            </if>
+            <if test="reqVO.countryCode != null and reqVO.countryCode !=''">
+                AND t7.country_Code = #{reqVO.countryCode}
+            </if>
+
+            <if test="reqVO.packCode != null and reqVO.packCode !=''">
+                AND t1.pack_Code = #{reqVO.packCode}
+            </if>
+            <if test="reqVO.shipmentId != null and reqVO.shipmentId !=''">
+                AND t7.Shipment_ID = #{reqVO.shipmentId}
+            </if>
+            <if test="reqVO.startDate != null ">
+                AND t1.Fba_Turn_Date >= #{reqVO.startDate}
+            </if>
+            <if test="reqVO.endDate != null ">
+                AND t1.Fba_Turn_Date &lt; #{reqVO.endDate}+1
+            </if>
+        </if>
+        order by t1.Fba_Turn_Date DESC
+    </select>
+
+    <select id="getLogisticsGoodsListReport" parameterType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.params.TbLogisticsGoodsListReportParam"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.LogisticsGoodsListViewModel">
+
+        SELECT
+            a.Lhr_Note,
+            a.Log_Tra_Mode1,
+            e.Ler_Sign_Date,
+            a.Lhr_Send_Good_Date,
+            a.Lhr_Odd_Numb,
+            a.Pack_Store_House_Name,
+            a.Lhr_Position AS lhrPosition,
+            b.Pack_Code,
+            a.Ele_Platform_Name || '_' || c.Shop_Name_Simple || '_' || c.Country_Code AS countryCode,
+            a.Lp_Simple_Name ,
+            lp.LP_NAME,
+            a.Log_Tra_Mode2 ,
+            b.Shipment_ID ,
+            t2.SKU,
+            SUM(NVL(t2.Quantity,0)) AS auantity ,
+            t2.Fn_SKU,
+            t2.dep_Name,
+            t2.team_Name,
+            d.MATERIAL_CODE AS matCode ,
+            d.CATEGORY AS matOperateCate,
+            d.COMPANY_BRAND AS matComBrand,
+            d.MATERIAL_NAME AS matName ,
+            d.FIT_BRAND AS matBrand,
+            d.MODEL AS matModel,
+            d.STYLE AS matStyle,
+            d.COLOR AS matColor,
+            t2.Pack_Direct_Code as transgerApplyBillNo,
+            c.Com_Warehouse_Name
+        FROM
+            Tb_Logistics_List_To_Head_Route a
+
+            LEFT JOIN  tb_logistics_provider lp
+            ON lp.LP_SIMPLE_NAME = a.Lp_Simple_Name
+
+            LEFT JOIN  Tb_Logistics_List_To_Head_Route_Det b
+            ON b.Lhr_Code = a.Lhr_Code AND b.Lhr_Odd_Numb = a.Lhr_Odd_Numb
+
+            LEFT JOIN  Tb_Logistics_Packing_List c
+            ON c.pack_Code = b.Pack_Code
+
+            LEFT JOIN Tb_Logistics_List_To_End_Route e
+            ON e.Lhr_Code = a.Lhr_Code AND e.Lhr_Odd_Numb = a.Lhr_Odd_Numb
+
+            LEFT JOIN ( SELECT pack_Code , team_Name , dep_Name, SKU, mate_Code, Fn_SKU, pack_Det_Box_Num, Quantity, Pack_Direct_Code FROM Tb_Logistics_Packing_List_Det2  )  t2
+            ON t2.pack_Code = b.Pack_Code AND t2.pack_Det_Box_Num = b.Pack_Det_Box_Num
+
+            LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL  d
+            ON t2.mate_Code = d.MATERIAL_CODE
+        WHERE 1=1
+            <if test="reqVO != null">
+                <if test="reqVO.lhrOddNumb != null and reqVO.lhrOddNumb !=''">
+                    AND a.Lhr_Odd_Numb like '%'|| #{reqVO.lhrOddNumb} ||'%'
+                </if>
+
+                <if test="reqVO.logTraMode1 != null and reqVO.logTraMode1 !=''">
+                    AND a.log_Tra_Mode1 = #{reqVO.logTraMode1}
+                </if>
+
+                <if test="reqVO.lpName != null and reqVO.lpName !=''">
+                    AND lp.LP_NAME = #{reqVO.lpName}
+                </if>
+
+                <if test="reqVO.shipmentID != null and reqVO.shipmentID !=''">
+                    AND b.Shipment_ID like '%'|| #{reqVO.shipmentID} ||'%'
+                </if>
+
+                <if test="reqVO.packDirectCode != null and reqVO.packDirectCode !=''">
+                    AND t2.pack_Direct_Code like '%'|| #{reqVO.packDirectCode} ||'%'
+                </if>
+
+                <if test="reqVO.packStoreHouseName != null and reqVO.packStoreHouseName !=''">
+                    AND a.Pack_Store_House_Name = #{reqVO.packStoreHouseName}
+                </if>
+
+                <if test="reqVO.lhrPosition != null and reqVO.lhrPosition !=''">
+                    AND a.lhr_Position like '%'|| #{reqVO.lhrPosition} ||'%'
+                </if>
+
+                <if test="reqVO.matCode != null and reqVO.matCode !=''">
+                    AND d.mat_Code like '%'|| #{reqVO.matCode} ||'%'
+                </if>
+
+                <if test="reqVO.shopNameSimpleList != null and reqVO.shopNameSimpleList.size() != 0">
+                    AND c.Shop_Name_Simple IN
+                    <foreach collection="reqVO.shopNameSimpleList" item="shopNameSimple" index="index" separator="," open="(" close=")">
+                        #{shopNameSimple}
+                    </foreach>
+                </if>
+
+                <if test="reqVO.countryCodeList != null and reqVO.countryCodeList.size() != 0">
+                    AND c.Country_Code IN
+                    <foreach collection="reqVO.countryCodeList" item="countryCode" index="index" separator="," open="(" close=")">
+                        #{countryCode}
+                    </foreach>
+                </if>
+
+                <if test="reqVO.startDate != null ">
+                    AND a.Lhr_Send_Good_Date >= #{reqVO.startDate}
+                </if>
+                <if test="reqVO.endDate != null ">
+                    AND a.Lhr_Send_Good_Date &lt; #{reqVO.endDate}+1
+                </if>
+            </if>
+        GROUP BY
+            a.Lhr_Note,
+            a.Log_Tra_Mode1,
+            e.Ler_Sign_Date,
+            Lhr_Send_Good_Date,
+            a.Lhr_Odd_Numb,
+            a.Pack_Store_House_Name,
+            a.Lhr_Position,
+            b.Pack_Code,
+            a.Ele_Platform_Name || '_' || c.Shop_Name_Simple || '_' || c.Country_Code ,
+            a.Lp_Simple_Name ,
+            lp.LP_NAME,
+            a.Log_Tra_Mode2 ,
+            b.Shipment_ID ,
+            t2.SKU,
+            t2.Fn_SKU,
+            t2.dep_Name,
+            t2.team_Name,
+            d.MATERIAL_CODE ,
+            d.CATEGORY ,
+            d.COMPANY_BRAND ,
+            d.MATERIAL_NAME ,
+            d.FIT_BRAND ,
+            d.MODEL ,
+            d.STYLE ,
+            d.COLOR ,
+            Pack_Direct_Code,
+            c.Com_Warehouse_Name
+    </select>
+
+    <select id="getLogisticsReceiveReport" parameterType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.params.TbLogisticsReceiveReportParam"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.LogisticsReceiveReportViewModel">
+
+        SELECT
+          DISTINCT  T1.Sys_ID
+          ,T1.Shipment_ID
+          ,t1.Ship_To
+          ,t1.Shop_Name_Simple  as ShopSimpleName
+          ,t1.Country_Code
+          ,Ama_Rec_State
+          ,NVL(Shipment_Qty,0) AS Shipment_Qty
+          ,NVL(Erp_Qty,0) AS  Erp_Qty
+          ,Merchant_SKU  ItemSku
+          ,NVL(t5.Quantity,0) AS receiveQty
+          ,T7.lhr_Send_Good_Date
+          ,(NVL(Erp_Qty,0) - NVL(t5.Quantity,0)) AS cyQty
+        FROM Tb_Logistics_Pack_List_Box_Rec  T1
+        LEFT JOIN(
+                    SELECT
+                        DISTINCT Shipment_ID,
+                         Merchant_SKU,
+                         NVL((SELECT  SUM(Quantity)  FROM  Tb_Logistics_Pack_List_Box_Rec_Det  WHERE   Shipment_ID = T3.Shipment_ID  AND  Merchant_SKU = T3.Merchant_SKU GROUP BY Shipment_ID,Merchant_SKU) ,0 ) AS Shipment_Qty  ,
+                         NVL((SELECT SUM(Quantity)    FROM  Tb_Logistics_Packing_List_Det2  WHERE   pack_Code =T3.Pack_Code AND  SKU = T3.Merchant_SKU  GROUP BY pack_Code,SKU),0)  AS Erp_Qty
+                    FROM Tb_Logistics_Pack_List_Box_Rec_Det  T3
+                  )T4 ON T1.Shipment_ID = T4.Shipment_ID
+
+         LEFT JOIN  ( --来货报告 获取接收数量
+                        SELECT
+                            MAX(REFERENCE_ID) Shipment_ID,
+                            MAX(SYS_SHOPS_NAME) Shop_Name_Simple,
+                            MAX(ASIN) asin ,
+                            MAX(FNSKU) fnsku ,
+                            MAX(SKU) ItemSku,
+                            MAX(SYS_SITE) Country_Code,
+                            SUM(QUANTITY) Quantity ,
+                            MAX(FULFILLMENT_CENTER) ship_to,
+                            MAX(BUSINESS_DATE) businessDate
+                        FROM
+                            WAREHOUSE.INVENTORY_LEDGER_DETAILED
+                        WHERE
+                            EVENT_TYPE = 'Receipts' -- AND REFERENCE_ID='FBA15GX7W16F' AND SKU ='ZB-MK-22PGip10e-SZBTPU-TF-ybwSilver'
+                        GROUP BY
+                            REFERENCE_ID ,
+                            FULFILLMENT_CENTER,
+                            FNSKU,
+                            ASIN,
+                            SKU,
+                            SYS_SITE,
+                            SYS_SHOPS_NAME
+                    )t5  ON t5.Country_Code = T1.Country_Code AND  t5.Shipment_ID = T1.Shipment_ID AND  t5.Shop_Name_Simple = T1.Shop_Name_Simple  AND  T4.Merchant_SKU = t5.ItemSku AND t5.Ship_To = T1.Ship_To
+         LEFT  JOIN  Tb_Logistics_List_To_Head_Route_Det  T6 ON T6.Pack_Code = T1.Pack_Code AND T6.Shipment_ID = T1.Shipment_ID
+         LEFT  JOIN Tb_Logistics_List_To_Head_Route   T7 ON T7.Lhr_Code = T6.Lhr_Code
+
+        WHERE   T7.lhr_Send_Good_Date is not NULL
+
+        <if test="reqVO != null">
+            <if test="reqVO.countryCode != null and reqVO.countryCode !=''">
+                AND T1.country_Code = #{reqVO.countryCode}
+            </if>
+
+            <if test="reqVO.shopNameSimple != null and reqVO.shopNameSimple !=''">
+                AND T1.shop_Name_Simple = #{reqVO.shopNameSimple}
+            </if>
+
+            <if test="reqVO.shipmentID != null and reqVO.shipmentID !=''">
+                AND T1.Shipment_ID = #{reqVO.shipmentID}
+            </if>
+
+            <if test="reqVO.startDate != null ">
+                AND T7.lhr_Send_Good_Date >= #{reqVO.startDate}
+            </if>
+            <if test="reqVO.endDate != null ">
+                AND T7.lhr_Send_Good_Date &lt; #{reqVO.endDate}+1
+            </if>
+        </if>
+
+    </select>
+    <select id="lpsr"  resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.entity.TbLogisticsPackingList">
+
+        SELECT
+        a.Pack_Store_House_Type as packStoreHouseType,
+        b.Ship_To as packStoreHouseName
+        FROM
+        Tb_Logistics_Packing_List a ,
+        Tb_Logistics_Pack_List_Box_Rec b
+        WHERE
+        1=1
+        <if test="packStoreHouseType != null and packStoreHouseType !=''">
+            AND a.pack_Store_House_Type=#{packStoreHouseType}-- 条件1
+
+            <if test='packStoreHouseType=="亚马逊仓"' >
+                <if test="packStoreHouseName != null and packStoreHouseName !='' ">
+                    AND b.Ship_To like '%'||#{packStoreHouseName}||'%' --条件2
+                </if>
+            </if>
+
+        </if>
+
+        AND a.Pack_Code = b.Pack_Code
+        AND b.Shipment_ID = b.Shipment_ID
+        AND a.Pack_Log_State = '未发货'
+        AND a.Pack_Upload_State = '已回传'
+        and b.Ship_To IS NOT NULL
+        and a.pack_Store_House_Type IN ('亚马逊仓', '沃尔玛仓')
+
+        UNION
+
+        SELECT
+        a.Pack_Store_House_Type as packStoreHouseType,
+        a.pack_Store_House_Name as packStoreHouseName
+        FROM
+        Tb_Logistics_Packing_List a
+        WHERE
+        1=1
+        <if test="packStoreHouseType != null and packStoreHouseType !=''">
+            AND a.pack_Store_House_Type=#{packStoreHouseType} -- 条件1
+
+            <if test='packStoreHouseType=="海外仓"  or packStoreHouseType =="沃尔玛仓"' >
+                <if test="packStoreHouseName != null and packStoreHouseName !='' ">
+                    AND a.pack_Store_House_Name=#{packStoreHouseName} --条件2
+                </if>
+            </if>
+        </if>
+        AND a.Pack_Log_State = '未发货'
+        AND a.Pack_Upload_State = '已回传'
+        AND (a.Pack_Store_House_Type IN ('海外仓'))
+    </select>
+
+    <select id="lpsrDetAmazonOrWalmart"  resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbShipmentApplyDetModel">
+        SELECT
+            a.Shop_Plat_Name,
+            a.Pack_Code ,
+            a.Country_Code,
+            a.Shop_Name_Simple ,
+            c.Shipment_ID ,
+            COUNT(b.Pack_Code) AS totalNumber ,
+            SUM(b.Pack_Det_Box_Weight) AS totalWeight,
+            a.pack_Date
+        FROM
+            Tb_Logistics_Packing_List a,
+            Tb_Logistics_Packing_List_Det1 b,
+            tb_logistics_pack_list_box_rec c
+        WHERE
+            a.Pack_Code = b.Pack_Code
+          AND a.Pack_Code = c.Pack_Code
+        <if test="packStoreHouseName != null and packStoreHouseName !=''">
+            AND c.Ship_To like '%'||#{packStoreHouseName}||'%' --条件1
+        </if>
+
+        <if test="packStoreHouseType != null and packStoreHouseType !=''">
+            AND a.Pack_Store_House_Type = #{packStoreHouseType}
+        </if>
+          AND a.pack_Upload_State = '已回传'
+          AND b.pack_Det_Box_Log_State = '未发货'
+        GROUP BY
+            a.Shop_Plat_Name,
+            a.Pack_Code ,
+            a.Country_Code,
+            a.Shop_Name_Simple,
+            c.Shipment_ID,
+            a.Pack_Date
+    </select>
+
+    <select id="lpsrDetOther"  resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbShipmentApplyDetModel">
+        SELECT
+            a.Shop_Plat_Name,
+            a.Pack_Code ,
+            a.Country_Code,
+            a.Shop_Name_Simple ,
+            COUNT(b.Pack_Code) AS totalNumber ,
+            SUM(b.Pack_Det_Box_Weight) AS totalWeight,
+            a.pack_Date
+        FROM
+            Tb_Logistics_Packing_List a,
+            Tb_Logistics_Packing_List_Det1 b
+        WHERE
+            a.Pack_Code = b.Pack_Code
+            <if test="packStoreHouseName != null and packStoreHouseName !=''">
+                AND a.Pack_Store_House_Name = #{packStoreHouseName} --条件1
+            </if>
+
+            <if test="packStoreHouseType != null and packStoreHouseType !=''">
+                AND a.Pack_Store_House_Type = #{packStoreHouseType}
+            </if>
+            AND a.pack_Upload_State = '已回传'
+            AND b.pack_Det_Box_Log_State = '未发货'
+        GROUP BY
+            a.Shop_Plat_Name,
+            a.Pack_Code ,
+            a.Country_Code,
+            a.Shop_Name_Simple,
+            a.Pack_Date
+    </select>
+</mapper>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsPackingListDet2Mapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackingListDet2Result">
+        select * from tb_logistics_packing_list_det2 ${ew.customSqlSegment}
+    </select>
+
+    <select id="getMaxBoxNoByPackCode" resultType="java.lang.Integer" parameterType="String">
+        SELECT MAX(PACK_DET_BOX_NUM)  FROM tb_logistics_packing_list_det2 WHERE PACK_CODE = #{packCode}
+    </select>
+
+    <select id="getSkuCountQtyByPackCode" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.entity.TbLogisticsShipmentDet" parameterType="String">
+        SELECT SKU AS merchantSku , SUM(QUANTITY) AS quantity  FROM tb_logistics_packing_list_det2 WHERE PACK_CODE = #{packCode} GROUP BY SKU
+    </select>
+
+    <select id="getClearanceData" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbShipemtListClearancModel" >
+        SELECT
+            a.SKU AS sku,
+            SUM(a.Quantity) as qty,
+            b.INVOICE_NORM AS matInvoiceNorm ,
+            b.MODEL AS matModel ,
+            b.MAT_SET_ATTRIBUTES AS matSetAttributes,
+            b.MAT_QTY_UNIT AS matQtyUnit,
+            a.PACK_DET_BOX_NUM AS packDetBoxNum,
+            b.COM_BRAND AS matComBrand,
+            b.INVOICE_PRO_NAME AS matInvoiceProName,
+            a.PACK_CODE AS packCode,
+            b.MATERIAL_CODE  AS matCode
+        FROM
+            tb_logistics_packing_list_det2 a
+                LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL  b ON
+                a.mate_Code = b.MATERIAL_CODE
+        WHERE 1=1
+                <if test="packCodeList != null and packCodeList.size() != 0">
+                    AND a.pack_code IN
+                    <foreach collection="packCodeList" item="packCode" index="index" separator="," open="(" close=")">
+                        #{packCode}
+                    </foreach>
+                </if>
+
+                AND a.PACK_CODE || a.pack_Det_Box_Num IN (
+                                                            SELECT  DISTINCT 	Pack_Code||Pack_Det_Box_Num
+                                                            FROM Tb_Logistics_List_To_Head_Route_Det
+                                                            WHERE 1=1
+                                                                and Lhr_Odd_Numb = #{lhrOddNumb}
+                                                                <if test="packCodeList != null and packCodeList.size() != 0">
+                                                                    AND Pack_Code IN
+                                                                    <foreach collection="packCodeList" item="packCode" index="index" separator="," open="(" close=")">
+                                                                        #{packCode}
+                                                                    </foreach>
+                                                                </if>
+                                                            )
+        GROUP BY
+            a.SKU,
+            b.INVOICE_NORM,
+            b.MODEL,
+            a.PACK_DET_BOX_NUM,
+            b.MAT_SET_ATTRIBUTES,
+            b.MAT_QTY_UNIT,
+            b.COM_BRAND,
+            b.INVOICE_PRO_NAME,
+            a.pack_Code,
+            b.MATERIAL_CODE
+        ORDER  BY a.Pack_Code,a.PACK_DET_BOX_NUM
+    </select>
+</mapper>

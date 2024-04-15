@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdFeeReimburseReviewMapper">
+
+    <select id="listPageApprove"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleApproveResult">
+        SELECT t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t3.SYS_PM_PER_CODE,
+               t3.SYS_PM_PER_NAME,
+               t4.SYS_PL_NAME,
+               t4.SYS_SHORT_CODE,
+               t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,
+               t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+               t2.SYS_VERSION,
+               t2.SYS_TA_PA_DATE,
+               t2.SYS_TA_LEVEL,
+               t2.SYS_TA_CODE,
+               t2.SYS_PL_CODE,
+               t2.SYS_SPU,
+               '提案阶段' AS SYS_RD_STAGE,
+               '购样费'  AS SYS_APP_FEE_TYPE
+        FROM RD_SAMPLE_PA t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE = T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+        --JOIN RD_PSS_MANAGE_VERSION t5 ON t3.SYS_SPU = t5.SYS_SPU AND t5.SYS_VERSION_STATUS = '进行中'
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE = t4.SYS_PL_CODE
+        where (t1.SYS_FEE_APP_STATUS = '待审批')
+
+        UNION
+
+        SELECT t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t3.SYS_PM_PER_CODE,
+               t3.SYS_PM_PER_NAME,
+               t4.SYS_PL_NAME,
+               t4.SYS_SHORT_CODE,
+               t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,
+               t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+               t2.SYS_VERSION,
+               t2.SYS_TA_PA_DATE,
+               t2.SYS_TA_LEVEL,
+               t2.SYS_TA_CODE,
+               t2.SYS_PL_CODE,
+               t2.SYS_SPU,
+               '提案阶段' AS SYS_RD_STAGE,
+               '打样费'  AS SYS_APP_FEE_TYPE
+        FROM RD_SAMPLE_CA t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE = T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE = t4.SYS_PL_CODE
+        JOIN RD_SAMPLE_CFB t5 ON t5.SYS_CUST_FEBK_CODE = t1.SYS_CUST_FEBK_CODE
+        WHERE t5.SYS_CF_IS_MOLD_OPEN = '否'
+          AND (t1.SYS_SA_AP_STATUS = '待审批')
+
+        UNION
+
+        SELECT t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t3.SYS_PM_PER_CODE,
+               t3.SYS_PM_PER_NAME,
+               t4.SYS_PL_NAME,
+               t4.SYS_SHORT_CODE,
+               t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,
+               t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+               t2.SYS_VERSION,
+               t2.SYS_TA_PA_DATE,
+               t2.SYS_TA_LEVEL,
+               t2.SYS_TA_CODE,
+               t2.SYS_PL_CODE,
+               t2.SYS_SPU,
+               '提案阶段' AS SYS_RD_STAGE,
+               '开模费'  AS SYS_APP_FEE_TYPE
+        FROM RD_SAMPLE_CA t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE = T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE = t4.SYS_PL_CODE
+        JOIN RD_SAMPLE_CFB t5 ON t5.SYS_CUST_FEBK_CODE = t1.SYS_CUST_FEBK_CODE
+        --JOIN (SELECT SYS_FEE_APP_CODE, SUM(SYS_MOF_PAY_AMOUNT) SYS_MOF_PAY_AMOUNT
+              --from RD_MOLD_OPEN_PFA
+              --GROUP BY SYS_FEE_APP_CODE) t6 ON t1.SYS_FEE_APP_CODE = t6.SYS_FEE_APP_CODE
+        WHERE t5.SYS_CF_IS_MOLD_OPEN = '是'
+          AND (t1.SYS_SA_AP_STATUS = '待审批')
+
+    </select>
+
+    <select id="listCaApprove"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleCaResult">
+        SELECT t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t3.SYS_PM_PER_CODE,
+               t3.SYS_PM_PER_NAME,
+               t4.SYS_PL_NAME,
+               t4.SYS_SHORT_CODE,
+               t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,
+               t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+               t2.SYS_VERSION,
+               t2.SYS_TA_PA_DATE,
+               t2.SYS_TA_LEVEL,
+               '提案阶段' AS SYS_RD_STAGE,
+               '打样费' AS SYS_APP_FEE_TYPE,
+               t5.SYS_CF_SUPPLIER_NAME,t5.SYS_CF_SUPPLIER_NUM,t5.SYS_CF_GOODS_SOURCE,t5.SYS_CF_SAMPLE_QTY,t5.SYS_CF_FEE_TOTAL,t5.SYS_CF_IS_REFUND,t5.SYS_CF_ADDIT_CONDITION,t5.SYS_CF_PUR_PER_CODE,t5.SYS_CF_PUR_PER_NAME,
+               t1.*
+        FROM RD_SAMPLE_CA t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE = T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE = t4.SYS_PL_CODE
+        JOIN RD_SAMPLE_CFB t5 ON t5.SYS_CUST_FEBK_CODE = t1.SYS_CUST_FEBK_CODE
+        WHERE t5.SYS_CF_IS_MOLD_OPEN = '否'
+          AND ((t1.SYS_SA_AP_STATUS = '待审批') OR (t1.SYS_SA_AP_STATUS = '已完结' AND t1.SYS_SA_PAY_RD IS NOT NULL))
+        <if test="paramCondition.sysTaCodeList != null and paramCondition.sysTaCodeList.size() > 0">
+            AND t2.SYS_TA_CODE in
+            <foreach collection="paramCondition.sysTaCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listCaMoApprove"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleCaResult">
+        SELECT t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t3.SYS_PM_PER_CODE,
+               t3.SYS_PM_PER_NAME,
+               t4.SYS_PL_NAME,
+               t4.SYS_SHORT_CODE,
+               t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,
+               t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+               t2.SYS_VERSION,
+               t2.SYS_TA_PA_DATE,
+               t2.SYS_TA_LEVEL,
+               '提案阶段' AS SYS_RD_STAGE,
+               '开模费' AS SYS_APP_FEE_TYPE,
+               t6.SYS_MOF_PAY_AMOUNT,
+               t5.SYS_CF_SUPPLIER_NAME,t5.SYS_CF_SUPPLIER_NUM,t5.SYS_CF_GOODS_SOURCE,t5.SYS_CF_SAMPLE_QTY,t5.SYS_CF_FEE_TOTAL,t5.SYS_CF_IS_REFUND,t5.SYS_CF_ADDIT_CONDITION,t5.SYS_CF_PUR_PER_CODE,t5.SYS_CF_PUR_PER_NAME,
+               t1.*
+        FROM RD_SAMPLE_CA t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE = T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE = t4.SYS_PL_CODE
+        JOIN RD_SAMPLE_CFB t5 ON t5.SYS_CUST_FEBK_CODE = t1.SYS_CUST_FEBK_CODE
+        LEFT JOIN (SELECT SYS_FEE_APP_CODE, SUM(SYS_MOF_PAY_AMOUNT) SYS_MOF_PAY_AMOUNT
+              from RD_MOLD_OPEN_PFA
+              GROUP BY SYS_FEE_APP_CODE) t6 ON t1.SYS_FEE_APP_CODE = t6.SYS_FEE_APP_CODE
+        WHERE t5.SYS_CF_IS_MOLD_OPEN = '是'
+          AND ((t1.SYS_SA_AP_STATUS = '待审批') OR (t1.SYS_SA_AP_STATUS = '已完结' AND NVL(t6.SYS_MOF_PAY_AMOUNT, 0) > 0))
+        <if test="paramCondition.sysTaCodeList != null and paramCondition.sysTaCodeList.size() > 0">
+            AND t2.SYS_TA_CODE in
+            <foreach collection="paramCondition.sysTaCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listPaApprove"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSamplePaResult">
+        SELECT t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t3.SYS_PM_PER_CODE,
+               t3.SYS_PM_PER_NAME,
+               t4.SYS_PL_NAME,
+               t4.SYS_SHORT_CODE,
+               t4.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,
+               t4.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+               t2.SYS_VERSION,
+               t2.SYS_TA_PA_DATE,
+               t2.SYS_TA_LEVEL,
+               '提案阶段' AS SYS_RD_STAGE,
+               '购样费' AS SYS_APP_FEE_TYPE,
+               t1.*
+        FROM RD_SAMPLE_PA t1
+        JOIN RD_PROPOSAL t2 ON t1.SYS_TA_CODE = T2.SYS_TA_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+        --JOIN RD_PSS_MANAGE_VERSION t5 ON t3.SYS_SPU = t5.SYS_SPU AND t5.SYS_VERSION_STATUS = '进行中'
+        JOIN RD_PL_MANAGE t4 ON t1.SYS_PL_CODE = t4.SYS_PL_CODE
+        where (t1.SYS_FEE_APP_STATUS = '待审批')
+           OR (t1.SYS_FEE_APP_STATUS = '已归档' AND t1.SYS_FEE_APP_PAY_RD IS NOT NULL)
+        <if test="paramCondition.sysTaCodeList != null and paramCondition.sysTaCodeList.size() > 0">
+            AND t2.SYS_TA_CODE in
+            <foreach collection="paramCondition.sysTaCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

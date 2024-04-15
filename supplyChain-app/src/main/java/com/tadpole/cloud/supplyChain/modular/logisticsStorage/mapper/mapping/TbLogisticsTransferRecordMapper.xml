@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsTransferRecordMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsTransferRecordResult">
+        select * from tb_logistics_transfer_record ${ew.customSqlSegment}
+    </select>
+
+    <select id="export" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.ExportDirectTransfersOrderResult">
+        SELECT
+            ROWNUM AS billEntry,
+            a.*,
+            '虚拟Team' AS bscTeam,
+            '虚拟Team' AS bscTeamName
+        FROM
+            (
+                SELECT
+                    DISTINCT t1.Mate_Code AS materialId,
+                             SUM(t1.Transfer_Quantity) AS qty ,
+                             t.Sys_ID AS billHead,
+                             t.Pack_Code AS billNo,
+                             t.Transfers_Direction AS transferDirect,
+                             t.Transfers_Type AS transferBizType,
+                             t.Transfer_Out_Organize_Code AS stockOutOrgId,
+                             t.Transfer_In_Organize_Code AS stockOrgId,
+                             t.Transfer_Date AS bizDate,
+                             t1.Transfer_Out_House_Code AS srcStockId,
+                             t1.Transfer_In_House_Code AS destStockId,
+                             t1.Transfer_In_House_Name AS destStockIdName
+                FROM
+                    TB_LOGISTICS_TRANSFER_RECORD t
+                        LEFT JOIN TB_LOGISTICS_TRANSFER_RECORD_DET t1 ON
+                        (t1.sys_id = t.sys_id)
+                WHERE 1 = 1
+                    <if test="packCodeList != null and packCodeList.size() != 0">
+                        AND t.pack_code IN
+                        <foreach collection="packCodeList" item="packCode" index="index" separator="," open="(" close=")">
+                            #{packCode}
+                        </foreach>
+                    </if>
+                GROUP BY
+                    t1.Mate_Code,
+                    t.Sys_ID,
+                    t.Pack_Code,
+                    t.Transfers_Direction,
+                    t.Transfers_Type,
+                    t.Transfer_Out_Organize_Code,
+                    t.Transfer_In_Organize_Code,
+                    t.Transfer_Date,
+                    t1.Transfer_Out_House_Code,
+                    t1.Transfer_In_House_Code,
+                    t1.Transfer_In_House_Name
+                ORDER BY
+                    t.sys_id ASC
+            ) a
+
+    </select>
+</mapper>

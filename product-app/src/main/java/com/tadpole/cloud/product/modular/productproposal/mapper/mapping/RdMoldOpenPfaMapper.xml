@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdMoldOpenPfaMapper">
+
+    <select id="listMoldOpenPfa"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdMoldOpenPfaResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,
+        t2.SYS_PL_NAME,
+        t4.SYS_CF_IS_REFUND,
+        t1.SYS_SA_CONTRACT_DOC,
+        t5.*
+        FROM RD_MOLD_OPEN_PFA t5
+        JOIN RD_SAMPLE_CA t1 ON t1.SYS_FEE_APP_CODE=t5.SYS_FEE_APP_CODE
+        JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_SAMPLE_CFB t4 ON t1.SYS_CUST_FEBK_CODE=t4.SYS_CUST_FEBK_CODE
+        where 1=1
+        <if test="paramCondition.sysMofStatus != null and paramCondition.sysMofStatus != ''">
+            AND t5.SYS_MOF_STATUS = #{paramCondition.sysMofStatus}
+        </if>
+        <if test="paramCondition.sysMofStatusList != null and paramCondition.sysMofStatusList.size() > 0">
+            AND t5.SYS_MOF_STATUS in
+            <foreach collection="paramCondition.sysMofStatusList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY t5.SYS_MOF_CODE DESC
+
+    </select>
+
+    <select id="listMoldOpenPfaArrears"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdMoldOpenPfaResult">
+        SELECT t3.SYS_PRO_NAME,
+               t3.SYS_STYLE,
+               t3.SYS_MAIN_MATERIAL,
+               t3.SYS_BRAND,
+               t3.SYS_MODEL,
+               t2.SYS_PL_NAME,
+               t4.SYS_CF_IS_REFUND,
+               t1.SYS_SA_CONTRACT_DOC,
+               t6.SYS_MOF_SUB_DATE AS SYS_MOF_FIRST_SUB_DATE,
+               t5.*
+        FROM RD_MOLD_OPEN_PFA t5
+                 JOIN RD_SAMPLE_CA t1 ON t1.SYS_FEE_APP_CODE = t5.SYS_FEE_APP_CODE
+                 JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE = t2.SYS_PL_CODE
+                 JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE = t3.SYS_PL_CODE AND t1.SYS_SPU = t3.SYS_SPU
+                 JOIN RD_SAMPLE_CFB t4 ON t1.SYS_CUST_FEBK_CODE = t4.SYS_CUST_FEBK_CODE
+                 JOIN RD_MOLD_OPEN_PFA t6 ON t5.SYS_FEE_APP_CODE_FIRST = t6.SYS_MOF_CODE
+        where 1 = 1
+          AND (t5.SYS_MOF_STATUS IS NULL OR t5.SYS_MOF_STATUS = '')
+        ORDER BY t5.SYS_MOF_CODE DESC
+    </select>
+
+    <select id="listPage" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdMoldOpenPfaResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,
+        t2.SYS_PL_NAME,
+        t4.SYS_CF_IS_REFUND,
+        t1.SYS_SA_CONTRACT_DOC,
+        t6.SYS_REF_PAY_DATE,
+        t5.*
+        FROM RD_MOLD_OPEN_PFA t5
+        JOIN RD_SAMPLE_CA t1 ON t1.SYS_FEE_APP_CODE=t5.SYS_FEE_APP_CODE
+        JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_SAMPLE_CFB t4 ON t1.SYS_CUST_FEBK_CODE=t4.SYS_CUST_FEBK_CODE
+        LEFT JOIN RD_REF_REGIST t6 ON t1.SYS_FEE_APP_CODE=t6.SYS_FEE_APP_CODE AND t6.SYS_FEE_APP_SOURCE='定制申请'
+        where 1=1 AND t5.SYS_MOF_STATUS='已归档'
+        <if test="paramCondition.sysMofStatus != null and paramCondition.sysMofStatus != ''">
+            AND t5.SYS_MOF_STATUS = #{paramCondition.sysMofStatus}
+        </if>
+
+        <if test="paramCondition.sysMofPayDateList != null and paramCondition.sysMofPayDateList.size() > 0">
+            AND t5.SYS_MOF_PAY_DATE &gt;= to_date(#{paramCondition.sysMofPayDateList[0]},'yyyy-mm-dd')
+            AND t5.SYS_MOF_PAY_DATE &lt;= to_date(#{paramCondition.sysMofPayDateList[1]},'yyyy-mm-dd')
+        </if>
+
+        <if test="paramCondition.sysMofCodeList != null and paramCondition.sysMofCodeList.size() > 0">
+            AND t5.SYS_MOF_CODE in
+            <foreach collection="paramCondition.sysMofCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysMofCode != null and paramCondition.sysMofCode != ''">
+            AND t5.SYS_MOF_CODE = #{paramCondition.sysMofCode}
+        </if>
+        <if test="paramCondition.sysPmPerNameList != null and paramCondition.sysPmPerNameList.size() > 0">
+            AND t5.SYS_PM_PER_NAME in
+            <foreach collection="paramCondition.sysPmPerNameList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerName != null and paramCondition.sysPmPerName != ''">
+            AND t5.SYS_PM_PER_NAME = #{paramCondition.sysPmPerName}
+        </if>
+        <if test="paramCondition.sysCfPurPerNameList != null and paramCondition.sysCfPurPerNameList.size() > 0">
+            AND t5.SYS_CF_PUR_PER_NAME in
+            <foreach collection="paramCondition.sysCfPurPerNameList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysCfPurPerName != null and paramCondition.sysCfPurPerName != ''">
+            AND t5.SYS_CF_PUR_PER_NAME = #{paramCondition.sysCfPurPerName}
+        </if>
+        ORDER BY t5.SYS_MOF_CODE DESC
+
+    </select>
+
+    <select id="detail" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdMoldOpenPfaResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,
+        t2.SYS_PL_NAME,
+        t4.SYS_CF_IS_REFUND,
+        t1.SYS_SA_CONTRACT_DOC,
+        t6.SYS_REF_PAY_DATE,
+        t5.*
+        FROM RD_MOLD_OPEN_PFA t5
+        JOIN RD_SAMPLE_CA t1 ON t1.SYS_FEE_APP_CODE=t5.SYS_FEE_APP_CODE
+        JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        JOIN RD_SAMPLE_CFB t4 ON t1.SYS_CUST_FEBK_CODE=t4.SYS_CUST_FEBK_CODE
+        LEFT JOIN RD_REF_REGIST t6 ON t1.SYS_FEE_APP_CODE=t6.SYS_FEE_APP_CODE AND t6.SYS_FEE_APP_SOURCE='定制申请'
+        where 1=1
+        <if test="paramCondition.sysMofStatus != null and paramCondition.sysMofStatus != ''">
+            AND t5.SYS_MOF_STATUS = #{paramCondition.sysMofStatus}
+        </if>
+
+        <if test="paramCondition.sysMofPayDateList != null and paramCondition.sysMofPayDateList.size() > 0">
+            AND t5.SYS_MOF_PAY_DATE &gt;= to_date(#{paramCondition.sysMofPayDateList[0]},'yyyy-mm-dd')
+            AND t5.SYS_MOF_PAY_DATE &lt;= to_date(#{paramCondition.sysMofPayDateList[1]},'yyyy-mm-dd')+1
+        </if>
+
+        <if test="paramCondition.sysMofCodeList != null and paramCondition.sysMofCodeList.size() > 0">
+            AND t5.SYS_MOF_CODE in
+            <foreach collection="paramCondition.sysMofCodeList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysMofCode != null and paramCondition.sysMofCode != ''">
+            AND t5.SYS_MOF_CODE = #{paramCondition.sysMofCode}
+        </if>
+        <if test="paramCondition.sysPmPerNameList != null and paramCondition.sysPmPerNameList.size() > 0">
+            AND t5.SYS_PM_PER_NAME in
+            <foreach collection="paramCondition.sysPmPerNameList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerName != null and paramCondition.sysPmPerName != ''">
+            AND t5.SYS_PM_PER_NAME = #{paramCondition.sysPmPerName}
+        </if>
+        <if test="paramCondition.sysCfPurPerNameList != null and paramCondition.sysCfPurPerNameList.size() > 0">
+            AND t5.SYS_CF_PUR_PER_NAME in
+            <foreach collection="paramCondition.sysCfPurPerNameList" item="item" index="index" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysCfPurPerName != null and paramCondition.sysCfPurPerName != ''">
+            AND t5.SYS_CF_PUR_PER_NAME = #{paramCondition.sysCfPurPerName}
+        </if>
+        ORDER BY t5.SYS_MOF_CODE DESC
+
+    </select>
+
+</mapper>

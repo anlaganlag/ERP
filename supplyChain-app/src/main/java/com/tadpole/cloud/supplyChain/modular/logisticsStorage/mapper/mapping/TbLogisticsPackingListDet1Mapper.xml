@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsPackingListDet1Mapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackingListDet1Result">
+        select * from tb_logistics_packing_list_det1 ${ew.customSqlSegment}
+    </select>
+
+    <select id="getClearanceBoxInfoData" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackingListDet1Result">
+        SELECT
+            *
+        FROM
+            Tb_Logistics_Packing_List_Det1
+        WHERE 1=1
+        <if test="packCodeList != null and packCodeList.size() != 0">
+            AND pack_code IN
+            <foreach collection="packCodeList" item="packCode" index="index" separator="," open="(" close=")">
+                #{packCode}
+            </foreach>
+        </if>
+
+          AND PACK_CODE || pack_Det_Box_Num IN (
+                                                SELECT DISTINCT Pack_Code || Pack_Det_Box_Num
+                                                FROM Tb_Logistics_List_To_Head_Route_Det
+                                                WHERE 1=1 AND Lhr_Odd_Numb = #{lhrOddNumb}
+                                                <if test="packCodeList != null and packCodeList.size() != 0">
+                                                    AND pack_code IN
+                                                    <foreach collection="packCodeList" item="packCode" index="index" separator="," open="(" close=")">
+                                                        #{packCode}
+                                                    </foreach>
+                                                </if>
+                                                )
+        ORDER BY
+            pack_Code
+    </select>
+</mapper>

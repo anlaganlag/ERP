@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbAmazonInGoodsQtyNewV2Mapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbAmazonInGoodsQtyNewV2Result">
+        select * from Tb_Amazon_In_Goods_Qty_New_V2 ${ew.customSqlSegment}
+    </select>
+
+    <update id="initOnTheWayData" >
+        INSERT INTO Tb_Amazon_In_Goods_Qty_New_V2 (sku,mat_code,shop_name_simple,country_code,shipment_id,sys_statistical_date,all_qty,shipping_qty,train_qty,car_qty,air_qty,stay_deliver_qty)
+        SELECT
+            T.sku,
+            T.mat_code,
+            T.shop_name_simple,
+            T.country_code,
+            T.shipment_id,
+            SYSDATE ,  -- 获取当前日期和时间
+            SUM(NVL(T.delivery_num, 0)) AS all_qty,  -- 汇总所有发货数量
+            SUM(
+                CASE
+                WHEN instr(T.deliver_type,'海运') > 0
+                AND NVL(T.shipment_real_status, 'NULL') NOT IN ('已完成')
+                THEN
+                CASE
+                WHEN T.delivery_num &lt; NVL(T1.quantity, 0) THEN 0
+                ELSE T.delivery_num - NVL(T1.quantity, 0)
+                END
+                ELSE 0
+                END
+            ) AS shipping_qty,  -- 汇总海运发货数量
+            SUM(
+                CASE
+                WHEN T.deliver_type = '铁运'
+                AND NVL(T.shipment_real_status, 'NULL') NOT IN ('已完成')
+                THEN
+                CASE
+                WHEN T.delivery_num &lt; NVL(T1.quantity, 0) THEN 0
+                ELSE T.delivery_num - NVL(T1.quantity, 0)
+                END
+                ELSE 0
+                END
+            ) AS train_qty,  -- 汇总铁运发货数量
+            SUM(
+                CASE
+                WHEN T.deliver_type = '卡航'
+                AND NVL(T.shipment_real_status, 'NULL') NOT IN ('已完成')
+                THEN
+                CASE
+                WHEN T.delivery_num &lt; NVL(T1.quantity, 0) THEN 0
+                ELSE T.delivery_num - NVL(T1.quantity, 0)
+                END
+                ELSE 0
+                END
+            ) AS car_qty,  -- 汇总卡航发货数量
+            SUM(
+                CASE
+                WHEN T.deliver_type IN ('空运', '快递')
+                AND NVL(T.shipment_real_status, 'NULL') NOT IN ('已完成')
+                THEN
+                CASE
+                WHEN T.delivery_num &lt; NVL(T1.quantity, 0) THEN 0
+                ELSE T.delivery_num - NVL(T1.quantity, 0)
+                END
+                ELSE 0
+                END
+            ) AS air_qty,  -- 汇总空运和快递发货数量
+            SUM(
+                CASE
+                WHEN T.deliver_type IS NULL
+                AND NVL(T.shipment_real_status, 'NULL') NOT IN ('已完成')
+                THEN NVL(T.delivery_num, 0)
+                ELSE 0
+                END
+            ) AS stay_deliver_qty  -- 汇总其他发货数量
+        FROM
+            Tb_bsc_overseas_way_analysis_new_v2 T LEFT JOIN tb_received_invenroty_analysis_v2 T1 ON T.sku = T1.item_sku AND T.shipment_id = T1.shipment_id
+        GROUP BY
+            T.sku,
+            T.shop_name_simple,
+            T.country_code,
+            T.mat_code,
+            T.shipment_id
+    </update>
+
+    <update id="initFinishData">
+
+        INSERT INTO
+            Tb_Bsc_Overseas_Way_Ship_Status_Analysis_New (shipment_id,sku)
+        SELECT
+            T1.shipment_id,
+            T1.sku
+        FROM
+        (
+            SELECT
+                A.shipment_id,
+                sku,
+                SUM(stay_deliver_qty) AS stay_deliver,
+                SUM(shipping_qty + train_qty + car_qty + air_qty) AS on_way,
+                SUM(A.all_qty - B.quantity) AS bus_discrepancy
+            FROM
+                Tb_Amazon_In_Goods_Qty_New_V2 A JOIN Tb_Received_Invenroty_Analysis_V2 B ON A.shipment_id = B.shipment_id AND A.sku = B.item_sku
+            GROUP BY
+                A.shipment_id,
+                A.sku
+        ) T1
+        JOIN
+        (
+            SELECT
+                shipment_id,
+                sku
+            FROM
+                Tb_Bsc_Overseas_Way
+            WHERE
+                status = 'CLOSED'
+            GROUP BY
+                shipment_id,
+                sku
+        ) T2
+        ON T1.shipment_id = T2.shipment_id AND T1.sku = T2.sku
+        WHERE
+            stay_deliver = 0
+            AND (on_way BETWEEN 0 AND 5)
+            AND ABS(bus_discrepancy) &lt;= 5
+
+    </update>
+</mapper>

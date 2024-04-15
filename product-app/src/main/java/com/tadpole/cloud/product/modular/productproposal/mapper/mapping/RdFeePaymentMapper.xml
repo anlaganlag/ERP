@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdFeePaymentMapper">
+    <select id="listRdFeePay" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdFeePayResult">
+        SELECT
+            t1.SYS_FEE_APP_CODE AS sys_Fee_App_Code,
+            '购样申请' AS sys_Fee_Pay_Type,
+            t1.SYS_FEE_APP_APP_DATE AS sys_date,
+            t1.SYS_FEE_APP_SC AS sys_Fee_Pay_Sc,
+            t1.SYS_FEE_APP_PUR_PER_CODE AS sys_Pur_Per_Code,
+            t1.SYS_FEE_APP_PUR_PER_NAME AS sys_Pur_Per_Name,
+            t1.SYS_FEE_APP_TOTAL_FEE AS sys_Fee_Pay_Total_Fee,
+            '支付' AS sysFeeOprType
+        FROM
+            RD_SAMPLE_PA t1 WHERE t1.SYS_FEE_APP_STATUS='待支付'
+        UNION ALL
+        SELECT
+            t1.SYS_FEE_APP_CODE AS sys_Fee_App_Code,
+            '打样申请' AS sys_Fee_Pay_Type,
+            t1.SYS_SA_APP_DATE AS sys_date,
+            '供应商' AS sys_Fee_Pay_Sc,
+            t2.SYS_CF_PUR_PER_CODE AS sys_Pur_Per_Code,
+            t2.SYS_CF_PUR_PER_NAME AS sys_Pur_Per_Name,
+            t2.SYS_CF_FEE_TOTAL AS sys_Fee_Pay_Total_Fee,
+            '支付' AS sysFeeOprType
+        from RD_SAMPLE_CA t1
+                 JOIN RD_SAMPLE_CFB t2 ON t1.SYS_CUST_FEBK_CODE=t2.SYS_CUST_FEBK_CODE
+        WHERE t1.SYS_SA_AP_STATUS='待支付' AND t2.SYS_CF_IS_MOLD_OPEN='否'
+        UNION ALL
+        SELECT
+            t1.SYS_FEE_APP_CODE AS sys_Fee_App_Code,
+            '购样申请' AS sys_Fee_Pay_Type,
+            t2.SYS_REF_OP_DATE AS sys_date,
+            t1.SYS_FEE_APP_SC AS sys_Fee_Pay_Sc,
+            t1.SYS_FEE_APP_PUR_PER_CODE AS sys_Pur_Per_Code,
+            t1.SYS_FEE_APP_PUR_PER_NAME AS sys_Pur_Per_Name,
+            t2.SYS_REF_PRE_AMOUNT AS sys_Fee_Pay_Total_Fee,
+            '退款' AS sysFeeOprType
+        FROM RD_SAMPLE_PA t1
+            JOIN RD_SAMPLE_RPR t2 ON t1.SYS_FEE_APP_CODE =t2.SYS_FEE_APP_CODE
+        WHERE t1.SYS_FEE_APP_SC !='供应商' AND t2.SYS_REF_DATE is null
+        UNION ALL
+        SELECT
+            t1.SYS_FEE_APP_CODE AS sys_Fee_App_Code,
+            '购样申请' AS sys_Fee_Pay_Type,
+            t2.SYS_REF_FEB_DATE AS sys_date,
+            t1.SYS_FEE_APP_SC AS sys_Fee_Pay_Sc,
+            t1.SYS_FEE_APP_PUR_PER_CODE AS sys_Pur_Per_Code,
+            t1.SYS_FEE_APP_PUR_PER_NAME AS sys_Pur_Per_Name,
+            t2.SYS_REF_APP_AMOUNT AS sys_Fee_Pay_Total_Fee,
+            '退款' AS sysFeeOprType
+        FROM RD_SAMPLE_PA t1
+            JOIN RD_REF_REGIST t2 ON t1.SYS_FEE_APP_CODE =t2.SYS_FEE_APP_CODE
+        WHERE t1.SYS_FEE_APP_SC ='供应商' AND t2.SYS_FEE_APP_SOURCE='购样申请' AND t2.SYS_REF_APP_STATUS='待退款确认'
+        UNION ALL
+        SELECT
+            t1.SYS_FEE_APP_CODE AS sys_Fee_App_Code,
+            '定制申请' AS sys_Fee_Pay_Type,
+            t3.SYS_REF_FEB_DATE AS sys_date,
+            '供应商' AS sys_Fee_Pay_Sc,
+            t2.SYS_CF_PUR_PER_CODE AS sys_Pur_Per_Code,
+            t2.SYS_CF_PUR_PER_NAME AS sys_Pur_Per_Name,
+            t3.SYS_REF_APP_AMOUNT AS sys_Fee_Pay_Total_Fee,
+            '退款' AS sysFeeOprType
+        from RD_SAMPLE_CA t1
+            JOIN RD_SAMPLE_CFB t2 ON t1.SYS_CUST_FEBK_CODE=t2.SYS_CUST_FEBK_CODE
+            JOIN RD_REF_REGIST t3 ON t1.SYS_FEE_APP_CODE =t3.SYS_FEE_APP_CODE
+        WHERE t3.SYS_REF_APP_STATUS='待退款确认' AND t2.SYS_CF_IS_MOLD_OPEN='否'
+    </select>
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbBscOverseasWayMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbBscOverseasWayResult">
+        select * from Tb_Bsc_Overseas_Way ${ew.customSqlSegment}
+    </select>
+
+    <select id="getBscOverseasWayMapper" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.entity.TbBscOverseasWay">
+        SELECT
+            T.Merchant_SKU AS SKU,
+            t1.Pack_Code,
+            T1.pack_Det_Box_Log_State AS DELIVER_STATUS,
+            T2.pack_Upload_State AS RETURN_STATUS,
+            t4.Ama_Rec_State AS STATUS,
+            T6.mate_Code AS material_code,
+            NVL(T.Quantity, 0) AS delivery_NUM,
+            T1.log_Tra_Mode2 AS delivery_type,
+            '1' AS ow_name,
+            T2.country_Code AS sys_site,
+            T2.shop_Name_Simple AS sys_shops_name,
+            T.Shipment_ID AS FBA_SHIPMENT_ID,
+            'Amazon' AS PLATEFORM,
+            T2.pack_Store_House_Name AS RECEIVE_WAREHOUSE,
+            T4.Ow_Name AS DELIVER_WAREHOUSE,
+            SYSDATE AS UPDATE_TIME,
+            T1.pack_Det_Box_Num AS PACKDETBOXNUM,
+            T.Shipment_Real_Status
+        FROM
+            Tb_Logistics_Pack_List_Box_Rec_Det T
+                LEFT JOIN ( SELECT DISTINCT pack_Code, pack_Det_Box_Num, log_Tra_Mode2, pack_Det_Box_Log_State, Pack_Det_Box_Num_Upload FROM Tb_Logistics_Packing_List_Det1) T1
+                          ON T1.pack_Code = T.Pack_Code AND T1.Pack_Det_Box_Num_Upload = T.Origin_Pack_Det_Box_Num_Upload
+                LEFT JOIN Tb_Logistics_Packing_List T2
+                          ON T2.pack_Code = T1.pack_Code
+                LEFT JOIN Tb_Logistics_Pack_List_Box_Rec T4
+                          ON T4.Pack_Code = T1.Pack_Code AND T4.Shipment_ID = T.Shipment_ID
+                LEFT JOIN Tb_Com_Overseas_Warehouse T5
+                          ON T5.Ow_Name = T4.Ow_Name
+                LEFT JOIN ( SELECT DISTINCT SKU, pack_Code, pack_Det_Box_Num_Upload, mate_Code FROM Tb_Logistics_Packing_List_Det2) T6
+                          ON T6.SKU = T.Merchant_SKU AND T6.pack_Code = T.pack_Code AND T6.Pack_Det_Box_Num_Upload = T.Origin_Pack_Det_Box_Num_Upload
+        WHERE
+            T2.pack_Code = #{packCode}
+          AND T2.pack_Date >= TO_DATE('2020-12-01', 'YYYY-MM-DD')
+    </select>
+
+    <update id="updateShipmentRealStatus">
+        MERGE INTO Tb_Bsc_Overseas_Way  T1
+        USING Tb_Bsc_Overseas_Way_Ship_Status_Analysis_New  T2
+        ON (T1.shipment_id = T2.shipment_id AND T1.sku = T2.sku )
+        WHEN MATCHED THEN
+            UPDATE SET T1.shipment_real_status = '已完成' WHERE T1.shipment_real_status = '进行中'
+    </update>
+
+    <update id="updateBscOverseasWayStatus">
+        MERGE INTO Tb_Bsc_Overseas_Way T1
+        USING (
+            SELECT country_code, shop_name_simple, shipment_id, pack_code, ama_rec_state
+            FROM Tb_Logistics_Pack_List_Box_Rec
+            WHERE sys_update_date = TRUNC(SYSDATE)
+        ) T2
+        ON (T1.country_code = T2.country_code AND T1.shop_name_simple = T2.shop_name_simple AND T1.shipment_id = T2.shipment_id AND T1.pack_code = T2.pack_code)
+        WHEN MATCHED THEN
+            UPDATE SET T1.status = T2.ama_rec_state
+    </update>
+</mapper>

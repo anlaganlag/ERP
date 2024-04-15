@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdSampleTaskProgressDetMapper">
+    <select id="listTaskProgressDet" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdSampleTaskProgressDetResult">
+        SELECT t1.*
+        FROM RD_SAMPLE_TASK_PROGRESS_DET t1
+        WHERE 1=1
+        <if test="paramCondition.sysTsTaskCode != null and paramCondition.sysTsTaskCode != ''">
+            AND t1.SYS_TS_TASK_CODE = #{paramCondition.sysTsTaskCode}
+        </if>
+        <if test="paramCondition.sysPerNameList != null and paramCondition.sysPerNameList.size() > 0">
+            AND t1.SYS_PER_NAME in
+            <foreach collection="paramCondition.sysPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysCDateList != null and paramCondition.sysCDateList.size() > 0">
+            AND  t1.SYS_C_DATE &gt;=  to_date(#{paramCondition.sysCDateList[0]},'yyyy-mm-dd')
+            AND  t1.SYS_C_DATE &lt;= to_date(#{paramCondition.sysCDateList[1]},'yyyy-mm-dd')+1
+        </if>
+        ORDER BY t1.SYS_C_DATE DESC
+    </select>
+</mapper>

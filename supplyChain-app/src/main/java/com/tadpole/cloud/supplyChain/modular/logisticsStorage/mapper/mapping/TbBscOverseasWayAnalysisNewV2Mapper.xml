@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbBscOverseasWayAnalysisNewV2Mapper">
+
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbBscOverseasWayAnalysisNewV2Result">
+        select * from Tb_Bsc_Overseas_Way_Analysis_New_V2 ${ew.customSqlSegment}
+    </select>
+
+    <update id="initSendData">
+        INSERT INTO Tb_bsc_overseas_way_analysis_new_v2 (sku,mat_code,shop_name_simple,country_code,shipment_id,deliver_type,status,shipment_real_status,delivery_num)
+        SELECT
+            B.sku,
+            B.mat_code,
+            B.shop_name_simple,
+            B.country_code,
+            B.shipment_id,
+            B.deliver_type,
+            B.status,
+            B.shipment_real_status,
+            SUM(NVL(B.delivery_num, 0)) AS delivery_num
+        FROM
+            Tb_bsc_overseas_way B
+        WHERE
+            B.receive_warehouse = '亚马逊仓'
+            AND B.plate_form = 'Amazon'
+            AND B.return_status = '已回传'
+            AND B.deliver_status != '已返仓'
+            AND B.shop_name_simple NOT IN ('QL', 'NY')
+            AND MONTHS_BETWEEN(SYSDATE, B.update_time) &lt;= 6
+        GROUP BY
+            B.sku,
+            B.mat_code,
+            B.shop_name_simple,
+            B.country_code,
+            B.shipment_id,
+            B.deliver_type,
+            B.status,
+            B.shipment_real_status
+    </update>
+</mapper>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsPackListBoxRecMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackListBoxRecResult">
+        select * from tb_logistics_pack_list_box_rec ${ew.customSqlSegment}
+    </select>
+    <update id="updateShipmentRealStatus">
+        UPDATE Tb_Logistics_Pack_List_Box_Rec SET SHIPMENT_REAL_STATUS ='已完成'
+        WHERE SHIPMENT_REAL_STATUS='进行中'
+          AND SHIPMENT_ID IN (
+            SELECT a.Shipment_ID
+            FROM (
+                     SELECT d.Shipment_ID,
+                            SUM( CASE d.SHIPMENT_REAL_STATUS   WHEN '已完成' THEN 0  else 1 END  ) as STATUS
+                     FROM Tb_Logistics_Pack_List_Box_Rec_Det d group by Shipment_ID
+                 )a
+            WHERE a.STATUS=0
+        )
+    </update>
+</mapper>

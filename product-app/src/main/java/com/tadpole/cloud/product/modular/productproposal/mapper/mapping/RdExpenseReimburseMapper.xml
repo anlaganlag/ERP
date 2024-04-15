@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdExpenseReimburseMapper">
+    <select id="listPage" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdExpenseReimburseResult">
+        SELECT t1.*
+        FROM RD_EXPENSE_REIMBURSE t1
+        WHERE 1=1 AND t1.SYS_SAEA_STATUS='已归档'
+        <if test="paramCondition.sysSaeaCodeList != null and paramCondition.sysSaeaCodeList.size() > 0">
+            AND t1.SYS_SAEA_CODE in
+            <foreach collection="paramCondition.sysSaeaCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSaeaPerNameList != null and paramCondition.sysSaeaPerNameList.size() > 0">
+            AND t1.SYS_SAEA_PER_NAME in
+            <foreach collection="paramCondition.sysSaeaPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSaeaAccountList != null and paramCondition.sysSaeaAccountList.size() > 0">
+            AND t1.SYS_SAEA_ACCOUNT in
+            <foreach collection="paramCondition.sysSaeaAccountList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSaeaAmountList != null and paramCondition.sysSaeaAmountList.size() > 0">
+            AND t1.SYS_SAEA_AMOUNT in
+            <foreach collection="paramCondition.sysSaeaAmountList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSaeaPayDateList != null and paramCondition.sysSaeaPayDateList.size() > 0">
+            AND  t1.SYS_SAEA_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaPayDateList[0]},'yyyy-mm-dd')
+            AND  t1.SYS_SAEA_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaPayDateList[1]},'yyyy-mm-dd')
+        </if>
+        ORDER BY t1.SYS_SAEA_CODE DESC
+    </select>
+
+    <select id="listExpenseReimburse" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdExpenseReimburseResult">
+        SELECT t1.*
+        FROM RD_EXPENSE_REIMBURSE t1
+        WHERE 1=1
+        <if test="paramCondition.sysSaeaStatus != null and paramCondition.sysSaeaStatus != ''">
+            AND t1.SYS_SAEA_STATUS = #{paramCondition.sysSaeaStatus}
+        </if>
+        <if test="paramCondition.sysSaeaStatusList != null and paramCondition.sysSaeaStatusList.size() > 0">
+            AND t1.SYS_SAEA_STATUS in
+            <foreach collection="paramCondition.sysSaeaStatusList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY t1.SYS_SAEA_CODE DESC
+    </select>
+
+    <select id="detail" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdExpenseReimburseResult">
+        SELECT t1.*
+        FROM RD_EXPENSE_REIMBURSE t1
+        WHERE 1=1
+        <if test="paramCondition.sysSaeaCode != null and paramCondition.sysSaeaCode != ''">
+            AND t1.SYS_SAEA_CODE = #{paramCondition.sysSaeaCode}
+        </if>
+    </select>
+
+    <select id="useLastRecipientAccount" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdExpenseReimburseResult">
+        SELECT t1.SYS_SAEA_REC_ACCOUNT,t1.SYS_SAEA_REC_PN,t1.SYS_SAEA_REC_AN,max(SYS_C_DATE) SYS_C_DATE
+        FROM RD_EXPENSE_REIMBURSE t1
+        WHERE 1=1
+        <if test="paramCondition.sysSaeaAccount != null and paramCondition.sysSaeaAccount != ''">
+            AND t1.SYS_SAEA_ACCOUNT = #{paramCondition.sysSaeaAccount}
+        </if>
+        group by t1.SYS_SAEA_REC_ACCOUNT,t1.SYS_SAEA_REC_PN,t1.SYS_SAEA_REC_AN
+    </select>
+
+
+
+
+
+</mapper>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdExpenseReimburseDetMapper">
+    <select id="listExpenseReimburseDet" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdExpenseReimburseDetResult">
+        SELECT * FROM
+        (
+          SELECT t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_CODE,NULL AS SYS_CUST_FEBK_CODE,'购样申请' AS SYS_SAEA_SOURCE,t1.SYS_FEE_APP_CODE AS SYS_SAEA_SOURCE_ID,'支出' AS SYS_SAEA_TYPE,
+                 t1.SYS_FEE_APP_PAY_DATE SYS_SAEA_APP_DATE,t3.SYS_TS_SAMPLE_METHOD AS SYS_SAEA_SAMPLE_METHOD,t1.SYS_FEE_APP_SC AS SYS_SAEA_SAMPLE_CHANNEL,
+                 decode(t1.SYS_FEE_APP_SC,'供应商',t1.SYS_FEE_APP_SUPPLIER_NAME,'1688网站',t1.SYS_FEE_APP_SHOP_NAME,'淘宝网站',t1.SYS_FEE_APP_SHOP_NAME) AS SYS_SAEA_SHOP_OR_SUPP_NAME,
+                 t1.SYS_FEE_APP_ORDER_PIC AS SYS_SAEA_ORDER_VOUCHER,t1.SYS_FEE_APP_PUR_PER_NAME AS SYS_SAEA_PUR_NAME,t1.SYS_FEE_APP_PUR_PER_CODE AS SYS_SAEA_PUR_CODE,
+                 NVL(t2.SYS_REGIST_SAMPLE_QTY, 0) AS SYS_SAEA_SAMPLE_QTY,t1.SYS_FEE_APP_TOTAL_FEE AS SYS_SAEA_APP_AMOUNT,t1.SYS_FEE_APP_PAY_AMOUNT AS SYS_SAEA_REAL_AMOUNT,
+                 t1.SYS_FEE_APP_PAY_VD AS SYS_SAEA_VARIANCE_DESC,t1.SYS_FEE_APP_PAY_RPN AS SYS_SAEA_OPR_NAME,t1.SYS_FEE_APP_PAY_RPC AS SYS_SAEA_OPR_CODE
+          FROM RD_SAMPLE_PA t1
+                   JOIN RD_SAMPLE_TASK t3 ON t1.SYS_TS_TASK_CODE=t3.SYS_TS_TASK_CODE
+                   LEFT JOIN (
+              SELECT SYS_KFY_FEE_CODE,SYS_KFY_FEE_SOURCE,COUNT(1) as SYS_REGIST_SAMPLE_QTY
+              FROM RD_SAMPLE_MANAGE GROUP BY SYS_KFY_FEE_CODE,SYS_KFY_FEE_SOURCE
+          ) t2 ON t1.SYS_FEE_APP_CODE=T2.SYS_KFY_FEE_CODE AND t2.SYS_KFY_FEE_SOURCE='购样申请'
+          WHERE 1=1
+            <if test="paramCondition.sysSaeaAccount != null and paramCondition.sysSaeaAccount != ''">
+                AND t1.SYS_FEE_APP_ALIPAY_ACCOUNT = #{paramCondition.sysSaeaAccount}
+            </if>
+            <if test="paramCondition.sysSaeaStartDate != null">
+                AND t1.SYS_FEE_APP_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaStartDate},'yyyy-mm-dd')
+            </if>
+            <if test="paramCondition.sysSaeaEndDate != null">
+                AND t1.SYS_FEE_APP_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaEndDate},'yyyy-mm-dd')+1
+            </if>
+            <if test="paramCondition.sysSaeaDateList != null and paramCondition.sysSaeaDateList.size() > 0">
+                AND  t1.SYS_FEE_APP_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaDateList[0]},'yyyy-mm-dd')
+                AND  t1.SYS_FEE_APP_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaDateList[1]},'yyyy-mm-dd')+1
+            </if>
+
+          UNION ALL
+
+          SELECT t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_CODE,t1.SYS_CUST_FEBK_CODE,'定制申请' AS SYS_SAEA_SOURCE,t1.SYS_FEE_APP_CODE AS SYS_SAEA_SOURCE_ID,'支出' AS SYS_SAEA_TYPE,
+                 t1.SYS_SA_PAY_DATE SYS_SAEA_APP_DATE,t3.SYS_TS_SAMPLE_METHOD AS SYS_SAEA_SAMPLE_METHOD,'供应商' AS SYS_SAEA_SAMPLE_CHANNEL,t4.SYS_CF_SUPPLIER_NAME AS SYS_SAEA_SHOP_OR_SUPP_NAME,
+                 NULL AS SYS_SAEA_ORDER_VOUCHER,t4.SYS_CF_PUR_PER_NAME AS SYS_SAEA_PUR_NAME,t4.SYS_CF_PUR_PER_CODE AS SYS_SAEA_PUR_CODE,NVL(t2.SYS_REGIST_SAMPLE_QTY, 0) AS SYS_SAEA_SAMPLE_QTY,
+                 t1.SYS_SA_CONTRACT_AMOUNT AS SYS_SAEA_APP_AMOUNT,t1.SYS_SA_PAY_AMOUNT AS SYS_SAEA_REAL_AMOUNT,t1.SYS_SA_PAY_VD AS SYS_SAEA_VARIANCE_DESC,t1.SYS_SA_PAY_RPN AS SYS_SAEA_OPR_NAME,
+                 t1.SYS_SA_PAY_RPC AS SYS_SAEA_OPR_CODE
+          FROM RD_SAMPLE_CA t1
+                   JOIN RD_SAMPLE_CFB t4 ON t1.SYS_CUST_FEBK_CODE=t4.SYS_CUST_FEBK_CODE
+                   JOIN RD_SAMPLE_TASK t3 ON t1.SYS_TS_TASK_CODE=t3.SYS_TS_TASK_CODE
+                   LEFT JOIN (
+              SELECT SYS_KFY_FEE_CODE,SYS_KFY_FEE_SOURCE,COUNT(1) as SYS_REGIST_SAMPLE_QTY
+              FROM RD_SAMPLE_MANAGE GROUP BY SYS_KFY_FEE_CODE,SYS_KFY_FEE_SOURCE
+          ) t2 ON t1.SYS_FEE_APP_CODE=T2.SYS_KFY_FEE_CODE AND t2.SYS_KFY_FEE_SOURCE='定制申请'
+          WHERE t4.SYS_CF_IS_MOLD_OPEN='否'
+            <if test="paramCondition.sysSaeaAccount != null and paramCondition.sysSaeaAccount != ''">
+                AND t1.SYS_SA_ALIPAY_ACCOUNT = #{paramCondition.sysSaeaAccount}
+            </if>
+            <if test="paramCondition.sysSaeaStartDate != null">
+                AND t1.SYS_SA_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaStartDate},'yyyy-mm-dd')
+            </if>
+            <if test="paramCondition.sysSaeaEndDate != null">
+                AND t1.SYS_SA_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaEndDate},'yyyy-mm-dd')+1
+            </if>
+            <if test="paramCondition.sysSaeaDateList != null and paramCondition.sysSaeaDateList.size() > 0">
+                AND  t1.SYS_SA_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaDateList[0]},'yyyy-mm-dd')
+                AND  t1.SYS_SA_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaDateList[1]},'yyyy-mm-dd')+1
+            </if>
+
+          UNION ALL
+
+          SELECT t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_CODE,NULL AS SYS_CUST_FEBK_CODE,'购样申请' AS SYS_SAEA_SOURCE,t1.SYS_FEE_APP_CODE AS SYS_SAEA_SOURCE_ID,'退款' AS SYS_SAEA_TYPE,
+                 t2.SYS_REF_DATE SYS_SAEA_APP_DATE,t3.SYS_TS_SAMPLE_METHOD AS SYS_SAEA_SAMPLE_METHOD,t1.SYS_FEE_APP_SC AS SYS_SAEA_SAMPLE_CHANNEL,
+                 decode(t1.SYS_FEE_APP_SC,'1688网站',t1.SYS_FEE_APP_SHOP_NAME,'淘宝网站',t1.SYS_FEE_APP_SHOP_NAME) AS SYS_SAEA_SHOP_OR_SUPP_NAME,
+                 t1.SYS_FEE_APP_ORDER_PIC AS SYS_SAEA_ORDER_VOUCHER,t1.SYS_FEE_APP_PUR_PER_NAME AS SYS_SAEA_PUR_NAME,t1.SYS_FEE_APP_PUR_PER_CODE AS SYS_SAEA_PUR_CODE,
+                 NVL(t2.SYS_REF_QTY, 0) AS SYS_SAEA_SAMPLE_QTY,t2.SYS_REF_PRE_AMOUNT AS SYS_SAEA_APP_AMOUNT,t2.SYS_REF_REAL_AMOUNT AS SYS_SAEA_REAL_AMOUNT,
+                 t2.SYS_REF_VD AS SYS_SAEA_VARIANCE_DESC,t2.SYS_REF_RG_PER_NAME AS SYS_SAEA_OPR_NAME,t2.SYS_REF_RG_PER_CODE AS SYS_SAEA_OPR_CODE
+          FROM RD_SAMPLE_PA t1
+                   JOIN RD_SAMPLE_TASK t3 ON t1.SYS_TS_TASK_CODE=t3.SYS_TS_TASK_CODE
+                   JOIN RD_SAMPLE_RPR t2 ON t1.SYS_FEE_APP_CODE=T2.SYS_FEE_APP_CODE AND t2.SYS_FEE_APP_SOURCE='购样申请'
+          WHERE t1.SYS_FEE_APP_SC != '供应商'
+            <if test="paramCondition.sysSaeaAccount != null and paramCondition.sysSaeaAccount != ''">
+                AND t1.SYS_FEE_APP_ALIPAY_ACCOUNT = #{paramCondition.sysSaeaAccount}
+            </if>
+            <if test="paramCondition.sysSaeaStartDate != null">
+                AND t2.SYS_REF_DATE &gt;=  to_date(#{paramCondition.sysSaeaStartDate},'yyyy-mm-dd')
+            </if>
+            <if test="paramCondition.sysSaeaEndDate != null">
+                AND t2.SYS_REF_DATE &lt;= to_date(#{paramCondition.sysSaeaEndDate},'yyyy-mm-dd')+1
+            </if>
+            <if test="paramCondition.sysSaeaDateList != null and paramCondition.sysSaeaDateList.size() > 0">
+                AND  t2.SYS_REF_DATE &gt;=  to_date(#{paramCondition.sysSaeaDateList[0]},'yyyy-mm-dd')
+                AND  t2.SYS_REF_DATE &lt;= to_date(#{paramCondition.sysSaeaDateList[1]},'yyyy-mm-dd')+1
+            </if>
+
+          UNION ALL
+
+          SELECT t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_CODE,NULL AS SYS_CUST_FEBK_CODE,'购样申请' AS SYS_SAEA_SOURCE,t1.SYS_FEE_APP_CODE AS SYS_SAEA_SOURCE_ID,'退款' AS SYS_SAEA_TYPE,
+              t2.SYS_REF_PAY_DATE SYS_SAEA_APP_DATE,t3.SYS_TS_SAMPLE_METHOD AS SYS_SAEA_SAMPLE_METHOD,t1.SYS_FEE_APP_SC AS SYS_SAEA_SAMPLE_CHANNEL,t1.SYS_FEE_APP_SUPPLIER_NAME AS SYS_SAEA_SHOP_OR_SUPP_NAME,
+              t1.SYS_FEE_APP_ORDER_PIC AS SYS_SAEA_ORDER_VOUCHER,t1.SYS_FEE_APP_PUR_PER_NAME AS SYS_SAEA_PUR_NAME,t1.SYS_FEE_APP_PUR_PER_CODE AS SYS_SAEA_PUR_CODE,
+              0 AS SYS_SAEA_SAMPLE_QTY,t2.SYS_REF_FEES AS SYS_SAEA_APP_AMOUNT,t2.SYS_REF_APP_AMOUNT AS SYS_SAEA_REAL_AMOUNT,
+              t2.SYS_REF_APP_EXPLAIN AS SYS_SAEA_VARIANCE_DESC,t2.SYS_REF_APP_EPN AS SYS_SAEA_OPR_NAME,t2.SYS_REF_APP_EPC AS SYS_SAEA_OPR_CODE
+          FROM RD_SAMPLE_PA t1
+              JOIN RD_SAMPLE_TASK t3 ON t1.SYS_TS_TASK_CODE=t3.SYS_TS_TASK_CODE
+              JOIN RD_REF_REGIST t2 ON t1.SYS_FEE_APP_CODE=T2.SYS_FEE_APP_CODE AND t2.SYS_FEE_APP_SOURCE='购样申请'
+          WHERE t1.SYS_FEE_APP_SC = '供应商'
+            <if test="paramCondition.sysSaeaAccount != null and paramCondition.sysSaeaAccount != ''">
+                AND t1.SYS_FEE_APP_ALIPAY_ACCOUNT = #{paramCondition.sysSaeaAccount}
+            </if>
+            <if test="paramCondition.sysSaeaStartDate != null">
+                AND t2.SYS_REF_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaStartDate},'yyyy-mm-dd')
+            </if>
+            <if test="paramCondition.sysSaeaEndDate != null">
+                AND t2.SYS_REF_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaEndDate},'yyyy-mm-dd')+1
+            </if>
+            <if test="paramCondition.sysSaeaDateList != null and paramCondition.sysSaeaDateList.size() > 0">
+                AND  t2.SYS_REF_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaDateList[0]},'yyyy-mm-dd')
+                AND  t2.SYS_REF_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaDateList[1]},'yyyy-mm-dd')+1
+            </if>
+
+          UNION ALL
+
+          SELECT t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_TA_CODE,t1.SYS_TS_TASK_CODE,t1.SYS_CUST_FEBK_CODE,'定制申请' AS SYS_SAEA_SOURCE,t1.SYS_FEE_APP_CODE AS SYS_SAEA_SOURCE_ID,'退款' AS SYS_SAEA_TYPE,
+              t2.SYS_REF_PAY_DATE SYS_SAEA_APP_DATE,t3.SYS_TS_SAMPLE_METHOD AS SYS_SAEA_SAMPLE_METHOD,'供应商' AS SYS_SAEA_SAMPLE_CHANNEL,t4.SYS_CF_SUPPLIER_NAME AS SYS_SAEA_SHOP_OR_SUPP_NAME,
+              NULL AS SYS_SAEA_ORDER_VOUCHER,t4.SYS_CF_PUR_PER_NAME AS SYS_SAEA_PUR_NAME,t4.SYS_CF_PUR_PER_CODE AS SYS_SAEA_PUR_CODE,0 AS SYS_SAEA_SAMPLE_QTY,
+              t2.SYS_REF_FEES AS SYS_SAEA_APP_AMOUNT,t2.SYS_REF_APP_AMOUNT AS SYS_SAEA_REAL_AMOUNT,t2.SYS_REF_APP_EXPLAIN AS SYS_SAEA_VARIANCE_DESC,t2.SYS_REF_APP_EPN AS SYS_SAEA_OPR_NAME,
+              t2.SYS_REF_APP_EPC AS SYS_SAEA_OPR_CODE
+          FROM RD_SAMPLE_CA t1
+              JOIN RD_SAMPLE_CFB t4 ON t1.SYS_CUST_FEBK_CODE=t4.SYS_CUST_FEBK_CODE
+              JOIN RD_SAMPLE_TASK t3 ON t1.SYS_TS_TASK_CODE=t3.SYS_TS_TASK_CODE
+              JOIN RD_REF_REGIST t2 ON t1.SYS_FEE_APP_CODE=T2.SYS_FEE_APP_CODE AND t2.SYS_FEE_APP_SOURCE='定制申请'
+          WHERE  t4.SYS_CF_IS_MOLD_OPEN='否'
+            <if test="paramCondition.sysSaeaAccount != null and paramCondition.sysSaeaAccount != ''">
+                AND t1.SYS_SA_ALIPAY_ACCOUNT = #{paramCondition.sysSaeaAccount}
+            </if>
+            <if test="paramCondition.sysSaeaStartDate != null">
+                AND t2.SYS_REF_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaStartDate},'yyyy-mm-dd')
+            </if>
+            <if test="paramCondition.sysSaeaEndDate != null">
+                AND t2.SYS_REF_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaEndDate},'yyyy-mm-dd')+1
+            </if>
+            <if test="paramCondition.sysSaeaDateList != null and paramCondition.sysSaeaDateList.size() > 0">
+                AND  t2.SYS_REF_PAY_DATE &gt;=  to_date(#{paramCondition.sysSaeaDateList[0]},'yyyy-mm-dd')
+                AND  t2.SYS_REF_PAY_DATE &lt;= to_date(#{paramCondition.sysSaeaDateList[1]},'yyyy-mm-dd')+1
+            </if>
+
+         ) T
+        WHERE NOT EXISTS (SELECT 1 FROM RD_EXPENSE_REIMBURSE_DET A WHERE A.SYS_SAEA_SOURCE_ID=T.SYS_SAEA_SOURCE_ID AND A.SYS_SAEA_TYPE=T.SYS_SAEA_TYPE)
+    </select>
+
+</mapper>

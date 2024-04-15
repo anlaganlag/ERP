@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdCustProductDetMapper">
+    <select id="listCustProductDet" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdCustProductDetResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,
+        t2.SYS_PL_NAME,t2.SYS_PM_PER_CODE,t2.SYS_PM_PER_NAME,
+        t5.SYS_TS_TASK_CODE,t5.SYS_TS_TASK_NAME,t5.SYS_TS_SAMPLE_METHOD,
+        t6.SYS_KFY_SC,t6.SYS_KFY_SUPPLIER_NUM,t6.SYS_KFY_SUPPLIER_NAME,t6.SYS_KFY_SHOP_NAME,t6.SYS_KFY_GOODS_SOURCE,t6.SYS_KFY_SAMPLE_NAME,
+        t6.SYS_KFY_STYLE,t6.SYS_KFY_BRAND,t6.SYS_KFY_MAIN_MATERIAL,t6.SYS_KFY_PATTERN,t6.SYS_KFY_COLOR,t6.SYS_KFY_PACK_QTY,t6.SYS_KFY_PACK_TYPE,t6.SYS_KFY_SAMPLE_SIZE,t6.SYS_KFY_SAMPLE_PACK_SIZE,
+        t6.SYS_KFY_NET_WEIGHT,t6.SYS_KFY_GROSS_WEIGHT,t6.SYS_KFY_QUOTE_PRICE,t6.SYS_KFY_TAX_RATE,t6.SYS_KFY_MIN_ORDER_QTY,t6.SYS_KFY_PRODUCT_CYCLE,t6.SYS_KFY_PRODUCT_CRED,
+        t6.SYS_KFY_PUR_PC,t6.SYS_KFY_PUR_PN,t6.SYS_KFY_SUB_DATE,t6.SYS_KFY_FEBK_IS_VALID,t6.SYS_KFY_FEBK_INFO,t6.SYS_KFY_SAMPLE_PIC,t6.SYS_KFY_GROSS_WEIGHT,t6.SYS_KFY_PRODUCT_CLASSIFY,
+        t4.*,t6.SYS_KFY_MODEL,t6.SYS_KFY_SIZE,t6.SYS_KFY_DIAMETER,t6.SYS_KFY_CAPACITY,t6.SYS_KFY_IS_CHARGED,
+        t6.SYS_KFY_IS_CE_CLASS,t6.SYS_KFY_CAPACITY_UNIT,t6.SYS_KFY_CAPACITY_UNIT,t6.SYS_KFY_WEIGHT_UNIT,t6.SYS_KFY_PRODUCT_SPECIFICATIONS,t6.SYS_KFY_COM_BRAND
+        FROM RD_CUST_PRODUCT_DET t4
+        JOIN RD_SAMPLE_MANAGE t6 ON t4.SYS_KFY_CODE=t6.SYS_KFY_CODE
+        JOIN RD_SAMPLE_TASK t5 ON t6.SYS_TS_TASK_CODE=t5.SYS_TS_TASK_CODE
+        JOIN RD_PL_MANAGE t2 ON t6.SYS_PL_CODE=t2.SYS_PL_CODE
+        JOIN RD_PSS_MANAGE t3 ON t6.SYS_PL_CODE=t3.SYS_PL_CODE AND t6.SYS_SPU=t3.SYS_SPU
+        JOIN RD_CUST_PRODUCT t7 ON t4.SYS_CP_CODE=t7.SYS_CP_CODE
+        where 1=1 and t4.SYS_CP_IS_SELECT='是'
+        <if test="paramCondition.sysCpCode != null and paramCondition.sysCpCode != ''">
+            AND t7.SYS_CP_CODE = #{paramCondition.sysCpCode}
+        </if>
+        ORDER BY t7.SYS_CP_CODE DESC
+
+    </select>
+
+    <select id="listCustSample" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdCustProductDetResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,
+        t2.SYS_PL_NAME,t2.SYS_PM_PER_CODE,t2.SYS_PM_PER_NAME,
+        t5.SYS_TS_TASK_CODE,t5.SYS_TS_TASK_NAME,t5.SYS_TS_SAMPLE_METHOD,
+        t6.SYS_KFY_SC,t6.SYS_KFY_SUPPLIER_NUM,t6.SYS_KFY_SUPPLIER_NAME,t6.SYS_KFY_SHOP_NAME,t6.SYS_KFY_GOODS_SOURCE,t6.SYS_KFY_SAMPLE_NAME,
+        t6.SYS_KFY_STYLE,t6.SYS_KFY_BRAND,t6.SYS_KFY_MAIN_MATERIAL,t6.SYS_KFY_PATTERN,t6.SYS_KFY_COLOR,t6.SYS_KFY_PACK_QTY,t6.SYS_KFY_PACK_TYPE,t6.SYS_KFY_SAMPLE_SIZE,t6.SYS_KFY_SAMPLE_PACK_SIZE,
+        t6.SYS_KFY_NET_WEIGHT,t6.SYS_KFY_GROSS_WEIGHT,t6.SYS_KFY_QUOTE_PRICE,t6.SYS_KFY_TAX_RATE,t6.SYS_KFY_MIN_ORDER_QTY,t6.SYS_KFY_PRODUCT_CYCLE,t6.SYS_KFY_PRODUCT_CRED,t6.SYS_KFY_PRODUCT_CLASSIFY,
+        t6.SYS_KFY_PUR_PC,t6.SYS_KFY_PUR_PN,t6.SYS_KFY_SUB_DATE,t6.SYS_KFY_FEBK_IS_VALID,t6.SYS_KFY_FEBK_INFO,t6.SYS_KFY_CODE,t6.SYS_KFY_SAMPLE_PIC,t6.SYS_KFY_GROSS_WEIGHT,
+        t4.ID,t4.SYS_CP_CODE,t4.SYS_CP_PRODUCT_CLASS,t4.SYS_CP_ANALYSIS,t4.SYS_CP_SUGG_SALE_PRICE,t4.SYS_CP_EST_GROSS_PRO_MARGIN,
+        t4.SYS_CP_IS_SELECT,t4.SYS_CP_IS_CUST_PRODUCT,t6.SYS_KFY_MODEL,t6.SYS_KFY_SIZE,t6.SYS_KFY_DIAMETER,t6.SYS_KFY_CAPACITY,t6.SYS_KFY_IS_CHARGED,
+        t6.SYS_KFY_IS_CE_CLASS,t6.SYS_KFY_CAPACITY_UNIT,t6.SYS_KFY_CAPACITY_UNIT,t6.SYS_KFY_WEIGHT_UNIT,t6.SYS_KFY_PRODUCT_SPECIFICATIONS,t6.SYS_KFY_COM_BRAND
+        FROM RD_SAMPLE_MANAGE t6
+        JOIN RD_SAMPLE_TASK t5 ON
+        t6.SYS_TS_TASK_CODE = t5.SYS_TS_TASK_CODE
+        JOIN RD_PL_MANAGE t2 ON
+        t6.SYS_PL_CODE = t2.SYS_PL_CODE
+        JOIN RD_PSS_MANAGE t3 ON
+        t6.SYS_PL_CODE = t3.SYS_PL_CODE
+        AND t6.SYS_SPU = t3.SYS_SPU
+        AND t6.SYS_KFY_STYLE = t3.SYS_STYLE
+        AND t6.SYS_KFY_MAIN_MATERIAL = t3.SYS_MAIN_MATERIAL
+        AND t6.SYS_KFY_BRAND = t3.SYS_BRAND
+        AND t6.SYS_KFY_MODEL = t3.SYS_MODEL
+        LEFT JOIN RD_CUST_PRODUCT_DET t4 ON
+        t4.SYS_KFY_CODE = t6.SYS_KFY_CODE AND t4.SYS_CP_CODE = #{paramCondition.sysCpCode}
+        LEFT JOIN RD_CUST_PRODUCT t7 ON
+        t4.SYS_CP_CODE = t7.SYS_CP_CODE
+        WHERE
+        1 = 1
+        AND t6.SYS_KFY_FEBK_IS_VALID = '有效'
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t6.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+        <if test="paramCondition.sysTsTaskCodeList != null and paramCondition.sysTsTaskCodeList.size() > 0">
+            AND t6.SYS_TS_TASK_CODE in
+            <foreach collection="paramCondition.sysTsTaskCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        ORDER BY t6.SYS_KFY_CODE DESC
+
+    </select>
+</mapper>

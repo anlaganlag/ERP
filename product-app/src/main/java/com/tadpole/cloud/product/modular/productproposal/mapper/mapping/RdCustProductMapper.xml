@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdCustProductMapper">
+    <select id="listPage" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdCustProductResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t2.SYS_PL_NAME,t2.SYS_SHORT_CODE,t2.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t2.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+        t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_DEV_METHOND,t1.SYS_TA_LTR_DATE,t1.SYS_TA_LEVEL,t1.SYS_TA_PA_DATE,
+        t5.*
+        FROM RD_CUST_PRODUCT t5
+        JOIN RD_PROPOSAL t1 ON t1.SYS_TA_CODE=t5.SYS_TA_CODE
+        JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        where 1=1
+        <if test="paramCondition.sysCpStatus != null and paramCondition.sysCpStatus != ''">
+            AND t5.SYS_CP_STATUS = #{paramCondition.sysCpStatus}
+        </if>
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t5.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+        ORDER BY t5.SYS_CP_CODE DESC
+
+    </select>
+
+    <select id="detail" resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdCustProductResult">
+        SELECT
+        t3.SYS_PRO_NAME,t3.SYS_STYLE,t3.SYS_MAIN_MATERIAL,t3.SYS_BRAND,t3.SYS_MODEL,t3.SYS_PM_PER_CODE,t3.SYS_PM_PER_NAME,
+        t2.SYS_PL_NAME,t2.SYS_SHORT_CODE,t2.SYS_PM_PER_CODE SYS_PL_PM_PER_CODE,t2.SYS_PM_PER_NAME SYS_PL_PM_PER_NAME,
+        t1.SYS_PL_CODE,t1.SYS_SPU,t1.SYS_DEV_METHOND,t1.SYS_TA_LTR_DATE,t1.SYS_TA_LEVEL,t1.SYS_TA_PA_DATE,
+        t5.*
+        FROM RD_PROPOSAL t1
+        JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        JOIN RD_PSS_MANAGE t3 ON t1.SYS_PL_CODE=t3.SYS_PL_CODE AND t1.SYS_SPU=t3.SYS_SPU
+        LEFT JOIN RD_CUST_PRODUCT t5 ON t1.SYS_TA_CODE=t5.SYS_TA_CODE
+        where 1=1
+        <if test="paramCondition.sysCpStatus != null and paramCondition.sysCpStatus != ''">
+            AND t5.SYS_CP_STATUS = #{paramCondition.sysCpStatus}
+        </if>
+        <if test="paramCondition.sysCpCode != null and paramCondition.sysCpCode != ''">
+            AND t5.SYS_CP_CODE = #{paramCondition.sysCpCode}
+        </if>
+        <if test="paramCondition.sysTaCode != null and paramCondition.sysTaCode != ''">
+            AND t5.SYS_TA_CODE = #{paramCondition.sysTaCode}
+        </if>
+
+        ORDER BY t5.SYS_CP_CODE DESC
+
+    </select>
+
+</mapper>

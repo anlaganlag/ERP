@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsNewPriceMapper">
+    <select id="selectByPage"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsNewPriceResult">
+        select *
+        from tb_logistics_new_price ${ew.customSqlSegment}
+    </select>
+
+    <select id="queryByPriceOnlyKey"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.params.TbLogisticsNewPriceParam">
+        select
+            p.*,
+            d.*,
+            p.bus_lc_code||'-'
+                ||p.bus_lp_country_code||'-'
+                ||p.bus_lsp_num||'-'
+                ||p.bus_log_tra_mode2||'-'
+                ||p.bus_log_sea_tra_route||'-'
+                ||p.bus_log_red_or_blue_list||'-'
+                ||p.bus_log_good_character||'-'
+                ||p.bus_logp_is_inc_tax||'-'
+                ||p.bus_logp_charg_currency||'-'
+                ||p.bus_logp_charg_type as olnyKey
+        from tb_logistics_new_price p left join tb_logistics_new_price_det d ON p.PK_LOGP_ID =d.PK_LOGP_ID
+        where 1=1 and d.bus_logp_det_status != -1 and bus_logp_det_use_status != '已禁用'
+        <if test="priceOnlyKeySet != null and priceOnlyKeySet.size() != 0">
+            AND       p.bus_lc_code||'-'
+                    ||p.bus_lp_country_code||'-'
+                    ||p.bus_lsp_num||'-'
+                    ||p.bus_log_tra_mode2||'-'
+                    ||p.bus_log_sea_tra_route||'-'
+                    ||p.bus_log_red_or_blue_list||'-'
+                    ||p.bus_log_good_character||'-'
+                    ||p.bus_logp_is_inc_tax||'-'
+                    ||p.bus_logp_charg_currency||'-'
+                    ||p.bus_logp_charg_type IN
+            <foreach collection="priceOnlyKeySet" item="key" index="index" separator="," open="(" close=")">
+                #{key}
+            </foreach>
+        </if>
+    </select>
+
+
+</mapper>

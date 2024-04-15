@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productproposal.mapper.RdCustProductDet2Mapper">
+
+    <select id="listCustSample"
+            resultType="com.tadpole.cloud.product.api.productproposal.model.result.RdCustProductDet2Result">
+        select * from RD_CUST_PRODUCT_DET2
+        where 1=1
+        <if test="paramCondition.sysCpCode != null and paramCondition.sysCpCode != ''">
+            AND SYS_CP_CODE = #{paramCondition.sysCpCode}
+        </if>
+    </select>
+</mapper>

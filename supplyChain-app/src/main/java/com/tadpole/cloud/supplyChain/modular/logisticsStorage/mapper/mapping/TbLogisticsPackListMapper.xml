@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logisticsStorage.mapper.TbLogisticsPackListMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackListResult">
+        select * from tb_logistics_pack_list ${ew.customSqlSegment}
+    </select>
+
+    <select id="queryPage" parameterType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.params.TbLogisticsPackListParam"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.TbLogisticsPackListResultModel">
+        SELECT DISTINCT
+            T1.pack_code,
+            T1.plan_name,
+            T1.PACK_TEMP_UP_DATE,
+            T1.pack_temp_up_per_name,
+            T1.pack_temp_name,
+            T1.shipment_id,
+            T1.plan_id,
+            T1.ship_to,
+            T1.TO_TAL_SKUS,
+            T1.total_units,
+            T1.pack_gen_date,
+            T1.pack_gen_per_name,
+            T1.is_upload,
+            T1.pack_ama_rec_state,
+            T1.pack_ama_rec_state_per_name,
+            T1.pack_ama_rec_state_datetime,
+            T1.country_code,
+            T1.shop_name_simple,
+            T1.com_warehouse_type,
+            T1.com_warehouse_name,
+            T1.MAX_BO_XNUM ,
+            T1.pack_shipment_real_status,
+            T1.bus_pack_remark,
+            T1.bus_shipment_name,
+            T1.bus_api_process_status,
+            T1.sys_update_date,
+            T3.pack_upload_state,
+            T3.FBA_TURN_DATE,
+            T1.pack_list_code,
+            s.LER_SIGN_DATE
+        FROM Tb_logistics_pack_list T1
+--         当查询条件有sku，asin 基于货件明细过滤
+        <if test="(reqVO.asin != null and reqVO.asin !='')
+                    or ( reqVO.sku != null and reqVO.sku !='')">
+            JOIN (  SELECT DISTINCT PACK_LIST_CODE
+                    FROM TB_LOGISTICS_PACK_LIST_DET
+                    WHERE 1=1
+                    <if test="reqVO.sku != null and reqVO.sku !=''">
+                        AND MERCHANT_SKU = #{reqVO.sku}
+                    </if>
+                    <if test="reqVO.asin != null and reqVO.asin !=''">
+                        AND ASIN = #{reqVO.asin}
+                    </if>
+                ) pld
+                ON T1.PACK_LIST_CODE=pld.PACK_LIST_CODE
+
+        </if>
+
+        LEFT JOIN Tb_logistics_pack_list_box_rec T2 ON T1.shipment_id = T2.shipment_id
+        LEFT JOIN Tb_logistics_packing_list T3 ON T2.pack_code = T3.pack_code
+--             签收日期 关联物流商名称
+        LEFT JOIN (
+            SELECT
+                d.LHR_CODE ,d.SHIPMENT_ID ,d.PACK_CODE ,e.LER_SIGN_DATE,h.LP_CODE ,tlp.LP_NAME, h.LHR_ODD_NUMB , e.LER_ODD_NUMB
+            FROM TB_LOGISTICS_LIST_TO_end_ROUTE_DET   d
+            join Tb_Logistics_List_To_end_Route e on d.LHR_CODE  =e.LHR_CODE
+            JOIN tb_logistics_list_to_head_route h ON h.LHR_CODE =d.LHR_CODE
+            JOIN TB_LOGISTICS_PROVIDER tlp ON tlp.LP_CODE =h.LP_CODE
+            WHERE d.SHIPMENT_ID IS NOT NULL
+            GROUP  BY
+                d.LHR_CODE ,d.SHIPMENT_ID ,d.PACK_CODE ,e.LER_SIGN_DATE,h.LP_CODE,tlp.LP_NAME,h.LHR_ODD_NUMB , e.LER_ODD_NUMB
+        ) s ON T1.shipment_id = s.shipment_id
+        <if test="(reqVO.busLhrState != null and reqVO.busLhrState !='')
+                    or ( reqVO.logTraMode2 != null and reqVO.logTraMode2 !='')
+                    or ( reqVO.materialCode != null and reqVO.materialCode !='')">
+             JOIN (
+            --3去除重复的数据拼接DELIVER_TYPE，DELIVER_STATUS
+            SELECT tt.PACK_CODE,tt.shipment_id
+                ,LISTAGG( tt.DELIVER_TYPE, ',') WITHIN GROUP (ORDER BY tt.DELIVER_TYPE) AS DELIVER_TYPE
+                ,LISTAGG( tt.DELIVER_STATUS, ',') WITHIN GROUP (ORDER BY tt.DELIVER_STATUS) AS DELIVER_STATUS
+            FROM (
+                    -- 2按 shipment_id维度汇分组 不考虑sku
+                    SELECT
+                    t.PACK_CODE,t.shipment_id,t.DELIVER_STATUS,t.DELIVER_TYPE
+                    FROM (
+                            -- 1来货信息  查出符合条件的来货信息
+                            SELECT send.* FROM (
+                                    SELECT PACK_CODE ,shipment_id,DELIVER_TYPE,DELIVER_STATUS ,T1.sku,MAX(COUNTRY_CODE)COUNTRY_CODE
+                                    ,   MAX(SHOP_NAME_SIMPLE)SHOP_NAME_SIMPLE
+                                    FROM Tb_Bsc_Overseas_Way T1
+                                    WHERE 1=1
+                                        AND LENGTH(T1.shipment_ID) &lt;=15
+                                        AND T1.deliver_Status !='已返仓'
+                                        AND T1.shop_Name_Simple NOT IN  ('QL','NY')
+                                        AND T1.return_Status='已回传'
+                                        AND T1.receive_Warehouse='亚马逊仓'
+                                        AND MONTHS_BETWEEN(TRUNC(T1.update_Time, 'MM'), TRUNC(SYSDATE, 'MM')) &lt;= 6
+                                        AND T1.Shipment_Real_Status = '进行中'
+                                        <if test="reqVO.busLhrState != null and reqVO.busLhrState !=''">
+                                            AND T1.DELIVER_STATUS = #{reqVO.busLhrState}
+                                        </if>
+                                        <if test="reqVO.logTraMode2 != null and reqVO.logTraMode2 !=''">
+                                            AND T1.DELIVER_TYPE = #{reqVO.logTraMode2}
+                                        </if>
+                                        <if test="reqVO.materialCode != null and reqVO.materialCode !=''">
+                                            AND T1.MAT_CODE = #{reqVO.materialCode}
+                                        </if>
+                                    GROUP BY
+                                        T1.sku
+                                        ,T1.PACK_CODE
+                                        ,T1.shipment_id
+                                        ,T1.COUNTRY_CODE
+                                        ,T1.DELIVER_TYPE
+                                        ,T1.DELIVER_STATUS
+                                    ) send
+                    LEFT JOIN Tb_Received_Invenroty_Analysis_V2 rec ON send.sku=rec.Item_Sku AND send.shipment_ID=rec.Shipment_ID
+                    LEFT JOIN Tb_Amazon_In_Goods_Qty_New_V2 inGood on  inGood.sku=send.sku and inGood.shop_Name_Simple=send.Shop_Name_Simple and inGood.country_Code=send.Country_Code and inGood.shipment_ID=send.Shipment_ID
+                    WHERE   ABS(NVL(inGood.ALL_Qty,0)-NVL(rec.Quantity,0)) > 6
+                    )t
+                GROUP BY
+                    t.PACK_CODE,t.shipment_id,t.DELIVER_STATUS,t.DELIVER_TYPE
+                )tt
+                GROUP BY
+                tt.PACK_CODE,tt.shipment_id
+             ) T4 ON T4.shipment_id = T1.shipment_id and T4.PACK_CODE=T3.pack_code
+        </if>
+        WHERE 1=1  and T1.pack_list_code IS NOT NULL
+        <if test="reqVO != null">
+
+            <if test="reqVO.shopNameSimple != null and reqVO.shopNameSimple !=''">
+                AND T1.shop_name_simple = #{reqVO.shopNameSimple}
+            </if>
+
+            <if test="reqVO.countryCode != null and reqVO.countryCode !=''">
+                AND T1.country_code = #{reqVO.countryCode}
+            </if>
+
+            <if test="reqVO.packCode != null and reqVO.packCode !=''">
+                AND T1.PACK_CODE = #{reqVO.packCode}
+            </if>
+
+            <if test="reqVO.shipmentId != null and reqVO.shipmentId !=''">
+                AND T1.shipment_id  like '%'||#{reqVO.shipmentId}||'%'
+            </if>
+
+
+            <if test="reqVO.packTempUpPerName != null and reqVO.packTempUpPerName !=''">
+                AND T1.pack_temp_up_per_name like '%'||#{reqVO.packTempUpPerName}||'%'
+            </if>
+            <if test="reqVO.comWarehouseName != null and reqVO.comWarehouseName !=''">
+                AND T1.com_warehouse_name like '%'||#{reqVO.comWarehouseName}||'%'
+            </if>
+            <if test="reqVO.packAmaRecState != null and reqVO.packAmaRecState !=''">
+                AND T1.pack_ama_rec_state = #{reqVO.packAmaRecState}
+            </if>
+            <if test="reqVO.lerSignDateStart != null and reqVO.lerSignDateEnd != null ">
+                AND s.LER_SIGN_DATE >= #{reqVO.lerSignDateStart}
+                AND s.LER_SIGN_DATE &lt; #{reqVO.lerSignDateEnd}+1
+            </if>
+
+            <if test="reqVO.lpName != null and reqVO.lpName !=''">
+                AND s.LP_NAME =  #{reqVO.lpName}
+            </if>
+
+            <if test="reqVO.lpNameList != null and reqVO.lpNameList.size() != 0">
+                AND s.LP_NAME IN
+                <foreach collection="reqVO.lpNameList" item="lpName" index="index" separator=","
+                         open="(" close=")">
+                    #{lpName}
+                </foreach>
+            </if>
+
+            <if test="reqVO.busLhrOddNumb != null and reqVO.busLhrOddNumb !=''">
+                AND s.LHR_ODD_NUMB like '%'||  #{reqVO.busLhrOddNumb} ||'%'
+            </if>
+        </if>
+        ORDER BY pack_temp_up_date DESC
+    </select>
+
+    <select id="getSingleBoxRec"  parameterType="java.lang.String"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.LogisticsSingleBoxRecModel">
+        SELECT
+        p.Sys_Det_ID as sysDetID,
+        p.Shipment_ID  as ShipmentID,
+        p.Merchant_SKU as MerchantSKU,
+        s.Fn_SKU as FnSKU,
+        p.Pack_Code as PackCode,
+        s.Quantity as Sqty,
+        s.Pack_Det_Box_Num as SBoxNum,
+        p.Quantity as Pqty,
+        p.Pack_Det_Box_Num as PBoxNum
+        from  tb_logistics_pack_list_box_rec_det p, tb_logistics_packing_list_det2 s
+        WHERE p.origin_pack_det_box_num_upload = s.pack_det_box_num_upload
+        and p.merchant_sku = s.SKU
+        and p.Pack_Code=s.Pack_Code
+
+        <if test="shipmentId != null and shipmentId !=''">
+          AND  p.Shipment_ID = #{shipmentId}
+        </if>
+
+        <if test="sku != null and sku !=''">
+            AND  p.merchant_sku = #{sku}
+        </if>
+
+    </select>
+
+    <select id="getSingleBoxRecNew"  parameterType="java.lang.String"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.LogisticsSingleBoxRecModel">
+        SELECT
+        p.Sys_Det_ID as sysDetID,
+        p.Shipment_ID  as ShipmentID,
+        p.Merchant_SKU as MerchantSKU,
+        s.Fn_SKU as FnSKU,
+        p.Pack_Code as PackCode,
+        s.Quantity as Sqty,
+        s.Pack_Det_Box_Num as SBoxNum,
+        p.Quantity as Pqty,
+        p.Pack_Det_Box_Num as PBoxNum
+        from  tb_logistics_pack_list_box_rec_det p, tb_logistics_packing_list_det2 s
+        WHERE p.origin_pack_det_box_num_upload = s.pack_det_box_num_upload
+        and p.merchant_sku = s.SKU
+        and p.Pack_Code=s.Pack_Code
+
+        <if test="packListCode != null and packListCode !=''">
+            AND  p.Pack_List_Code = #{packListCode}
+        </if>
+
+        <if test="sku != null and sku !=''">
+            AND  p.merchant_sku = #{sku}
+        </if>
+
+    </select>
+
+    <update id="updateShipmentRealStatus">
+        UPDATE Tb_Logistics_Pack_List SET PACK_SHIPMENT_REAL_STATUS ='已完成'
+        WHERE PACK_SHIPMENT_REAL_STATUS='进行中'
+          AND SHIPMENT_ID IN (
+                                SELECT a.Shipment_ID
+                                FROM (
+                                          SELECT d.Shipment_ID,
+                                                SUM( CASE d.SHIPMENT_REAL_STATUS   WHEN '已完成' THEN 0  else 1 END  ) as STATUS
+                                          FROM Tb_Logistics_Pack_List_Box_Rec_Det d group by Shipment_ID
+                                       )a
+                                WHERE a.STATUS=0
+                              )
+    </update>
+
+    <select id="queryLogisticsInGoodsList"  parameterType="java.lang.String"
+            resultType="com.tadpole.cloud.supplyChain.modular.logisticsStorage.model.result.LogisticsInGoodsModel">
+
+        SELECT
+            amz.ASIN as  busCASIN
+            ,amz.MATERIAL_CODE as busMatCode
+            ,send.sku busSku
+            --,send.packCode
+            ,send.deliver_Status busLhrState
+            ,send.return_Status busReturnStatus
+            ,send.status busAmaRecState
+            ,send.deliver_Type busLogTraMode2
+            ,send.ow_Name
+            ,send.country_Code busCountryCode
+            ,send.shop_Name_Simple busShopNameSimple
+            ,send.shipment_ID busShipmentID
+            ,send.plate_Form busPlanName
+            ,send.receive_Warehouse
+            ,send.deliver_Warehouse busComWarehouseName
+            ,send.update_Time busFbaTurnDate
+            ,send.Lhr_Code
+            ,send.Lhr_Odd_Numb busLhrOddNumb
+            ,send.Ler_Sign_Date busLerSignDate
+            ,send.Log_Tra_Mode1 busLogTraMode1
+            ,send.LP_NAME lpName
+            ,rec.Quantity busReceiveQty --接收数量
+            ,inGood.all_Qty busSendQty --发货数量
+            ,inGood.stay_Deliver_Qty busStayDeliverQty --物流待发
+            ,inGood.all_Qty - inGood.stay_Deliver_Qty busIssuedQty --物流已发
+            ,inGood.shipping_Qty + inGood.train_Qty + inGood.car_Qty + inGood.air_Qty busInTransitQty --在途（空+海+卡+铁..-接收数量）
+            ,NVL(inGood.all_Qty,0)-NVL(rec.Quantity,0) busDiscrepancy --接收差异
+            --,CASE ISNULL(inGood.allQty,0)-ISNULL(rec.Quantity,0)  WHEN 0 THEN 'sku汇总后差异数量总数为0' ELSE '' END AS busRemark
+            ,send.Lhr_Note AS busRemark
+        FROM (
+              SELECT
+                T1.sku
+                --,T1.packCode
+                ,T1.deliver_Status
+                ,T1.RETURN_Status
+                ,T1.status
+                ,SUM(T1.delivery_Num) deliveryNum
+                ,T1.deliver_Type
+                ,T1.ow_Name
+                ,T1.country_Code
+                ,T1.shop_Name_Simple
+                ,T1.shipment_ID
+                ,T1.plate_Form
+                ,T1.receive_Warehouse
+                ,T1.deliver_Warehouse
+                ,T1.update_Time
+                ,A.Lhr_Code
+                ,A.Lhr_Odd_Numb
+                ,B.Ler_Sign_Date
+                ,C.Log_Tra_Mode1
+                ,C.Lhr_Note
+                ,tlp.LP_NAME
+                --,ROW_NUMBER() OVER(PARTITION BY T1.sku,T1.deliverStatus,T1.returnStatus,T1.status,T1.owName,T1.countryCode,T1.shopNameSimple,T1.plateForm,T1.shipmentID,T1.receiveWarehouse,T1.deliverWarehouse
+                -- ORDER BY A.LhrCode ASC) LHRCODE_NO
+                FROM Tb_Bsc_Overseas_Way T1
+                    LEFT JOIN tb_logistics_list_to_head_route_det A ON T1.shipment_ID=A.Shipment_ID and T1.pack_Code=A.Pack_Code and T1.pack_Det_Box_Num=A.Pack_Det_Box_Num
+                    LEFT JOIN tb_logistics_list_to_head_route C ON A.Lhr_Code=C.Lhr_Code
+                    LEFT JOIN tb_logistics_list_to_end_route B ON A.Lhr_Code=B.Lhr_Code
+                    LEFT JOIN TB_LOGISTICS_PROVIDER tlp ON tlp.LP_CODE =C.LP_CODE
+              WHERE LENGTH(T1.shipment_ID) &lt;=15
+                    AND T1.deliver_Status !='已返仓'
+                    AND T1.shop_Name_Simple NOT IN  ('QL','NY')
+                    AND T1.return_Status='已回传'
+                    AND T1.receive_Warehouse='亚马逊仓'
+                    --		AND DATEDIFF(MONTH,T1.update_Time,GETDATE())&lt;=6
+                    AND MONTHS_BETWEEN(TRUNC(T1.update_Time, 'MM'), TRUNC(SYSDATE, 'MM')) &lt;= 6
+                    AND T1.Shipment_Real_Status = '进行中'
+                    AND T1.shipment_ID=#{shipmentId}
+                GROUP BY T1.sku
+                        --,T1.packCode
+                        ,T1.deliver_Status
+                        ,T1.return_Status
+                        ,T1.status
+                        ,T1.deliver_Type
+                        ,T1.ow_Name
+                        ,T1.country_Code
+                        ,T1.shop_Name_Simple
+                        ,T1.shipment_ID
+                        ,T1.plate_Form
+                        ,T1.receive_Warehouse
+                        ,T1.deliver_Warehouse
+                        ,T1.update_Time
+                        ,A.Lhr_Code
+                        ,A.Lhr_Odd_Numb
+                        ,B.Ler_Sign_Date
+                        ,C.Log_Tra_Mode1
+                        ,C.Lhr_Note
+                        ,tlp.LP_NAME
+        ) send
+        LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY amz on send.country_Code=amz.SYS_SITE  and send.shop_Name_Simple=amz.SYS_SHOPS_NAME  and send.sku=amz.SKU
+
+        LEFT JOIN Tb_Received_Invenroty_Analysis_V2 rec ON send.sku=rec.Item_Sku AND send.shipment_ID=rec.Shipment_ID
+        LEFT JOIN Tb_Amazon_In_Goods_Qty_New_V2 inGood on  inGood.sku=send.sku and inGood.shop_Name_Simple=send.Shop_Name_Simple and inGood.country_Code=send.Country_Code and inGood.shipment_ID=send.Shipment_ID
+        WHERE   ABS(NVL(inGood.ALL_Qty,0)-NVL(rec.Quantity,0)) > 6
+    </select>
+
+
+    <select id="getTbComShippingLableFromEbms"  parameterType="java.util.List" resultType="String">
+        SELECT CountryCode+item_sku+FNSKU+matCode FROM TbComShippingLable
+        WHERE 1=1
+        <if test="csfm!= null and csfm.size() > 0">
+            AND  CountryCode+item_sku+FNSKU+matCode IN
+            <foreach collection="csfm" item="item" index="index" separator="," open="(" close=")">
+              #{item}
+            </foreach>
+        </if>
+
+
+    </select>
+</mapper>
