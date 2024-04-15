@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.OrderDatasourceMonitorMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        DM.ID,DM.SYS_SHOPS_NAME,DM.SYS_SITE,DM.PURCHASE_DATE,DM.SALE_DAILY_QUANTITY,DM.SALE_DAILY_AMOUNT,DM.NORMAL_ORDER_QUANTITY,DM.TEST_ORDER_QUANTITY,
+        DM.SMALL_ORDER_QUANTITY,DM.REISSUE_ORDER_QUANTITY,DM.DESTROY_ORDER_QUANTITY,DM.ABNORMAL_ORDER_QUANTITY,DM.SMALL_PLATFORM_ORDER_QUANTITY,
+        DM.CANCEL_ORDER_QUANTITY,DM.OTHER_ORDER_QUANTITY,DM.CREATE_TIME,DM.CREATE_BY,DM.UPDATE_TIME,DM.UPDATE_BY
+    </sql>
+
+    <!-- 销售订单源报告数据监控列表 -->
+    <select id="queryOrderDataSourceMonitorPage"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OrderDataSourceMonitorParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OrderDataSourceMonitorResult">
+        SELECT
+            TO_CHAR(CASE WHEN NVL(T2.SALE_DAILY_QUANTITY, 0) = 0 THEN 0 ELSE (NVL(T1.SALE_DAILY_QUANTITY, 0) - NVL(T2.SALE_DAILY_QUANTITY, 0)) / NVL(T2.SALE_DAILY_QUANTITY, 0) * 100 END, 'FM999999990.00') || '%' AS saleDailyQuantityMOM,
+            TO_CHAR(CASE WHEN NVL(T2.SALE_DAILY_AMOUNT, 0) = 0 THEN 0 ELSE (NVL(T1.SALE_DAILY_AMOUNT, 0) - NVL(T2.SALE_DAILY_AMOUNT, 0)) / NVL(T2.SALE_DAILY_AMOUNT, 0) * 100 END, 'FM999999990.00') || '%' AS saleDailyAmountMOM,
+            ROUND(T3.SITE_SALE_DAILY_QUANTITY / TRUNC(TO_DATE('2022-05-24 23:59:59', 'yyyy-mm-dd hh24:mi:ss') - TO_DATE('2022-05-01 00:00:00', 'yyyy-mm-dd hh24:mi:ss') + 1) , 0) AS saleDailyAvgQuantity,
+            T1.ID,
+            T1.SYS_SHOPS_NAME,
+            T1.SYS_SITE,
+            T1.PURCHASE_DATE,
+            T1.SALE_DAILY_QUANTITY,
+            T1.SALE_DAILY_AMOUNT,
+            T1.NORMAL_ORDER_QUANTITY,
+            T1.TEST_ORDER_QUANTITY,
+            T1.SMALL_ORDER_QUANTITY,
+            T1.REISSUE_ORDER_QUANTITY,
+            T1.DESTROY_ORDER_QUANTITY,
+            T1.ABNORMAL_ORDER_QUANTITY,
+            T1.SMALL_PLATFORM_ORDER_QUANTITY,
+            T1.CANCEL_ORDER_QUANTITY,
+            T1.OTHER_ORDER_QUANTITY,
+            T1.CREATE_TIME,
+            T1.CREATE_BY,
+            T1.UPDATE_TIME,
+            T1.UPDATE_BY
+        FROM
+        (
+            SELECT
+                DM.ID,
+                DM.SYS_SHOPS_NAME,
+                DM.SYS_SITE,
+                DM.PURCHASE_DATE,
+                TO_CHAR(TO_DATE(DM.PURCHASE_DATE, 'yyyy-mm-dd') - 1,'yyyy-mm-dd') AS yesPurchaseDate,
+                DM.SALE_DAILY_QUANTITY,
+                DM.SALE_DAILY_AMOUNT,
+                DM.NORMAL_ORDER_QUANTITY,
+                DM.TEST_ORDER_QUANTITY,
+                DM.SMALL_ORDER_QUANTITY,
+                DM.REISSUE_ORDER_QUANTITY,
+                DM.DESTROY_ORDER_QUANTITY,
+                DM.ABNORMAL_ORDER_QUANTITY,
+                DM.SMALL_PLATFORM_ORDER_QUANTITY,
+                DM.CANCEL_ORDER_QUANTITY,
+                DM.OTHER_ORDER_QUANTITY,
+                DM.CREATE_TIME,
+                DM.CREATE_BY,
+                DM.UPDATE_TIME,
+                DM.UPDATE_BY
+            FROM CW_ORDER_DATASOURCE_MONITOR DM
+            WHERE
+                TO_DATE(DM.PURCHASE_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                AND TO_DATE(DM.PURCHASE_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND DM.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND DM.SYS_SITE = #{param.sysSite}
+                </if>
+        ) T1
+        LEFT JOIN
+        (
+            SELECT
+                DM.SYS_SHOPS_NAME,
+                DM.SYS_SITE,
+                DM.PURCHASE_DATE,
+                DM.SALE_DAILY_QUANTITY,
+                DM.SALE_DAILY_AMOUNT
+            FROM CW_ORDER_DATASOURCE_MONITOR DM
+            WHERE
+                TO_DATE(DM.PURCHASE_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                AND TO_DATE(DM.PURCHASE_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND DM.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND DM.SYS_SITE = #{param.sysSite}
+                </if>
+        ) T2 ON T1.SYS_SHOPS_NAME = T2.SYS_SHOPS_NAME AND T1.SYS_SITE = T2.SYS_SITE AND T1.yesPurchaseDate = T2.PURCHASE_DATE
+        LEFT JOIN
+        (
+            SELECT
+                DM.SYS_SHOPS_NAME,
+                DM.SYS_SITE,
+                SUM(NVL(DM.NORMAL_ORDER_QUANTITY, 0) + NVL(DM.REISSUE_ORDER_QUANTITY, 0)) AS SITE_SALE_DAILY_QUANTITY
+            FROM CW_ORDER_DATASOURCE_MONITOR DM
+            WHERE
+                TO_DATE(DM.PURCHASE_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                AND TO_DATE(DM.PURCHASE_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND DM.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND DM.SYS_SITE = #{param.sysSite}
+                </if>
+            GROUP BY
+                DM.SYS_SHOPS_NAME,
+                DM.SYS_SITE
+        ) T3 ON T1.SYS_SHOPS_NAME = T3.SYS_SHOPS_NAME AND T1.SYS_SITE = T3.SYS_SITE
+    </select>
+
+    <!-- 销售订单源报告数据监控数据生成（刷新） -->
+    <select id="refresh" parameterType="java.lang.String">
+        -- 默认只刷新前3个月数据
+        MERGE INTO (SELECT * FROM CW_ORDER_DATASOURCE_MONITOR WHERE TO_DATE(PURCHASE_DATE, 'yyyy-mm-dd') >= ADD_MONTHS(SYSDATE, -3)) B
+        USING (
+            SELECT
+                T.SYS_SHOPS_NAME AS sysShopsName,
+                CASE
+                WHEN T.PLATFORM = 'Amazon'
+                    AND T.TYPE = 'Destroy'
+                    AND REGEXP_LIKE(T.SYS_SITE, ',')
+                THEN T.DESTROY_SYS_SITE_STR
+                ELSE T.SYS_SITE END AS sysSite,
+                TO_CHAR(T.PURCHASE_DATE,'yyyy-mm-dd') AS purchaseDate,
+                -- 日销售数量
+                SUM(
+                    CASE
+                    WHEN NOT (T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS saleDailyQuantity,
+                -- 日销售金额
+                SUM(
+                    CASE
+                    WHEN NOT (T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+					THEN NVL(T.PRINCIPAL, 0) + NVL(T.TAX, 0) + NVL(T.SHIPPING, 0) + NVL(T.SHIPPING_TAX, 0) + NVL(T.GIFTWRAP, 0) + NVL(T.GIFTWRAP_TAX, 0)
+                    ELSE 0 END
+                ) AS saleDailyAmount,
+                -- 正常订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM = 'Amazon'
+                        AND T.TYPE = 'Normal'
+                        AND NOT (T.ORDER_STATUS = 'Cancelled' AND T.ITEM_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS normalOrderQuantity,
+                -- 测试订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM = 'Amazon'
+                        AND T.TYPE = 'Test'
+                        AND NOT (T.ORDER_STATUS = 'Cancelled' AND T.ITEM_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS testOrderQuantity,
+                -- 小包订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM = 'Amazon'
+                        AND T.TYPE = 'Packet'
+                        AND NOT (T.ORDER_STATUS = 'Cancelled' AND T.ITEM_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS smallOrderQuantity,
+                -- 补发订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM = 'Amazon'
+                        AND T.TYPE = 'Reissue'
+                        AND NOT (T.ORDER_STATUS = 'Cancelled' AND T.ITEM_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT(T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS reissueOrderQuantity,
+                -- 移除/销毁订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM = 'Amazon'
+                        AND T.TYPE = 'Destroy'
+                        AND NOT (T.ORDER_STATUS = 'Cancelled' AND T.ITEM_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS destroyOrderQuantity,
+                -- 非常规订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM = 'Amazon'
+                        AND T.TYPE = 'UN-normal'
+                        AND NOT (T.ORDER_STATUS = 'Cancelled' AND T.ITEM_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS abnormalOrderQuantity,
+                -- 小平台订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM != 'Amazon'
+                        AND NOT (T.ORDER_STATUS = 'Cancelled' AND T.ITEM_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL LIKE '%Marketplace%' AND T.ORDER_STATUS = 'Cancelled')
+                        AND NOT (T.SALES_CHANNEL = 'Non-Amazon' AND T.ORDER_STATUS = 'Cancelled')
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS smallPlatformOrderQuantity,
+                -- 取消订单
+                SUM(
+                    CASE
+                    WHEN T.PLATFORM = 'Amazon'
+                        AND T.ORDER_STATUS = 'Cancelled'
+                        AND T.ITEM_STATUS = 'Cancelled'
+                    THEN T.QUANTITY
+                    ELSE 0 END
+                ) AS cancelOrderQuantity
+            FROM
+            (
+                -- 调整销毁移除订单的站点
+                SELECT
+                    CASE WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND OD.SYS_SITE = 'CA,MX,US' THEN 'US'
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND OD.SYS_SITE = 'CA,US' THEN 'US'
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND OD.SYS_SITE = 'MX,US' THEN 'US'
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,UK' THEN 'DE'
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,SE,UK' THEN 'DE'
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,UK' THEN 'DE'
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,TR,UK' THEN 'DE'
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND REGEXP_LIKE('CA,MX,US', OD.SYS_SITE) THEN 'US' -- 北美归类到美国
+                    WHEN O.PLATFORM = 'Amazon' AND O.TYPE = 'Destroy' AND SC.SITE IS NULL AND REGEXP_LIKE('DE,ES,FR,IT,NL,PL,SE,TR,UK', OD.SYS_SITE) THEN 'DE' -- 欧洲归类到德国
+                    ELSE SC.SITE END AS DESTROY_SYS_SITE_STR,
+                    O.PLATFORM,
+                    O.ORDER_STATUS,
+                    O.SALES_CHANNEL,
+                    O.TYPE,
+                    O.MERCHANT_ORDER_ID,
+                    OD.SYS_SHOPS_NAME,
+                    OD.SYS_SITE,
+                    OD.PURCHASE_DATE,
+                    OD.AMAZON_ORDER_ITEM_CODE,
+                    OD.ITEM_STATUS,
+                    OD.QUANTITY,
+                    OD.PRINCIPAL,
+                    OD.TAX,
+                    OD.SHIPPING,
+                    OD.SHIPPING_TAX,
+                    OD.GIFTWRAP,
+                    OD.GIFTWRAP_TAX
+                FROM AMAZON_ORDERS O
+                LEFT JOIN AMAZON_ORDER_DETAIL OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID
+                LEFT JOIN
+                (
+                    SELECT
+                        D.SYS_SHOPS_NAME,
+                        D.ORDER_ID,
+                        D.SKU,
+                        D.CURRENCY
+                    FROM ${fbaRemovalOrderDetail} D
+                    WHERE D.CURRENCY IS NOT NULL AND D.CURRENCY NOT IN ('EUR')
+                    GROUP BY
+                        D.SYS_SHOPS_NAME,
+                        D.ORDER_ID,
+                        D.SKU,
+                        D.CURRENCY
+                ) ROD ON OD.SYS_SHOPS_NAME = ROD.SYS_SHOPS_NAME AND O.MERCHANT_ORDER_ID = ROD.ORDER_ID AND OD.SKU = ROD.SKU
+                AND O.PLATFORM = 'Amazon'
+                AND O.TYPE = 'Destroy'
+                LEFT JOIN CW_SHOP_CURRENCY SC ON ROD.CURRENCY = SC.ORIGINAL_CURRENCY AND OD.SYS_SHOPS_NAME = SC.SHOP_NAME
+                -- 默认只刷新前3个月数据
+                WHERE TO_DATE(TO_CHAR(OD.PURCHASE_DATE, 'yyyy-mm-dd'), 'yyyy-mm-dd') &gt;= ADD_MONTHS(SYSDATE, -3)
+            ) T
+            GROUP BY
+                T.SYS_SHOPS_NAME,
+                CASE
+                WHEN T.PLATFORM = 'Amazon'
+                    AND T.TYPE = 'Destroy'
+                    AND REGEXP_LIKE(T.SYS_SITE, ',')
+                THEN T.DESTROY_SYS_SITE_STR
+                ELSE T.SYS_SITE END,
+                to_char(T.PURCHASE_DATE,'yyyy-mm-dd')
+            ORDER BY purchaseDate DESC, sysShopsName
+        ) C ON (
+            C.purchaseDate = B.PURCHASE_DATE
+            AND C.sysShopsName = B.SYS_SHOPS_NAME
+            AND C.sysSite = B.SYS_SITE
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+                B.SALE_DAILY_QUANTITY = C.saleDailyQuantity,
+                B.SALE_DAILY_AMOUNT = C.saleDailyAmount,
+                B.NORMAL_ORDER_QUANTITY = C.normalOrderQuantity,
+                B.TEST_ORDER_QUANTITY = C.testOrderQuantity,
+                B.SMALL_ORDER_QUANTITY = C.smallOrderQuantity,
+                B.REISSUE_ORDER_QUANTITY = C.reissueOrderQuantity,
+                B.DESTROY_ORDER_QUANTITY = C.destroyOrderQuantity,
+                B.ABNORMAL_ORDER_QUANTITY = C.abnormalOrderQuantity,
+                B.SMALL_PLATFORM_ORDER_QUANTITY = C.smallPlatformOrderQuantity,
+                B.CANCEL_ORDER_QUANTITY = C.cancelOrderQuantity,
+                B.OTHER_ORDER_QUANTITY =
+                (
+                    C.saleDailyQuantity
+                    - C.normalOrderQuantity
+                    - C.testOrderQuantity
+                    - C.smallOrderQuantity
+                    - C.reissueOrderQuantity
+                    - C.destroyOrderQuantity
+                    - C.abnormalOrderQuantity
+                    - C.smallPlatformOrderQuantity
+                    - C.cancelOrderQuantity
+                ),
+                B.UPDATE_TIME = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                B.SYS_SHOPS_NAME,
+                B.SYS_SITE,
+                B.PURCHASE_DATE,
+                B.SALE_DAILY_QUANTITY,
+                B.SALE_DAILY_AMOUNT,
+                B.NORMAL_ORDER_QUANTITY,
+                B.TEST_ORDER_QUANTITY,
+                B.SMALL_ORDER_QUANTITY,
+                B.REISSUE_ORDER_QUANTITY,
+                B.DESTROY_ORDER_QUANTITY,
+                B.ABNORMAL_ORDER_QUANTITY,
+                B.SMALL_PLATFORM_ORDER_QUANTITY,
+                B.CANCEL_ORDER_QUANTITY,
+                B.OTHER_ORDER_QUANTITY,
+                B.CREATE_TIME
+            )
+            VALUES(
+                C.sysShopsName,
+                C.sysSite,
+                C.purchaseDate,
+                C.saleDailyQuantity,
+                C.saleDailyAmount,
+                C.normalOrderQuantity,
+                C.testOrderQuantity,
+                C.smallOrderQuantity,
+                C.reissueOrderQuantity,
+                C.destroyOrderQuantity,
+                C.abnormalOrderQuantity,
+                C.smallPlatformOrderQuantity,
+                C.cancelOrderQuantity,
+                (
+                    C.saleDailyQuantity
+                    - C.normalOrderQuantity
+                    - C.testOrderQuantity
+                    - C.smallOrderQuantity
+                    - C.reissueOrderQuantity
+                    - C.destroyOrderQuantity
+                    - C.abnormalOrderQuantity
+                    - C.smallPlatformOrderQuantity
+                    - C.cancelOrderQuantity
+                ),
+                SYSDATE
+            )
+    </select>
+</mapper>

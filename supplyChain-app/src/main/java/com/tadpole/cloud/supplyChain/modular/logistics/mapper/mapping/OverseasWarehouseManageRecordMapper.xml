@@ -1,0 +1,678 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.OverseasWarehouseManageRecordMapper">
+
+    <!-- 海外仓库存管理详情分页查询列表 -->
+    <select id="queryPage"
+        parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseManageRecordParam"
+        resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseManageRecordResult">
+        SELECT
+            R.ID,
+            R.PARENT_ID ,
+            R.PLATFORM,
+            R.SYS_SHOPS_NAME,
+            R.SYS_SITE,
+            R.WAREHOUSE_NAME,
+            R.FN_SKU,
+            R.SKU,
+            R.MATERIAL_CODE,
+            R.DEPARTMENT,
+            R.TEAM,
+            R.NEEDS_USER,
+            R.INVENTORY_QUANTITY,
+            R.CHANGE_INVENTORY_QUANTITY,
+            R.NOW_INVENTORY_QUANTITY,
+            R.OPERATE_TYPE,
+            R.IN_ORDER,
+            R.OUT_ORDER,
+            R.SYNC_EBMS_STATUS,
+            R.SYNC_EBMS_TIME,
+            R.SYNC_ERP_STATUS,
+            R.SYNC_ERP_TIME,
+            R.CREATE_TIME createDateStr,
+            R.CREATE_TIME,
+            R.CREATE_USER,
+            R.UPDATE_TIME,
+            R.UPDATE_USER,
+            R.COME_QUANTITY,
+            R.CHANGE_COME_QUANTITY,
+            R.NOW_COME_QUANTITY,
+            R.BUSINESS_TYPE,
+            R.RSD_ID,
+            R.REMARK
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD R
+        WHERE
+            R.PARENT_ID = #{param.parentId}
+            <if test="param.outOrder != null and param.outOrder != ''">
+                AND R.OUT_ORDER = #{param.outOrder}
+            </if>
+            <if test="param.inOrder != null and param.inOrder != ''">
+                AND R.IN_ORDER = #{param.inOrder}
+            </if>
+            <if test="param.checkReason != null and param.checkReason != ''">
+                AND R.OPERATE_TYPE = '盘点'
+                AND R.REMARK LIKE '%' || #{param.checkReason} || '%'
+            </if>
+            <if test="param.startCreateTime != null and param.startCreateTime != ''">
+                AND R.CREATE_TIME &gt;= TO_DATE(#{param.startCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.endCreateTime != null and param.endCreateTime != ''">
+                AND R.CREATE_TIME &lt;= TO_DATE(#{param.endCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.operateTypes != null and param.operateTypes.size() != 0">
+                AND R.OPERATE_TYPE IN
+                <foreach collection="param.operateTypes" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.businessTypes != null and param.businessTypes.size() != 0">
+                AND R.BUSINESS_TYPE IN
+                <foreach collection="param.businessTypes" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        ORDER BY R.CREATE_TIME DESC, R.ID DESC
+    </select>
+
+    <!-- 海外仓库存管理操作记录分页查询列表数据汇总 -->
+    <select id="queryPageTotal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseManageRecordParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseManageTotalResult">
+        SELECT
+            SUM(NVL(R.CHANGE_COME_QUANTITY, 0)) AS comeQuantityTotal,
+            SUM(NVL(R.CHANGE_INVENTORY_QUANTITY, 0)) AS inventoryQuantityTotal
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD R
+        WHERE
+        R.PARENT_ID = #{param.parentId}
+        <if test="param.outOrder != null and param.outOrder != ''">
+            AND R.OUT_ORDER = #{param.outOrder}
+        </if>
+        <if test="param.inOrder != null and param.inOrder != ''">
+            AND R.IN_ORDER = #{param.inOrder}
+        </if>
+        <if test="param.checkReason != null and param.checkReason != ''">
+            AND R.OPERATE_TYPE = '盘点'
+            AND R.REMARK LIKE '%' || #{param.checkReason} || '%'
+        </if>
+        <if test="param.startCreateTime != null and param.startCreateTime != ''">
+            AND R.CREATE_TIME &gt;= TO_DATE(#{param.startCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.endCreateTime != null and param.endCreateTime != ''">
+            AND R.CREATE_TIME &lt;= TO_DATE(#{param.endCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.operateTypes != null and param.operateTypes.size() != 0">
+            AND R.OPERATE_TYPE IN
+            <foreach collection="param.operateTypes" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.businessTypes != null and param.businessTypes.size() != 0">
+            AND R.BUSINESS_TYPE IN
+            <foreach collection="param.businessTypes" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        ORDER BY R.CREATE_TIME DESC
+    </select>
+
+    <!--根据订单类型获取当前的订单号-->
+    <select id="getNowOrder" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT
+            DECODE(T.OUT_ORDER, NULL, T.IN_ORDER, T.OUT_ORDER) nowOrder
+        FROM
+        (
+            SELECT R.IN_ORDER, R.OUT_ORDER FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD R
+            WHERE R.IN_ORDER LIKE #{orderTypePre} || '%' OR R.OUT_ORDER LIKE #{orderTypePre} || '%'
+            GROUP BY R.IN_ORDER, R.OUT_ORDER
+            ORDER BY R.IN_ORDER DESC, R.OUT_ORDER DESC
+        ) T
+        WHERE ROWNUM = 1
+    </select>
+
+    <!--删除原fba发海外仓来货记录-->
+    <delete id="deleteByRsdId">
+        DELETE OVERSEAS_WAREHOUSE_MANAGE_RECORD WHERE RSD_ID = #{rsdId}
+    </delete>
+
+    <!-- 海外仓换标报表查询列表、导出 -->
+    <select id="queryChangeReportPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasChangeReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasChangeReportResult">
+        SELECT
+            A.ID AS outId,
+            A.OUT_ORDER AS outOrder,
+            A.CREATE_TIME,
+            A.PLATFORM AS oldPlatform,
+            A.SYS_SHOPS_NAME AS oldSysShopsName,
+            A.SYS_SITE AS oldSysSite,
+            A.WAREHOUSE_NAME AS oldWarehouseName,
+            A.FN_SKU AS oldFnSku,
+            A.SKU AS oldSku,
+            A.MATERIAL_CODE,
+            A.CHANGE_INVENTORY_QUANTITY,
+            A.DEPARTMENT,
+            A.TEAM,
+            A.NEEDS_USER,
+            B.ID AS inId,
+            B.IN_ORDER AS inOrder,
+            B.PLATFORM AS newPlatform,
+            B.SYS_SHOPS_NAME AS newSysShopsName,
+            B.SYS_SITE AS newSysSite,
+            B.WAREHOUSE_NAME AS newWarehouseName,
+            B.FN_SKU AS newFnSku,
+            B.SKU AS newSku
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD A
+        INNER JOIN OVERSEAS_WAREHOUSE_MANAGE_RECORD B ON A.OUT_ORDER = B.IN_ORDER
+        WHERE
+            A.OPERATE_TYPE = '换标'
+            AND B.OPERATE_TYPE = '换标'
+            <if test="param.outOrder != null and param.outOrder != ''">
+                AND A.OUT_ORDER = #{param.outOrder}
+            </if>
+            <if test="param.inOrder != null and param.inOrder != ''">
+                AND B.IN_ORDER = #{param.inOrder}
+            </if>
+            <if test="param.startCreateTime != null and param.startCreateTime != ''">
+                AND A.CREATE_TIME &gt;= TO_DATE(#{param.startCreateTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.endCreateTime != null and param.endCreateTime != ''">
+                AND A.CREATE_TIME &lt;= TO_DATE(#{param.endCreateTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.oldSysShopsNames != null and param.oldSysShopsNames.size() != 0">
+                AND A.SYS_SHOPS_NAME IN
+                <foreach collection="param.oldSysShopsNames" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.oldSysSites != null and param.oldSysSites.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.oldSysSites" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.oldFnSku != null and param.oldFnSku != ''">
+                AND
+                <foreach collection="param.oldFnSku.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                    A.FN_SKU LIKE '%'|| #{item}
+                </foreach>
+            </if>
+            <if test="param.oldSku != null and param.oldSku != ''">
+                AND A.SKU = #{param.oldSku}
+            </if>
+            <if test="param.newSysShopsNames != null and param.newSysShopsNames.size() != 0">
+                AND B.SYS_SHOPS_NAME IN
+                <foreach collection="param.newSysShopsNames" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.newSysSites != null and param.newSysSites.size() != 0">
+                AND B.SYS_SITE IN
+                <foreach collection="param.newSysSites" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.newFnSku != null and param.newFnSku != ''">
+                AND
+                <foreach collection="param.newFnSku.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                    B.FN_SKU LIKE '%'|| #{item}
+                </foreach>
+            </if>
+            <if test="param.newSku != null and param.newSku != ''">
+                AND B.SKU = #{param.newSku}
+            </if>
+            <if test="param.departments != null and param.departments.size() != 0">
+                AND A.DEPARTMENT IN
+                <foreach collection="param.departments" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.teams != null and param.teams.size() != 0">
+                AND A.TEAM IN
+                <foreach collection="param.teams" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.needsUsers != null and param.needsUsers.size() != 0">
+                AND A.NEEDS_USER IN
+                <foreach collection="param.needsUsers" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        ORDER BY A.CREATE_TIME DESC
+    </select>
+
+    <!-- 海外仓同步ERP异常管理查询列表 -->
+    <select id="querySyncErrorPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseSyncErrorParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseSyncErrorResult">
+            SELECT
+                CASE
+                WHEN E.IN_ORDER IS NOT NULL THEN E.IN_ORDER
+                WHEN E.OUT_ORDER IS NOT NULL THEN E.OUT_ORDER
+                ELSE NULL END AS mcOrder,
+                E.OPERATE_TYPE AS operateType,
+                '同步失败' AS syncErpStatusName
+            FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+            WHERE
+                (
+                    CASE WHEN E.OPERATE_TYPE = '换标' AND E.IS_CHANGE_ORG = 1 AND E.IS_CHANGE_MATERIAL_CODE = 0 AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                    WHEN E.OPERATE_TYPE = '亚马逊仓发海外仓' AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                    WHEN E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓') AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                    WHEN E.SYNC_ERP_STATUS = '-1' THEN '-1'
+                    ELSE '1' END
+                ) = '-1'
+                <if test="param.operateType !=null and param.operateType !=''">
+                    AND E.OPERATE_TYPE = #{param.operateType}
+                </if>
+                <if test="param.startCreateTime !=null and param.startCreateTime !=''">
+                    AND E.CREATE_TIME &gt;= TO_DATE(#{param.startCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+                </if>
+                <if test="param.endCreateTime !=null and param.endCreateTime !=''">
+                    AND E.CREATE_TIME &lt;= TO_DATE(#{param.endCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+                </if>
+                <if test="param.mcOrder !=null and param.mcOrder !=''">
+                    AND (E.IN_ORDER LIKE #{param.mcOrder} || '%' OR E.OUT_ORDER = #{param.mcOrder})
+                </if>
+                <if test="param.sysShopsNames !=null and param.sysShopsNames.size() != 0">
+                    AND E.SYS_SHOPS_NAME IN
+                    <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="param.sysSites !=null and param.sysSites.size() != 0">
+                    AND E.SYS_SITE IN
+                    <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="param.warehouseNames !=null and param.warehouseNames.size() != 0">
+                    AND E.WAREHOUSE_NAME IN
+                    <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="param.sku !=null and param.sku !=''">
+                    AND E.SKU = #{param.sku}
+                </if>
+                <if test="param.fnSku !=null and param.fnSku !=''">
+                    AND E.FN_SKU = #{param.fnSku}
+                </if>
+                <if test="param.materialCode !=null and param.materialCode !=''">
+                    AND E.MATERIAL_CODE = #{param.materialCode}
+                </if>
+            GROUP BY
+                CASE
+                WHEN E.IN_ORDER IS NOT NULL THEN E.IN_ORDER
+                WHEN E.OUT_ORDER IS NOT NULL THEN E.OUT_ORDER
+                ELSE NULL END,
+                E.OPERATE_TYPE
+            ORDER BY MIN(E.CREATE_TIME) DESC
+    </select>
+
+    <!-- 海外仓同步ERP异常管理明细 -->
+    <select id="querySyncErrorDetail" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseSyncErrorDetailResult">
+        SELECT
+            E.ID,
+            E.PARENT_ID,
+            E.PLATFORM,
+            E.SYS_SHOPS_NAME,
+            E.SYS_SITE,
+            E.WAREHOUSE_NAME,
+            E.FN_SKU,
+            E.SKU,
+            E.MATERIAL_CODE,
+            E.DEPARTMENT,
+            E.TEAM,
+            E.NEEDS_USER,
+            E.INVENTORY_QUANTITY,
+            E.CHANGE_INVENTORY_QUANTITY,
+            E.NOW_INVENTORY_QUANTITY,
+            E.OPERATE_TYPE,
+            E.IN_ORDER,
+            E.OUT_ORDER,
+            E.SYNC_EBMS_STATUS,
+            E.SYNC_EBMS_TIME,
+            E.SYNC_ERP_STATUS,
+            CASE E.SYNC_ERP_STATUS WHEN '-1' THEN '处理失败'
+            WHEN '1' THEN '已保存'
+            WHEN '2' THEN '已提交'
+            WHEN '4' THEN '审核失败'
+            END AS syncErpStatusName,
+            E.SYNC_ERP_TIME,
+            E.CREATE_TIME createDateStr,
+            E.CREATE_TIME,
+            E.CREATE_USER,
+            E.UPDATE_TIME,
+            E.UPDATE_USER,
+            E.COME_QUANTITY,
+            E.CHANGE_COME_QUANTITY,
+            E.NOW_COME_QUANTITY,
+            E.BUSINESS_TYPE,
+            E.RSD_ID,
+            E.REMARK
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+        WHERE
+            (
+                CASE WHEN E.OPERATE_TYPE = '换标' AND E.IS_CHANGE_ORG = 1 AND E.IS_CHANGE_MATERIAL_CODE = 0 AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.OPERATE_TYPE = '亚马逊仓发海外仓' AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓') AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.SYNC_ERP_STATUS = '-1' THEN '-1'
+                ELSE '1' END
+            ) = '-1'
+            AND (E.IN_ORDER = #{param.mcOrder} OR E.OUT_ORDER = #{param.mcOrder})
+        ORDER BY E.CREATE_TIME DESC, E.ID DESC
+    </select>
+
+    <!-- 海外仓同步ERP异常管理查询列表导出 -->
+    <select id="exportSyncError"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseSyncErrorParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseSyncErrorDetailResult">
+        SELECT
+            E.ID,
+            E.PARENT_ID,
+            E.PLATFORM,
+            E.SYS_SHOPS_NAME,
+            E.SYS_SITE,
+            E.WAREHOUSE_NAME,
+            E.FN_SKU,
+            E.SKU,
+            E.MATERIAL_CODE,
+            E.DEPARTMENT,
+            E.TEAM,
+            E.NEEDS_USER,
+            E.INVENTORY_QUANTITY,
+            E.CHANGE_INVENTORY_QUANTITY,
+            E.NOW_INVENTORY_QUANTITY,
+            E.OPERATE_TYPE,
+            E.IN_ORDER,
+            E.OUT_ORDER,
+            E.SYNC_EBMS_STATUS,
+            E.SYNC_EBMS_TIME,
+            E.SYNC_ERP_STATUS,
+            CASE E.SYNC_ERP_STATUS WHEN '-1' THEN '处理失败'
+            WHEN '1' THEN '已保存'
+            WHEN '2' THEN '已提交'
+            WHEN '4' THEN '审核失败'
+            END AS syncErpStatusName,
+            E.SYNC_ERP_TIME,
+            E.CREATE_TIME createDateStr,
+            E.CREATE_TIME,
+            E.CREATE_USER,
+            E.UPDATE_TIME,
+            E.UPDATE_USER,
+            E.COME_QUANTITY,
+            E.CHANGE_COME_QUANTITY,
+            E.NOW_COME_QUANTITY,
+            E.BUSINESS_TYPE,
+            E.RSD_ID,
+            E.REMARK
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+        WHERE
+            (
+                CASE WHEN E.OPERATE_TYPE = '换标' AND E.IS_CHANGE_ORG = 1 AND E.IS_CHANGE_MATERIAL_CODE = 0 AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.OPERATE_TYPE = '亚马逊仓发海外仓' AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓') AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.SYNC_ERP_STATUS = '-1' THEN '-1'
+                ELSE '1' END
+            ) = '-1'
+            <if test="param.operateType !=null and param.operateType !=''">
+                AND E.OPERATE_TYPE = #{param.operateType}
+            </if>
+            <if test="param.startCreateTime !=null and param.startCreateTime !=''">
+                AND E.CREATE_TIME &gt;= TO_DATE(#{param.startCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.endCreateTime !=null and param.endCreateTime !=''">
+                AND E.CREATE_TIME &lt;= TO_DATE(#{param.endCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.mcOrder !=null and param.mcOrder !=''">
+                AND (E.IN_ORDER = #{param.mcOrder} OR E.OUT_ORDER = #{param.mcOrder})
+            </if>
+            <if test="param.sysShopsNames !=null and param.sysShopsNames.size() != 0">
+                AND E.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites !=null and param.sysSites.size() != 0">
+                AND E.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+
+            <if test="param.warehouseNames !=null and param.warehouseNames.size() != 0">
+                AND E.WAREHOUSE_NAME IN
+                <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sku !=null and param.sku !=''">
+                AND E.SKU = #{param.sku}
+            </if>
+            <if test="param.fnSku !=null and param.fnSku !=''">
+                AND E.FN_SKU = #{param.fnSku}
+            </if>
+            <if test="param.materialCode !=null and param.materialCode !=''">
+                AND E.MATERIAL_CODE = #{param.materialCode}
+            </if>
+        ORDER BY E.CREATE_TIME DESC, E.ID DESC
+    </select>
+
+    <!-- 根据订单号查询同步K3异常记录 -->
+    <select id="listByMcOrder" resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.OverseasWarehouseManageRecord">
+        SELECT
+            E.*
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+        WHERE
+            (
+                CASE WHEN E.OPERATE_TYPE = '换标' AND E.IS_CHANGE_ORG = 1 AND E.IS_CHANGE_MATERIAL_CODE = 0 AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.OPERATE_TYPE = '亚马逊仓发海外仓' AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓') AND E.SYNC_ERP_STATUS IN ( '-1', '1', '2', '4' ) THEN '-1'
+                WHEN E.SYNC_ERP_STATUS = '-1' THEN '-1'
+                ELSE '1' END
+            ) = '-1'
+            AND (E.IN_ORDER = #{mcOrder} OR E.OUT_ORDER = #{mcOrder})
+        ORDER BY E.CREATE_TIME DESC, E.ID DESC
+    </select>
+
+    <!-- 海外仓同步EBMS异常管理查询列表 -->
+    <select id="querySyncEBMSErrorPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseSyncErrorParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseSyncErrorResult">
+        SELECT
+            E.OUT_ORDER mcOrder,
+            E.OPERATE_TYPE AS operateType,
+            CASE E.SYNC_EBMS_STATUS WHEN '0' THEN '未同步' WHEN '-1' THEN '同步失败' ELSE '' END AS syncErpStatusName
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+        WHERE
+            E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓')
+            AND E.SYNC_EBMS_STATUS IN ('0', '-1')
+            <if test="param.operateType !=null and param.operateType !=''">
+                AND E.OPERATE_TYPE = #{param.operateType}
+            </if>
+            <if test="param.startCreateTime !=null and param.startCreateTime !=''">
+                AND E.CREATE_TIME &gt;= TO_DATE(#{param.startCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.endCreateTime !=null and param.endCreateTime !=''">
+                AND E.CREATE_TIME &lt;= TO_DATE(#{param.endCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.mcOrder !=null and param.mcOrder !=''">
+                AND E.OUT_ORDER = #{param.mcOrder}
+            </if>
+            <if test="param.sysShopsNames !=null and param.sysShopsNames.size() != 0">
+                AND E.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites !=null and param.sysSites.size() != 0">
+                AND E.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.warehouseNames !=null and param.warehouseNames.size() != 0">
+                AND E.WAREHOUSE_NAME IN
+                <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sku !=null and param.sku !=''">
+                AND E.SKU = #{param.sku}
+            </if>
+            <if test="param.fnSku !=null and param.fnSku !=''">
+                AND E.FN_SKU = #{param.fnSku}
+            </if>
+            <if test="param.materialCode !=null and param.materialCode !=''">
+                AND E.MATERIAL_CODE = #{param.materialCode}
+            </if>
+        GROUP BY
+            E.OUT_ORDER,
+            E.OPERATE_TYPE,
+            E.SYNC_EBMS_STATUS
+        ORDER BY MIN(E.CREATE_TIME) DESC
+    </select>
+
+    <!-- 海外仓同步EBMS异常管理明细 -->
+    <select id="querySyncEBMSErrorDetail" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseSyncErrorDetailResult">
+        SELECT
+            E.ID,
+            E.PARENT_ID,
+            E.PLATFORM,
+            E.SYS_SHOPS_NAME,
+            E.SYS_SITE,
+            E.WAREHOUSE_NAME,
+            E.FN_SKU,
+            E.SKU,
+            E.MATERIAL_CODE,
+            E.DEPARTMENT,
+            E.TEAM,
+            E.NEEDS_USER,
+            E.INVENTORY_QUANTITY,
+            E.CHANGE_INVENTORY_QUANTITY,
+            E.NOW_INVENTORY_QUANTITY,
+            E.OPERATE_TYPE,
+            E.IN_ORDER,
+            E.OUT_ORDER,
+            E.SYNC_EBMS_STATUS,
+            E.SYNC_EBMS_TIME,
+            E.SYNC_ERP_STATUS,
+            CASE E.SYNC_EBMS_STATUS WHEN '0' THEN '未同步' WHEN '-1' THEN '同步失败' ELSE '' END AS syncErpStatusName,
+            E.SYNC_ERP_TIME,
+            E.CREATE_TIME createDateStr,
+            E.CREATE_TIME,
+            E.CREATE_USER,
+            E.UPDATE_TIME,
+            E.UPDATE_USER,
+            E.COME_QUANTITY,
+            E.CHANGE_COME_QUANTITY,
+            E.NOW_COME_QUANTITY,
+            E.BUSINESS_TYPE,
+            E.RSD_ID,
+            E.REMARK
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+        WHERE
+            E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓')
+            AND E.SYNC_EBMS_STATUS IN ('0', '-1')
+            AND E.OUT_ORDER = #{param.mcOrder}
+        ORDER BY E.CREATE_TIME DESC, E.ID DESC
+    </select>
+
+    <!-- 海外仓同步EBMS异常管理查询列表导出 -->
+    <select id="exportSyncEBMSError"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseSyncErrorParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseSyncErrorDetailResult">
+        SELECT
+            E.ID,
+            E.PARENT_ID,
+            E.PLATFORM,
+            E.SYS_SHOPS_NAME,
+            E.SYS_SITE,
+            E.WAREHOUSE_NAME,
+            E.FN_SKU,
+            E.SKU,
+            E.MATERIAL_CODE,
+            E.DEPARTMENT,
+            E.TEAM,
+            E.NEEDS_USER,
+            E.INVENTORY_QUANTITY,
+            E.CHANGE_INVENTORY_QUANTITY,
+            E.NOW_INVENTORY_QUANTITY,
+            E.OPERATE_TYPE,
+            E.IN_ORDER,
+            E.OUT_ORDER,
+            E.SYNC_EBMS_STATUS,
+            E.SYNC_EBMS_TIME,
+            E.SYNC_ERP_STATUS,
+            CASE E.SYNC_EBMS_STATUS WHEN '0' THEN '未同步' WHEN '-1' THEN '同步失败' ELSE '' END AS syncErpStatusName,
+            E.SYNC_ERP_TIME,
+            E.CREATE_TIME createDateStr,
+            E.CREATE_TIME,
+            E.CREATE_USER,
+            E.UPDATE_TIME,
+            E.UPDATE_USER,
+            E.COME_QUANTITY,
+            E.CHANGE_COME_QUANTITY,
+            E.NOW_COME_QUANTITY,
+            E.BUSINESS_TYPE,
+            E.RSD_ID,
+            E.REMARK
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+        WHERE
+            E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓')
+            AND E.SYNC_EBMS_STATUS IN ('0', '-1')
+            <if test="param.operateType !=null and param.operateType !=''">
+                AND E.OPERATE_TYPE = #{param.operateType}
+            </if>
+            <if test="param.startCreateTime !=null and param.startCreateTime !=''">
+                AND E.CREATE_TIME &gt;= TO_DATE(#{param.startCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.endCreateTime !=null and param.endCreateTime !=''">
+                AND E.CREATE_TIME &lt;= TO_DATE(#{param.endCreateTime}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.mcOrder !=null and param.mcOrder !=''">
+                AND (E.IN_ORDER = #{param.mcOrder} OR E.OUT_ORDER = #{param.mcOrder})
+            </if>
+            <if test="param.sysShopsNames !=null and param.sysShopsNames.size() != 0">
+                AND E.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites !=null and param.sysSites.size() != 0">
+                AND E.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+
+            <if test="param.warehouseNames !=null and param.warehouseNames.size() != 0">
+                AND E.WAREHOUSE_NAME IN
+                <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sku !=null and param.sku !=''">
+                AND E.SKU = #{param.sku}
+            </if>
+            <if test="param.fnSku !=null and param.fnSku !=''">
+                AND E.FN_SKU = #{param.fnSku}
+            </if>
+            <if test="param.materialCode !=null and param.materialCode !=''">
+                AND E.MATERIAL_CODE = #{param.materialCode}
+            </if>
+            ORDER BY E.CREATE_TIME DESC, E.ID DESC
+    </select>
+
+    <!-- 根据订单号查询同步EBMS异常记录 -->
+    <select id="listByMcOrderEBMS" resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.OverseasWarehouseManageRecord">
+        SELECT
+            E.*
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD E
+        WHERE
+            E.OPERATE_TYPE IN ('海外仓发亚马逊仓', '海外仓发沃尔玛仓')
+            AND E.SYNC_EBMS_STATUS IN ('0', '-1')
+            AND E.OUT_ORDER = #{mcOrder}
+        ORDER BY E.CREATE_TIME DESC, E.ID DESC
+    </select>
+</mapper>

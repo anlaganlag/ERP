@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgBaseProductDetailMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        D.ID,D.PID,D.MAIN_MATERIAL_CODE,D.COUNTRY_CODE,D.COUNTRY_NAME,D.HSCODE,R.CHANGE_TAX_RATE,R.TAX_RATE,R.ADD_TAX_RATE,
+        D.MERGE_STATUS,D.MERGE_ID,D.CREATE_TIME,D.CREATE_USER,D.UPDATE_TIME,D.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgBaseProductDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductDetailResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_BASE_PRODUCT_DETAIL D
+        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+        WHERE D.PID = #{param.pid}
+        ORDER BY D.CREATE_TIME DESC
+    </select>
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.OverseasInWarehouseDetailMapper">
+
+    <!--根据id批量更新入库明细物流状态-->
+    <update id="updateBatchLogisticsById">
+        UPDATE OVERSEAS_IN_WAREHOUSE_DETAIL
+        SET
+            LOGISTICS_NUM = NULL,
+            LOGISTICS_COMPANY = NULL,
+            SHIPMENT_DATE = NULL,
+            LOGISTICS_STATUS = NULL,
+            UPDATE_TIME = SYSDATE,
+            UPDATE_USER = #{operator}
+        WHERE ID IN
+        <foreach collection="ids" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+</mapper>

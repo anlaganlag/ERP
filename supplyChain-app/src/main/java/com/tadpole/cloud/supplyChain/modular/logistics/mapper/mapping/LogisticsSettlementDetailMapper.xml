@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LogisticsSettlementDetailMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, SHIPMENT_NUM, LOGISTICS_FEE, LOGISTICS_CURRENCY, DTP, TARIFF_FEE, CLEAR_TARIFF_FEE, BUSY_SEASON_FEE, OIL_FEE, OIL_FEE_PERCENT, OTHERS_FEE, PRODUCT_FEE, LOGISTICS_SETTLEMENT_ORDER,
+        CHANGE_TAX, DUTY, TAX_CURRENCY, TAX_ORDER, C88, C88_REMARK, VAT, TAX_INVOICE_ORDER, TOTAL_FEE, TO_CHAR(LOGISTICS_ERP_DATE, 'YYYY/MM/DD') AS LOGISTICS_ERP_DATE,
+        LOGISTICS_BILL_ORDER, TO_CHAR(TAX_ERP_DATE, 'YYYY/MM/DD') AS TAX_ERP_DATE, TAX_BILL_ORDER, REMARK, CREATE_TIME, CREATE_USER, UPDATE_TIME, UPDATE_USER, LOGISTICS_COUNT_FEE, UNIT_PRICE, SEQ_NO, DATA_MONTHS, DATA_STATUS
+    </sql>
+
+    <!--查询物流实际结算明细-->
+    <select id="queryDetailListPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LogisticsSettlementDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LogisticsSettlementDetailResult">
+        SELECT 
+            <include refid="Base_Column_List"></include>
+        FROM LOGISTICS_SETTLEMENT_DETAIL
+        WHERE
+            DATA_STATUS = 1
+            AND SHIPMENT_NUM = #{param.shipmentNum}
+        ORDER BY CREATE_TIME DESC
+    </select>
+
+    <!--根据ID批量更新明细为空-->
+    <update id="batchUpdateByIds">
+        UPDATE LOGISTICS_SETTLEMENT_DETAIL
+        SET DATA_STATUS = 0
+        WHERE
+            DATA_STATUS = 1
+            AND DATA_MONTHS = #{dataMonths}
+            AND ID IN
+            <foreach collection="detailIdList" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+    </update>
+
+    <!--根据ID更新明细-->
+    <update id="updateDetailById">
+        UPDATE LOGISTICS_SETTLEMENT_DETAIL
+        SET
+            SHIPMENT_NUM = #{detail.shipmentNum, jdbcType = VARCHAR},
+            LOGISTICS_FEE = #{detail.logisticsFee, jdbcType = DECIMAL},
+            LOGISTICS_CURRENCY = #{detail.logisticsCurrency, jdbcType = DECIMAL},
+            DTP = #{detail.dtp, jdbcType = DECIMAL},
+            TARIFF_FEE = #{detail.tariffFee, jdbcType = DECIMAL},
+            CLEAR_TARIFF_FEE = #{detail.clearTariffFee, jdbcType = DECIMAL},
+            BUSY_SEASON_FEE = #{detail.busySeasonFee, jdbcType = DECIMAL},
+            OIL_FEE = #{detail.oilFee, jdbcType = DECIMAL},
+            OIL_FEE_PERCENT = #{detail.oilFeePercent, jdbcType = VARCHAR},
+            OTHERS_FEE = #{detail.othersFee, jdbcType = DECIMAL},
+            PRODUCT_FEE = #{detail.productFee,jdbcType = DECIMAL},
+            LOGISTICS_SETTLEMENT_ORDER = #{detail.logisticsSettlementOrder, jdbcType = VARCHAR},
+            CHANGE_TAX = #{detail.changeTax, jdbcType = DECIMAL},
+            DUTY = #{detail.duty, jdbcType = DECIMAL},
+            TAX_CURRENCY = #{detail.taxCurrency, jdbcType = VARCHAR},
+            TAX_ORDER = #{detail.taxOrder, jdbcType = VARCHAR},
+            C88 = #{detail.c88, jdbcType = VARCHAR},
+            C88_REMARK = #{detail.c88Remark, jdbcType = VARCHAR},
+            VAT = #{detail.vat, jdbcType = DECIMAL},
+            TAX_INVOICE_ORDER = #{detail.taxInvoiceOrder, jdbcType = VARCHAR},
+            TOTAL_FEE = #{detail.totalFee, jdbcType = DECIMAL},
+            LOGISTICS_ERP_DATE = #{detail.logisticsErpDate, jdbcType = TIMESTAMP},
+            LOGISTICS_BILL_ORDER = #{detail.logisticsBillOrder, jdbcType = VARCHAR},
+            TAX_ERP_DATE = #{detail.taxErpDate, jdbcType = TIMESTAMP},
+            TAX_BILL_ORDER = #{detail.taxBillOrder, jdbcType = VARCHAR},
+            REMARK = #{detail.remark, jdbcType = VARCHAR},
+            UPDATE_TIME = #{detail.updateTime, jdbcType = TIMESTAMP},
+            LOGISTICS_COUNT_FEE = #{detail.logisticsCountFee, jdbcType = DECIMAL},
+            UNIT_PRICE = #{detail.unitPrice, jdbcType = DECIMAL},
+            DATA_STATUS = #{detail.dataStatus, jdbcType = INTEGER}
+        WHERE ID = #{detail.id}
+    </update>
+</mapper>

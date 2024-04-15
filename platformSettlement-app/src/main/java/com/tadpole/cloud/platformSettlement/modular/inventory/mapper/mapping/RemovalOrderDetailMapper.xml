@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.RemovalOrderDetailMapper">
+
+
+    <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.RemovalOrderDetail">
+    SELECT m.*  FROM REMOVAL_ORDER_DETAIL m
+    <where>
+    <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+      AND m.SYS_SHOPS_NAME IN
+      <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+        item="shopName">
+        #{shopName}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+      AND m.SYS_SITE IN
+      <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+        #{site}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+      AND m.sku IN
+      <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+        #{sku}
+      </foreach>
+    </if>
+
+
+    <if
+      test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+      and m.REQUEST_DATE BETWEEN
+      to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+      to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+    </if>
+
+      <if
+        test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND m.upload_mark =#{paramCondition.uploadMark}
+      </if>
+      <if
+        test="paramCondition.orderId != null and paramCondition.orderId != ''">
+        AND m.ORDER_ID =#{paramCondition.orderId}
+      </if>
+
+    </where>
+    ORDER BY ID
+
+
+  </select>
+
+
+  <select id="getQuantity"
+    resultType="java.lang.String"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.RemovalOrderDetail">
+    SELECT SUM(DISPOSED_QUANTITY)||','||SUM(SHIPPED_QUANTITY)   FROM REMOVAL_ORDER_DETAIL m
+    <where>
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND m.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+          item="shopName">
+          #{shopName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+        AND m.SYS_SITE IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+
+      <if
+        test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        and m.REQUEST_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+      </if>
+
+      <if
+        test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND m.upload_mark =#{paramCondition.uploadMark}
+      </if>
+      <if
+        test="paramCondition.orderId != null and paramCondition.orderId != ''">
+        AND m.ORDER_ID =#{paramCondition.orderId}
+      </if>
+
+    </where>
+  </select>
+
+  <insert id="InsertRemoveMain"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalOrderDetailParam">
+    insert into REMOVE_MAIN
+    (platform,
+     shop_name,
+     site,
+     sku,
+     fnsku,
+     order_apply_date,
+     order_id,
+     order_type,
+     order_status,
+     id)
+    select T1.platform,
+           T1.shop_name,
+           T1.site,
+           T1.sku,
+           T1.fnsku,
+           T1.order_apply_date,
+           T1.order_id,
+           T1.order_type,
+           T1.order_status,
+           T1.id
+    from (select distinct 'Amazon'         as platform,
+                          t.sys_shops_name as shop_name,
+                          t.sys_site       as site,
+                          t.sku,
+                          t.fnsku,
+                          t.request_date   as order_apply_date,
+                          t.order_id,
+                          t.order_type,
+                          t.order_status,
+                          max(id)             id
+          from removal_order_detail t
+          where to_char(t.upload_date, 'YYYYMM') =
+                to_char(sysdate, 'YYYYMM')
+          group by t.request_date,
+                   t.order_id,
+                   t.order_type,
+                   t.sku,
+                   t.fnsku,
+                   t.sys_shops_name,
+                   t.sys_site,
+                   t.order_status) T1
+           LEFT JOIN REMOVE_MAIN T2
+                     ON T2.SHOP_NAME = T1.SHOP_NAME
+                       AND T2.SITE = T1.SITE
+                       AND T2.SKU = T1.SKU
+                       AND T2.ORDER_APPLY_DATE = T1.ORDER_APPLY_DATE
+                       AND T2.ORDER_ID = T1.ORDER_ID
+    WHERE T2.SKU IS NULL
+  </insert>
+  <update id="InsertRemoveMainDetial"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalOrderDetailParam">
+      MERGE INTO remove_main_detial d
+          USING (select m.id,
+                        a.requested_quantity apply_amount,
+                        nvl(a.disposed_quantity, 0) - nvl(b.disposed_quantity, 0) dispose_amount,
+                        nvl(a.shipped_quantity, 0) - nvl(b.shipped_quantity, 0)   remove_amount,
+                        case to_char(a.upload_date,'mm')  when '01'  then to_char(add_months(a.upload_date,-12), 'yyyy')  else  to_char(a.upload_date, 'yyyy') end year,
+                        to_char(add_months(a.upload_date,-1),'mm') month,
+                        a.disposition inventory_status,
+                        a.sys_shops_name shop_name,
+                        a.sys_site site
+                 from removal_order_detail a
+                          left join removal_order_detail b
+                                    on b.request_date = a.request_date
+                                        and b.order_id = a.order_id
+                                        and b.sku = a.sku
+                                        and b.sys_shops_name = a.sys_shops_name
+                                        and b.sys_site = a.sys_site
+                                        and to_char(b.upload_date, 'YYYYMM') = to_char(add_months(sysdate, -1), 'YYYYMM')
+                          left join remove_main m on  m.Order_Apply_Date = a.request_date
+                     and m.order_id = a.order_id
+                     and m.sku = a.sku
+                     and m.shop_name = a.sys_shops_name
+                     and m.site = a.sys_site
+                 where to_char(a.upload_date, 'YYYYMM') =to_char(sysdate, 'YYYYMM') and to_char(a.request_date, 'YYYYMM') !=to_char(sysdate, 'YYYYMM')
+                   and nvl(a.DISPOSED_QUANTITY, 0) - nvl(b.DISPOSED_QUANTITY, 0)!=0) n
+          on (d.main_id=n.id and d.year=n.year and  d.month=n.month and d.inventory_status=n.inventory_status and d.shop_name=n.shop_name and  d.site=n.site)
+          WHEN NOT MATCHED THEN
+              insert  (d.main_id, d.apply_amount, d.dispose_amount, d.remove_amount, d.year, d.month, d.inventory_status, d.shop_name, d.site)
+                  values (n.id, n.apply_amount, n.dispose_amount, n.remove_amount, n.year,n.month, n.inventory_status, n.shop_name,n.site)
+  </update>
+
+  <select id="getMaterial"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalOrderDetailParam"
+    resultType="java.lang.String">
+    SELECT a.material_code
+    FROM mcms_base_data.inv_product_gallery a
+    where a.sku = #{paramCondition.sku}
+      AND a.sys_site = #{paramCondition.sysSite}
+      AND a.sys_shops_name = #{paramCondition.sysShopsName }
+
+  </select>
+
+  <select id="getListHeader"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalOrderDetailParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemovalOrderDetailResult">
+
+    SELECT to_char(#{paramCondition.requestDate}, 'YYYY') YEAR,
+           to_char(#{paramCondition.requestDate}, 'MM') MONTH,
+           platform,
+           shop_name,
+           site,
+           ORG,
+           INVENTORY_ORGANIZATION_CODE,
+           WAREHOUSE_NAME,
+           WAREHOUSE_CODE,
+           SALES_ORGANIZATION,
+           SALES_ORGANIZATION_CODE
+    FROM remove_main a
+           left join remove_main_detial b
+                     on a.id = b.main_id
+    WHERE to_char(a.ORDER_APPLY_DATE, 'YYYY/MM') =
+          to_char(#{paramCondition.requestDate}, 'YYYY/MM')
+    GROUP BY platform,
+             shop_name,
+             site,
+             org,
+             INVENTORY_ORGANIZATION_CODE,
+             WAREHOUSE_NAME,
+             WAREHOUSE_CODE,
+             SALES_ORGANIZATION,
+             SALES_ORGANIZATION_CODE
+
+  </select>
+
+  <update id="syncErpCode"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ErpOrgCode">
+    MERGE INTO ERP_WAREHOUSE_CODE T1
+      USING (SELECT #{paramCondition.organizationCode} as ORGANIZATION_CODE
+                  , #{paramCondition.organizationName} as ORGANIZATION_NAME
+                  , #{paramCondition.organizationType} as ORGANIZATION_TYPE
+                  , #{paramCondition.useOrganization}  as USE_ORGANIZATION
+             FROM dual) T2
+      ON (T1.ORGANIZATION_NAME = T2.ORGANIZATION_NAME and
+          T1.ORGANIZATION_TYPE = T2.ORGANIZATION_TYPE and T1.USE_ORGANIZATION = T2.USE_ORGANIZATION)
+      WHEN MATCHED THEN
+        UPDATE SET T1.ORGANIZATION_CODE = T2.ORGANIZATION_CODE
+      WHEN NOT MATCHED THEN
+        INSERT (T1.ORGANIZATION_CODE, T1.ORGANIZATION_NAME, T1.ORGANIZATION_TYPE, T1.USE_ORGANIZATION) VALUES (T2.ORGANIZATION_CODE,
+                                                                                                               T2.ORGANIZATION_NAME,
+                                                                                                               T2.ORGANIZATION_TYPE,
+                                                                                                               T2.USE_ORGANIZATION)
+  </update>
+
+  <select id="getErpCode"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ErpOrgCode">
+    select *
+    from View_OrgCode_To_Bi
+  </select>
+
+  <update id="updateDetailList">
+    UPDATE dispose_remove_detail d
+    SET (d.department, d.team, d.material_code) =
+          (SELECT b.department, b.team, b.material_code
+           FROM mcms_base_data.inv_product_gallery b
+                  left JOIN (SELECT b.sku, a.site, a.shop_name, b.id
+                             FROM dispose_remove a
+                                    JOIN dispose_remove_detail b
+                                         ON a.id = b.out_id) c
+                            on upper(b.sku) = upper(c.sku)
+                              AND b.sys_site = c.site
+                              AND b.sys_shops_name = c.shop_name
+           WHERE c.id = d.id
+          )
+    where d.department is null
+  </update>
+
+
+  <update id="updateDeptDetailList">
+
+
+    MERGE INTO (SELECT * FROM REMOVE_MAIN WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) D
+      USING MCMS_BASE_DATA.INV_PRODUCT_GALLERY G
+      ON (upper(D.sku) = upper(G.sku)
+        AND D.SITE = G.SYS_SITE
+        AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+        UPDATE SET D.DEPARTMENT = G.DEPARTMENT, D.TEAM = G.TEAM, D.MATERIAL_CODE = G.MATERIAL_CODE
+
+  </update>
+
+
+  <update id="updateFileDeptDetailList">
+    MERGE INTO (SELECT * FROM REMOVE_MAIN WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) D
+      USING (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE
+      FROM (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE,
+      ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+      FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE) t
+      WHERE t.rn = 1) G
+      ON (upper(D.sku) = upper(G.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+    UPDATE
+      SET D.DEPARTMENT    = G.DEPARTMENT,
+      D.TEAM          = G.TEAM,
+      D.MATERIAL_CODE = G.MATERIAL_CODE
+  </update>
+<update id="editSites"  parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalOrderDetailParam">
+    update REMOVAL_ORDER_DETAIL set SYS_SITE=#{paramCondition.site} where
+     SYS_SHOPS_NAME IN
+    <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+             item="shopName">
+        #{shopName}
+    </foreach>
+    and ORDER_ID=#{paramCondition.orderId} and CURRENCY =#{paramCondition.currency}
+    and REQUEST_DATE BETWEEN
+    to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+    to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+</update>
+
+</mapper>

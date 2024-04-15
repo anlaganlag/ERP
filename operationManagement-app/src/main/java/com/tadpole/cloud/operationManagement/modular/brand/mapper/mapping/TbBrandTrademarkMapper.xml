@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.brand.mapper.TbBrandTrademarkMapper">
+
+    <insert id="saveDictionary">
+        INSERT INTO dbo.TbSysDictionary
+        (dicClassCode,dicClassName,dicValueCode,dicValueName,dicValueSymbol,dicValueRemark)
+        VALUES (#{code},#{className},#{tradeName},#{tradeName},NULL,NULL)
+    </insert>
+    <select id="getPage"
+            resultType="com.tadpole.cloud.operationManagement.api.brand.model.result.TbBrandTrademarkResult">
+        SELECT a.id
+        , b.id regisId
+        , c.id progressId
+        , a.trade_name
+        , a.type
+        , a.is_register
+        , b.register_country
+        , b.trademark_category
+        , b.trademark_sub_class
+        , b.agency_organization
+        ,nvl(c.trademark_status,0) trademark_status
+        , nvl(b.remark, a.remark) as remark
+        , a.create_name
+        , a.create_time
+        FROM tb_brand_trademark a
+        LEFT JOIN tb_brand_trademark_regis b ON a.id = b.bt_id
+        LEFT JOIN tb_brand_trademark_regis_progress c ON b.id = c.regis_id
+        WHERE 1 = 1
+        <if test="param.tradeNames != null and param.tradeNames.size > 0">
+            AND a.trade_name IN
+            <foreach collection="param.tradeNames" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.trademarkStatus != null and param.trademarkStatus != ''">
+            AND c.trademark_status = #{param.trademarkStatus}
+        </if>
+        <if test="param.createName != null and param.createName != ''">
+            AND a.create_name = #{param.createName}
+        </if>
+        <if test="param.isRegister != null ">
+            AND a.is_register = #{param.isRegister}
+        </if>
+        ORDER BY a.create_time DESC
+    </select>
+    <select id="getDictionarys" resultType="java.util.Map">
+        SELECT
+        w.dicValueCode code,
+        w.dicValueName name
+        FROM TbSysDictionary w
+        WHERE w.dicClassCode =#{code}
+    </select>
+    <select id="getTradeReportPage"
+            resultType="com.tadpole.cloud.operationManagement.api.brand.model.result.TbBrandTrademarkReportResult">
+
+        select
+        a.trade_name
+        , c.register_number
+        , c.trademark_status
+        , b.register_country
+        , b.company_name
+        , b.trademark_category
+        , b.trademark_sub_class
+        , c.apply_date
+        , c.payment_date_first
+        , c.payment_amount
+        , c.apply_outlay_plus_tax
+        , c.certificate_date
+        , c.trademark_validity_term_end
+        , d.assets_no
+        , b.create_name
+        from tb_brand_trademark a
+        join tb_brand_trademark_regis b on a.id = b.bt_id
+        join tb_brand_trademark_regis_progress c on b.id = c.regis_id and payment_date_first is not null
+        left join tb_trademark_certificate d on a.trade_name = d.trade_name and a.type = d.trademark_type
+        and d.register_country=b.register_country and d.trademark_category=b.trademark_category
+        where 1 = 1
+        <if test="param.tradeNames != null and param.tradeNames.size > 0">
+            AND a.trade_name IN
+            <foreach collection="param.tradeNames" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.trademarkStatus != null ">
+            AND c.trademark_status = #{param.trademarkStatus}
+        </if>
+
+        <if test="param.registerNumber != null and param.registerNumber != ''">
+            AND  c.register_number = #{param.registerNumber}
+        </if>
+        <if test="param.assetsNo != null and param.assetsNo != ''">
+            AND  d.assets_no = #{param.assetsNo}
+        </if>
+        <if test="param.startCertificateDate != null and param.endCertificateDate != null">
+            AND  c.certificate_date &gt;=  to_date(#{param.startCertificateDate},'yyyy-mm-dd')
+            AND  c.certificate_date &lt;= to_date(#{param.endCertificateDate},'yyyy-mm-dd')
+        </if>
+        order by trade_name
+    </select>
+    <select id="getTradeReport"
+            resultType="com.tadpole.cloud.operationManagement.api.brand.model.result.TbBrandTrademarkReportResult">
+
+        select
+        a.trade_name
+        , c.register_number
+        ,c.trademark_status
+        ,decode(c.trademark_status,0,'申请中',1,'已受理',2,'审查中',3,'公告中',4,'已下证',5,'异常归档') trademarkStatusCn
+        , b.register_country
+        , b.company_name
+        , b.trademark_category
+        , b.trademark_sub_class
+        , c.apply_date
+        , c.payment_date_first
+        , c.payment_amount
+        , c.apply_outlay_plus_tax
+        , c.certificate_date
+        , c.trademark_validity_term_end
+        , d.assets_no
+        , b.create_name
+        from tb_brand_trademark a
+        join tb_brand_trademark_regis b on a.id = b.bt_id
+        join tb_brand_trademark_regis_progress c on b.id = c.regis_id and payment_date_first is not null
+        left join tb_trademark_certificate d on a.trade_name = d.trade_name and a.type = d.trademark_type
+        and d.register_country=b.register_country and d.trademark_category=b.trademark_category
+        where 1 = 1
+        <if test="param.tradeNames != null and param.tradeNames.size > 0">
+            AND a.trade_name IN
+            <foreach collection="param.tradeNames" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.trademarkStatus != null ">
+            AND c.trademark_status = #{param.trademarkStatus}
+        </if>
+        <if test="param.registerNumber != null and param.registerNumber != ''">
+            AND  c.register_number = #{param.registerNumber}
+        </if>
+        <if test="param.assetsNo != null and param.assetsNo != ''">
+            AND  d.assets_no = #{param.assetsNo}
+        </if>
+        <if test="param.startCertificateDate != null and param.endCertificateDate != null">
+            AND  c.certificate_date &gt;=  to_date(#{param.startCertificateDate},'yyyy-mm-dd')
+            AND  c.certificate_date &lt;= to_date(#{param.endCertificateDate},'yyyy-mm-dd')
+        </if>
+        order by trade_name
+    </select>
+</mapper>

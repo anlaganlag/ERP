@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.ProfitRateConfigMapper">
+
+    <!-- 利润率参数管理 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ProfitRateConfigParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ProfitRateConfigResult">
+        SELECT
+            P.ID,
+            P.PLATFORM,
+            P.DEPARTMENT,
+            P.TEAM,
+            P.PRODUCT_TYPE,
+            TO_CHAR(P.AD_RATE, 'FM9990.00') || '%' AS adRateStr,
+            TO_CHAR(P.SHARE_RATE, 'FM9990.00') || '%' AS shareRateStr,
+            TO_CHAR(P.OTHER_RATE, 'FM9990.00') || '%' AS otherRateStr,
+            TO_CHAR(P.PARAM, 'FM9990.00') || '%' AS paramStr,
+            TO_CHAR(P.TARGET_RATE, 'FM9990.00') || '%' AS targetRateStr,
+            TO_CHAR(P.WARNING_RATE_BI, 'FM9990.00') || '%' AS warningRateBIStr,
+            TO_CHAR(P.WARNING_RATE_PRE_SETTLEMENT, 'FM9990.00') || '%' AS warningRatePreSettlementStr,
+            P.VALID_DATE,
+            P.CREATE_TIME,
+            P.CREATE_BY,
+            P.UPDATE_TIME,
+            P.UPDATE_BY
+        FROM PROFIT_RATE_CONFIG P
+        WHERE
+            P.VALID_DATE = TO_CHAR(SYSDATE, 'yyyy-mm')
+            <if test="param.departments != null and param.departments.size() != 0">
+                AND P.DEPARTMENT IN
+                <foreach collection="param.departments" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.teams != null and param.teams.size() != 0">
+                AND P.TEAM IN
+                <foreach collection="param.teams" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productTypes != null and param.productTypes.size() != 0">
+                AND P.PRODUCT_TYPE IN
+                <foreach collection="param.productTypes" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        ORDER BY P.CREATE_TIME DESC
+    </select>
+
+    <!-- 历史利润率查询列表 -->
+    <select id="queryHistoryPage"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ProfitRateConfigParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ProfitRateConfigResult">
+        SELECT
+            P.ID,
+            P.PLATFORM,
+            P.DEPARTMENT,
+            P.TEAM,
+            P.PRODUCT_TYPE,
+            TO_CHAR(P.AD_RATE, 'FM9990.00') || '%' AS adRateStr,
+            TO_CHAR(P.SHARE_RATE, 'FM9990.00') || '%' AS shareRateStr,
+            TO_CHAR(P.OTHER_RATE, 'FM9990.00') || '%' AS otherRateStr,
+            TO_CHAR(P.PARAM, 'FM9990.00') || '%' AS paramStr,
+            TO_CHAR(P.TARGET_RATE, 'FM9990.00') || '%' AS targetRateStr,
+            TO_CHAR(P.WARNING_RATE_BI, 'FM9990.00') || '%' AS warningRateBIStr,
+            TO_CHAR(P.WARNING_RATE_PRE_SETTLEMENT, 'FM9990.00') || '%' AS warningRatePreSettlementStr,
+            P.VALID_DATE,
+            P.CREATE_TIME,
+            P.CREATE_BY,
+            P.UPDATE_TIME,
+            P.UPDATE_BY
+        FROM PROFIT_RATE_CONFIG P
+        WHERE
+            P.VALID_DATE != TO_CHAR(SYSDATE, 'yyyy-mm')
+            AND TO_DATE(P.VALID_DATE, 'yyyy-mm') &lt; SYSDATE
+            AND P.DEPARTMENT = #{param.department}
+            AND P.TEAM = #{param.team}
+            AND P.PRODUCT_TYPE = #{param.productType}
+        ORDER BY P.CREATE_TIME DESC
+    </select>
+</mapper>

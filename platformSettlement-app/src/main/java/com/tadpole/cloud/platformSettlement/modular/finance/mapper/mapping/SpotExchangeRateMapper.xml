@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.SpotExchangeRateMapper">
+
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SpotExchangeRateResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SpotExchangeRateParam">
+        select
+        *
+        from RP_SPOT_EXCHANGE_RATE
+        <where>
+        <if test="paramCondition.originalCurrency != null and paramCondition.originalCurrency != ''">
+            and ORIGINAL_CURRENCY =#{paramCondition.originalCurrency}
+        </if>
+            <if test="paramCondition.searchDate != null and paramCondition.searchDate!=''">
+                AND EFFECT_DATE &lt;=to_date(#{paramCondition.searchDate},'yyyy-mm-dd')
+                AND INEFFECTIVE_DATE >=to_date(#{paramCondition.searchDate},'yyyy-mm-dd')
+            </if>
+        </where>
+        order by EFFECT_DATE desc
+
+    </select>
+
+    <select id="queryErp" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SpotExchangeRate">
+        select
+            *
+        from spot_exchange_rate_mcms
+
+    </select>
+
+    <delete id="deleteAll">
+
+        delete from RP_SPOT_EXCHANGE_RATE
+
+    </delete>
+
+    <select id="originalCurrencyList" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SpotExchangeRate">
+        select
+            ORIGINAL_CURRENCY,ORIGINAL_CURRENCY_NAME
+        from RP_SPOT_EXCHANGE_RATE  group by ORIGINAL_CURRENCY,ORIGINAL_CURRENCY_NAME
+
+    </select>
+
+    <select id="getRateByDateCurrency"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SpotExchangeRate"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SpotExchangeRateParam">
+
+        select
+        DIRECT_RATE,INDIRECT_RATE
+        from RP_SPOT_EXCHANGE_RATE where TARGET_CURRENCY ='USD'
+        <if test="paramCondition.originalCurrency != null and paramCondition.originalCurrency != ''">
+            and ORIGINAL_CURRENCY =#{paramCondition.originalCurrency}
+        </if>
+        <if test="paramCondition.effectDate != null">
+            and  INEFFECTIVE_DATE>=#{paramCondition.effectDate} and EFFECT_DATE &lt;=#{paramCondition.effectDate}
+        </if>
+
+    </select>
+
+</mapper>
+
+

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.ErpWarehouseCodeMapper">
+
+
+  <select id="getOrganizationCode"
+    parameterType="java.lang.String"
+    resultType="java.lang.String">
+
+    select  ORGANIZATION_CODE
+    from ERP_WAREHOUSE_CODE t
+    <where>
+      <choose>
+        <when test ="name != null and name != ''" >
+          t.ORGANIZATION_Name =  #{name}
+        </when>
+        <otherwise>
+          t.ORGANIZATION_Name =    '无组织名'
+        </otherwise>
+      </choose>
+    </where>
+  </select>
+
+
+  <select id="getOrganizationCodeByWarehouse"
+          parameterType="java.lang.String"
+          resultType="java.lang.String">
+
+    select distinct ORGANIZATION_CODE
+    from ERP_WAREHOUSE_CODE t
+    <where>
+      <choose>
+        <when test ="name != null and name != ''" >
+          t.ORGANIZATION_Name =  #{name}
+        </when>
+        <otherwise>
+          t.ORGANIZATION_Name =    '无组织名'
+        </otherwise>
+      </choose>
+      and ORGANIZATION_TYPE='warehouse'
+    </where>
+  </select>
+
+
+  <select id="getSkuSalesOrganization"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.ErpWarehouseCodeParam"
+    resultType="java.lang.String">
+    select t.PLATFORM || '_' || t.sys_shops_name || '_' || t.sys_site SYS_SHOPS_NAME
+    from ODS_AMAZON.AMAZON_ORDER_DETAIL t
+    where
+    t.amazon_order_id = #{paramCondition.amazonOrderId}
+      and t.sku = #{paramCondition.sku}
+      and rownum =1
+  </select>
+
+  <!--拿到OrderId去结算报告里匹配销售组织-->
+  <select id="getOtherSalesOrganization" parameterType="java.lang.String" resultType="java.lang.String">
+    select '_' ||SYS_SHOPS_NAME|| '_' ||SYS_SITE from CW_SETTLEMENT_DETAIL t where t.merchant_order_id=#{merchantOrderId} AND ROWNUM=1
+  </select>
+
+
+
+
+  <select id="getSalesOrganization"
+    parameterType="java.lang.String"
+    resultType="java.lang.String">
+
+    select t.PLATFORM || '_' || t.sys_shops_name || '_' || t.sys_site SYS_SHOPS_NAME
+    from ODS_AMAZON.AMAZON_ORDER_DETAIL t
+    where rownum = 1
+      and t.amazon_order_id = #{amazonOrderId}
+
+  </select>
+
+
+
+
+  <select id="orgCodeMap" parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.ErpWarehouseCodeParam" resultType="java.util.HashMap">
+    select distinct ORGANIZATION_Name,ORGANIZATION_CODE
+    from ERP_WAREHOUSE_CODE t
+    <where>
+    <if test="paramCondition.organizationType != null and paramCondition.organizationType != ''">
+       t.ORGANIZATION_TYPE =#{paramCondition.organizationType}
+    </if>
+    </where>
+    order by ORGANIZATION_Name
+  </select>
+
+  <!--获取AmazonERP仓库组织信息-->
+  <select id="getOrgCodeInfo" resultType="java.util.HashMap">
+    select t.ORGANIZATION_NAME, t.ORGANIZATION_CODE, t.ORGANIZATION_TYPE
+    from ERP_WAREHOUSE_CODE t
+    where USE_ORGANIZATION like 'Amazon_%' group by t.ORGANIZATION_NAME, t.ORGANIZATION_CODE, t.ORGANIZATION_TYPE
+  </select>
+
+  <!--获取AmazonERP组织名称对应的组织编码-->
+  <select id="getOrgCodeMap" resultType="java.util.HashMap">
+    select DISTINCT t.ORGANIZATION_NAME org, t.ORGANIZATION_CODE code
+    from ERP_WAREHOUSE_CODE t
+  </select>
+
+  <select id="getOrgMap" resultType="java.util.HashMap">
+
+  SELECT DISTINCT T.ORGANIZATION_CODE CODE, T.ORGANIZATION_NAME ORG
+  FROM ERP_WAREHOUSE_CODE T
+  WHERE T.ORGANIZATION_NAME NOT LIKE '%仓库'
+  </select>
+
+
+<!--  <select id="assignMaterialList"     parameterType="java.util.List"  resultType="cn.stylefeng.guns.cloud.system.modular.inventory.entity.ZZDistributeMcms" >
+    SELECT t.sales_organization_code shop_code,d.material_code FROM sales_return t JOIN sales_return_detail d ON t.id = d.out_id
+    <where>
+      <if test="detailIdList != null and detailIdList.size>0">
+        d.id IN
+        <foreach collection="detailIdList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+    </where>
+  </select>-->
+
+</mapper>

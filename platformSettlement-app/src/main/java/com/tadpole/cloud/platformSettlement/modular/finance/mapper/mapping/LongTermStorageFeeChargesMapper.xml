@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LongTermStorageFeeChargesMapper">
+
+    <sql id="LONG_CONDITION">
+        <if test="param.snapshotDate != null and param.snapshotDate != ''">
+            AND to_char(snapshot_date,'yyyy-MM')  = #{param.snapshotDate}
+        </if>
+
+        <if test="param.sysShopsName != null and param.sysShopsName != ''">
+            AND sys_shops_name  = #{param.sysShopsName}
+        </if>
+
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND sys_site IN
+            <foreach collection="param.sysSites" item="sysSite" index="index" separator="," open="(" close=")">
+                #{sysSite}
+            </foreach>
+        </if>
+
+        <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+            AND sys_shops_name IN
+            <foreach collection="param.sysShopsNames" item="sysShopsName" index="index" separator="," open="(" close=")">
+                #{sysShopsName}
+            </foreach>
+        </if>
+    </sql>
+
+
+
+    <select id="afreshStorageFee">
+        begin
+        --长期仓存费
+        merge into long_term_storage_fee_charges a
+        using (
+        SELECT
+        a.id,c.material_code material_code,a.amount_charged,a.qty_charged,
+        decode(a.currency,'USD',a.amount_charged ,
+        round(a.amount_charged*b.direct_rate,2) )storage_fee,
+        decode(a.currency,'USD',a.amount_charged ,
+        round((a.amount_charged)*b2.direct_rate,2)
+        )  storage_detail_fee
+        FROM long_term_storage_fee_charges a
+        left join  RP_SPOT_EXCHANGE_RATE b on a.currency=b.original_currency and a.SNAPSHOT_DATE>=b.effect_date  and a.SNAPSHOT_DATE &lt;=b.ineffective_date
+        left join  RP_SPOT_EXCHANGE_RATE b2 on a.currency=b2.original_currency and add_months(b.effect_date,1)=b2.effect_date  and add_months(b.ineffective_date,1)=b2.ineffective_date
+        left join  mcms_base_data.inv_product_gallery c on a.sys_shops_name=c.sys_shops_name and a.sys_site=c.sys_site and a.fnsku=c.fnsku  and a.sku=c.sku
+        WHERE a.create_time>trunc(sysdate-30) --and a.material_code is null
+
+        ) b on(a.id=b.id)
+        when matched then
+        UPDATE set a.qty_charged_12_mo=b.qty_charged,a.mo12_long_terms_storage_fee=b.amount_charged,a.storage_fee=b.storage_fee,a.storage_detail_fee=b.storage_detail_fee , a.material_code=b.material_code;
+        end;
+    </select>
+
+
+    <select id="fnskuFillLongListing" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.LongTermStorageFeeChargesParam">
+        BEGIN
+        <!--        1 fnsku用sku-->
+        UPDATE long_term_storage_fee_charges
+        SET FNSKU = SKU
+        <where>
+            AND FNSKU IS NULL
+            AND status IN (1, 2, 3)
+            <include refid="LONG_CONDITION"/>
+        </where>;
+
+        <!--2fnsku用sku-->
+
+        MERGE INTO (SELECT * FROM long_term_storage_fee_charges
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            <include refid="LONG_CONDITION"/>
+        </where>) d
+        USING (SELECT a.FNSKU,a.SYS_SITE,a.SYS_SHOPS_NAME,MAX(a.sku) AS sku
+        FROM mcms_base_data.INV_PRODUCT_GALLERY a
+        WHERE NVL(a.fnsku, 'NULL') != 'NULL'
+        GROUP BY a.FNSKU, a.SYS_SITE, a.SYS_SHOPS_NAME
+        ) g
+        ON (UPPER(d.FNSKU) = UPPER(g.FNSKU) AND d.SYS_SITE = g.SYS_SITE AND d.SYS_SHOPS_NAME = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+        UPDATE SET d.SKU = g.SKU;
+        <!--3fnsku用sku-->
+        MERGE INTO (SELECT *
+        FROM long_term_storage_fee_charges
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            <include refid="LONG_CONDITION"/>
+        </where>) d
+        USING (SELECT a.FNSKU, a.SYS_SITE, a.SYS_SHOPS_NAME, MAX(a.sku) AS sku
+        FROM mcms_base_data.INV_PRODUCT_GALLERY_FILE a
+        WHERE NVL(a.fnsku, 'NULL') != 'NULL'
+        GROUP BY a.fnsku, a.sys_site, a.sys_shops_name
+        ) g
+        ON (UPPER(d.fnsku) = UPPER(g.fnsku) AND d.sys_site = g.sys_site AND d.sys_shops_name = g.sys_shops_name)
+        WHEN MATCHED THEN
+        UPDATE
+        SET d.SKU = g.SKU;
+
+        <!--4 -->
+        MERGE INTO (SELECT *
+        FROM long_term_storage_fee_charges
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            <include refid="LONG_CONDITION"/>
+        </where>) d
+        USING mcms_base_data.INV_PRODUCT_GALLERY g ON (UPPER(d.sku) = UPPER(g.sku) AND d.sys_site = g.sys_site AND d.sys_shops_name = g.sys_shops_name)
+        WHEN MATCHED THEN
+        UPDATE
+        SET d.department    = g.department,
+            d.team          = g.team,
+            d.material_code = g.material_code;
+        <!--5 -->
+        MERGE INTO (SELECT * FROM long_term_storage_fee_charges
+        <where>
+            AND NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            <include refid="LONG_CONDITION"/>
+        </where>) d
+        USING (SELECT SKU,
+                      SYS_SITE,
+                      SYS_SHOPS_NAME,
+                      MATERIAL_CODE,
+                      DEPARTMENT,
+                      TEAM,
+                      LAST_UPDATE_DATE
+                      FROM (SELECT SKU,
+                      SYS_SITE,
+                      SYS_SHOPS_NAME,
+                      MATERIAL_CODE,
+                      DEPARTMENT,
+                      TEAM,
+                      LAST_UPDATE_DATE,
+                      ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME ORDER BY LAST_UPDATE_DATE DESC) AS rn
+        FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE) t WHERE t.rn = 1) G
+        ON (UPPER(d.sku) = UPPER(g.sku) AND D.sys_site = G.sys_site AND D.sys_shops_name = G.sys_shops_name)
+        WHEN MATCHED THEN
+        UPDATE
+        SET D.DEPARTMENT    = G.DEPARTMENT,
+            D.TEAM          = G.TEAM,
+            D.MATERIAL_CODE = G.MATERIAL_CODE;
+        END;
+
+    </select>
+
+
+    <select id="emailList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LongTermStorageFeeChargesResult">
+        select * from long_term_storage_fee_charges t where (NVL(t.material_code,'0') = '0' or NVL(t.department,'0') = '0') and t.sku!='0'
+                                               and status in (2,3) and ROWNUM &lt; 100000
+        order BY t.snapshot_date DESC
+
+    </select>
+</mapper>

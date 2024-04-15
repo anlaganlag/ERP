@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgCustomsAgainCoeffRuleMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        P.ID,P.COUNTRY_CODE,P.COUNTRY_NAME,P.MIN_CUSTOMS_PRICE,P.MIN_EQ,P.MAX_CUSTOMS_PRICE,P.MAX_EQ,P.INTERVAL_TYPE,P.CUSTOMS_CURRENCY,P.AGAIN_COEFF,P.CREATE_TIME,P.CREATE_USER,P.UPDATE_TIME,P.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsAgainCoeffRuleParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsAgainCoeffRuleResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_AGAIN_COEFF_RULE P
+        <where>
+            <if test="param.countryCodeList != null and param.countryCodeList.size() != 0">
+                P.COUNTRY_CODE IN
+                <foreach collection="param.countryCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.customsPrice != null and param.customsPrice != ''">
+                AND (
+                    CASE WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '0' AND P.MAX_EQ = '0' AND P.MIN_CUSTOMS_PRICE &lt; #{param.customsPrice} AND P.MAX_CUSTOMS_PRICE &gt; #{param.customsPrice} THEN '1'
+                    WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '1' AND P.MAX_EQ = '0' AND P.MIN_CUSTOMS_PRICE &lt;= #{param.customsPrice} AND P.MAX_CUSTOMS_PRICE &gt; #{param.customsPrice} THEN '1'
+                    WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '0' AND P.MAX_EQ = '1' AND P.MIN_CUSTOMS_PRICE &lt; #{param.customsPrice} AND P.MAX_CUSTOMS_PRICE &gt;= #{param.customsPrice} THEN '1'
+                    WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '1' AND P.MAX_EQ = '1' AND P.MIN_CUSTOMS_PRICE &lt;= #{param.customsPrice} AND P.MAX_CUSTOMS_PRICE &gt;= #{param.customsPrice} THEN '1'
+                    WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NULL AND P.MIN_EQ = '0' AND P.MAX_EQ IS NULL AND P.MIN_CUSTOMS_PRICE &lt; #{param.customsPrice} THEN '1'
+                    WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NULL AND P.MIN_EQ = '1' AND P.MAX_EQ IS NULL AND P.MIN_CUSTOMS_PRICE &lt;= #{param.customsPrice} THEN '1'
+                    WHEN P.MIN_CUSTOMS_PRICE IS NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ IS NULL AND P.MAX_EQ = '0' AND P.MAX_CUSTOMS_PRICE &gt; #{param.customsPrice} THEN '1'
+                    WHEN P.MIN_CUSTOMS_PRICE IS NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ IS NULL AND P.MAX_EQ = '1' AND P.MAX_CUSTOMS_PRICE &gt;= #{param.customsPrice} THEN '1'
+                    ELSE '0'
+                    END
+                ) = '1'
+            </if>
+        </where>
+        ORDER BY
+            NLSSORT(P.COUNTRY_NAME, 'NLS_SORT = SCHINESE_PINYIN_M'),
+            P.CUSTOMS_CURRENCY,
+            DECODE(P.MIN_CUSTOMS_PRICE, NULL, -1000000000, P.MIN_CUSTOMS_PRICE),
+            DECODE(P.MAX_CUSTOMS_PRICE, NULL, 1000000000, P.MAX_CUSTOMS_PRICE),
+            P.CREATE_TIME DESC,
+            P.ID DESC
+    </select>
+
+    <!-- 币种和清关单价范围查询清关二次折算 -->
+    <!--1：区间，区间；2：区间，非区间；3：非区间，区间；4：非区间，非区间-->
+    <select id="selectContainVal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsAgainCoeffRuleParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.TgCustomsAgainCoeffRule">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_AGAIN_COEFF_RULE P
+        WHERE
+            P.COUNTRY_CODE = #{param.countryCode}
+            AND P.CUSTOMS_CURRENCY = #{param.customsCurrency}
+            <if test="param.id != null and param.id != ''">
+                AND P.ID != #{param.id}
+            </if>
+            AND
+            (
+                (
+                    #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL
+                    AND
+                    (
+                        (
+                            (#{param.minCustomsPrice, jdbcType = DECIMAL} BETWEEN P.MIN_CUSTOMS_PRICE AND P.MAX_CUSTOMS_PRICE)
+                            AND
+                            (#{param.maxCustomsPrice, jdbcType = DECIMAL} BETWEEN P.MIN_CUSTOMS_PRICE AND P.MAX_CUSTOMS_PRICE)
+                            AND #{param.minCustomsPrice, jdbcType = DECIMAL} != #{param.maxCustomsPrice, jdbcType = DECIMAL}
+                        )
+                        OR
+                        (
+                            (#{param.minCustomsPrice, jdbcType = DECIMAL} BETWEEN P.MIN_CUSTOMS_PRICE AND P.MAX_CUSTOMS_PRICE)
+                            AND (#{param.maxCustomsPrice, jdbcType = DECIMAL} BETWEEN P.MIN_CUSTOMS_PRICE AND P.MAX_CUSTOMS_PRICE)
+                            AND P.MIN_CUSTOMS_PRICE =
+                            CASE WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.minEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.minEq} = '1' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.minEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.minEq} = '1' THEN P.MIN_CUSTOMS_PRICE END
+                        )
+                        OR
+                        (
+                            (#{param.minCustomsPrice, jdbcType = DECIMAL} BETWEEN P.MIN_CUSTOMS_PRICE AND P.MAX_CUSTOMS_PRICE)
+                            AND (#{param.maxCustomsPrice, jdbcType = DECIMAL} BETWEEN P.MIN_CUSTOMS_PRICE AND P.MAX_CUSTOMS_PRICE)
+                            AND P.MAX_CUSTOMS_PRICE =
+                            CASE WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.maxEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.maxEq} = '1' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.maxEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.maxEq} = '1' THEN P.MAX_CUSTOMS_PRICE END
+                        )
+                        OR
+                        (
+                            (P.MIN_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL})
+                            AND
+                            (P.MAX_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL})
+                            AND P.MIN_CUSTOMS_PRICE != P.MAX_CUSTOMS_PRICE
+                        )
+                        OR
+                        (
+                            (P.MIN_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL}) AND (P.MAX_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL}) AND P.MIN_CUSTOMS_PRICE = P.MAX_CUSTOMS_PRICE
+                            AND P.MIN_CUSTOMS_PRICE =
+                            CASE WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.minEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.minEq} = '1' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.minEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.minEq} = '1' THEN P.MIN_CUSTOMS_PRICE END
+                        )
+                        OR
+                        (
+                            (P.MIN_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL}) AND (P.MAX_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL}) AND P.MIN_CUSTOMS_PRICE = P.MAX_CUSTOMS_PRICE
+                            AND P.MAX_CUSTOMS_PRICE =
+                            CASE WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.maxEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.maxEq} = '1' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.maxEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.maxEq} = '1' THEN P.MAX_CUSTOMS_PRICE END
+                        )
+                        OR
+                        (
+                            (P.MIN_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL})
+                            AND
+                            (P.MAX_CUSTOMS_PRICE NOT BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL})
+                            AND P.MIN_CUSTOMS_PRICE =
+                            CASE WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE
+                            WHEN P.MIN_CUSTOMS_PRICE &lt; #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE END
+                        )
+                        OR
+                        (
+                            (P.MIN_CUSTOMS_PRICE NOT BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL})
+                            AND
+                            (P.MAX_CUSTOMS_PRICE BETWEEN #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL})
+                            AND P.MAX_CUSTOMS_PRICE =
+                            CASE WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE
+                            WHEN P.MAX_CUSTOMS_PRICE > #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE END
+                        )
+                    )
+                )
+                OR
+                (
+                    #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NOT NULL
+                    AND
+                    (
+                        (
+                            P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NULL
+                            AND P.MIN_CUSTOMS_PRICE =
+                            CASE WHEN P.MIN_CUSTOMS_PRICE &lt; #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE
+                            WHEN P.MIN_CUSTOMS_PRICE > #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' THEN P.MIN_CUSTOMS_PRICE
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND #{param.maxCustomsPrice, jdbcType = DECIMAL} > #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE
+                            WHEN P.MIN_CUSTOMS_PRICE > #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MIN_CUSTOMS_PRICE &lt; #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE END
+                        )
+                        OR
+                        (
+                            P.MIN_CUSTOMS_PRICE IS NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL
+                            AND P.MAX_CUSTOMS_PRICE =
+                            CASE WHEN P.MAX_CUSTOMS_PRICE &lt; #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE > #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' THEN P.MAX_CUSTOMS_PRICE
+                            WHEN P.MAX_CUSTOMS_PRICE > #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_CUSTOMS_PRICE &lt;= #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE END
+                        )
+                    )
+                )
+                OR
+                (
+                    P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL
+                    AND
+                    (
+                        (
+                            #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL
+                            AND P.MAX_CUSTOMS_PRICE =
+                            CASE WHEN P.MAX_CUSTOMS_PRICE &lt; #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE > #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                            WHEN P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE END
+                        )
+                        OR
+                        (
+                            #{param.minCustomsPrice, jdbcType = DECIMAL} IS NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NOT NULL
+                            AND P.MIN_CUSTOMS_PRICE =
+                            CASE WHEN P.MIN_CUSTOMS_PRICE &lt; #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE
+                            WHEN P.MIN_CUSTOMS_PRICE > #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                            WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE END
+                        )
+                    )
+                )
+                OR
+                (
+                    (
+                        P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NULL
+                        AND P.MIN_CUSTOMS_PRICE =
+                        CASE WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL THEN P.MIN_CUSTOMS_PRICE
+                        WHEN #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.minCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MIN_CUSTOMS_PRICE > #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE + 0.001
+                        WHEN #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.minCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MIN_CUSTOMS_PRICE &lt; #{param.maxCustomsPrice, jdbcType = DECIMAL} THEN P.MIN_CUSTOMS_PRICE
+                        WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                        WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '0' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                        WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '0' THEN P.MIN_CUSTOMS_PRICE + 0.001
+                        WHEN P.MIN_CUSTOMS_PRICE = #{param.maxCustomsPrice, jdbcType = DECIMAL} AND P.MIN_EQ = '1' AND #{param.maxEq} = '1' THEN P.MIN_CUSTOMS_PRICE END
+                    )
+                    OR
+                    (
+                        P.MIN_CUSTOMS_PRICE IS NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL
+                        AND P.MAX_CUSTOMS_PRICE =
+                        CASE WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NOT NULL THEN P.MAX_CUSTOMS_PRICE
+                        WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MAX_CUSTOMS_PRICE > #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE
+                        WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MAX_CUSTOMS_PRICE &lt; #{param.minCustomsPrice, jdbcType = DECIMAL} THEN P.MAX_CUSTOMS_PRICE + 0.001
+                        WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                        WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '0' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                        WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '0' THEN P.MAX_CUSTOMS_PRICE + 0.001
+                        WHEN #{param.minCustomsPrice, jdbcType = DECIMAL} IS NOT NULL AND #{param.maxCustomsPrice, jdbcType = DECIMAL} IS NULL AND P.MAX_CUSTOMS_PRICE = #{param.minCustomsPrice, jdbcType = DECIMAL} AND P.MAX_EQ = '1' AND #{param.minEq} = '1' THEN P.MAX_CUSTOMS_PRICE END
+                    )
+                )
+            )
+    </select>
+
+    <!-- 根据条件查询清关价格二次折算 -->
+    <select id="queryAgainCoeff"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsAgainCoeffRuleParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.TgCustomsAgainCoeffRule">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_AGAIN_COEFF_RULE P
+        WHERE
+            P.COUNTRY_CODE = #{param.countryCode}
+            AND P.CUSTOMS_CURRENCY = #{param.customsCurrency}
+            AND (
+                CASE WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '0' AND P.MAX_EQ = '0' AND P.MIN_CUSTOMS_PRICE &lt; #{param.customsUnitPrice} AND P.MAX_CUSTOMS_PRICE &gt; #{param.customsUnitPrice} THEN '1'
+                WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '1' AND P.MAX_EQ = '0' AND P.MIN_CUSTOMS_PRICE &lt;= #{param.customsUnitPrice} AND P.MAX_CUSTOMS_PRICE &gt; #{param.customsUnitPrice} THEN '1'
+                WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '0' AND P.MAX_EQ = '1' AND P.MIN_CUSTOMS_PRICE &lt; #{param.customsUnitPrice} AND P.MAX_CUSTOMS_PRICE &gt;= #{param.customsUnitPrice} THEN '1'
+                WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ = '1' AND P.MAX_EQ = '1' AND P.MIN_CUSTOMS_PRICE &lt;= #{param.customsUnitPrice} AND P.MAX_CUSTOMS_PRICE &gt;= #{param.customsUnitPrice} THEN '1'
+                WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NULL AND P.MIN_EQ = '0' AND P.MAX_EQ IS NULL AND P.MIN_CUSTOMS_PRICE &lt; #{param.customsUnitPrice} THEN '1'
+                WHEN P.MIN_CUSTOMS_PRICE IS NOT NULL AND P.MAX_CUSTOMS_PRICE IS NULL AND P.MIN_EQ = '1' AND P.MAX_EQ IS NULL AND P.MIN_CUSTOMS_PRICE &lt;= #{param.customsUnitPrice} THEN '1'
+                WHEN P.MIN_CUSTOMS_PRICE IS NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ IS NULL AND P.MAX_EQ = '0' AND P.MAX_CUSTOMS_PRICE &gt; #{param.customsUnitPrice} THEN '1'
+                WHEN P.MIN_CUSTOMS_PRICE IS NULL AND P.MAX_CUSTOMS_PRICE IS NOT NULL AND P.MIN_EQ IS NULL AND P.MAX_EQ = '1' AND P.MAX_CUSTOMS_PRICE &gt;= #{param.customsUnitPrice} THEN '1'
+                ELSE '0'
+                END
+            ) = '1'
+    </select>
+</mapper>

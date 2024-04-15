@@ -1,0 +1,678 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.FbaInventoryAdjustmentsMapper">
+
+  <!--Inventory Adjustments库存调整报告分页查询列表-->
+  <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.FbaInventoryAdjustments"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaInventoryAdjustmentsParam">
+        SELECT
+            m.*,
+            CASE m.VERIFY_STATUS WHEN 0 THEN '未审核' WHEN 1 THEN '已审核' WHEN 2 THEN '已作废' END verifyStatusCN,
+            CASE m.GENERATE_STATUS WHEN 0 THEN '未生成' WHEN 1 THEN '已生成' END generateStatusCN
+        FROM FBA_INVENTORY_ADJUSTMENTS m
+        <where>
+          <trim prefix="(" suffix=")" >
+            <trim  prefixOverrides="AND">
+              <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+                AND m.SYS_SITE IN
+                <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+                  #{sysSite}
+                </foreach>
+                <if test="paramCondition.sysSites.get(0)=='空'.toString()">
+                  OR m.SYS_SITE IS NULL
+                </if>
+              </if>
+            </trim>
+          </trim>
+
+          <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+            AND m.SYS_SHOPS_NAME IN
+            <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="sysShopsName">
+              #{sysShopsName}
+            </foreach>
+          </if>
+
+          <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+            AND m.sku IN
+            <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+              #{sku}
+            </foreach>
+          </if>
+
+          <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+            AND m.VERIFY_STATUS IN
+            <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator="," item="verifyStatus">
+              #{verifyStatus}
+            </foreach>
+          </if>
+
+          <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+            AND m.GENERATE_STATUS IN
+            <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator="," item="generateStatus">
+              #{generateStatus}
+            </foreach>
+          </if>
+
+          <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+            AND m.ADJUSTED_DATE BETWEEN
+            to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+            to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 - interval '1' SECOND
+          </if>
+
+          <if test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+            AND m.upload_mark =#{paramCondition.uploadMark}
+          </if>
+
+          <choose>
+            <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+              AND m.INVENTORY_ORGANIZATION_CODE IS NULL
+            </when>
+            <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+              AND m.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+            </when>
+            <otherwise>
+            </otherwise>
+          </choose>
+        </where>
+    ORDER BY id
+  </select>
+
+  <!--Inventory Adjustments库存调整报告获取数量-->
+  <select id="getQuantity" resultType="java.lang.Integer"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaInventoryAdjustmentsParam">
+    SELECT
+        SUM(quantity)
+    FROM FBA_INVENTORY_ADJUSTMENTS m
+    <where>
+      <trim prefix="(" suffix=")" >
+        <trim  prefixOverrides="AND">
+          <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+            AND m.SYS_SITE IN
+            <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+              #{sysSite}
+            </foreach>
+            <if test="paramCondition.sysSites.get(0)=='空'.toString()">
+              OR m.SYS_SITE IS NULL
+            </if>
+          </if>
+        </trim>
+      </trim>
+
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND m.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+        AND m.VERIFY_STATUS IN
+        <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator="," item="verifyStatus">
+          #{verifyStatus}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+        AND m.GENERATE_STATUS IN
+        <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator="," item="generateStatus">
+          #{generateStatus}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        and m.ADJUSTED_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+      </if>
+
+      <if test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND m.upload_mark =#{paramCondition.uploadMark}
+      </if>
+
+      <choose>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+          AND m.INVENTORY_ORGANIZATION_CODE IS NULL
+        </when>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+          AND m.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+        </when>
+        <otherwise>
+        </otherwise>
+      </choose>
+    </where>
+  </select>
+
+
+  <select id="getMaterial"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaInventoryAdjustmentsParam"
+    resultType="java.lang.String">
+    SELECT a.material_code
+    FROM mcms_base_data.inv_product_gallery a
+    where a.sku = #{paramCondition.sku}
+      AND a.sys_site = #{paramCondition.sysSite}
+      AND a.sys_shops_name = #{paramCondition.sysShopsName }
+  </select>
+
+
+  <select id="getAddListHeader"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaInventoryAdjustmentsParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.FbaInventoryAdjustmentsResult"
+  >
+    SELECT to_char(to_date(#{paramCondition.adjustedDate}, 'YYYYMM'), 'YYYY') YEAR,
+           to_char(to_date(#{paramCondition.adjustedDate}, 'YYYYMM'), 'MM') MONTH,
+           sysdate  UPDATE_AT,
+           'Amazon' PLATFORM,
+           SYS_SHOPS_NAME,
+           SYS_SITE,
+           ORG,
+           INVENTORY_ORGANIZATION_CODE,
+           WAREHOUSE_NAME,
+           WAREHOUSE_CODE
+
+    FROM FBA_INVENTORY_ADJUSTMENTS t
+
+    WHERE to_char(t.ADJUSTED_DATE, 'YYYYMM') = #{paramCondition.adjustedDate}
+      AND quantity > 0
+
+      And NVL(t.GENERATE_STATUS, 0) = 0
+      and t.VERIFY_STATUS = 1
+      and t.INVENTORY_ORGANIZATION_CODE is not null
+
+    GROUP BY SYS_SHOPS_NAME,
+             SYS_SITE,
+             org,
+             INVENTORY_ORGANIZATION_CODE,
+             WAREHOUSE_NAME,
+             WAREHOUSE_CODE
+
+  </select>
+  <select id="getReduceListHeader"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaInventoryAdjustmentsParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.FbaInventoryAdjustmentsResult"
+  >
+    SELECT to_char(to_date(#{paramCondition.adjustedDate}, 'YYYYMM'), 'YYYY') YEAR,
+           to_char(to_date(#{paramCondition.adjustedDate}, 'YYYYMM'), 'MM') MONTH,
+           sysdate  UPDATE_AT,
+           'Amazon' PLATFORM,
+           SYS_SHOPS_NAME,
+           SYS_SITE,
+           ORG,
+           INVENTORY_ORGANIZATION_CODE,
+           WAREHOUSE_NAME,
+           WAREHOUSE_CODE
+
+    FROM FBA_INVENTORY_ADJUSTMENTS t
+
+    WHERE to_char(t.ADJUSTED_DATE, 'YYYYMM') = #{paramCondition.adjustedDate}
+      AND quantity
+      &lt; 0
+
+      And NVL(t.GENERATE_STATUS, 0) = 0
+      and t.VERIFY_STATUS = 1
+      and t.INVENTORY_ORGANIZATION_CODE is not null
+
+    GROUP BY SYS_SHOPS_NAME,
+             SYS_SITE,
+             org,
+             INVENTORY_ORGANIZATION_CODE,
+             WAREHOUSE_NAME,
+             WAREHOUSE_CODE
+
+  </select>
+
+  <select id="getAddDetailList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.FbaInventoryAdjustmentsResult"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.InventoryAdjustAddDetail">
+
+    SELECT SKU,
+           SYS_SHOPS_NAME             SHOP_NAME,
+           SYS_SITE                   SITE,
+           SUM(QUANTITY)              ADJUST_NUM,
+           0                          IS_CANCEL,
+           0                          SYNC_STATUS,
+           sysDate                    UPDATE_AT
+    FROM FBA_INVENTORY_ADJUSTMENTS t
+
+    WHERE to_char(t.ADJUSTED_DATE, 'YYYYMM') =
+          #{paramCondition.year} || #{paramCondition.month}
+      AND t.SYS_SHOPS_NAME = #{paramCondition.sysShopsName}
+      AND t.SYS_SITE = #{paramCondition.sysSite}
+      AND t.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      And NVL(t.GENERATE_STATUS, 0) = 0
+      AND t.verify_status = 1
+      AND t.QUANTITY > 0
+    GROUP BY SKU, SYS_SHOPS_NAME, SYS_SITE
+  </select>
+
+  <select id="getReduceDetailList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.FbaInventoryAdjustmentsResult"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.InventoryAdjustReduceDetail">
+
+    SELECT SKU,
+           SYS_SHOPS_NAME             SHOP_NAME,
+           SYS_SITE                   SITE,
+           SUM(ABS(QUANTITY))         ADJUST_NUM,
+           0                          IS_CANCEL,
+           0                          SYNC_STATUS,
+           sysDate                    UPDATE_AT
+    FROM FBA_INVENTORY_ADJUSTMENTS t
+
+    WHERE to_char(t.ADJUSTED_DATE, 'YYYYMM') =
+          #{paramCondition.year} || #{paramCondition.month}
+      AND t.SYS_SHOPS_NAME = #{paramCondition.sysShopsName}
+      AND t.SYS_SITE = #{paramCondition.sysSite}
+      AND t.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      And NVL(t.GENERATE_STATUS, 0) = 0
+      AND t.verify_status = 1
+      AND t.QUANTITY &lt; 0
+    GROUP BY SKU, SYS_SHOPS_NAME, SYS_SITE
+  </select>
+
+
+  <update id="updateAddDetailList">
+    MERGE
+      INTO (SELECT * FROM INVENTORY_ADJUST_ADD_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) d
+      USING mcms_base_data.inv_product_gallery g
+      ON (upper(d.sku) = upper(g.sku)
+      AND d.site = g.SYS_SITE
+      AND d.shop_name = g.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+    UPDATE SET d.department = g.department, d.team = g.team, d.material_code = g.material_code
+  </update>
+
+  <update id="updateFileAddDetailList">
+    MERGE INTO (SELECT * FROM INVENTORY_ADJUST_ADD_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) D
+      USING (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE
+      FROM (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE,
+      ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+      FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE) t
+      WHERE t.rn = 1) G
+      ON (upper(D.sku) = upper(G.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+    UPDATE
+      SET D.DEPARTMENT    = G.DEPARTMENT,
+      D.TEAM          = G.TEAM,
+      D.MATERIAL_CODE = G.MATERIAL_CODE
+  </update>
+
+  <update id="updateReduceDetailList">
+
+
+    MERGE
+      INTO (SELECT * FROM INVENTORY_ADJUST_REDUCE_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) d
+      USING mcms_base_data.inv_product_gallery g
+      ON (upper(d.sku) = upper(g.sku)
+      AND d.site = g.SYS_SITE
+      AND d.shop_name = g.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+    UPDATE SET d.department = g.department, d.team = g.team, d.material_code = g.material_code
+  </update>
+
+  <update id="updateFileReduceDetailList">
+    MERGE INTO (SELECT * FROM INVENTORY_ADJUST_REDUCE_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) D
+      USING (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE
+      FROM (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE,
+      ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+      FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE) t
+      WHERE t.rn = 1) G
+      ON (upper(D.sku) = upper(G.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+    UPDATE
+      SET D.DEPARTMENT    = G.DEPARTMENT,
+      D.TEAM          = G.TEAM,
+      D.MATERIAL_CODE = G.MATERIAL_CODE
+  </update>
+
+
+  <update id="updateAddSrcList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.FbaInventoryAdjustmentsResult">
+
+
+    UPDATE FBA_INVENTORY_ADJUSTMENTS
+    SET bill_code       = #{paramCondition.billCode},
+        generate_status = 1,
+        update_time     = SYSDATE,
+        update_by       = #{paramCondition.updateBy}
+    WHERE generate_status = 0
+      AND verify_status = 1
+      AND to_char(ADJUSTED_DATE, 'YYYYMM') =
+          #{paramCondition.year} || #{paramCondition.month}
+      AND sys_shops_name = #{paramCondition.sysShopsName}
+      AND SYS_SITE = #{paramCondition.sysSite}
+      AND quantity > 0
+      AND bill_code is null
+
+
+  </update>
+
+
+  <update id="updateReduceSrcList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.FbaInventoryAdjustmentsResult">
+
+    UPDATE FBA_INVENTORY_ADJUSTMENTS
+    SET bill_code       = #{paramCondition.billCode},
+        generate_status = 1,
+        update_time     = SYSDATE,
+        update_by       = #{paramCondition.updateBy}
+    WHERE generate_status = 0
+      AND verify_status = 1
+      AND to_char(ADJUSTED_DATE, 'YYYYMM') =
+          #{paramCondition.year} || #{paramCondition.month}
+      AND sys_shops_name = #{paramCondition.sysShopsName}
+      AND SYS_SITE = #{paramCondition.sysSite}
+      AND quantity &lt; 0
+      AND bill_code is null
+
+
+  </update>
+  <update id="orgBatch" parameterType="java.util.List">
+    UPDATE
+    FBA_INVENTORY_ADJUSTMENTS a
+    <set>
+      <trim prefix="a.org = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.inventoryOrganization}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.INVENTORY_ORGANIZATION_CODE = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.inventoryOrganizationCode}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.WAREHOUSE_NAME = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.warehouseName}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.WAREHOUSE_CODE = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.warehouseCode}
+        </foreach>
+      </trim>
+    </set>
+    WHERE a.id IN
+    <foreach collection="verifyList" item="item" index="index" separator="," open="(" close=")">
+      #{item.id}
+    </foreach>
+  </update>
+
+
+  <select id="orgList"     resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaInventoryAdjustmentsParam" >
+    SELECT t.* FROM FBA_INVENTORY_ADJUSTMENTS  t  WHERE t.INVENTORY_ORGANIZATION_CODE IS NULL
+  </select>
+
+  <update id="rejectBatch" parameterType="java.util.List">
+    UPDATE
+    FBA_INVENTORY_ADJUSTMENTS a
+    SET
+    a.VERIFY_AT = SYSDATE,
+    a.UPDATE_TIME = SYSDATE,
+    <if test="paramCondition.verifyBy != null and paramCondition.verifyBy != ''">
+      a.VERIFY_BY = #{paramCondition.verifyBy},
+    </if>
+    <if test="paramCondition.updateBy != null and paramCondition.updateBy != ''">
+      a.UPDATE_BY = #{paramCondition.updateBy},
+    </if>
+    a.VERIFY_STATUS = 2
+    <where>
+      <if test="paramCondition.idList != null and paramCondition.idList.size>0">
+        and a.id IN
+        <foreach collection="paramCondition.idList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+      and a.verify_status = 0
+      and a.generate_status = 0
+    </where>
+  </update>
+
+
+  <update id="verifyUpdateBatch" parameterType="java.util.List">
+    UPDATE
+    FBA_INVENTORY_ADJUSTMENTS  a
+    SET
+    a.VERIFY_AT =  SYSDATE,
+    a.UPDATE_TIME = SYSDATE,
+    a.VERIFY_BY = #{paramCondition.verifyBy},
+    a.UPDATE_BY = #{paramCondition.updateBy},
+    a.VERIFY_STATUS = 1
+    <where>
+      a.VERIFY_STATUS = 0
+      AND a.GENERATE_STATUS = 0
+      AND a.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+      AND a.WAREHOUSE_CODE IS NOT NULL
+      AND a.BILL_CODE IS NULL
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND a.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+          item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+        AND a.SYS_SITE IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+          #{sysSite}
+        </foreach>
+        <if test="paramCondition.sysSites.get(0)=='空'.toString()">
+          or a.SYS_SITE is null
+        </if>
+      </if>
+
+
+
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND a.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+
+      <if
+        test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        and a.ADJUSTED_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+      </if>
+
+
+      <if
+        test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND a.upload_mark =#{paramCondition.uploadMark}
+      </if>
+    </where>
+
+
+
+  </update>
+
+  <!--刷组织名称（Amazon_账号_站点）和仓库组织名称（Amazon_账号_站点_仓库）-->
+  <update id="addOrgName" >
+    UPDATE FBA_INVENTORY_ADJUSTMENTS  A
+    SET A.org = 'Amazon_' || A.SYS_SHOPS_NAME || '_' ||A.SYS_SITE,
+    A.warehouse_name = 'Amazon_' || A.SYS_SHOPS_NAME || '_' ||A.SYS_SITE || '_仓库'
+    WHERE (A.org IS NULL OR A.warehouse_name IS NULL)
+    AND A.SYS_SHOPS_NAME IS NOT NULL
+    AND A.SYS_SITE IS NOT NULL
+  </update>
+
+  <!--根据组织刷库存组织编码-->
+  <update id="refreshOrgCode">
+    MERGE INTO FBA_INVENTORY_ADJUSTMENTS A
+    USING (
+        SELECT
+            wc.ORGANIZATION_CODE,
+            wc.ORGANIZATION_NAME
+        FROM erp_warehouse_code wc
+        GROUP BY
+          wc.ORGANIZATION_CODE,
+          wc.ORGANIZATION_NAME
+    ) C ON (A.ORG = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+      UPDATE SET A.INVENTORY_ORGANIZATION_CODE = C.ORGANIZATION_CODE
+      WHERE  A.INVENTORY_ORGANIZATION_CODE IS NULL
+        AND A.ORG IS NOT NULL
+  </update>
+
+  <!--根据仓库组织名称获取仓库组织编码-->
+  <update id="refreshWareOrgCode">
+    MERGE INTO FBA_INVENTORY_ADJUSTMENTS A
+    USING (
+        SELECT
+            wc.ORGANIZATION_CODE,
+            wc.ORGANIZATION_NAME
+        FROM erp_warehouse_code wc
+        GROUP BY
+            wc.ORGANIZATION_CODE,
+            wc.ORGANIZATION_NAME
+    ) C ON (A.WAREHOUSE_NAME = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+      UPDATE SET A.WAREHOUSE_CODE = C.ORGANIZATION_CODE
+      WHERE A.WAREHOUSE_CODE IS NULL
+          AND A.WAREHOUSE_NAME IS NOT NULL
+  </update>
+
+  <!--获InventoryAdjustments数据任务-->
+  <update id="generateInventoryAdjustments">
+        MERGE INTO FBA_INVENTORY_ADJUSTMENTS A
+        USING (
+            SELECT
+              D.BUSINESS_DATE AS ADJUSTED_DATE,
+              D.REFERENCE_ID AS TRANSACTION_ITEM_ID,
+              D.FNSKU,
+              D.SKU,
+              D.FULFILLMENT_CENTER AS FULFILLMENT_CENTER_ID,
+              D.QUANTITY,
+              D.REASON,
+              D.DISPOSITION,
+              D.RECONCILED_QUANTITY AS RECONCILED,
+              D.UNRECONCILED_QUANTITY AS UNRECONCILED,
+              D.SYS_SITE,
+              D.SYS_SHOPS_NAME,
+              SYSDATE AS CREATE_TIME,
+              D.CREATE_TIME AS UPLOAD_DATE,
+              D.ASIN,
+              D.SYS_SELLER_ID,
+              D.UPLOAD_MARK,
+              D.ORIGINAL_TASK_NAME,
+              D.FILE_PATH,
+              D.COUNTRY,
+              D.ID AS PARENT_ID
+            FROM INVENTORY_LEDGER_DETAILED D
+            WHERE D.EVENT_TYPE = 'Adjustments'
+                AND D.CREATE_TIME &gt;= #{dataDate}
+        ) C ON (
+            A.ADJUSTED_DATE = C.ADJUSTED_DATE
+            AND A.FNSKU = C.FNSKU
+            AND A.SKU = C.SKU
+            AND A.SYS_SHOPS_NAME = C.SYS_SHOPS_NAME
+            AND A.SYS_SITE = C.SYS_SITE
+            AND A.TRANSACTION_ITEM_ID = C.TRANSACTION_ITEM_ID
+            AND A.FULFILLMENT_CENTER_ID = C.FULFILLMENT_CENTER_ID
+            AND A.DISPOSITION = C.DISPOSITION
+        )
+        WHEN MATCHED THEN
+          UPDATE SET
+            A.QUANTITY = C.QUANTITY,
+            A.REASON = C.REASON,
+            A.RECONCILED = C.RECONCILED,
+            A.UNRECONCILED = C.UNRECONCILED,
+            A.UPLOAD_DATE = C.UPLOAD_DATE,
+            A.UPLOAD_MARK = C.UPLOAD_MARK,
+            A.ORIGINAL_TASK_NAME = C.ORIGINAL_TASK_NAME,
+            A.SYS_SELLER_ID = C.SYS_SELLER_ID,
+            A.FILE_PATH = C.FILE_PATH,
+            A.COUNTRY = C.COUNTRY,
+            A.PARENT_ID = C.PARENT_ID,
+            A.UPDATE_TIME = SYSDATE
+          WHERE A.VERIFY_STATUS = 0
+        WHEN NOT MATCHED THEN
+            INSERT (
+                A.ADJUSTED_DATE,
+                A.TRANSACTION_ITEM_ID,
+                A.FNSKU,
+                A.SKU,
+                A.FULFILLMENT_CENTER_ID,
+                A.QUANTITY,
+                A.REASON,
+                A.DISPOSITION,
+                A.RECONCILED,
+                A.UNRECONCILED,
+                A.SYS_SITE,
+                A.SYS_SHOPS_NAME,
+                A.CREATE_TIME,
+                A.UPLOAD_DATE,
+                A.ASIN,
+                A.SYS_SELLER_ID,
+                A.UPLOAD_MARK,
+                A.ORIGINAL_TASK_NAME,
+                A.FILE_PATH,
+                A.COUNTRY,
+                A.PARENT_ID
+            )
+            VALUES
+            (
+                C.ADJUSTED_DATE,
+                C.TRANSACTION_ITEM_ID,
+                C.FNSKU,
+                C.SKU,
+                C.FULFILLMENT_CENTER_ID,
+                C.QUANTITY,
+                C.REASON,
+                C.DISPOSITION,
+                C.RECONCILED,
+                C.UNRECONCILED,
+                C.SYS_SITE,
+                C.SYS_SHOPS_NAME,
+                C.CREATE_TIME,
+                C.UPLOAD_DATE,
+                C.ASIN,
+                C.SYS_SELLER_ID,
+                C.UPLOAD_MARK,
+                C.ORIGINAL_TASK_NAME,
+                C.FILE_PATH,
+                C.COUNTRY,
+                C.PARENT_ID
+            )
+    </update>
+</mapper>

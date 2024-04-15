@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.oa.mapper.HrmjobtitlesMapper">
+
+    <select id="getJobTitle"
+            resultType="com.tadpole.cloud.externalSystem.api.oa.model.result.HrmjobtitlesResult">
+        select * from ecology.dbo.HrmJobTitles
+    </select>
+    <select id="hrmCalendar" parameterType="com.tadpole.cloud.externalSystem.modular.oa.entity.HrmShiftCalendarNormal"
+            resultType="com.tadpole.cloud.externalSystem.modular.oa.entity.HrmShiftCalendarNormal">
+        select * from ecology.dbo.HrmShiftCalendar_Normal
+        where kqdate LIKE CONCAT(CONCAT('%', #{param.kqdate}), '%')
+    </select>
+</mapper>

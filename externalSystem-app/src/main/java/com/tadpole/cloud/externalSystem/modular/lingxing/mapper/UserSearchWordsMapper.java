@@ -1,0 +1,16 @@
+package com.tadpole.cloud.externalSystem.modular.lingxing.mapper;
+
+import com.tadpole.cloud.externalSystem.api.lingxing.model.resp.advertising.UserSearchWords;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
+/**
+ * <p>
+ * 销量汇总订单数据 Mapper 接口
+ * </p>
+ *
+ * @author ty
+ * @since 2022-05-06
+ */
+public interface UserSearchWordsMapper extends BaseMapper<UserSearchWords> {
+
+}

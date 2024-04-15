@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.BaseEuCountriesMapper">
+    <sql id="Page_Column_List">
+        ID,
+        COUNTRY,
+        COUNTRY_EN,
+        COUNTRY_CN,
+        AREA,
+        IS_DELETE AS status
+    </sql>
+
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.BaseEuCountriesParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.BaseEuCountriesResult">
+        SELECT <include refid="Page_Column_List"/>  FROM BASE_EU_COUNTRIES t
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.COUNTRY ASC
+    </select>
+
+    <sql id="List_Condition">
+
+        <if test="paramCondition.countrys != null and paramCondition.countrys.size() > 0">
+            AND t.COUNTRY IN
+            <foreach collection="paramCondition.countrys" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.countryCns != null and paramCondition.countryCns.size() != 0">
+            AND t.COUNTRY_CN IN
+            <foreach collection="paramCondition.countryCns" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.area != null and paramCondition.area != ''">
+            AND t.AREA = #{paramCondition.area}
+        </if>
+
+        <if test="paramCondition.status != null ">
+            AND t.IS_DELETE = #{paramCondition.status}
+        </if>
+
+    </sql>
+
+    <select id="euCountry" resultType="String">
+        select distinct COUNTRY from BASE_EU_COUNTRIES t WHERE IS_DELETE = 0 ORDER BY COUNTRY ASC
+    </select>
+
+    <select id="cnCountry" resultType="String">
+        select distinct COUNTRY_CN from BASE_EU_COUNTRIES t WHERE IS_DELETE = 0 ORDER BY COUNTRY_CN ASC
+    </select>
+
+    <select id="enCountry" resultType="String">
+        select distinct COUNTRY_EN from BASE_EU_COUNTRIES t WHERE IS_DELETE = 0 ORDER BY COUNTRY_CN ASC
+    </select>
+</mapper>

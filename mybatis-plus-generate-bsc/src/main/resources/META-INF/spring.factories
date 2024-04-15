@@ -1,0 +1,2 @@
+rg.springframework.context.ApplicationListener=\
+cn.stylefeng.guns.cloud.system.core.dbs.listener.MultiDatasourceInitListener

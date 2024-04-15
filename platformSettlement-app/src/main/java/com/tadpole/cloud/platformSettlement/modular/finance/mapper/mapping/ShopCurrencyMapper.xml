@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.ShopCurrencyMapper">
+
+
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ShopCurrencyResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ShopCurrencyParam">
+        select * from CW_SHOP_CURRENCY where PLATFORM_NAME='Amazon'
+    <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and SHOP_NAME =#{paramCondition.shopName}
+    </if>
+    <if test="paramCondition.site != null and paramCondition.site != ''">
+            and site =#{paramCondition.site}
+    </if>
+            order by PROCEEDS_CURRENCY desc, ID DESC
+    </select>
+
+    <select id="exportShopCurrencyList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ShopCurrencyResult"
+      parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ShopCurrencyParam">
+        select * from CW_SHOP_CURRENCY where PLATFORM_NAME='Amazon'
+        <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+            and SHOP_NAME =#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and site =#{paramCondition.site}
+        </if>
+        order by PROCEEDS_CURRENCY desc, ID DESC
+    </select>
+
+    <select id="findShopEbms" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.TbComShop"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.TbComShop">
+        select
+            ELE_PLATFORM_NAME AS elePlatformName,
+            SHOP_NAME_SIMPLE AS shopNameSimple,
+            COUNTRY_CODE AS CountryCode,
+            ELE_PLATFORM_NAME || '_' || SHOP_NAME_SIMPLE || '_' || COUNTRY_CODE AS shop,
+            SHOP_ORG_CODE AS shopOrgCode,
+            SHOP_COL_ACC_BANK AS shopColAccBank,
+            SHOP_COL_ACC_NO AS shopColAccNo
+        from TB_COM_SHOP WHERE ELE_PLATFORM_NAME = 'Amazon'
+        <if test="paramCondition.shopNameSimple!= null and paramCondition.shopNameSimple != ''">
+            and SHOP_NAME_SIMPLE = #{paramCondition.shopNameSimple}
+        </if>
+        <if test="paramCondition.countryCode != null and paramCondition.countryCode != ''">
+            and COUNTRY_CODE =#{paramCondition.countryCode}
+        </if>
+    </select>
+
+
+    <update  id="autoAnalysis"  useGeneratedKeys="false" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.TbComShop">
+        MERGE INTO CW_SHOP_CURRENCY T1
+            USING (SELECT #{paramCondition.elePlatformName} as PLATFORM_NAME,#{paramCondition.shopNameSimple} as SHOP_NAME
+                        ,  #{paramCondition.countryCode}  as SITE,  #{paramCondition.shop}  as SHOP
+                        ,  #{paramCondition.shopOrgCode}  as SHOP_CODE FROM dual) T2
+            ON (T1.PLATFORM_NAME=T2.PLATFORM_NAME and T1.SHOP_NAME=T2.SHOP_NAME and T1.SITE=T2.SITE)
+            WHEN MATCHED THEN
+                UPDATE SET T1.SHOP_CODE=T2.SHOP_CODE
+            WHEN NOT MATCHED THEN
+                INSERT (T1.PLATFORM_NAME,T1.SHOP_NAME, T1.SITE,T1.SHOP, T1.SHOP_CODE) VALUES (T2.PLATFORM_NAME,T2.SHOP_NAME, T2.SITE
+                                                                                             ,T2.SHOP, T2.SHOP_CODE)
+    </update>
+
+    <update id="updateOriCurrency">
+         UPDATE CW_SHOP_CURRENCY T1
+            SET T1.ORIGINAL_CURRENCY=(SELECT T2.ORIGINAL_CURRENCY FROM CW_FINANCIAL_SITE T2 WHERE T2.PLATFORM_NAME=T1.PLATFORM_NAME AND T2.SITE=T1.SITE)
+            WHERE EXISTS(SELECT 1 FROM CW_FINANCIAL_SITE T2 WHERE T2.PLATFORM_NAME=T1.PLATFORM_NAME AND T2.SITE=T1.SITE)
+    </update>
+
+    <select id="getShop" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ShopCurrencyResult">
+        select SHOP_NAME from CW_SHOP_CURRENCY group by SHOP_NAME order  by SHOP_NAME
+    </select>
+    <select id="getCurrency" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ShopCurrencyParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ShopCurrencyResult">
+
+        select PROCEEDS_CURRENCY from CW_SHOP_CURRENCY where 1=1
+
+        <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+            and PLATFORM_NAME =#{paramCondition.platformName}
+        </if>
+        <if test="paramCondition.shopName!= null and paramCondition.shopName != ''">
+            and SHOP_NAME =#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and SITE =#{paramCondition.site}
+        </if>
+
+        group by PROCEEDS_CURRENCY
+    </select>
+
+
+</mapper>

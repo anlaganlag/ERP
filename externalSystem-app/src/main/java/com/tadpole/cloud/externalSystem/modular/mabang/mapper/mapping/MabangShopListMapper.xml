@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.MabangShopListMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangShopList">
+        <id column="ID" property="id" />
+        <result column="NAME" property="name" />
+        <result column="PLATFORM_ID" property="platformId" />
+        <result column="PLATFORM_NAME" property="platformName" />
+        <result column="AMAZONSITE" property="amazonsite" />
+        <result column="FINANCE_CODE" property="financeCode" />
+        <result column="STATUS" property="status" />
+        <result column="ACCOUNT_USERNAME" property="accountUsername" />
+        <result column="ACCOUNT_STORE_NAME" property="accountStoreName" />
+        <result column="DATACENTER_TOKENID" property="datacenterTokenid" />
+        <result column="SHOP_EMPLOYEE_ID" property="shopEmployeeId" />
+        <result column="IS_DELETE" property="isDelete" />
+        <result column="SYNC_TYPE" property="syncType" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="SYNC_STATUS" property="syncStatus" />
+        <result column="SYNC_FAIL_TIMES" property="syncFailTimes" />
+        <result column="SYNC_RESULT_MSG" property="syncResultMsg" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <sql id="List_Condition">
+
+        <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+            AND upper(s.PLATFORM_NAME) like '%' || upper(#{paramCondition.platformName}) ||'%'
+        </if>
+
+        <if test="paramCondition.name != null and paramCondition.name != ''">
+            AND upper(s.NAME) like '%' || upper(#{paramCondition.name}) ||'%'
+        </if>
+
+        <if test="paramCondition.financeCode != null and paramCondition.financeCode != ''">
+            AND s.FINANCE_CODE like '%' || #{paramCondition.financeCode} ||'%'
+        </if>
+
+        <if test="paramCondition.originalFinanceCode != null and paramCondition.originalFinanceCode != ''">
+            AND s.ORIGINAL_FINANCE_CODE like '%' || #{paramCondition.originalFinanceCode} ||'%'
+        </if>
+        <if test="paramCondition.status != null and paramCondition.status != ''">
+            AND s.STATUS =#{paramCondition.status}
+        </if>
+
+        <if test="paramCondition.names != null and paramCondition.names.size() != 0">
+            AND s.NAME IN
+            <foreach collection="paramCondition.names" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.platformNames != null and paramCondition.platformNames.size() != 0">
+            AND s.PLATFORM_NAME IN
+            <foreach collection="paramCondition.platformNames" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        s.ID,
+        s.NAME,
+        s.PLATFORM_ID,
+        s.PLATFORM_NAME,
+        s.AMAZONSITE,
+        s.FINANCE_CODE,
+        s.ORIGINAL_FINANCE_CODE,
+        s.STATUS,
+        CASE s.STATUS WHEN '1' THEN '启用' ELSE '停用' END AS statusName,
+        s.ACCOUNT_USERNAME,
+        s.ACCOUNT_STORE_NAME,
+        s.DATACENTER_TOKENID,
+        s.SHOP_EMPLOYEE_ID,
+        s.IS_DELETE,
+        s.SYNC_TYPE,
+        s.SYNC_TIME,
+        s.SYNC_STATUS,
+        s.SYNC_FAIL_TIMES,
+        s.SYNC_RESULT_MSG,
+        s.CREATE_TIME,
+        s.UPDATE_TIME,
+        e.NAME employeeName
+    </sql>
+
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangShopListParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangShopListResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM MABANG_SHOP_LIST  s LEFT JOIN MABANG_EMPLOYEE e ON s.SHOP_EMPLOYEE_ID=e.EMPLOYEE_ID
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY s.id ASC
+    </select>
+
+    <select id="queryNames" resultType="String">
+        SELECT DISTINCT  NAME  FROM MABANG_SHOP_LIST msl WHERE   IS_DELETE= '0' ORDER BY UPPER(NAME)
+    </select>
+
+    <select id="queryPlatformNames" resultType="String">
+        SELECT DISTINCT PLATFORM_NAME FROM MABANG_SHOP_LIST WHERE   IS_DELETE= '0' ORDER BY PLATFORM_NAME
+    </select>
+
+    <select id="queryFinanceCodeList" resultType="String">
+        SELECT DISTINCT  FINANCE_CODE  FROM MABANG_SHOP_LIST msl WHERE STATUS = '1' AND IS_DELETE= '0' AND FINANCE_CODE IS NOT NULL ORDER BY FINANCE_CODE
+    </select>
+
+</mapper>

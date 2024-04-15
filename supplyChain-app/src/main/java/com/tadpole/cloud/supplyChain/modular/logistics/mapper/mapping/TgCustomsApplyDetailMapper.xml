@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgCustomsApplyDetailMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        D.ID,D.PID,D.PACK_CODE,D.BOX_NO,D.PACK_DIRECT_CODE,D.MATERIAL_CODE,D.CUSTOMS_NUM,D.ESSENTIAL_FACTOR,D.SKU,D.QUANTITY,
+        D.UNIT,D.ATTRIBUTE,D.CURRENCY,D.BOX_NO_NAME,D.BOX_TYPE,D.WEIGHT,D.GOODS_LONG,D.WIDE,D.HIGH,
+        D.CREATE_TIME,D.CREATE_USER,D.UPDATE_TIME,D.UPDATE_USER,
+        P.FIT_BRAND AS TYPE,P.STYLE,P.COMPANY_BRAND,P.INVOICE_PRO_NAME_CN
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyDetailResult">
+        SELECT
+            DECODE(B.BOX_TYPE, NULL, DECODE(C.BOX_TYPE, NULL, '0', '1'), '1') AS hasBoxType,
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_APPLY_DETAIL D
+        LEFT JOIN TG_BOX_INFO B ON D.BOX_TYPE = B.BOX_TYPE
+        LEFT JOIN
+        (
+            SELECT BOX_TYPE FROM TG_CUSTOM_BOX_INFO GROUP BY BOX_TYPE
+        ) C ON D.BOX_TYPE = C.BOX_TYPE
+        LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+        WHERE D.PID = #{param.pid}
+        ORDER BY D.PACK_CODE ASC, TO_NUMBER(D.BOX_NO) ASC, D.ID ASC
+    </select>
+
+    <!-- 查询列表 -->
+    <select id="queryList"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyDetailResult">
+        SELECT
+            DECODE(B.BOX_TYPE, NULL, DECODE(C.BOX_TYPE, NULL, '0', '1'), '1') AS hasBoxType,
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_APPLY_DETAIL D
+        LEFT JOIN TG_BOX_INFO B ON D.BOX_TYPE = B.BOX_TYPE
+        LEFT JOIN
+        (
+            SELECT BOX_TYPE FROM TG_CUSTOM_BOX_INFO GROUP BY BOX_TYPE
+        ) C ON D.BOX_TYPE = C.BOX_TYPE
+        LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+        WHERE D.PID = #{param.pid}
+        ORDER BY D.PACK_CODE ASC, TO_NUMBER(D.BOX_NO) ASC, D.ID ASC
+    </select>
+
+    <!-- 获取报关单信息缺失明细数据 -->
+    <select id="getIncompleteDetail"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.entity.TgCustomsApplyDetail"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.TgCustomsApplyDetail">
+        SELECT
+            D.MATERIAL_CODE
+        FROM TG_CUSTOMS_APPLY_DETAIL D
+        LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+        WHERE D.PID = #{param.pid}
+        AND P.MATERIAL_CODE IS NOT NULL
+        AND (P.INVOICE_PRO_NAME_CN IS NULL OR P.STYLE IS NULL OR P.INVOICE_PRO_NAME_CN = '无' OR P.STYLE = '无')
+        GROUP BY D.MATERIAL_CODE
+    </select>
+</mapper>

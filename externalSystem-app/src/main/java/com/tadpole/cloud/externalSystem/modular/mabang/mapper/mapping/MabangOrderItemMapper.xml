@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.MabangOrderItemMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangOrderItem">
+        <id column="ID" property="id" />
+        <result column="COST_PRICE" property="costPrice" />
+        <result column="HAS_GOODS" property="hasGoods" />
+        <result column="ORDER_ITEM_ID" property="orderItemId" />
+        <result column="ERP_ORDER_ITEM_ID" property="erpOrderItemId" />
+        <result column="IS_COMBO" property="isCombo" />
+        <result column="ITEM_ID" property="itemId" />
+        <result column="ITEM_REMARK" property="itemRemark" />
+        <result column="NO_LIQUID_COSMETIC" property="noLiquidCosmetic" />
+        <result column="ORIGIN_ORDER_ID" property="originOrderId" />
+        <result column="PICTURE_URL" property="pictureUrl" />
+        <result column="ORIGINAL_PICTURE_URL" property="originalPictureUrl" />
+        <result column="PLATFORM_QUANTITY" property="platformQuantity" />
+        <result column="PLATFORM_SKU" property="platformSku" />
+        <result column="PRODUCT_UNIT" property="productUnit" />
+        <result column="QUANTITY" property="quantity" />
+        <result column="SELL_PRICE" property="sellPrice" />
+        <result column="SELL_PRICE_ORIGIN" property="sellPriceOrigin" />
+        <result column="SPECIFICS" property="specifics" />
+        <result column="STATUS" property="status" />
+        <result column="STOCK_GRID" property="stockGrid" />
+        <result column="STOCK_SKU" property="stockSku" />
+        <result column="STOCK_STATUS" property="stockStatus" />
+        <result column="STOCK_WAREHOUSE_ID" property="stockWarehouseId" />
+        <result column="TITLE" property="title" />
+        <result column="TRANSACTION_ID" property="transactionId" />
+        <result column="UNIT_WEIGHT" property="unitWeight" />
+        <result column="STOCK_WAREHOUSE_NAME" property="stockWarehouseName" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, COST_PRICE, HAS_GOODS, ORDER_ITEM_ID, ERP_ORDER_ITEM_ID, IS_COMBO, ITEM_ID, ITEM_REMARK, NO_LIQUID_COSMETIC, ORIGIN_ORDER_ID, PICTURE_URL, ORIGINAL_PICTURE_URL, PLATFORM_QUANTITY, PLATFORM_SKU, PRODUCT_UNIT, QUANTITY, SELL_PRICE, SELL_PRICE_ORIGIN, SPECIFICS, STATUS, STOCK_GRID, STOCK_SKU, STOCK_STATUS, STOCK_WAREHOUSE_ID, TITLE, TRANSACTION_ID, UNIT_WEIGHT, STOCK_WAREHOUSE_NAME, SYNC_TIME, CREATE_TIME, UPDATE_TIME
+    </sql>
+</mapper>

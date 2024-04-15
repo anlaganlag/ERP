@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LtAliexpressSettlementReportMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtAliexpressSettlementReportResult">
+        select<include refid="DETAIL_COL_NOT_MAT"/>,
+         <include refid="MAT_PROP"/> from LT_ALIEXPRESS_SETTLEMENT_REPORT A
+         LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+         ON B.MATERIAL_CODE = A.NEW_MAT_CODE
+    </select>
+
+
+    <select id="exportByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtAliexpressSettlementReport">
+        select * from LT_ALIEXPRESS_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+    <select id="downloadExport" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtAliexpressSettlementReportExport">
+        select * from LT_ALIEXPRESS_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+
+    <sql id="ALIEXPRESS_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+
+    <sql id ="MAT_PROP">
+        decode(B.MATERIAL_CODE,null,'0', B.CATEGORY) CATEGORY,
+         A.product_type,
+         decode(B.MATERIAL_CODE,null,'0',B.PRODUCT_NAME) PRODUCT_NAME,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE) STYLE,
+         decode(B.MATERIAL_CODE,null,'0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+         decode(B.MATERIAL_CODE,null,'0',B.DESIGN) DESIGN,
+         decode(B.MATERIAL_CODE,null,'0',B.COMPANY_BRAND) COMPANY_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.FIT_BRAND) FIT_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.MODEL) MODEL,
+         decode(B.MATERIAL_CODE,null,'0',B.COLOR) COLOR,
+         decode(B.MATERIAL_CODE,null,'0',B.SIZES) SIZES,
+         decode(B.MATERIAL_CODE,null,'0',B.PACKING) PACKING,
+         decode(B.MATERIAL_CODE,null,'0',B.VERSION) VERSION,
+         decode(B.MATERIAL_CODE,null,'0',B.TYPE) TYPE
+    </sql>
+
+    <sql id="DETAIL_COL_NOT_MAT">
+    A.id,
+    A.platform,
+    A.logistics_track_no,
+    A.department,
+    A.team,
+    A.new_mat_code,
+    A.country,
+    A.order_no,
+    A.sale_qty,
+    A.order_aomount,
+    A.platform_fee,
+    A.promote_alliance_fee,
+    A.logistics_fee,
+    A.cost1,
+    A.cost_step,
+    A.dispose_purchase_fee,
+    A.domestic_unsalable_inventory,
+    A.profit,
+    A.incentive_fund,
+    A.period,
+    A.shop_name,
+    A.out_time,
+    A.unit_cost_cny,
+    A.tax_price_cny,
+    A.remark,
+    A.give_amount,
+    A.collect_account,
+    A.payment_currency,
+    A.remark2,
+    A.revenue_ration,
+    A.people_num,
+    A.people_cost,
+    A.confirm_status
+
+
+    </sql>
+
+    <sql id="detail_col">
+        detail.ID,
+        detail.LOGISTICS_TRACK_NO,
+        detail.NEW_MAT_CODE,
+        detail.CATEGORY,
+        detail.PRODUCT_TYPE,
+        detail.PRODUCT_NAME,
+        detail.STYLE,
+        detail.MAIN_MATERIAL,
+        detail.DESIGN,
+        detail.COMPANY_BRAND,
+        detail.FIT_BRAND,
+        detail.MODEL,
+        detail.COLOR,
+        detail.SIZES,
+        detail.PACKING,
+        detail.VERSION,
+        detail.TYPE,
+        detail.COUNTRY,
+        detail.ORDER_NO,
+        detail.SALE_QTY,
+        detail.ORDER_AOMOUNT,
+        detail.PLATFORM_FEE,
+        detail.PROMOTE_ALLIANCE_FEE,
+        detail.LOGISTICS_FEE,
+        detail.COST1,
+        detail.COST_STEP,
+        detail.DISPOSE_PURCHASE_FEE,
+        detail.DOMESTIC_UNSALABLE_INVENTORY,
+        detail.PROFIT,
+        detail.INCENTIVE_FUND,
+        detail.PERIOD,
+        detail.SHOP_NAME,
+        detail.OUT_TIME,
+        detail.UNIT_COST_CNY,
+        detail.TAX_PRICE_CNY,
+        detail.REMARK,
+        detail.GIVE_AMOUNT,
+        detail.COLLECT_ACCOUNT,
+        detail.PAYMENT_CURRENCY,
+        detail.REMARK2,
+        detail.REVENUE_RATION,
+        detail.PEOPLE_NUM,
+        detail.PEOPLE_COST
+    </sql>
+
+
+
+    <select id="supplement"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.LtAliexpressSettlementReportParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportFinalResult">
+        SELECT
+        <include refid="detail_col"/>  ,
+        detail.net_sales - detail.BRUSHING_VALUE detailSalesVol,
+        SUM(detail.net_sales - detail.BRUSHING_VALUE) OVER(PARTITION BY detail.Fiscal_Period, detail.department, detail.team ORDER BY detail.Fiscal_Period, detail.department, detail.team) AS teamsalesVol,
+        struct.id,
+        struct.period,
+        struct.dept3,
+        struct.dept4,
+        struct.amazon_alloc
+        FROM rp_settlement_report_final detail
+        FULL JOIN (SELECT t.*, t.rowid FROM alloc_structure t WHERE t.AMAZON_ALLOC > 0) struct
+        ON struct.period = detail.Fiscal_Period
+        AND struct.dept3 = detail.department
+        AND struct.dept4 = detail.team
+    </select>
+
+
+    <select id="mergePeople" >
+        begin
+            MERGE INTO LT_ALIEXPRESS_SETTLEMENT_REPORT a
+        USING (SELECT t.* FROM ALLOC_STRUCTURE t  where t.status =1) struct
+        ON (struct.period = a.period AND struct.dept3 = a.department AND struct.dept4 = a.team)
+        WHEN MATCHED THEN
+            UPDATE SET a.people_num = ROUND(NVL(struct.smt_alloc,0),12)
+
+            WHERE a.period = #{period};
+
+            MERGE INTO LT_ALIEXPRESS_SETTLEMENT_REPORT  det
+            USING (
+                SELECT detail.id,detail.PERIOD,detail.department,detail.team,
+                       case when detail.sale_Qty &lt; 0 then 0 else   detail.sale_Qty END detailSalesVol,
+                       SUM(case when detail.sale_Qty &lt; 0 then 0 else   detail.sale_Qty END) OVER(PARTITION BY detail.PERIOD, detail.department, detail.team ) AS teamsalesVol
+                        ,rowid
+                FROM  LT_ALIEXPRESS_SETTLEMENT_REPORT detail) src
+            ON (det.id = src.id)
+            WHEN MATCHED THEN UPDATE set
+                det.revenue_ration = DECODE (NVL(src.teamsalesVol,0),0,0, src.detailSalesVol /src.teamsalesVol),
+                det.people_num = det.people_num * DECODE (NVL(src.teamsalesVol,0),0,0, src.detailSalesVol /src.teamsalesVol)
+                              WHERE NVL(det.confirm_status,0) != 1
+                                and det.period = #{period};
+            UPDATE LT_ALIEXPRESS_SETTLEMENT_REPORT t
+            SET t.people_cost= 0   where t.period = #{period};
+        end;
+
+    </select>
+
+
+    <update id="insertStructure"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtRakutenSettlementReportParam">
+        <!--        删除避免重复插入 -->
+        BEGIN
+        DELETE FROM lt_aliexpress_settlement_report
+        <where>
+            CONFIRM_STATUS = '1'
+            <include refid="ALIEXPRESS_CONDITION"/>
+        </where>;
+        <!--                插入架构数据-->
+        INSERT INTO
+        lt_aliexpress_settlement_report (PERIOD ,
+        DEPARTMENT ,
+        team,
+        REVENUE_RATION ,
+        PEOPLE_NUM,
+        CREATE_TIME ,
+        CREATE_BY)
+        SELECT
+        PERIOD ,
+        DEPT3 ,
+        dept4,
+        0 REVENUE_RATION ,
+        smt_alloc,
+        SYSDATE ,
+        #{param.createBy}
+        FROM
+        ALLOC_STRUCTURE
+        <where>
+            STATUS = '1'
+            and smt_alloc>0
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+        </where>;
+
+        END;
+
+
+    </update>
+
+</mapper>

@@ -1,0 +1,945 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.MonthlyInventoryHistoryMapper">
+
+  <!--Monthly inventory history分页查询列表-->
+  <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.MonthlyInventoryHistory"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.MonthlyInventoryHistoryParam">
+    SELECT
+        m.*,
+        CASE m.VERIFY_STATUS WHEN 0 THEN '未审核' WHEN 1 THEN '已审核' WHEN 2 THEN '已作废' END verifyStatusCN,
+        CASE m.GENERATE_STATUS WHEN 0 THEN '未生成' WHEN 1 THEN '已生成' END generateStatusCN
+    FROM MONTHLY_INVENTORY_HISTORY m
+    <where>
+      <trim prefix="(" suffix=")" >
+        <trim  prefixOverrides="AND">
+          <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+            AND <foreach collection="paramCondition.sysSites" open="m.SYS_SITE IN (" close=")" separator="," item="sysSite">
+              #{sysSite}
+            </foreach>
+            <if test="paramCondition.sysSites.get(0)=='空'.toString()">
+              OR m.SYS_SITE IS NULL
+            </if>
+          </if>
+        </trim>
+      </trim>
+
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND m.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+        AND m.VERIFY_STATUS IN
+        <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator="," item="verifyStatus">
+          #{verifyStatus}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+        AND m.GENERATE_STATUS IN
+        <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator="," item="generateStatus">
+          #{generateStatus}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.dateMonthly != null and paramCondition.dateMonthly != ''">
+        AND m.DATE_MONTHLY = #{paramCondition.dateMonthly}
+      </if>
+
+      <if test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND m.upload_mark =#{paramCondition.uploadMark}
+      </if>
+
+        <choose>
+            <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+                AND m.INVENTORY_ORGANIZATION_CODE IS NULL
+            </when>
+            <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+                AND m.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+    </where>
+    ORDER BY id
+  </select>
+
+  <!--Monthly inventory history获取数量-->
+  <select id="getQuantity" resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.MonthlyInventoryHistory"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.MonthlyInventoryHistoryParam">
+    SELECT
+        SUM(END_QUANTITY) AS END_QUANTITY,
+        SUM(IN_TRANSIT_BETWEEN_WAREHOUSES) AS IN_TRANSIT_BETWEEN_WAREHOUSES
+    FROM MONTHLY_INVENTORY_HISTORY m
+    <where>
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND m.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+        AND m.SYS_SITE IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+          #{sysSite}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+        AND m.VERIFY_STATUS IN
+        <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator="," item="verifyStatus">
+          #{verifyStatus}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+        AND m.GENERATE_STATUS IN
+        <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator="," item="generateStatus">
+          #{generateStatus}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.dateMonthly != null and paramCondition.dateMonthly != ''">
+        and m.DATE_MONTHLY = #{paramCondition.dateMonthly}
+      </if>
+
+      <if test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND m.upload_mark =#{paramCondition.uploadMark}
+      </if>
+
+        <choose>
+            <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+                AND m.INVENTORY_ORGANIZATION_CODE IS NULL
+            </when>
+            <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+                AND m.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+    </where>
+  </select>
+
+
+  <select id="getMaterial"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.MonthlyInventoryHistoryParam"
+    resultType="java.lang.String">
+    SELECT a.material_code
+    FROM mcms_base_data.inv_product_gallery a
+    where a.sku = #{paramCondition.sku}
+      AND a.sys_site = #{paramCondition.sysSite}
+      AND a.sys_shops_name = #{paramCondition.sysShopsName }
+
+  </select>
+
+  <!-- 获取指定月份Monthly Inventory_History汇总数据 -->
+  <select id="getListHeader"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.MonthlyInventoryHistoryParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventory">
+    SELECT to_char(to_date(#{paramCondition.dateMonthly}, 'YYYYMM'), 'YYYY') AS YEAR,
+           to_char(to_date(#{paramCondition.dateMonthly}, 'YYYYMM'), 'MM') AS MONTH,
+           SYSDATE AS CREATE_TIME,
+           'Amazon' AS PLATFORM,
+           SYS_SHOPS_NAME AS SHOP_NAME,
+           SYS_SITE SITE,
+           ORG,
+           INVENTORY_ORGANIZATION_CODE,
+           WAREHOUSE_NAME,
+           WAREHOUSE_CODE
+    FROM MONTHLY_INVENTORY_HISTORY t
+    WHERE t.DATE_MONTHLY = to_char(to_date(#{paramCondition.dateMonthly}, 'YYYYMM'), 'MM/YYYY')
+      AND NVL(t.GENERATE_STATUS, 0) = 0
+      AND t.VERIFY_STATUS = 1
+      AND t.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+    GROUP BY SYS_SHOPS_NAME,
+             SYS_SITE,
+             org,
+             INVENTORY_ORGANIZATION_CODE,
+             WAREHOUSE_NAME,
+             WAREHOUSE_CODE
+  </select>
+
+  <!-- 获取指定月份Monthly Inventory_History明细数据 -->
+  <select id="getDetailList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventory"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventoryDetail">
+    SELECT
+       'Amazon' AS PLATFORM,
+       SYS_SHOPS_NAME AS SHOP_NAME,
+       SYS_SITE AS SITE,
+       ORG,
+       INVENTORY_ORGANIZATION_CODE,
+       WAREHOUSE_NAME,
+       WAREHOUSE_CODE,
+       SKU,
+       CASE
+         WHEN DETAILED_DISPOSITION = 'SELLABLE' THEN 'SELLABLE'
+         WHEN DETAILED_DISPOSITION IS NULL THEN 'SELLABLE'
+         ELSE 'UNSELLABLE'
+         END AS INVENTORY_STATUS,
+       SUM(NVL(END_QUANTITY,0)) AS STOCK_NUM,
+       SUM(NVL(IN_TRANSIT_BETWEEN_WAREHOUSES,0)) AS TRANSIT_NUM,
+       0 AS LOGISTICS_NUM,
+       0 AS ENDING_NUM,
+       0 AS IS_CANCEL,
+       0 AS SYNC_STATUS,
+       SYSDATE AS CREATE_TIME
+    FROM MONTHLY_INVENTORY_HISTORY
+    WHERE DATE_MONTHLY = #{paramCondition.month} || '/' || #{paramCondition.year}
+      AND SYS_SHOPS_NAME = #{paramCondition.shopName}
+      AND SYS_SITE = #{paramCondition.site}
+      AND ORG = #{paramCondition.org}
+      AND INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      AND WAREHOUSE_NAME = #{paramCondition.warehouseName}
+      AND WAREHOUSE_CODE = #{paramCondition.warehouseCode}
+      And NVL(GENERATE_STATUS, 0) = 0
+      AND VERIFY_STATUS = 1
+    GROUP BY
+        SYS_SHOPS_NAME,
+        SYS_SITE,
+        ORG,
+        INVENTORY_ORGANIZATION_CODE,
+        WAREHOUSE_NAME,
+        WAREHOUSE_CODE,
+        SKU,
+        CASE
+            WHEN DETAILED_DISPOSITION = 'SELLABLE' THEN 'SELLABLE'
+            WHEN DETAILED_DISPOSITION IS NULL THEN 'SELLABLE'
+            ELSE 'UNSELLABLE' END
+  </select>
+
+  <!--期末库存列表明细刷listings-->
+  <update id="updateDetailList">
+    MERGE INTO (SELECT * FROM ENDING_INVENTORY_DETAIL WHERE DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL) d
+    USING mcms_base_data.inv_product_gallery g
+    ON (
+      upper(d.sku) = upper(g.sku)
+      AND d.site = g.SYS_SITE
+      AND d.shop_name = g.SYS_SHOPS_NAME
+    )
+    WHEN MATCHED THEN
+        UPDATE SET d.department = g.department, d.team = g.team, d.material_code = g.material_code
+  </update>
+
+  <!--期末库存列表明细刷listings（存档）-->
+  <update id="updateFileDetailList">
+    MERGE INTO (SELECT * FROM ENDING_INVENTORY_DETAIL WHERE DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL) D
+    USING (
+      SELECT
+        SKU,
+        SYS_SITE,
+        SYS_SHOPS_NAME,
+        MATERIAL_CODE,
+        DEPARTMENT,
+        TEAM,
+        LAST_UPDATE_DATE
+        FROM (
+          SELECT
+            SKU,
+            SYS_SITE,
+            SYS_SHOPS_NAME,
+            MATERIAL_CODE,
+            DEPARTMENT,
+            TEAM,
+            LAST_UPDATE_DATE,
+            ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+          FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE
+        ) t
+      WHERE t.rn = 1
+    ) G ON (upper(D.sku) = upper(G.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+    WHEN MATCHED THEN
+        UPDATE SET D.DEPARTMENT= G.DEPARTMENT, D.TEAM = G.TEAM, D.MATERIAL_CODE = G.MATERIAL_CODE
+  </update>
+
+  <!--+在途库存更新物流代发数和在途数-->
+  <update id="updateComingInventory">
+    MERGE INTO (
+      SELECT
+        D.*
+      FROM ENDING_INVENTORY_DETAIL D
+      WHERE
+        D.IS_CANCEL = 0
+        AND D.SYNC_STATUS = 0
+        AND D.INVENTORY_STATUS = 'SELLABLE'
+        AND D.DATA_MONTH = #{dateMonthly}
+    ) A
+    USING (
+      SELECT
+        PLATFORM,
+        SHOP_NAME,
+        SITE,
+        ORG,
+        INVENTORY_ORGANIZATION_CODE,
+        ORG_WAREHOUSE_NAME AS WAREHOUSE_NAME,
+        ORG_WAREHOUSE_CODE AS WAREHOUSE_CODE,
+        SKU,
+        SUM(NVL(LOGISTICS_NUMBER, 0)) LOGISTICS_NUMBER,
+        SUM(NVL(SEA_NUMBER, 0) + NVL(TRAIN_NUMBER, 0) + NVL(CAR_NUMBER, 0) + NVL(AIR_NUMBER, 0)) TRANSIT_NUM
+      FROM EBMS_COMING_INVENTORY
+      WHERE
+        IS_USE = '0'
+        AND INVENTORY_ORGANIZATION_CODE IS NOT NULL
+        AND TO_CHAR(STATICS_DATE, 'YYYYMM') = #{dateMonthly}
+      GROUP BY PLATFORM, SHOP_NAME, SITE, ORG, INVENTORY_ORGANIZATION_CODE, ORG_WAREHOUSE_NAME, ORG_WAREHOUSE_CODE, SKU
+    ) B
+    ON (
+        A.PLATFORM = B.PLATFORM
+        AND A.SHOP_NAME = B.SHOP_NAME
+        AND A.SITE = B.SITE
+        AND A.ORG = B.ORG
+        AND A.INVENTORY_ORGANIZATION_CODE = B.INVENTORY_ORGANIZATION_CODE
+        AND A.WAREHOUSE_NAME = B.WAREHOUSE_NAME
+        AND A.WAREHOUSE_CODE = B.WAREHOUSE_CODE
+        AND A.SKU = B.SKU
+    )
+    WHEN MATCHED THEN
+      UPDATE SET A.LOGISTICS_NUM = A.LOGISTICS_NUM + B.LOGISTICS_NUMBER, A.TRANSIT_NUM = A.TRANSIT_NUM + B.TRANSIT_NUM
+  </update>
+
+  <!--更新在途库存使用状态-->
+  <update id="updateComingUse">
+    MERGE INTO (
+      SELECT
+        *
+      FROM EBMS_COMING_INVENTORY
+      WHERE
+        IS_USE = '0'
+        AND TO_CHAR(STATICS_DATE, 'YYYYMM') = #{dateMonthly}
+    ) A
+    USING (
+      SELECT
+        D.PLATFORM,
+        D.SHOP_NAME,
+        D.SITE,
+        D.ORG,
+        D.INVENTORY_ORGANIZATION_CODE,
+        D.WAREHOUSE_NAME,
+        D.WAREHOUSE_CODE,
+        D.SKU
+      FROM ENDING_INVENTORY_DETAIL D
+      WHERE
+        D.IS_CANCEL = 0
+        AND D.SYNC_STATUS = 0
+        AND D.INVENTORY_STATUS = 'SELLABLE'
+        AND D.DATA_MONTH = #{dateMonthly}
+      GROUP BY D.PLATFORM, D.SHOP_NAME, D.SITE, D.ORG, D.INVENTORY_ORGANIZATION_CODE, D.WAREHOUSE_NAME, D.WAREHOUSE_CODE, D.SKU
+    ) B
+    ON (
+        A.PLATFORM = B.PLATFORM
+        AND A.SHOP_NAME = B.SHOP_NAME
+        AND A.SITE = B.SITE
+        AND A.ORG = B.ORG
+        AND A.INVENTORY_ORGANIZATION_CODE = B.INVENTORY_ORGANIZATION_CODE
+        AND A.ORG_WAREHOUSE_NAME = B.WAREHOUSE_NAME
+        AND A.ORG_WAREHOUSE_CODE = B.WAREHOUSE_CODE
+        AND A.SKU = B.SKU
+    )
+    WHEN MATCHED THEN
+      UPDATE SET A.IS_USE = '1'
+  </update>
+
+  <!--+海外仓库存更新在库数和在途数-->
+  <update id="updateSeaInventory">
+    MERGE INTO (
+      SELECT
+        D.*
+      FROM ENDING_INVENTORY_DETAIL D
+      WHERE
+        D.IS_CANCEL = 0
+        AND D.SYNC_STATUS = 0
+        AND D.INVENTORY_STATUS = 'SELLABLE'
+        AND D.DATA_MONTH = #{dateMonthly}
+    ) A
+    USING (
+      SELECT
+        PLATFORM,
+        SHOP_NAME,
+        SITE,
+        ORG,
+        INVENTORY_ORGANIZATION_CODE,
+        ORG_WAREHOUSE_NAME AS WAREHOUSE_NAME,
+        ORG_WAREHOUSE_CODE AS WAREHOUSE_CODE,
+        SKU,
+        SUM(NVL(ACCOUNT_NUMBER, 0)) ACCOUNT_NUMBER,
+        SUM(NVL(COMING_NUMBER, 0)) COMING_NUMBER
+      FROM EBMS_SEA_INVENTORY
+      WHERE
+        IS_USE = '0'
+        AND INVENTORY_ORGANIZATION_CODE IS NOT NULL
+        AND TO_CHAR(BALANCE_DATE, 'YYYYMM') = #{dateMonthly}
+      GROUP BY PLATFORM, SHOP_NAME, SITE, ORG, INVENTORY_ORGANIZATION_CODE, ORG_WAREHOUSE_NAME, ORG_WAREHOUSE_CODE, SKU
+    ) B
+    ON (
+        A.PLATFORM = B.PLATFORM
+        AND A.SHOP_NAME = B.SHOP_NAME
+        AND A.SITE = B.SITE
+        AND A.ORG = B.ORG
+        AND A.INVENTORY_ORGANIZATION_CODE = B.INVENTORY_ORGANIZATION_CODE
+        AND A.WAREHOUSE_NAME = B.WAREHOUSE_NAME
+        AND A.WAREHOUSE_CODE = B.WAREHOUSE_CODE
+        AND A.SKU = B.SKU
+    )
+    WHEN MATCHED THEN
+      UPDATE SET A.STOCK_NUM = A.STOCK_NUM + B.ACCOUNT_NUMBER, A.TRANSIT_NUM = A.TRANSIT_NUM + B.COMING_NUMBER
+  </update>
+
+  <!--更新海外仓库存使用状态-->
+  <update id="updateSeaUse">
+    MERGE INTO (
+      SELECT
+        *
+      FROM EBMS_SEA_INVENTORY
+      WHERE
+        IS_USE = '0'
+        AND INVENTORY_ORGANIZATION_CODE IS NOT NULL
+        AND TO_CHAR(BALANCE_DATE, 'YYYYMM') = #{dateMonthly}
+    ) A
+    USING (
+      SELECT
+        D.PLATFORM,
+        D.SHOP_NAME,
+        D.SITE,
+        D.ORG,
+        D.INVENTORY_ORGANIZATION_CODE,
+        D.WAREHOUSE_NAME,
+        D.WAREHOUSE_CODE,
+        D.SKU
+      FROM ENDING_INVENTORY_DETAIL D
+      WHERE
+        D.IS_CANCEL = 0
+        AND D.SYNC_STATUS = 0
+        AND D.INVENTORY_STATUS = 'SELLABLE'
+        AND D.DATA_MONTH = #{dateMonthly}
+      GROUP BY D.PLATFORM, D.SHOP_NAME, D.SITE, D.ORG, D.INVENTORY_ORGANIZATION_CODE, D.WAREHOUSE_NAME, D.WAREHOUSE_CODE, D.SKU
+    ) B
+    ON (
+        A.PLATFORM = B.PLATFORM
+        AND A.SHOP_NAME = B.SHOP_NAME
+        AND A.SITE = B.SITE
+        AND A.ORG = B.ORG
+        AND A.INVENTORY_ORGANIZATION_CODE = B.INVENTORY_ORGANIZATION_CODE
+        AND A.ORG_WAREHOUSE_NAME = B.WAREHOUSE_NAME
+        AND A.ORG_WAREHOUSE_CODE = B.WAREHOUSE_CODE
+        AND A.SKU = B.SKU
+    )
+    WHEN MATCHED THEN
+      UPDATE SET A.IS_USE = '1'
+  </update>
+
+  <!-- 获取未使用的在途库存和海外仓库单据头部数据 -->
+  <select id="getHeaderByComingAndSea" resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventory">
+    SELECT
+      SUBSTR(#{dateMonthly}, 0, 4) AS YEAR,
+      SUBSTR(#{dateMonthly}, 5) AS MONTH,
+      T.PLATFORM,
+      T.SHOP_NAME,
+      T.SITE,
+      T.ORG,
+      T.INVENTORY_ORGANIZATION_CODE,
+      T.ORG_WAREHOUSE_NAME AS WAREHOUSE_NAME,
+      T.ORG_WAREHOUSE_CODE AS WAREHOUSE_CODE,
+      SYSDATE AS CREATE_TIME,
+      #{userAccount} AS CREATE_USER
+    FROM
+    (
+      (
+        SELECT
+          C.PLATFORM,
+          C.SHOP_NAME,
+          C.SITE,
+          C.ORG,
+          C.INVENTORY_ORGANIZATION_CODE,
+          C.ORG_WAREHOUSE_NAME,
+          C.ORG_WAREHOUSE_CODE
+        FROM EBMS_COMING_INVENTORY C
+        WHERE
+          C.IS_USE = '0'
+          AND C.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+          AND TO_CHAR(C.STATICS_DATE, 'YYYYMM') = #{dateMonthly}
+      )
+      UNION ALL
+      (
+      SELECT
+          S.PLATFORM,
+          S.SHOP_NAME,
+          S.SITE,
+          S.ORG,
+          S.INVENTORY_ORGANIZATION_CODE,
+          S.ORG_WAREHOUSE_NAME,
+          S.ORG_WAREHOUSE_CODE
+      FROM EBMS_SEA_INVENTORY S
+      WHERE
+          S.IS_USE = '0'
+          AND S.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+          AND TO_CHAR(S.BALANCE_DATE, 'YYYYMM') = #{dateMonthly}
+      )
+    ) T
+    GROUP BY
+        T.PLATFORM,
+        T.SHOP_NAME,
+        T.SITE,
+        T.ORG,
+        T.INVENTORY_ORGANIZATION_CODE,
+        T.ORG_WAREHOUSE_NAME,
+        T.ORG_WAREHOUSE_CODE
+  </select>
+
+  <!-- 获取未使用的在途库存和海外仓库明细数据 -->
+  <select id="getDetailByComingAndSea" parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventory"
+          resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventoryDetail">
+    SELECT
+      T.PLATFORM,
+      T.SHOP_NAME,
+      T.SITE,
+      T.ORG,
+      T.INVENTORY_ORGANIZATION_CODE,
+      T.WAREHOUSE_NAME,
+      T.WAREHOUSE_CODE,
+      T.SKU,
+      'SELLABLE' AS INVENTORY_STATUS,
+      SUM(NVL(T.TRANSIT_NUM, 0)) AS TRANSIT_NUM,
+      SUM(NVL(T.LOGISTICS_NUM, 0)) AS LOGISTICS_NUM,
+      SUM(NVL(T.STOCK_NUM, 0)) AS STOCK_NUM,
+      SUM(NVL(T.ENDING_NUM, 0)) AS ENDING_NUM,
+      0 AS IS_CANCEL,
+      0 AS SYNC_STATUS,
+      #{endingInventory.createUser} AS CREATE_USER,
+      SYSDATE AS CREATE_TIME,
+      #{endingInventory.dateMonthly} AS DATA_MONTH
+    FROM
+    (
+	  (
+	    SELECT
+	      C.PLATFORM,
+          C.SHOP_NAME,
+          C.SITE,
+          C.ORG,
+          C.INVENTORY_ORGANIZATION_CODE,
+          C.ORG_WAREHOUSE_NAME AS WAREHOUSE_NAME,
+          C.ORG_WAREHOUSE_CODE AS WAREHOUSE_CODE,
+          C.SKU,
+          SUM(NVL(C.SEA_NUMBER, 0)) + SUM(NVL(C.TRAIN_NUMBER, 0)) + SUM(NVL(C.CAR_NUMBER, 0)) + SUM(NVL(C.AIR_NUMBER, 0)) AS TRANSIT_NUM,
+          SUM(NVL(C.LOGISTICS_NUMBER, 0)) AS LOGISTICS_NUM,
+          0 AS STOCK_NUM,
+          0 AS ENDING_NUM
+        FROM EBMS_COMING_INVENTORY C
+	    WHERE
+          C.IS_USE = '0'
+          AND C.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+          AND TO_CHAR(C.STATICS_DATE, 'YYYYMM') = #{endingInventory.dateMonthly}
+          AND C.PLATFORM = #{endingInventory.platform}
+          AND C.SHOP_NAME = #{endingInventory.shopName}
+          AND C.SITE = #{endingInventory.site}
+          AND C.ORG = #{endingInventory.org}
+          AND C.INVENTORY_ORGANIZATION_CODE = #{endingInventory.inventoryOrganizationCode}
+          AND C.ORG_WAREHOUSE_NAME = #{endingInventory.warehouseName}
+          <choose>
+              <when test="endingInventory.warehouseCode != null">
+                  AND C.ORG_WAREHOUSE_CODE = #{endingInventory.warehouseCode}
+              </when>
+              <when test="endingInventory.warehouseCode == null">
+                  AND C.ORG_WAREHOUSE_CODE IS NULL
+              </when>
+              <otherwise>
+              </otherwise>
+          </choose>
+        GROUP BY
+          C.PLATFORM,
+          C.SHOP_NAME,
+          C.SITE,
+          C.ORG,
+          C.INVENTORY_ORGANIZATION_CODE,
+          C.ORG_WAREHOUSE_NAME,
+          C.ORG_WAREHOUSE_CODE,
+          C.SKU
+	 )
+	  UNION ALL
+	  (
+        SELECT
+          S.PLATFORM,
+          S.SHOP_NAME,
+          S.SITE,
+          S.ORG,
+          S.INVENTORY_ORGANIZATION_CODE,
+          S.ORG_WAREHOUSE_NAME AS WAREHOUSE_NAME,
+          S.ORG_WAREHOUSE_CODE AS WAREHOUSE_CODE,
+          S.SKU,
+          SUM(NVL(S.COMING_NUMBER, 0)) AS TRANSIT_NUM,
+          0 AS LOGISTICS_NUM,
+          SUM(NVL(S.ACCOUNT_NUMBER, 0)) AS STOCK_NUM,
+          0 AS ENDING_NUM
+        FROM EBMS_SEA_INVENTORY S
+        WHERE
+          S.IS_USE = '0'
+          AND S.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+          AND TO_CHAR(S.BALANCE_DATE, 'YYYYMM') = #{endingInventory.dateMonthly}
+          AND S.PLATFORM = #{endingInventory.platform}
+          AND S.SHOP_NAME = #{endingInventory.shopName}
+          AND S.SITE = #{endingInventory.site}
+          AND S.ORG = #{endingInventory.org}
+          AND S.INVENTORY_ORGANIZATION_CODE = #{endingInventory.inventoryOrganizationCode}
+          AND S.ORG_WAREHOUSE_NAME = #{endingInventory.warehouseName}
+          AND S.ORG_WAREHOUSE_CODE = #{endingInventory.warehouseCode, jdbcType = VARCHAR}
+        GROUP BY
+          S.PLATFORM,
+          S.SHOP_NAME,
+          S.SITE,
+          S.ORG,
+          S.INVENTORY_ORGANIZATION_CODE,
+          S.ORG_WAREHOUSE_NAME,
+          S.ORG_WAREHOUSE_CODE,
+          S.SKU
+	  )
+    ) T
+    GROUP BY
+      T.PLATFORM,
+      T.SHOP_NAME,
+      T.SITE,
+      T.ORG,
+      T.INVENTORY_ORGANIZATION_CODE,
+      T.WAREHOUSE_NAME,
+      T.WAREHOUSE_CODE,
+      T.SKU
+  </select>
+
+  <select id="isInvReady" resultType="java.lang.Boolean">
+   select  BALANCE_DATE from  ebms_sea_inventory
+
+  </select>
+
+  <!--更新Monthly Inventory History源报告生成状态和单据头-->
+  <update id="updateSrcList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventory">
+    UPDATE MONTHLY_INVENTORY_HISTORY
+    SET bill_code       = #{paramCondition.billCode},
+        generate_status = 1,
+        update_time     = SYSDATE,
+        update_by       = #{paramCondition.createUser}
+    WHERE generate_status = 0
+      AND verify_status = 1
+      AND to_char(to_date(DATE_MONTHLY, 'MM/YYYY'), 'YYYYMM') = #{paramCondition.year} || #{paramCondition.month}
+      AND SYS_SHOPS_NAME = #{paramCondition.shopName}
+      AND SYS_SITE = #{paramCondition.site}
+      AND bill_code IS NULL
+  </update>
+
+  <update id="rejectBatch" parameterType="java.util.List">
+    UPDATE
+    MONTHLY_INVENTORY_HISTORY a
+    SET
+    a.VERIFY_AT = SYSDATE,
+    a.UPDATE_TIME = SYSDATE,
+    <if test="paramCondition.verifyBy != null and paramCondition.verifyBy != ''">
+      a.VERIFY_BY = #{paramCondition.verifyBy},
+    </if>
+    <if test="paramCondition.updateBy != null and paramCondition.updateBy != ''">
+      a.UPDATE_BY = #{paramCondition.updateBy},
+    </if>
+    a.VERIFY_STATUS = 2
+    <where>
+      <if test="paramCondition.idList != null and paramCondition.idList.size>0">
+        and a.id IN
+        <foreach collection="paramCondition.idList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+      and a.verify_status = 0
+      and a.generate_status = 0
+    </where>
+
+  </update>
+
+
+  <update id="orgBatch" parameterType="java.util.List">
+    UPDATE
+    MONTHLY_INVENTORY_HISTORY a
+    <set>
+      <trim prefix="a.org = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.inventoryOrganization}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.INVENTORY_ORGANIZATION_CODE = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.inventoryOrganizationCode}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.WAREHOUSE_NAME = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.warehouseName}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.WAREHOUSE_CODE = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.warehouseCode}
+        </foreach>
+      </trim>
+    </set>
+    WHERE a.id IN
+    <foreach collection="verifyList" item="item" index="index" separator="," open="(" close=")">
+      #{item.id}
+    </foreach>
+
+  </update>
+
+
+  <select id="orgList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.MonthlyInventoryHistoryParam">
+    SELECT m.*
+    FROM MONTHLY_INVENTORY_HISTORY m
+    WHERE (m.INVENTORY_ORGANIZATION_CODE IS NULL OR M.WAREHOUSE_CODE IS NULL)
+
+  </select>
+
+
+
+  <update id="verifyUpdateBatch" parameterType="java.util.List">
+    UPDATE
+    monthly_inventory_history a
+    SET
+    a.VERIFY_AT = SYSDATE,
+    a.UPDATE_TIME = SYSDATE,
+    a.VERIFY_BY = #{paramCondition.verifyBy},
+    a.UPDATE_BY = #{paramCondition.updateBy},
+    a.VERIFY_STATUS = 1
+    <where>
+      a.VERIFY_STATUS = 0
+      AND a.GENERATE_STATUS = 0
+      AND a.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+      AND a.WAREHOUSE_CODE IS NOT NULL
+      AND a.BILL_CODE IS NULL
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND a.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+          item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+        AND a.SYS_SITE IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator=","
+          item="sysSite">
+          #{sysSite}
+        </foreach>
+        <if test="paramCondition.sysSites.get(0)=='空'.toString()">
+          or a.SYS_SITE is null
+        </if>
+      </if>
+
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND a.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+
+      <if test="paramCondition.dateMonthly != null and paramCondition.dateMonthly != ''">
+        and a.DATE_MONTHLY = #{paramCondition.dateMonthly}
+      </if>
+
+      <if
+        test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND a.upload_mark =#{paramCondition.uploadMark}
+      </if>
+    </where>
+
+
+  </update>
+
+  <!--刷组织名称（Amazon_账号_站点）和仓库组织名称（Amazon_账号_站点_仓库）-->
+  <update id="addOrgName" >
+    UPDATE monthly_inventory_history   A
+    SET A.org = 'Amazon_' || A.SYS_SHOPS_NAME || '_' ||A.SYS_SITE,
+    A.warehouse_name = 'Amazon_' || A.SYS_SHOPS_NAME || '_' ||A.SYS_SITE || '_仓库'
+    WHERE (A.org IS NULL OR A.warehouse_name IS NULL)
+    AND A.SYS_SHOPS_NAME IS NOT NULL
+    AND A.SYS_SITE IS NOT NULL
+  </update>
+
+  <!--根据组织刷库存组织编码-->
+  <update id="refreshOrgCode">
+    MERGE INTO monthly_inventory_history  A
+    USING (
+        SELECT
+            wc.ORGANIZATION_CODE,
+            wc.ORGANIZATION_NAME
+        FROM erp_warehouse_code wc
+        GROUP BY
+            wc.ORGANIZATION_CODE,
+            wc.ORGANIZATION_NAME
+    ) C ON (A.ORG = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+      UPDATE SET A.INVENTORY_ORGANIZATION_CODE = C.ORGANIZATION_CODE
+      WHERE A.INVENTORY_ORGANIZATION_CODE IS NULL
+        AND A.ORG IS NOT NULL
+  </update>
+
+  <!--根据仓库组织名称获取仓库组织编码-->
+  <update id="refreshWareOrgCode">
+    MERGE INTO monthly_inventory_history  A
+    USING (
+        SELECT
+          wc.ORGANIZATION_CODE,
+          wc.ORGANIZATION_NAME
+        FROM erp_warehouse_code wc
+        GROUP BY
+          wc.ORGANIZATION_CODE,
+          wc.ORGANIZATION_NAME
+    ) C ON (A.WAREHOUSE_NAME = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+      UPDATE SET A.WAREHOUSE_CODE = C.ORGANIZATION_CODE
+      WHERE A.WAREHOUSE_CODE IS NULL
+        AND A.WAREHOUSE_NAME IS NOT NULL
+  </update>
+
+  <!--分配的物料和库存组织编码-->
+  <select id="assignMaterialList" parameterType="java.util.List"
+          resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ZZDistributeMcms">
+    SELECT
+      t.INVENTORY_ORGANIZATION_CODE shop_code,
+      d.material_code
+    FROM ending_inventory t
+    JOIN ending_inventory_detail d ON t.id = d.out_id
+    WHERE
+      t.INVENTORY_ORGANIZATION_CODE is not null
+      and d.material_code is not null
+      <if test="detailIdList != null and detailIdList.size>0">
+        and d.id IN
+        <foreach collection="detailIdList" open="(" close=")" separator="," item="id">
+            #{id}
+        </foreach>
+      </if>
+  </select>
+
+  <!-- 查询是否有未审核或者未生成期末库存列表的数据 -->
+  <select id="getNotVerifyCounts"
+          parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.MonthlyInventoryHistoryParam"
+          resultType="java.lang.Integer">
+    SELECT
+       COUNT(1)
+    FROM MONTHLY_INVENTORY_HISTORY t
+    WHERE t.DATE_MONTHLY = TO_CHAR(TO_DATE(#{paramCondition.dateMonthly}, 'YYYYMM'), 'MM/YYYY')
+      AND (t.VERIFY_STATUS = 0 OR (t.VERIFY_STATUS = 1 AND t.GENERATE_STATUS = 0))
+  </select>
+
+    <!--获MonthlyInventoryHistory数据任务-->
+    <update id="generateMonthlyInventoryHistory">
+        MERGE INTO MONTHLY_INVENTORY_HISTORY A
+        USING (
+            SELECT
+                S.BUSINESS_DATE AS DATE_MONTHLY,
+                S.FNSKU,
+                S.SKU,
+                S.ENDING_WAREHOUSE_BALANCE - S.UNKNOWN_EVENTS AS END_QUANTITY,
+                S.DISPOSITION AS DETAILED_DISPOSITION,
+                S.SYS_SHOPS_NAME,
+                S.SYS_SITE,
+                S.CREATE_TIME AS UPLOAD_DATE,
+                SYSDATE AS CREATE_TIME,
+                S.UPLOAD_MARK,
+                S.ORIGINAL_TASK_NAME,
+                S.FILE_PATH,
+                S.SYS_SELLER_ID,
+                S.ASIN,
+                S.UNKNOWN_EVENTS,
+                S.LOCATION AS COUNTRY,
+                S.ID AS PARENT_ID,
+                S.IN_TRANSIT_BETWEEN_WAREHOUSES
+            FROM INVENTORY_LEDGER_SUMMARY S
+            WHERE S.BUSINESS_DATE = #{dataDate}
+        ) C ON (
+            A.DATE_MONTHLY = C.DATE_MONTHLY
+            AND A.FNSKU = C.FNSKU
+            AND A.SKU = C.SKU
+            AND A.DETAILED_DISPOSITION = C.DETAILED_DISPOSITION
+            AND A.SYS_SHOPS_NAME = C.SYS_SHOPS_NAME
+            AND A.SYS_SITE = C.SYS_SITE
+            AND A.ASIN = C.ASIN
+        )
+        WHEN MATCHED THEN
+          UPDATE SET
+            A.END_QUANTITY = C.END_QUANTITY,
+            A.UPLOAD_DATE = C.UPLOAD_DATE,
+            A.UPLOAD_MARK = C.UPLOAD_MARK,
+            A.ORIGINAL_TASK_NAME = C.ORIGINAL_TASK_NAME,
+            A.FILE_PATH = C.FILE_PATH,
+            A.SYS_SELLER_ID = C.SYS_SELLER_ID,
+            A.UNKNOWN_EVENTS = C.UNKNOWN_EVENTS,
+            A.COUNTRY = C.COUNTRY,
+            A.PARENT_ID = C.PARENT_ID,
+            A.UPDATE_TIME = SYSDATE,
+            A.IN_TRANSIT_BETWEEN_WAREHOUSES = C.IN_TRANSIT_BETWEEN_WAREHOUSES
+          WHERE A.VERIFY_STATUS = 0
+        WHEN NOT MATCHED THEN
+            INSERT (
+                A.DATE_MONTHLY,
+                A.FNSKU,
+                A.SKU,
+                A.END_QUANTITY,
+                A.DETAILED_DISPOSITION,
+                A.SYS_SHOPS_NAME,
+                A.SYS_SITE,
+                A.UPLOAD_DATE,
+                A.CREATE_TIME,
+                A.UPLOAD_MARK,
+                A.ORIGINAL_TASK_NAME,
+                A.FILE_PATH,
+                A.SYS_SELLER_ID,
+                A.ASIN,
+                A.UNKNOWN_EVENTS,
+                A.COUNTRY,
+                A.PARENT_ID,
+                A.IN_TRANSIT_BETWEEN_WAREHOUSES
+            )
+            VALUES
+            (
+                C.DATE_MONTHLY,
+                C.FNSKU,
+                C.SKU,
+                C.END_QUANTITY,
+                C.DETAILED_DISPOSITION,
+                C.SYS_SHOPS_NAME,
+                C.SYS_SITE,
+                C.UPLOAD_DATE,
+                C.CREATE_TIME,
+                C.UPLOAD_MARK,
+                C.ORIGINAL_TASK_NAME,
+                C.FILE_PATH,
+                C.SYS_SELLER_ID,
+                C.ASIN,
+                C.UNKNOWN_EVENTS,
+                C.COUNTRY,
+                C.PARENT_ID,
+                C.IN_TRANSIT_BETWEEN_WAREHOUSES
+            )
+    </update>
+</mapper>
+
+

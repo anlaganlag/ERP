@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.sales.mapper.ProfitTargetMapper">
+
+    <sql id="Page_Column_List">
+        ID,
+        PLATFORM,
+        DEPARTMENT,
+        TEAM,
+        PRODUCT_TYPE,
+        COMPANY_BRAND,
+        (SEASON_ONE+SEASON_TWO+SEASON_THREE+SEASON_FOUR) yearTarget,
+        PROFIT_MARGIN yearProfitMargin,
+        SEASON_ONE,
+        SEASON_TWO,
+        SEASON_THREE,
+        SEASON_FOUR,
+        US,
+        CA,
+        MX,
+        UK,
+        DE,
+        FR,
+        IT,
+        ES,
+        NL,
+        SE,
+        JP,
+        AU,
+        AE,
+        SG,
+        SA,
+        IND,
+        PL,
+        TR,
+        BE,
+        EU,
+        YEAR,
+        VERSION,
+        CURRENCY,
+        CASE CONFIRM_STATUS WHEN 1 THEN '已确认' WHEN 0 THEN '未确认' ELSE '其他' END CONFIRM_STATUS,
+        CREATE_AT,
+        CREATE_BY,
+        CONFIRM_DATE,
+        CONFIRM_BY,
+        UPDATE_AT,
+        UPDATE_BY,
+        shop_name,
+        retract_line,
+        newold_product
+    </sql>
+
+    <sql id="List_Sum">
+        SUM(t.SEASON_ONE+t.SEASON_TWO+t.SEASON_THREE+t.SEASON_FOUR) yearTarget,
+        SUM(t.SEASON_ONE+t.SEASON_TWO+t.SEASON_THREE+t.SEASON_FOUR)/SUM(s.SEASON_ONE+s.SEASON_TWO+s.SEASON_THREE+s.SEASON_FOUR) yearProfitMargin,
+        SUM(t.SEASON_ONE) seasonOne,
+        SUM(t.SEASON_TWO) seasonTwo,
+        SUM(t.SEASON_THREE) seasonThree,
+        SUM(t.SEASON_FOUR) seasonFour,
+        SUM(t.US) US,
+        SUM(t.CA) CA,
+        SUM(t.MX) MX,
+        SUM(t.UK) UK,
+        SUM(t.DE) DE,
+        SUM(t.FR) FR,
+        SUM(t.IT) IT,
+        SUM(t.ES) ES,
+        SUM(t.NL) NL,
+        SUM(t.SE) SE,
+        SUM(t.JP) JP,
+        SUM(t.AU) AU,
+        SUM(t.AE) AE,
+        SUM(t.SG) SG,
+        SUM(t.SA) SA,
+        SUM(t.IND) IND,
+        SUM(t.PL) PL,
+        SUM(t.TR) TR,
+        SUM(t.BE) BE,
+        SUM(t.EU) EU
+    </sql>
+
+    <sql id="List_Condition">
+        <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+            AND t.platform IN
+            <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+                     item="platform">
+                #{platform}
+            </foreach>
+        </if>
+        <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+            AND t.department IN
+            <foreach collection="paramCondition.departments" open="(" close=")" separator=","
+                     item="department">
+                #{department}
+            </foreach>
+        </if>
+        <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+            AND t.team IN
+            <foreach collection="paramCondition.teams" open="(" close=")" separator=","
+                     item="team">
+                #{team}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.productTypes != null and paramCondition.productTypes.size>0">
+            AND t.product_type IN
+            <foreach collection="paramCondition.productTypes" open="(" close=")" separator=","
+                     item="productType">
+                #{productType}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.companyBrands != null and paramCondition.companyBrands.size>0">
+            AND t.company_brand IN
+            <foreach collection="paramCondition.companyBrands" open="(" close=")" separator=","
+                     item="companyBrand">
+                #{companyBrand}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.year != null and paramCondition.year != ''">
+            AND t.year =#{paramCondition.year}
+        </if>
+
+        <if test="paramCondition.version != null and paramCondition.version != ''">
+            AND t.version =#{paramCondition.version}
+        </if>
+
+    </sql>
+
+    <sql id="List_Conditionx">
+        <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+            AND t.platform IN
+            <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+              item="platform">
+                #{platform}
+            </foreach>
+        </if>
+        <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+            AND t.department IN
+            <foreach collection="paramCondition.departments" open="(" close=")" separator=","
+              item="department">
+                #{department}
+            </foreach>
+        </if>
+        <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+            AND t.team IN
+            <foreach collection="paramCondition.teams" open="(" close=")" separator=","
+              item="team">
+                #{team}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.productTypes != null and paramCondition.productTypes.size>0">
+            AND t.product_type IN
+            <foreach collection="paramCondition.productTypes" open="(" close=")" separator=","
+              item="productType">
+                #{productType}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.companyBrands != null and paramCondition.companyBrands.size>0">
+            AND t.company_brand IN
+            <foreach collection="paramCondition.companyBrands" open="(" close=")" separator=","
+              item="companyBrand">
+                #{companyBrand}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.year != null and paramCondition.year != ''">
+            AND t.year =#{paramCondition.year}
+        </if>
+
+        <if test="paramCondition.version != null and paramCondition.version != ''">
+            AND t.version =#{paramCondition.version}
+        </if>
+
+        <if test="paramCondition.retractLines != null and paramCondition.retractLines.size>0">
+            AND t.RETRACT_LINE IN
+            <foreach collection="paramCondition.retractLines" open="(" close=")" separator=","
+                     item="retractLine">
+                #{retractLine}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.newoldProducts != null and paramCondition.newoldProducts.size>0">
+            AND t.newold_product IN
+            <foreach collection="paramCondition.newoldProducts" open="(" close=")" separator=","
+                     item="newoldProduct">
+                #{newoldProduct}
+            </foreach>
+        </if>
+
+
+
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND t.SHOP_NAME like '%'||#{paramCondition.shopName}||'%'
+        </if>
+
+    </sql>
+
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.ProfitTargetParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.ProfitTargetResult">
+        select      <include refid="Page_Column_List"/>     from PROFIT_TARGET t
+        <where>
+            <include refid="List_Conditionx"/>
+        </where>
+        ORDER BY ID
+
+    </select>
+
+    <select id="getQuantity"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.ProfitTargetParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.ProfitTargetResult">
+        SELECT <include refid="List_Sum"/>  FROM PROFIT_TARGET  t FULL JOIN   SALES_VOLUME_TARGET s
+        ON s.PLATFORM=t.PLATFORM
+        AND s.DEPARTMENT=t.DEPARTMENT
+        AND s.TEAM=t.TEAM
+        AND NVL(s.PRODUCT_TYPE,0)=NVL(t.PRODUCT_TYPE,0)
+        AND NVL(s.COMPANY_BRAND,0)=NVL(t.COMPANY_BRAND,0)
+        AND NVL(s.shop_name,0)=NVL(t.shop_name,0)
+        AND NVL(s.retract_line,0)=NVL(t.retract_line,0)
+        AND NVL(s.newold_product,0)=NVL(t.newold_product,0)
+        AND s.VERSION=t.VERSION
+        AND s.YEAR=t.YEAR
+        <where>
+            <include refid="List_Conditionx"/>
+        </where>
+    </select>
+
+</mapper>

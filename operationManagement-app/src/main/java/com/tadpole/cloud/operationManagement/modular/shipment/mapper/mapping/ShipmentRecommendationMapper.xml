@@ -1,0 +1,669 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.shipment.mapper.ShipmentRecommendationMapper">
+
+    <sql id="List_Condition">
+        AND T1.platform = 'Amazon'
+        AND NVL(T3. SYS_LOGI_MODE,'FA') = 'FA'
+        AND NVL(T3.SYS_LABEL_TYPE,'正常销售') in ('正常销售','清货物料','清货SKU')
+        <if test="paramCondition.department != null and paramCondition.department != ''">
+            AND T1.department = #{paramCondition.department}
+        </if>
+
+        <if test="paramCondition.team != null and paramCondition.team != ''">
+            AND T1.team = #{paramCondition.team}
+        </if>
+
+        <if test="paramCondition.preArea != null and paramCondition.preArea != ''">
+            AND T1.pre_area = #{paramCondition.preArea}
+        </if>
+
+        <if test="paramCondition.asin != null and paramCondition.asin != ''">
+            AND T1.asin = #{paramCondition.asin}
+        </if>
+
+        <if test="paramCondition.materialCode != null and paramCondition.materialCode != ''">
+            AND T1.material_code = #{paramCondition.materialCode}
+        </if>
+
+        <if test="paramCondition.productType != null and paramCondition.productType != '' and paramCondition.productType != '[]'">
+            AND T1.product_type like  '%'||#{paramCondition.productType}||'%'
+        </if>
+
+        <if test="paramCondition.productName != null and paramCondition.productName != '' and paramCondition.productName != '[]'">
+            AND T1.product_name like '%'||#{paramCondition.productName}||'%'
+        </if>
+
+        <if test="paramCondition.IsNoApply != null and paramCondition.IsNoApply">
+            AND T1.status != 1
+        </if>
+
+        <if test="paramCondition.departmentList != null and paramCondition.departmentList.size()>0">
+            AND T1.department IN
+            <foreach collection="paramCondition.departmentList" index="index" item="item" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.teamList != null and paramCondition.teamList.size()>0">
+            AND T1.team IN
+            <foreach collection="paramCondition.teamList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.PreAreaList != null and paramCondition.PreAreaList.size()>0">
+            AND T1.pre_area IN
+            <foreach collection="paramCondition.PreAreaList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.asinList != null and paramCondition.asinList.size()>0">
+            AND T1.asin IN
+            <foreach collection="paramCondition.asinList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size()>0">
+            AND T1.material_code IN
+            <foreach collection="paramCondition.materialCodeList" index="index" item="item" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size()>0">
+            AND T1.product_type IN
+            <foreach collection="paramCondition.productTypeList" index="index" item="item" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.productNameList != null and paramCondition.productNameList.size()>0">
+            AND T1.product_name IN
+            <foreach collection="paramCondition.productNameList" index="index" item="item" open="(" separator=","
+                     close=")">
+                #{item}
+            </foreach>
+        </if>
+    </sql>
+
+
+    <select id="getListByPK" resultType="com.tadpole.cloud.operationManagement.modular.shipment.entity.ShipmentRecommendation">
+        SELECT * FROM SHIPMENT_RECOMMENDATION t
+        <where>
+            <if test="pKList != null and pKList.size > 0">
+                AND 'Amazon'||PRE_AREA || department || team || material_code || ASIN IN
+                <foreach collection="pKList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="exportTemplateList"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ShipmentRecommendationTemplateResult">
+        SELECT
+            T1.pk,
+            T1.platform,
+            T1.pre_area,
+            T1.department,
+            T1.team,
+            T1.material_code,
+            T1.asin,
+            T1.product_type,
+            T1.product_name,
+            T1.style,T1.main_material,T1.pattern,T1.company_brand,T1.brand,T1.model,T1.color,T1.sizes,T1.packing,T1.version_des,T1.type,T1.matstylesecondlabel,T1.festival_label,T1.season_label,T1.restock_production_cycle,
+            T1.az_oversea_total_qty,
+            T1.az_total_qty,
+            T1.oversea_inv_qty,
+            T1.oversea_onway_qty,
+            T1.dayavgsell,
+            T1.domestic_transfer_avail_qty,
+            T1.domestic_uncheck_qty,
+            T1.undone_in7days_qty,
+            T1.undone_8to14days_qty,
+            T1.undone_after15days_qty,
+            T1.requirement_send_total_qty,
+            T1.can_sale_date,
+            T1.send_total_days,
+            T1.turnover_before_send_days,
+            T1.domestic_recomm_send_qty,
+            T1.is_cut_goods,
+            T1.recomm_transportation,
+            T2.delivery_type,
+            T3.sys_shops_name,
+            T3.sys_site,
+            T3.sku,
+            T3.shop_name,
+            '' FBANO,
+            'Amazon_'||T3.sys_shops_name||'_'||T3.sys_site||'_仓库' RECEIVEWAREHOUSE,
+            round(T1.domestic_recomm_send_qty,2) SEND_QTY,
+            T2.delivery_type TRANSPORTATION_TYPE,
+            '亚马逊发货' UNWTYPE,
+            '' REMARK1,
+            '' REMARK2,
+            '' REMARK3
+        FROM SHIPMENT_RECOMMENDATION T1
+            JOIN mcms_base_data.RP_MATERIAL T2
+                ON T1.MATERIAL_CODE = T2.MATERIAL_CODE
+            JOIN (SELECT * FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY WHERE  sys_site NOT IN ('AU', 'SG', 'NL', 'PL', 'SE', 'TR', 'BE') ) T3
+                ON  T1.PRE_AREA = T3.AREA
+                    AND T1.DEPARTMENT = T3.DEPARTMENT
+                    AND T1.TEAM = T3.TEAM
+                    AND T1.MATERIAL_CODE = T3.MATERIAL_CODE
+                    AND T1.ASIN = T3.ASIN
+        <where>
+            AND t3.SYS_LOGI_MODE = 'FA'
+            AND t3.SYS_LABEL_TYPE in ('正常销售','清货物料','清货SKU')
+            <include refid="List_Condition"/>
+        </where>
+
+    </select>
+
+
+    <select id="exportTemplateCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM SHIPMENT_RECOMMENDATION T1
+            JOIN mcms_base_data.RP_MATERIAL T2
+                ON T1.MATERIAL_CODE = T2.MATERIAL_CODE
+            JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY T3
+                ON T1.PRE_AREA = T3.AREA
+                AND T1.DEPARTMENT = T3.DEPARTMENT
+                AND T1.TEAM = T3.TEAM
+                AND T1.MATERIAL_CODE = T3.MATERIAL_CODE
+                AND T1.ASIN = T3.ASIN
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+
+    </select>
+    <select id="getShopSkuListByPK"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ShipmentRecommendationShopSkuResult">
+        SELECT
+               T2.SYS_SHOPS_NAME,
+               T2.SYS_SITE site,
+               T2.SKU,
+               MAX(T1.Pre_Area) area,
+               MAX(T2.SHOP_NAME) shopName,
+               MAX(T2.PRODUCT_TYPE) productType,
+               MAX(T2.SYS_LOGI_MODE) sysLogiMode,
+               MAX(T2.SYS_LABEL_TYPE) sysLabelType,
+               MAX(nvl(T3.DAY7QTY,0)) shopDay7qty,
+               MAX(nvl(T3.DAY30QTY,0)) shopDay30qty,
+               MAX(nvl(T3.AZ_OVERSEA_TOTAL_ATY,0)) shopAzOverseaTotalQty,
+               MAX(nvl(T3.AZ_AVAIL_QTY,0)) shopAvailQty,
+               MAX(nvl(T4.DAY7QTY,0)) skuDay7qty,
+               MAX(nvl(T4.DAY30QTY,0)) skuDay30qty,
+               MAX(nvl(T4.AZ_OVERSEA_TOTAL_ATY,0)) skuAzOverseaTotalQty,
+               MAX(nvl(T4.AZ_AVAIL_QTY,0)) skuAvailQty,
+               MAX(T1.PK) pk
+        FROM SHIPMENT_RECOMMENDATION T1
+        JOIN (SELECT * FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY WHERE  sys_site NOT IN ('AU', 'SG', 'NL', 'PL', 'SE', 'TR', 'BE') ) T2
+            ON T1.PK = 'Amazon' || T2.AREA || T2.DEPARTMENT || T2.TEAM || T2.MATERIAL_CODE || T2.ASIN
+          LEFT JOIN AMZ_INV_ASIN_DAY_AGG T3
+            ON T1.PK = T3.PK
+               AND T2.SYS_SHOPS_NAME = T3.SYS_SHOPS_NAME
+               AND T2.SYS_SITE = T3.SYS_SITE
+          LEFT JOIN AMZ_INV_SKU_DAY_AGG T4
+            ON T1.PK = T4.PK
+                AND T2.SYS_SITE = T4.SYS_SITE
+                AND T2.SKU = T4.SKU
+         WHERE NVL(T2. SYS_LOGI_MODE,'FA') = 'FA'
+               AND NVL(T2.SYS_LABEL_TYPE,'正常销售') in ('正常销售','清货物料','清货SKU')
+               AND T1.PK = #{pk}
+        GROUP BY T2.SYS_SHOPS_NAME,T2.SYS_SITE,T2.SKU
+        ORDER BY T2.SYS_SHOPS_NAME,T2.SYS_SITE,T2.SKU
+
+    </select>
+
+
+    <select id="getShopSkuListBySpec"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ShipmentRecommendationShopSkuResult">
+        SELECT
+               T2.SYS_SHOPS_NAME,
+               T2.SYS_SITE site,
+               T2.SKU,
+               MAX(T2.SHOP_NAME) shopName,
+               MAX(T2.PRODUCT_TYPE) productType,
+               MAX(T2.SYS_LOGI_MODE) sysLogiMode,
+               MAX(T2.SYS_LABEL_TYPE) sysLabelType,
+               MAX(nvl(T3.DAY7QTY,0)) shopDay7qty,
+               MAX(nvl(T3.DAY30QTY,0)) shopDay30qty,
+               MAX(nvl(T3.AZ_OVERSEA_TOTAL_ATY,0)) shopAzOverseaTotalQty,
+               MAX(nvl(T3.AZ_AVAIL_QTY,0)) shopAvailQty,
+               MAX(nvl(T4.DAY7QTY,0)) skuDay7qty,
+               MAX(nvl(T4.DAY30QTY,0)) skuDay30qty,
+               MAX(nvl(T4.AZ_OVERSEA_TOTAL_ATY,0)) skuAzOverseaTotalQty,
+               MAX(nvl(T4.AZ_AVAIL_QTY,0)) skuAvailQty,
+               MAX(T1.PK) pk
+          FROM SHIPMENT_RECOMMENDATION T1
+          JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY T2
+            ON T1.PK = 'Amazon' || T2.AREA || T2.DEPARTMENT || T2.TEAM || T2.MATERIAL_CODE || T2.ASIN
+          LEFT JOIN AMZ_INV_ASIN_DAY_AGG T3
+            ON T1.PK = T3.PK
+               AND T2.SYS_SHOPS_NAME = T3.SYS_SHOPS_NAME
+               AND T2.SYS_SITE = T3.SYS_SITE
+          LEFT JOIN AMZ_INV_SKU_DAY_AGG T4
+            ON T1.PK = T4.PK
+                AND T2.SYS_SITE = T4.SYS_SITE
+                AND T2.SKU = T4.SKU
+        <where>
+            <choose>
+                <when test="paramCondition.platform != null and paramCondition.platform != ''">
+                    AND T1.platform = #{paramCondition.platform}
+                </when>
+                <otherwise>
+                    AND T1.platform = 'Amazon'
+                </otherwise>
+            </choose>
+
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                AND T1.department = #{paramCondition.department}
+            </if>
+
+            <if test="paramCondition.team != null and paramCondition.team != ''">
+                AND T1.team = #{paramCondition.team}
+            </if>
+
+            <if test="paramCondition.preArea != null and paramCondition.preArea != ''">
+                AND T1.pre_area = #{paramCondition.preArea}
+            </if>
+
+            <if test="paramCondition.asin != null and paramCondition.asin != ''">
+                AND T1.asin = #{paramCondition.asin}
+            </if>
+
+            <if test="paramCondition.materialCode != null and paramCondition.materialCode != ''">
+                AND T1.material_code = #{paramCondition.materialCode}
+            </if>
+
+            <if test="paramCondition.productType != null and paramCondition.productType != '' and paramCondition.productType != '[]'">
+                AND T1.product_type like  '%'|| #{paramCondition.productType} ||'%'
+            </if>
+
+            <if test="paramCondition.productName != null and paramCondition.productName != '' and paramCondition.productName != '[]'">
+                AND T1.product_name like '%'||#{paramCondition.productName}||'%'
+            </if>
+
+            <if test="paramCondition.IsNoApply != null and paramCondition.IsNoApply">
+                AND T1.status != 1
+            </if>
+
+            <if test="paramCondition.departmentList != null and paramCondition.departmentList.size()>0">
+                AND T1.department IN
+                <foreach collection="paramCondition.departmentList" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.teamList != null and paramCondition.teamList.size()>0">
+                AND T1.team IN
+                <foreach collection="paramCondition.teamList" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.preAreaList != null and paramCondition.preAreaList.size()>0">
+                AND T1.pre_area IN
+                <foreach collection="paramCondition.preAreaList" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.asinList != null and paramCondition.asinList.size()>0">
+                AND T1.asin IN
+                <foreach collection="paramCondition.asinList" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+
+            <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size()>0">
+                AND T1.material_code IN
+                <foreach collection="paramCondition.materialCodeList" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+
+            <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size()>0">
+                AND T1.product_type IN
+                <foreach collection="paramCondition.productTypeList" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.productNameList != null and paramCondition.productNameList.size()>0">
+                AND T1.product_name IN
+                <foreach collection="paramCondition.productNameList" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY T2.SYS_SHOPS_NAME,T2.SYS_SITE,T2.SKU
+        ORDER BY T2.SYS_SHOPS_NAME,T2.SYS_SITE,T2.SKU
+
+
+    </select>
+
+    <select id="skuCheck"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.SkuCheckResult">
+        SELECT  TOP 1 labState , labSyncState , labUseState  FROM TbComShippingLable
+        <where>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != '' ">
+                AND shopName like '%'+#{paramCondition.shopName}+'%'
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != '' ">
+                AND shopName like '%'+#{paramCondition.site}+'%'
+            </if>
+            <if test="paramCondition.sku != null and paramCondition.sku != '' ">
+                AND item_sku = #{paramCondition.sku}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="failSku" resultType="String">
+        SELECT    SUBSTRING(shopName,CHARINDEX('_', shopName) + 1,CHARINDEX('_', shopName, CHARINDEX('_', shopName) + 1) - CHARINDEX('_', shopName) - 1)+'_'+CountryCode+'_'+item_sku+': ['+ labState + labSyncState + labUseState +']'   FROM TbComShippingLable
+        <where>
+            <if test="paramCondition != null and paramCondition.size()>0">
+                SUBSTRING(shopName,CHARINDEX('_', shopName) + 1,CHARINDEX('_', shopName, CHARINDEX('_', shopName) + 1) - CHARINDEX('_', shopName) - 1)+CountryCode+item_sku IN
+                    <foreach collection="paramCondition" index="index" item="item" open="(" separator="," close=")">
+                        #{item.shopName} + #{item.site} + #{item.sku}
+                    </foreach>
+                    AND labState + labSyncState + labUseState != '正常已同步启用'
+
+            </if>
+
+
+
+        </where>
+
+
+    </select>
+    <select id="selectPageDatalimit" parameterType="com.tadpole.cloud.operationManagement.modular.shipment.model.params.ShipmentRecommendationParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.entity.ShipmentRecommendation">
+
+        SELECT
+        a.*
+        FROM
+        STOCKING.SHIPMENT_RECOMMENDATION a
+        join MCMS_BASE_DATA.RP_MATERIAL material
+        ON a.MATERIAL_CODE = material.MATERIAL_CODE
+        WHERE
+        a.material_code IS NOT NULL
+        <if test="reqVO != null">
+
+            <if test="reqVO.platform != null and reqVO.platform !=''">
+                AND a.PLATFORM = #{reqVO.platform}
+            </if>
+
+--             Team
+            <if test="reqVO.team != null and reqVO.team !=''">
+                AND a.TEAM = #{reqVO.team}
+            </if>
+
+            <if test="reqVO.teamList != null and reqVO.teamList.size() != 0">
+                AND a.TEAM IN
+                <foreach collection="reqVO.teamList" item="team" index="index" separator="," open="(" close=")">
+                    #{team}
+                </foreach>
+            </if>
+
+            --             department
+            <if test="reqVO.department != null and reqVO.department !=''">
+                AND a.DEPARTMENT = #{reqVO.department}
+            </if>
+
+            <if test="reqVO.departmentList != null and reqVO.departmentList.size() != 0">
+                AND a.DEPARTMENT IN
+                <foreach collection="reqVO.departmentList" item="department" index="index" separator="," open="(" close=")">
+                    #{department}
+                </foreach>
+            </if>
+
+            --             preArea
+            <if test="reqVO.preArea != null and reqVO.preArea !=''">
+                AND a.PRE_AREA = #{reqVO.preArea}
+            </if>
+
+            <if test="reqVO.preAreaList != null and reqVO.preAreaList.size() != 0">
+                AND a.PRE_AREA IN
+                <foreach collection="reqVO.preAreaList" item="preArea" index="index" separator="," open="(" close=")">
+                    #{preArea}
+                </foreach>
+            </if>
+
+            --             asin
+            <if test="reqVO.asin != null and reqVO.asin !=''">
+                AND a.ASIN = #{reqVO.asin}
+            </if>
+
+            <if test="reqVO.asinList != null and reqVO.asinList.size() != 0">
+                AND a.ASIN IN
+                <foreach collection="reqVO.asinList" item="asin" index="index" separator="," open="(" close=")">
+                    #{asin}
+                </foreach>
+            </if>
+
+--          物料14级属性
+            <if test="reqVO.materialCode != null and reqVO.materialCode !=''">
+                AND material.material_code = #{reqVO.materialCode}
+            </if>
+            <if test="reqVO.materialCodeList != null and reqVO.materialCodeList.size() != 0">
+                AND material.material_code IN
+                <foreach collection="reqVO.materialCodeList" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+
+--          category
+            <if test="reqVO.category != null and reqVO.category !=''">
+                AND material.category = #{reqVO.category}
+            </if>
+
+            <if test="reqVO.categoryList != null and reqVO.categoryList.size() != 0">
+                AND material.category IN
+                <foreach collection="reqVO.categoryList" item="category" index="index" separator="," open="(" close=")">
+                    #{category}
+                </foreach>
+            </if>
+
+--          productType
+            <if test="reqVO.productType != null and reqVO.productType !=''">
+                AND material.product_type = #{reqVO.productType}
+            </if>
+            <if test="reqVO.productTypeList != null and reqVO.productTypeList.size() != 0">
+                AND material.product_type IN
+                <foreach collection="reqVO.productTypeList" item="productType" index="index" separator="," open="("
+                         close=")">
+                    #{productType}
+                </foreach>
+            </if>
+
+--          productname
+            <if test="reqVO.productName != null and reqVO.productName !=''">
+                AND material.product_name = #{reqVO.productName}
+            </if>
+            <if test="reqVO.productNameList != null and reqVO.productNameList.size() != 0">
+                AND material.product_name IN
+                <foreach collection="reqVO.productNameList" item="productName" index="index" separator="," open="(" close=")">
+                    #{productName}
+                </foreach>
+            </if>
+
+--          style
+            <if test="reqVO.style != null and reqVO.style !=''">
+                AND material.style = #{reqVO.style}
+            </if>
+            <if test="reqVO.styleList != null and reqVO.styleList.size() != 0">
+                AND material.style IN
+                <foreach collection="reqVO.styleList" item="style" index="index" separator="," open="(" close=")">
+                    #{style}
+                </foreach>
+            </if>
+
+--          mainmaterial
+            <if test="reqVO.mainmaterial != null and reqVO.mainmaterial !=''">
+                AND material.main_material = #{reqVO.mainmaterial}
+            </if>
+            <if test="reqVO.mainmaterialList != null and reqVO.mainmaterialList.size() != 0">
+                AND material.main_material IN
+                <foreach collection="reqVO.mainmaterialList" item="mainmaterial" index="index" separator="," open="("
+                         close=")">
+                    #{mainmaterial}
+                </foreach>
+            </if>
+
+--          pattern
+            <if test="reqVO.pattern != null and reqVO.pattern !=''">
+                AND material.DESIGN = #{reqVO.pattern}
+            </if>
+            <if test="reqVO.patternList != null and reqVO.patternList.size() != 0">
+                AND material.DESIGN IN
+                <foreach collection="reqVO.patternList" item="pattern" index="index" separator="," open="(" close=")">
+                    #{pattern}
+                </foreach>
+            </if>
+
+--          brand
+            <if test="reqVO.brand != null and reqVO.brand !=''">
+                AND material.FIT_BRAND = #{reqVO.brand}
+            </if>
+            <if test="reqVO.brandList != null and reqVO.brandList.size() != 0">
+                AND material.FIT_BRAND IN
+                <foreach collection="reqVO.brandList" item="brand" index="index" separator="," open="(" close=")">
+                    #{brand}
+                </foreach>
+            </if>
+
+
+--          companybrand
+            <if test="reqVO.companybrand != null and reqVO.companybrand !=''">
+                AND material.company_brand = #{reqVO.companybrand}
+            </if>
+            <if test="reqVO.companyBrandList != null and reqVO.companyBrandList.size() != 0">
+                AND material.company_brand IN
+                <foreach collection="reqVO.companyBrandList" item="companybrand" index="index" separator="," open="(" close=")">
+                    #{companybrand}
+                </foreach>
+            </if>
+
+--          model
+            <if test="reqVO.model != null and reqVO.model !=''">
+                AND material.model = #{reqVO.model}
+            </if>
+            <if test="reqVO.modelList != null and reqVO.modelList.size() != 0">
+                AND material.model IN
+                <foreach collection="reqVO.modelList" item="model" index="index" separator="," open="(" close=")">
+                    #{model}
+                </foreach>
+            </if>
+
+
+--          color
+            <if test="reqVO.color != null and reqVO.color !=''">
+                AND material.color = #{reqVO.color}
+            </if>
+            <if test="reqVO.colorList != null and reqVO.colorList.size() != 0">
+                AND material.color IN
+                <foreach collection="reqVO.colorList" item="color" index="index" separator="," open="(" close=")">
+                    #{color}
+                </foreach>
+            </if>
+
+--          sizes
+            <if test="reqVO.sizes != null and reqVO.sizes !=''">
+                AND material.sizes = #{reqVO.sizes}
+            </if>
+            <if test="reqVO.sizesList != null and reqVO.sizesList.size() != 0">
+                AND material.sizes IN
+                <foreach collection="reqVO.sizesList" item="sizes" index="index" separator="," open="(" close=")">
+                    #{sizes}
+                </foreach>
+            </if>
+
+--          packing
+            <if test="reqVO.packing != null and reqVO.packing !=''">
+                AND material.packing = #{reqVO.packing}
+            </if>
+            <if test="reqVO.packingList != null and reqVO.packingList.size() != 0">
+                AND material.packing IN
+                <foreach collection="reqVO.packingList" item="packing" index="index" separator="," open="(" close=")">
+                    #{packing}
+                </foreach>
+            </if>
+
+
+--          type
+            <if test="reqVO.type != null and reqVO.type !=''">
+                AND material.TYPE = #{reqVO.type}
+            </if>
+            <if test="reqVO.typeList != null and reqVO.typeList.size() != 0">
+                AND material.TYPE IN
+                <foreach collection="reqVO.typeList" item="type" index="index" separator="," open="(" close=")">
+                    #{type}
+                </foreach>
+            </if>
+
+
+--          version
+            <if test="reqVO.version != null and reqVO.version !=''">
+                AND material.version = #{reqVO.version}
+            </if>
+            <if test="reqVO.versionList != null and reqVO.versionList.size() != 0">
+                AND material.version IN
+                <foreach collection="reqVO.versionList" item="version" index="index" separator="," open="(" close=")">
+                    #{version}
+                </foreach>
+            </if>
+
+--          styleSecondLabel
+            <if test="reqVO.styleSecondLabel != null and reqVO.styleSecondLabel !=''">
+                AND material.MATSTYLESECONDLABEL = #{reqVO.styleSecondLabel}
+            </if>
+            <if test="reqVO.styleSecondLabelList != null and reqVO.styleSecondLabelList.size() > 0 ">
+                AND material.MATSTYLESECONDLABEL IN
+                <foreach collection="reqVO.styleSecondLabelList" item="styleLabel" index="index" separator=","
+                         open="(" close=")">
+                    #{styleLabel}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.isNoApply">
+                AND a.status != 1
+            </if>
+
+        </if>
+
+
+        <if test="reqVO.dataScopeMaterial != null and reqVO.dataScopeMaterial !=''">
+            ${reqVO.dataScopeMaterial}
+        </if>
+
+        <if test="reqVO.dataScopeArea != null and reqVO.dataScopeArea !=''">
+            ${reqVO.dataScopeArea}
+        </if>
+
+        ORDER BY a.PLATFORM,a.DEPARTMENT,a.TEAM,a.PRE_AREA,a.MATERIAL_CODE,a.ASIN
+    </select>
+
+</mapper>
+
+
+

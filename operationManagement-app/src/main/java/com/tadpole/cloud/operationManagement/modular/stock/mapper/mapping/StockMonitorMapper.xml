@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.StockMonitorMapper">
+    <update id="fillPurchase">
+        MERGE INTO stock_monitor T1
+        USING (SELECT po1.platform,
+                      po1.department,
+                      po1.Team,
+                      po1.product_type,
+                      sum(po2.cur_pur_qty)  cur_pur_qty
+               FROM STOCK_PURCHASE_ORDERS po1
+                    JOIN ( SELECT a.id,
+                                      min( CASE a.order_status
+                                               when 2 then NVL(b.qty,0)
+                                               when 4 then NVL(c.qty,0)
+                                               else NVL(b.qty,0)
+                                          end ) cur_pur_qty
+                               FROM STOCK_PURCHASE_ORDERS a
+                               LEFT JOIN (SELECT * FROM stock_verif_info_record WHERE VERIF_BIZ_TYPE = 10) b
+                               ON a.ID = b.PURCHASE_ORDER_ID
+                               LEFT JOIN (SELECT * FROM stock_verif_info_record WHERE VERIF_BIZ_TYPE = 20) c
+                               ON a.ID = c.PURCHASE_ORDER_ID
+                               WHERE  a.order_status IN(2, 4)
+                               AND (b.id IS NOT NULL OR c.id IS NOT null) GROUP BY a.id) po2
+                   ON po1.id = po2.id
+                 GROUP BY
+                   po1.platform,
+                   po1.department,
+                   po1.Team,
+                   po1.product_type
+        ) T2
+        ON (T1.PLATFORM_NAME = T2.platform AND T1.department = T2.department AND T1.Team = T2.Team AND T1.product_type = T2.product_type)
+        WHEN MATCHED THEN
+          UPDATE
+                 --本次采买数量	CUR_PUR_QTY (18)
+             SET T1.CUR_PUR_QTY              = T2.CUR_PUR_QTY,
+                 --年度采买预算使用度	YEAR_PURCHASET_PER (19)=   YEAR_USED_PUR_BUDGET(9)  + 18/           年度采买预算	YEAR_PURCHASE_BUDGET(8)
+                 T1.year_purchaset_per       =          (T1.Year_Used_Pur_Budget + T2.CUR_PUR_QTY) /          T1.year_purchase_budget,
+                 --本季度采买预算使用度	CUR_USED_QUARTER_PUR_PER(20) = 本季度已使用采买预算	CUR_USED_QUARTER_PUR_BUDGET(11) +18 /本季度采买预算	CUR_QUARTER_PUR_BUDGET(10)
+                 T1.cur_used_quarter_pur_per =          (T1.cur_used_quarter_pur_budget + T2.cur_pur_qty) /          T1.cur_quarter_pur_budget,
+                 --本季度剩余采买预算	CUR_QUARTER_LEFT_PUR(21) 本季度采买预算	CUR_QUARTER_PUR_BUDGET(10) - 本季度已使用采买预算	CUR_USED_QUARTER_PUR_BUDGET(11) -18
+                 T1.cur_quarter_left_pur     = T1.cur_quarter_pur_budget - T1.cur_used_quarter_pur_budget -  T2.cur_pur_qty,
+                 --平均每周剩余采买预算(22)	AVG_WEEK_LEFT_PUR = (21)*7/本季度剩余天数
+                 T1.avg_week_left_pur        =         ( (T1.cur_quarter_pur_budget - T1.cur_used_quarter_pur_budget -          T2.cur_pur_qty) * 7)/#{quarterLeftDays},
+                 -- 年度剩余采买预算(24)	YEAR_LEFT_PUR_BUDGET = 年度采买预算	YEAR_PURCHASE_BUDGET(8) - 年度已使用采买预算	YEAR_USED_PUR_BUDGET(9) - 18
+                 T1.year_left_pur_budget     = T1.year_purchase_budget - T1.year_used_pur_budget - T2.cur_pur_qty
+    </update>
+    <update id="fillTurnOverDay">
+        MERGE INTO STOCK_MONITOR T1
+        USING (  SELECT   a.platform,
+                          a.department,
+                          a.Team,
+                          a.product_type,
+                          DECODE(SUM(a.dayavgqty) , 0 , 0 , SUM(a.total_Volume + a.canuseqty + a.unpurchase) / SUM(a.dayavgqty)) turn_over_day
+
+                 FROM (
+                          SELECT b.platform, b.department, b.Team, b.product_type,b.MATERIAL_CODE ,
+                                 SUM(NVL(b.dayavgqty,0)) dayavgqty,
+                                 SUM(NVL(b.total_Volume,0)) total_Volume,
+                                 MAX(b.canuseqty) canuseqty,
+                                 MAX(b.unpurchase) unpurchase
+                          FROM BACK_PREPARE_RECOM_BI b GROUP BY b.platform, b.department, b.Team, b.product_type,b.MATERIAL_CODE
+                      )a
+                 GROUP BY a.platform, a.department, a.Team, a.product_type
+            ) t2
+
+        ON (T1.PLATFORM_NAME = T2.platform AND T1.department = T2.department AND  T1.Team = T2.Team AND T1.product_type = T2.product_type)
+        WHEN MATCHED THEN UPDATE SET T1.Turn_Over_Day = T2.TURN_OVER_DAY
+    </update>
+    <delete id="deleteAll">
+        delete from stock_monitor
+    </delete>
+    <delete id="deleteByDept">
+        delete from stock_monitor
+        <where>
+            <if test="department != null and department != ''">
+                and department = #{department}
+            </if>
+        </where>
+
+    </delete>
+
+    <sql id="Base_Column_List">
+
+        PLATFORM_NAME,
+        DEPARTMENT,
+        TEAM,
+        PRODUCT_TYPE,
+        YEAR_TARGET,
+        QUARTER_TARGE,
+        YEAR_PURCHASE_BUDGET,
+        YEAR_USED_PUR_BUDGET,
+        CUR_QUARTER_PUR_BUDGET,
+        CUR_USED_QUARTER_PUR_BUDGET,
+        MON_TURN_TARGET,
+        YEAR_SALE_QTY,
+        QUARTER_SALE_QTY,
+        YEAR_SALE_TARGET_PER,
+        CUR_QUARTER_SALE_TARGET_PER,
+        PRE_QUARTER_INV_SALE_PER,
+        CUR_PUR_QTY,
+        YEAR_PURCHASET_PER,
+        CUR_USED_QUARTER_PUR_PER,
+        CUR_QUARTER_LEFT_PUR,
+        YEAR_LEFT_PUR_BUDGET,
+        AVG_WEEK_LEFT_PUR,
+        TURN_OVER_DAY,
+        TARGET_VERSION,
+        DATA_VERSION,
+        IS_DELETE,
+        CREATE_BY,
+        UPDATE_BY,
+        CREATE_TIME,
+        UPDATE_TIME,
+        ID,
+        PRE_MONTH_STOCK_SALE_RATE,
+        LASTPRE_MONTH_STOCK_SALE_RATE
+
+    </sql>
+
+    <select id="customPageList"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.StockMonitorResult">
+        SELECT <include refid="Base_Column_List"/> FROM STOCK_MONITOR
+        <where>
+            <if test = "paramCondition.department != null and paramCondition.department != ''">
+                AND department = #{paramCondition.department}
+            </if>
+
+            <if test = "paramCondition.team != null and paramCondition.team != ''">
+                AND team = #{paramCondition.team}
+            </if>
+            <if test = "paramCondition.productType != null and paramCondition.productType != ''">
+                AND PRODUCT_TYPE = #{paramCondition.productType}
+            </if>
+        </where>
+        ORDER BY CASE WHEN PLATFORM_NAME = 'Amazon' THEN 'A' ELSE PLATFORM_NAME END,
+              TO_NUMBER(REGEXP_SUBSTR(TRANSLATE(DEPARTMENT,'一二三四五六七八九','123456789'),'[0-9]+')),
+              CASE WHEN TEAM IS NOT NULL AND TO_NUMBER(REGEXP_SUBSTR(TEAM, '[0-9]+')) IS NULL THEN 999 ELSE TO_NUMBER(REGEXP_SUBSTR(TEAM,'[0-9]+')) END
+    </select>
+    <select id="getErpData" resultType="com.tadpole.cloud.platformSettlement.api.sales.entity.StockMonitor">
+
+        SELECT #{department} AS DEPARTMENT, abc.TEAM,abc.PRODUCT_TYPE,
+        SUM(YEAR_USED_PUR_BUDGET) YEAR_USED_PUR_BUDGET,
+        SUM(CUR_USED_QUARTER_PUR_BUDGET) CUR_USED_QUARTER_PUR_BUDGET ,
+        SUM(CUR_PUR_QTY) CUR_PUR_QTY
+        FROM
+        (
+                ---已申请采购数量合计
+                (SELECT
+                    acd.FNAME as DEPARTMENT ,
+                    ac.FNAME as TEAM,
+                    b.FDATAVALUE PRODUCT_TYPE,
+                    (a.FQTY- (  --业务终止=‘B’ or  手工关闭=‘1’
+                                (CASE a.FMRPTERMINATESTATUS when 'B' THEN (CASE  WHEN adr.FREMAINSTOCKINQTY &lt; 0  then 0 else adr.FREMAINSTOCKINQTY end )
+                                else (CASE o.FMANUALCLOSE when '1' THEN (CASE  WHEN adr.FREMAINSTOCKINQTY &lt; 0  then 0 else adr.FREMAINSTOCKINQTY end ) else 0 end )
+                                end )
+                             )
+                    ) YEAR_USED_PUR_BUDGET,
+
+                    ( CASE DATEPART(QUARTER,o.FAPPROVEDATE) when  DATEPART(QUARTER,GETDATE() )
+                        then (
+                                a.FQTY-  ( --业务终止=‘B’ or  手工关闭=‘1’
+                                    CASE a.FMRPTERMINATESTATUS when 'B' THEN (CASE  WHEN adr.FREMAINSTOCKINQTY &lt; 0  then 0 else adr.FREMAINSTOCKINQTY end )
+                                    else (CASE o.FMANUALCLOSE when '1' THEN (CASE  WHEN adr.FREMAINSTOCKINQTY &lt; 0  then 0 else adr.FREMAINSTOCKINQTY end ) else 0 end )
+                                    end
+                                )
+                        ) else 0 end
+                    ) CUR_USED_QUARTER_PUR_BUDGET,
+                    0 as CUR_PUR_QTY,
+                    1 abc
+
+                FROM
+                    t_PUR_POOrder o
+                    JOIN  t_PUR_POOrderEntry a on o.FID = a.FID
+                    JOIN t_PUR_POOrderEntry_F aa ON a.FENTRYID= aa.FENTRYID
+                    JOIN t_PUR_POOrderEntry_D ad on a.FENTRYID=ad.FENTRYID
+                    JOIN t_PUR_POOrderEntry_R adr on a.FENTRYID=adr.FENTRYID
+                    JOIN T_BD_MATERIAL ab on a.FMATERIALID =ab.FMATERIALID
+
+                    JOIN T_BAS_ASSISTANTDATAENTRY_L b on ab.F_BSC_CATEGORIES=b.FENTRYID
+
+                    JOIN T_BD_DEPARTMENT_L ac on a.F_PAEZ_BASE=ac.FDEPTID
+                    JOIN T_BD_DEPARTMENT_L acd on ad.FREQUIREDEPTID=acd.FDEPTID
+
+                WHERE
+                    o.FDOCUMENTSTATUS ='C' -- 审核中， 已审核
+                    and o.FCANCELSTATUS !='B'  -- 作废状态（A：否，B：是）
+                    and DATEPART(yy,o.FAPPROVEDATE)=  DATEPART(yy,GETDATE()) -- 审核日期  483744.0000000000	110871.0000000000	1300.0000000000
+                    AND ab.FUSEORGID = 100269
+            )
+        -------------------------
+            UNION  ALL
+                -- 采购订单审核中的采买数量
+                (SELECT
+                    acd.FNAME as DEPARTMENT ,
+                    ac.FNAME as TEAM,
+                    b.FDATAVALUE PRODUCT_TYPE,
+                    0 as YEAR_USED_PUR_BUDGET,
+                    0 as CUR_USED_QUARTER_PUR_BUDGET,
+                    ISNULL (a.FQTY,0) AS CUR_PUR_QTY,
+                    2 abc
+                FROM
+                    t_PUR_POOrder o
+                    JOIN  t_PUR_POOrderEntry a on o.FID = a.FID
+                    JOIN t_PUR_POOrderEntry_F aa ON a.FENTRYID= aa.FENTRYID
+                    JOIN t_PUR_POOrderEntry_D ad on a.FENTRYID=ad.FENTRYID
+                    JOIN t_PUR_POOrderEntry_R adr on a.FENTRYID=adr.FENTRYID
+                    JOIN T_BD_MATERIAL ab on a.FMATERIALID =ab.FMATERIALID
+
+                    JOIN T_BAS_ASSISTANTDATAENTRY_L b on ab.F_BSC_CATEGORIES=b.FENTRYID
+
+                    JOIN T_BD_DEPARTMENT_L ac on a.F_PAEZ_BASE=ac.FDEPTID
+                    JOIN T_BD_DEPARTMENT_L acd on ad.FREQUIREDEPTID=acd.FDEPTID
+
+                WHERE
+                    o.FDOCUMENTSTATUS ='B' -- 审核中， 已审核
+                    and o.FCANCELSTATUS !='B'  -- 作废状态（A：否，B：是）  已审核 ，审核中 都不能作废
+                    and a.FMRPTERMINATESTATUS = 'A' --业务终止 (A:正常，B：业务终止)
+                    --        and DATEPART(yy,o.FAPPROVEDATE)=  DATEPART(yy,GETDATE()) -- 审核日期
+                    AND ab.FUSEORGID = 100269
+                )
+             UNION  ALL
+                -- 采购订单未下推的采买数量
+
+                (SELECT
+                    acd.FNAME as DEPARTMENT ,
+                    ac.FNAME as TEAM,
+                    b.FDATAVALUE PRODUCT_TYPE,
+                    0 as YEAR_USED_PUR_BUDGET,
+                    0 as CUR_USED_QUARTER_PUR_BUDGET,
+                    ISNULL( pe.FREQQTY, 0 )  CUR_PUR_QTY,
+                    3 abc
+                FROM
+                    T_PUR_Requisition p
+                    join T_PUR_ReqEntry pe on p.FID=pe.FID
+                    join T_PUR_REQENTRY_R tprr on tprr.FENTRYID = pe.FENTRYID
+
+                    JOIN T_BD_MATERIAL ab on pe.FMATERIALID =ab.FMATERIALID
+                    JOIN T_BAS_ASSISTANTDATAENTRY_L b on ab.F_BSC_CATEGORIES=b.FENTRYID
+
+                    JOIN T_BD_DEPARTMENT_L ac on pe.F_PAEZ_BASE=ac.FDEPTID
+                    JOIN T_BD_DEPARTMENT_L acd on pe.FREQUIREDEPTID=acd.FDEPTID
+
+                WHERE p.FCANCELSTATUS !='B' -- 作废状态（A：否，B：是）
+                    and p.FCLOSESTATUS='A' -- 关闭状态 A：未关闭  B:已关闭
+                    and pe.FMRPTERMINATESTATUS='A' -- 业务终止： A:正常  B:业务终止
+                    and tprr.FORDERJOINQTY  = 0 -- 订单关联数量0
+                )
+
+        ) abc
+        join ( SELECT a.FNAME TEAM from  T_BD_DEPARTMENT_L a join T_BD_DEPARTMENT b  on  a.FDEPTID =b.FDEPTID  and b.FPARENTID=  (SELECT  FDEPTID from  T_BD_DEPARTMENT_L WHERE FNAME = #{department})  ) aa
+        on abc.TEAM =aa.TEAM
+<!--        where 1=1
+        <if test="department != null and department != ''">
+             AND abc.DEPARTMENT = #{department}
+            AND abc.TEAM IN
+        </if>-->
+        GROUP BY -- abc.DEPARTMENT,
+                 abc.TEAM,
+                 abc.PRODUCT_TYPE
+        order by abc.TEAM
+
+
+
+    </select>
+    <select id="getCurPurQty" resultType="com.tadpole.cloud.platformSettlement.api.sales.entity.StockMonitor">
+
+        SELECT
+            DEPARTMENT,
+            TEAM,
+            PRODUCT_TYPE,
+            SUM(YEAR_USED_PUR_BUDGET) YEAR_USED_PUR_BUDGET,
+            SUM(CUR_USED_QUARTER_PUR_BUDGET) CUR_USED_QUARTER_PUR_BUDGET ,
+            SUM(CUR_PUR_QTY) CUR_PUR_QTY
+        FROM
+        (   -- 新品备货本次采买统计
+            (SELECT
+                a.DEPARTMENT DEPARTMENT,
+                a.TEAM  TEAM,
+                b.MAT_OPERATE_CATE AS PRODUCT_TYPE ,
+                0 YEAR_USED_PUR_BUDGET,
+                0 CUR_USED_QUARTER_PUR_BUDGET,
+                ( CASE a.APPLY_STATUS
+                WHEN '待采购复核' THEN  a.OPR_APPLY_QTY
+                WHEN '待PMC审批' THEN  a.OPR_APPLY_QTY3
+                ELSE 0 END ) CUR_PUR_QTY
+
+            FROM PRODUCT.PROD_PURCHASE_REQUIRE a
+                LEFT JOIN  PRODUCT.PROD_PRE_MATERIEL b ON a.MAT_CODE =b.MAT_CODE
+            WHERE
+                  a.APPLY_STATUS in ('待采购复核','待PMC审批')
+
+            )
+            UNION ALL
+            -- 日常备货+特殊备货 本次采买统计
+            ( SELECT
+                --			po1.platform,
+                po1.department DEPARTMENT,
+                po1.Team TEAM,
+                po1.product_type PRODUCT_TYPE,
+                0 YEAR_USED_PUR_BUDGET,
+                0 CUR_USED_QUARTER_PUR_BUDGET,
+                (po2.cur_pur_qty)  CUR_PUR_QTY
+            FROM STOCKING.STOCK_PURCHASE_ORDERS po1
+            JOIN ( SELECT   a.id,
+                            min( CASE a.order_status
+                            when 2 then NVL(b.qty,0)
+                            when 4 then NVL(c.qty,0)
+                            else NVL(b.qty,0)
+                            end ) cur_pur_qty
+
+                    FROM    STOCKING.STOCK_PURCHASE_ORDERS a
+                            LEFT JOIN (SELECT * FROM STOCKING.stock_verif_info_record WHERE VERIF_BIZ_TYPE = 10) b
+                            ON a.ID = b.PURCHASE_ORDER_ID
+                            LEFT JOIN (SELECT * FROM STOCKING.stock_verif_info_record WHERE VERIF_BIZ_TYPE = 20) c
+                            ON a.ID = c.PURCHASE_ORDER_ID
+
+                    WHERE  a.order_status IN(2, 4)
+                    AND (b.id IS NOT NULL OR c.id IS NOT null) GROUP BY a.id
+                ) po2
+            ON po1.id = po2.id
+            )
+        )ab
+        WHERE 1=1
+        <if test="department != null and department != ''">
+            AND ab.DEPARTMENT = #{department}
+        </if>
+        GROUP BY
+        ab.DEPARTMENT,
+        ab.TEAM,
+        ab.PRODUCT_TYPE
+
+    </select>
+
+
+    <update id="fillTurnOverDayDept">
+        MERGE INTO STOCK_MONITOR T1
+            USING (
+                    SELECT
+                        a.department,
+                        DECODE(SUM(a.dayavgqty) , 0 , 0 , SUM(a.total_Volume + a.canuseqty + a.unpurchase) / SUM(a.dayavgqty)) turn_over_day
+                    FROM (
+                             SELECT b.department,
+                                    SUM(NVL(b.dayavgqty,0)) dayavgqty,
+                                    SUM(NVL(b.total_Volume,0)) total_Volume,
+                                    MAX(b.canuseqty) canuseqty,
+                                    MAX(b.unpurchase) unpurchase
+                             FROM BACK_PREPARE_RECOM_BI b
+                             WHERE b.department= #{department}
+                             GROUP BY b.department
+                         )a
+                    GROUP BY  a.department
+            ) t2
+
+            ON (T1.department = T2.department)
+            WHEN MATCHED THEN UPDATE SET T1.Turn_Over_Day = T2.TURN_OVER_DAY
+    </update>
+</mapper>

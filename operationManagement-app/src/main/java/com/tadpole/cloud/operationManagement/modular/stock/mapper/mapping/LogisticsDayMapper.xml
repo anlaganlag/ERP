@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.LogisticsDayMapper">
+
+
+
+
+    <sql id="Page_Column_List">
+        ID	,
+        PLATFORM_NAME	,
+        AREA	,
+        COUNTRY	,
+        LOGISTICS_MODE	,
+        LOGISTICS_DAYS	,
+        REMARK	,
+        CREATE_BY	,
+        UPDATE_BY	,
+        CREATE_TIME	,
+        UPDATE_TIME
+    </sql>
+
+
+
+
+    <update id="updateBatch"
+            parameterType="java.util.HashSet">
+        UPDATE LOGISTICS_DAY a
+        <set>
+            <trim prefix="a.LOGISTICS_DAYS = CASE" suffix="ELSE a.LOGISTICS_DAYS END,">
+                <foreach collection="paramCondition" item="item" index="index">
+                    WHEN a.AREA = #{item.area}  and  a.LOGISTICS_MODE = #{item.logisticsMode} THEN #{item.logisticsDays}
+                </foreach>
+            </trim>
+
+        </set>
+    </update>
+
+
+
+    <select id="customPageList" resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.LogisticsDayResult"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.LogisticsDayParam">
+        select
+        <include refid="Page_Column_List"/>
+        from logistics_day
+        <where>
+            <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+                and platform_name like '%'||#{paramCondition.platformName}||'%'
+            </if>
+
+            <if test="paramCondition.areaList != null and paramCondition.areaList.size > 0 ">
+                and area in
+                    <foreach collection="paramCondition.areaList" index="index" item="item" open="(" separator="," close=")">
+                     #{item}
+                    </foreach>
+            </if>
+
+
+            <if test="paramCondition.area != null and paramCondition.area != ''">
+                and area like '%'||#{paramCondition.area}||'%'
+
+            </if>
+            <if test="paramCondition.logisticsMode != null and paramCondition.logisticsMode != ''">
+                and logistics_mode like '%'||#{paramCondition.logisticsMode}||'%'
+
+            </if>
+        </where>
+        order by area,to_number(logistics_days),logistics_mode,id desc
+    </select>
+    <select id="exportExcel"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.LogisticsDayResult">
+        select
+        <include refid="Page_Column_List"/>
+        from logistics_day
+        <where>
+            <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+                and platform_name like '%'||#{paramCondition.platformName}||'%'
+            </if>
+            <if test="paramCondition.area != null and paramCondition.area != ''">
+                and area like '%'||#{paramCondition.area}||'%'
+
+            </if>
+            <if test="paramCondition.logisticsMode != null and paramCondition.logisticsMode != ''">
+                and logistics_mode like '%'||#{paramCondition.logisticsMode}||'%'
+
+            </if>
+        </where>
+        order by area,logistics_mode,id desc
+
+
+
+    </select>
+    <select id="repeatAreaLog" resultType="java.lang.String">
+        select      distinct area||LOGISTICS_MODE          from logistics_day
+    </select>
+
+</mapper>

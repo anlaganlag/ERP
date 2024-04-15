@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsLogisticsProviderMapper">
+
+    <!-- 物流商信息下拉 -->
+    <select id="logisticsProviderSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.LsLogisticsProvider">
+        SELECT
+            C.lpCode AS lpCode,
+            C.lpName AS lpName,
+            C.lpSimpleName AS lpSimpleName,
+            C.lpAddress AS lpAddress,
+            C.lpUniSocCreCode AS lpUniSocCreCode,
+            C.sysUpdDatetime AS updateTime
+        FROM TbLogisticsProvider C WHERE C.lpCode IS NOT NULL
+    </select>
+</mapper>

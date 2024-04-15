@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.ProductLine2Mapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.operationManagement.modular.stock.entity.ProductLine2">
+        <id column="ID" property="id"/>
+        <result column="PRODUCT_TYPE" property="productType"/>
+        <result column="PLATFORM" property="platform"/>
+        <result column="AREA" property="area"/>
+        <result column="DEPARTMENT" property="department"/>
+        <result column="TEAM" property="team"/>
+        <result column="OPERATOR" property="operator"/>
+        <result column="OPERATOR_NAME" property="operatorName"/>
+        <result column="TEAM_SUPERVISE" property="teamSupervise"/>
+        <result column="TEAM_SUPERVISE_NAME" property="teamSuperviseName"/>
+        <result column="CREATE_AT" property="createAt"/>
+        <result column="CREATE_BY" property="createBy"/>
+        <result column="UPDATE_AT" property="updateAt"/>
+        <result column="UPDATE_BY" property="updateBy"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID
+        , PRODUCT_TYPE, PLATFORM, AREA, DEPARTMENT, TEAM, OPERATOR, OPERATOR_NAME, TEAM_SUPERVISE, TEAM_SUPERVISE_NAME, DEPT_MGR, DEPT_MGR_NAME, CREATE_AT, CREATE_BY, UPDATE_AT, UPDATE_BY
+    </sql>
+
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.ProductLine2Param"
+            resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from PRODUCT_LINE2
+        <where>
+            <if test="productLine2Param.productType != null and productLine2Param.productType != ''">
+                and PRODUCT_TYPE = #{productLine2Param.productType}
+            </if>
+            <if test="productLine2Param.platform != null and productLine2Param.platform != ''">
+                and PLATFORM = #{productLine2Param.platform}
+            </if>
+            <if test="productLine2Param.area != null and productLine2Param.area != ''">
+                and AREA = #{productLine2Param.area}
+            </if>
+            <if test="productLine2Param.department != null and productLine2Param.department != ''">
+                and DEPARTMENT = #{productLine2Param.department}
+            </if>
+            <if test="productLine2Param.team != null and productLine2Param.team != ''">
+                and TEAM = #{productLine2Param.team}
+            </if>
+            <if test="productLine2Param.operatorName != null and productLine2Param.operatorName != ''">
+                and OPERATOR_NAME like '%'||#{productLine2Param.operatorName}||'%'
+            </if>
+
+            <if test="productLine2Param.teamSuperviseName != null and productLine2Param.teamSuperviseName != ''">
+                and TEAM_SUPERVISE_NAME like '%'||#{productLine2Param.teamSuperviseName}||'%'
+            </if>
+            <if test="productLine2Param.deptMgrName != null and productLine2Param.deptMgrName != ''">
+                and DEPT_MGR_NAME like '%'||#{productLine2Param.deptMgrName}||'%'
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <select id="lineAnalysis"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.ProductLine2Param"
+            resultMap="BaseResultMap">
+        select
+        distinct
+        m.product_type,
+        m.platform,
+        m.area
+        from
+        ( select * from (select distinct  product_type from sys_material) p
+        join
+        ( select distinct b.platform, a.area from sys_area_site a join sys_platform b on a.area is not null) a ) m
+        left join PRODUCT_LINE2 l on l.product_type = m.product_type
+        and l.company_brand = m.company_brand
+        and l.platform = m.platform
+        and l.area = m.area
+        <where>
+            <if test="paramCondition.areas != null and paramCondition.areas != ''">
+                and m.area in
+                <foreach collection="paramCondition.areas" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productTypes != null and paramCondition.productTypes != ''">
+                and m.product_type in
+                <foreach collection="paramCondition.productTypes" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.companyBrands != null and paramCondition.companyBrands != ''">
+                and m.company_brand in
+                <foreach collection="paramCondition.companyBrands" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.platforms != null and paramCondition.platforms != ''">
+                and m.platform in
+                <foreach collection="paramCondition.platforms" index="index" item="item" open="(" separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by m.product_type, m.company_brand
+    </select>
+
+</mapper>

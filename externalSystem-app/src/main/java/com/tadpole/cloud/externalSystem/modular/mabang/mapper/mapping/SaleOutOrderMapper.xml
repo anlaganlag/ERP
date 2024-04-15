@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.SaleOutOrderMapper">
+
+     <resultMap id="BaseResultMap"
+           type="com.tadpole.cloud.platformSettlement.api.inventory.model.result.SalesOutErpResult">
+              <id column="FEntity" property="FEntity"/>
+              <result column="MATERIAL_CODE" property="FCustMatID"/>
+              <result column="SKU" property="F_Customer_SKU"/>
+              <result column="MATERIAL_CODE" property="FMaterialID"/>
+              <result column="UNIT" property="FUnitID"/>
+              <result column="SALES_STOCKOUT_AMOUNT" property="FRealQty"/>
+              <result column="BUSINESS" property="FOwnerTypeID"/>
+              <result column="WAREHOUSE_CODE" property="FStockID"/>
+              <result column="SALES_STOCKOUT_AMOUNT" property="FSALBASEQTY"/>
+              <result column="SALES_STOCKOUT_AMOUNT" property="FPRICEBASEQTY"/>
+              <result column="SALES_STOCKOUT_AMOUNT" property="FBASEUNITQTY"/>
+              <result column="F_BSC_Team" property="F_BSC_Team"/>
+              <result column="WAREHOUSE_NAME" property="WAREHOUSE_NAME"/>
+              <result column="REMARK1" property="F_BSC_SubRemark1"/>
+     </resultMap>
+
+    <!-- 销售出库分页查询列表 -->
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.SaleOutOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.ExportSaleOutOrderResult">
+           SELECT A.BILL_NO,
+           A.YEARS,
+           A.MONTH,
+           A.FINANCE_CODE,
+           A.SAL_ORG_NAME,
+           A.SAL_ORG_CODE,
+           A.STOCK_SKU,
+           A.OUT_QTY_SUM,
+           A.F_BILL_TYPE_ID,
+           A.F_BILL_NO,
+           A.F_DATE,
+           A.F_SALE_ORG_ID,
+           A.F_CUSTOMER_ID,
+           A.F_BSC_TYPE,
+           A.F_STOCK_ORG_ID,
+           A.F_NOTE,
+           A.F_SETTLE_CURR_ID,
+           A.F_DOCUMENT_STATUS,
+           A.SYNC_STATUS,
+           A.IS_INVALID,
+           CASE WHEN A.SYNC_STATUS='-1' THEN '未推送'
+           WHEN A.SYNC_STATUS='0' THEN '推送失败'
+           WHEN A.SYNC_STATUS='1' THEN '推送成功'
+           END AS syncStatusTxt,
+           A.SYNC_RESULT_MSG,
+           B.ID,
+           B.SALE_OUT_ORDER_ID,
+           B.MA_ORDER_ITEM_ID,
+           B.DEPARTMENT,
+           B.TEAM,
+           B.PLAT_NAME,
+           B.SHOP_NAME,
+           B.SITE_CODE,
+           B.WAREHOUSE_NAME,
+           B.WAREHOUSE_ID,
+           B.PLAT_ORD_ID,
+           B.PLAT_SKU,
+           B.SHIPPED_TIME,
+           B.OUT_QTY,
+           B.F_MATERIAL_ID,
+           B.F_MATERIAL_NAME,
+           B.F_MATERIA_MODEL,
+           B.F_UNIT_ID,
+           B.F_REAL_QTY,
+           B.F_STOCK_ID,
+           B.F_STOCK_STATUS_ID,
+           B.F_PAEZ_BASE_PROPERTY,
+           B.F_PAEZ_BASE_PROPERTY1,
+           B.F_BSC_TEAM,
+           B.F_BSC_DEPT
+           FROM SALE_OUT_ORDER A
+           LEFT JOIN SALE_OUT_ORDER_ITEM B
+           ON B.SALE_OUT_ORDER_ID = A.ID
+           <where>
+                  <if test="param.billNo != null and param.billNo != ''">
+                         AND A.BILL_NO LIKE '%'||#{param.billNo}||'%'
+                  </if>
+                  <if test="param.yearsList != null and param.yearsList.size() != 0">
+                         AND A.YEARS IN
+                         <foreach collection="param.yearsList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                         </foreach>
+                  </if>
+                  <if test="param.monthList != null and param.monthList.size() != 0">
+                         AND A.MONTH IN
+                         <foreach collection="param.monthList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                         </foreach>
+                  </if>
+                  <if test="param.platformNames != null and param.platformNames.size() != 0">
+                         AND B.PLAT_NAME IN
+                         <foreach collection="param.platformNames" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                         </foreach>
+                  </if>
+                  <if test="param.shopNames != null and param.shopNames.size() != 0">
+                         AND B.SHOP_NAME IN
+                         <foreach collection="param.shopNames" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                         </foreach>
+                  </if>
+                  <if test="param.sites != null and param.sites.size() != 0">
+                         AND B.SITE_CODE IN
+                         <foreach collection="param.sites" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                         </foreach>
+                  </if>
+                  <if test="param.financeCode != null and param.financeCode != ''">
+                         AND A.FINANCE_CODE LIKE '%'||#{param.financeCode}||'%'
+                  </if>
+                  <if test="param.department != null and param.department != ''">
+                         AND B.DEPARTMENT LIKE '%'||#{param.department}||'%'
+                  </if>
+                  <if test="param.team != null and param.team != ''">
+                         AND B.TEAM LIKE '%'||#{param.team}||'%'
+                  </if>
+                  <if test="param.platOrdId != null and param.platOrdId != ''">
+                         AND B.PLAT_ORD_ID LIKE '%'||#{param.platOrdId}||'%'
+                  </if>
+
+                  <if test="param.startTime != null and param.startTime != ''">
+                         and B.SHIPPED_TIME &gt;=to_date(#{param.startTime},'YYYY-MM-DD HH24:MI:SS')
+                  </if>
+                  <if test="param.endTime != null and param.endTime != ''">
+                         and B.SHIPPED_TIME &lt;=to_date(#{param.endTime},'YYYY-MM-DD HH24:MI:SS')
+                  </if>
+
+                  <if test="param.stockSku != null and param.stockSku != ''">
+                         AND A.STOCK_SKU LIKE '%'||#{param.stockSku}||'%'
+                  </if>
+                  <if test="param.platSku != null and param.platSku != ''">
+                         AND B.PLAT_SKU LIKE '%'||#{param.platSku}||'%'
+                  </if>
+                  <if test="param.syncStatus != null and param.syncStatus != ''">
+                         AND A.SYNC_STATUS = #{param.syncStatus}
+                  </if>
+           </where>
+           ORDER BY A.YEARS DESC,A.MONTH DESC,A.FINANCE_CODE ASC,A.SAL_ORG_CODE ASC,A.STOCK_SKU ASC
+    </select>
+
+    <!-- 查询马帮发货订单生成销售出库的订单列表 -->
+    <select id="selectMabangtOrders" parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.SyncSaleOutOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.dto.MabangOrdersDTO">
+           SELECT T1.*,MOI.*,SI.*,MOI.ID ORDER_DETAIL_ID
+           FROM MABANG_ORDERS T1
+                       LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                       LEFT JOIN MABANG_SHOP_LIST SI ON SI.ID = T1.SHOP_ID
+           WHERE
+               T1.CREATE_SALE_OUT_ORDER= 0
+             AND extract(year from T1.express_time) = #{param.year}
+             AND extract(month from T1.express_time) = #{param.month}
+             AND SI.FINANCE_CODE = #{param.financeCode}
+             AND SI.ORIGINAL_FINANCE_CODE = #{param.originalFinanceCode}
+             AND MOI.STOCK_SKU = #{param.sku}
+             AND MOI.STOCK_WAREHOUSE_NAME != '平台自发仓'
+             AND (T1.ORDER_STATUS !='4' OR T1.PLATFORM_ID != 'eBay' OR MOI.STOCK_WAREHOUSE_NAME != 'FBA虚拟仓' OR MOI.STOCK_WAREHOUSE_ID !='1049815') -- eBay  FBA虚拟仓 订单状态为4 的不需要生成销售出库单
+             AND (T1.ORDER_STATUS !='4' OR T1.PLATFORM_ID != 'LAZADA' OR MOI.STOCK_WAREHOUSE_NAME != 'FBL虚拟仓' OR MOI.STOCK_WAREHOUSE_ID !='1053855') --  LAZADA FBL虚拟仓 订单状态为4 的不需要生成销售出库单
+    </select>
+
+    <!-- 马帮发货订单生成销售出库合并 -->
+    <select id="mabangtOrdersMergeList" parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.SyncSaleOutOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.dto.MabangOrdersDTO">
+           SELECT EXTRACT(YEAR FROM T.EXPRESS_TIME) YEAR,EXTRACT(MONTH FROM T.EXPRESS_TIME) MONTH,SI.FINANCE_CODE,T.STOCK_SKU,SI.ORIGINAL_FINANCE_CODE,MAX(ERP_ORDER_ID) ERP_ORDER_ID FROM
+                  (
+                         SELECT * FROM MABANG_ORDERS T1 LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                         WHERE T1.ORDER_STATUS = '3' AND T1.PLATFORM_ID = 'eBay'
+                           AND (MOI.STOCK_WAREHOUSE_NAME = '雁田定制仓' OR MOI.STOCK_WAREHOUSE_NAME = '美国纽约仓-递四方(新)' OR MOI.STOCK_WAREHOUSE_ID = 1047844)
+                         UNION ALL
+                        /* SELECT * FROM MABANG_ORDERS T1 LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                         WHERE T1.ORDER_STATUS = '4' and T1.PLATFORM_ID = 'eBay'
+                           AND (MOI.STOCK_WAREHOUSE_NAME = 'FBA虚拟仓')
+                         UNION ALL*/
+                         SELECT * FROM MABANG_ORDERS T1 LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                         WHERE T1.ORDER_STATUS = '3' and T1.PLATFORM_ID = '速卖通'
+                           AND (MOI.STOCK_WAREHOUSE_NAME='雁田定制仓' OR MOI.STOCK_WAREHOUSE_ID = 1047844)
+                         UNION ALL
+                         SELECT * FROM MABANG_ORDERS T1 LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                         WHERE T1.ORDER_STATUS = '4' and T1.PLATFORM_ID = '速卖通'
+                           AND (MOI.STOCK_WAREHOUSE_NAME='AE虚拟优选仓')
+                         UNION ALL
+                         SELECT * FROM MABANG_ORDERS T1 LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                         WHERE T1.ORDER_STATUS = '3' and T1.PLATFORM_ID = 'Shopee'
+                           AND (MOI.STOCK_WAREHOUSE_NAME='雁田定制仓' OR MOI.STOCK_WAREHOUSE_ID = 1047844)
+                         UNION ALL
+                         SELECT * FROM MABANG_ORDERS T1 LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                         WHERE T1.ORDER_STATUS = '3' and T1.PLATFORM_ID = 'LAZADA'
+                           AND (MOI.STOCK_WAREHOUSE_NAME='雁田定制仓' OR MOI.STOCK_WAREHOUSE_ID = 1047844)
+                        /* UNION ALL
+                         SELECT * FROM MABANG_ORDERS T1 LEFT JOIN MABANG_ORDER_ITEM MOI ON MOI.ORIGIN_ORDER_ID = T1.ERP_ORDER_ID
+                         WHERE T1.ORDER_STATUS = '4' and T1.PLATFORM_ID = 'LAZADA'
+                           AND (MOI.STOCK_WAREHOUSE_NAME='FBL虚拟仓')*/
+                  ) T
+                         LEFT JOIN MABANG_SHOP_LIST si ON si.id=T.shop_id
+           WHERE TO_CHAR(T.EXPRESS_TIME,'YYYYMM') = #{param.yearMonth} AND T.CREATE_SALE_OUT_ORDER= 0
+           GROUP BY EXTRACT(YEAR FROM T.EXPRESS_TIME),EXTRACT(MONTH FROM T.EXPRESS_TIME),SI.FINANCE_CODE,T.STOCK_SKU,SI.ORIGINAL_FINANCE_CODE
+    </select>
+
+    <select id="getSyncList" parameterType="java.lang.String"
+               resultMap="BaseResultMap">
+        SELECT    T.PLAT_SKU SKU,
+                  T.F_MATERIAL_ID  MATERIAL_CODE,
+                  'Pcs'            UNIT,
+                  '业务组织'         BUSINESS,
+                  T.OUT_QTY        SALES_STOCKOUT_AMOUNT,
+                  T.WAREHOUSE_ID   WAREHOUSE_CODE,
+                  T.WAREHOUSE_NAME WAREHOUSE_NAME,
+                  T.TEAM           F_BSC_TEAM,
+                  T.PLAT_ORD_ID   REMARK1
+        FROM SALE_OUT_ORDER_ITEM T
+        WHERE T.BILL_NO = #{billNo}
+    </select>
+
+    <!-- 分配销售组织物料编码 -->
+    <select id="getFsaleOrgIdAndMat"
+                resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ZZDistributeMcms">
+        SELECT  T2.F_MATERIAL_ID materialCode,
+                T1.F_SALE_ORG_ID shopCode
+        FROM SALE_OUT_ORDER T1
+                 LEFT JOIN SALE_OUT_ORDER_ITEM T2
+                           ON T2.SALE_OUT_ORDER_ID = T1.ID
+        WHERE T1.SYNC_STATUS IN ('-1', '0')
+          AND T1.F_SALE_ORG_ID IS NOT NULL
+        GROUP BY T2.F_MATERIAL_ID,T1.F_SALE_ORG_ID
+    </select>
+
+</mapper>

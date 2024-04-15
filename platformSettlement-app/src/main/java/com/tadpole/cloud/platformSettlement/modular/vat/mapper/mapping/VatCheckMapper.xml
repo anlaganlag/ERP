@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.VatCheckMapper">
+
+    <sql id="List_Condition">
+<!--        <if test="param.activityPeriod != null and param.activityPeriod != ''">-->
+<!--            AND T.ACTIVITY_PERIOD = #{param.activityPeriod}-->
+<!--        </if>-->
+        <if test="param.startMonth != null and param.startMonth != ''">
+            AND TO_DATE(T.ACTIVITY_PERIOD, 'YYYY-MM') >= TO_DATE(#{param.startMonth}, 'YYYY-MM')
+        </if>
+        <if test="param.endMonth != null and param.endMonth != ''">
+            AND TO_DATE(T.ACTIVITY_PERIOD, 'YYYY-MM') &lt;= TO_DATE(#{param.endMonth}, 'YYYY-MM')
+        </if>
+
+        <if test="param.ebmsShopsNames != null and param.ebmsShopsNames.size() != 0">
+            AND T.EBMS_SHOPS_NAME IN
+            <foreach collection="param.ebmsShopsNames" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND T.SYS_SITE IN
+            <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.transactionCurrencyCodes != null and param.transactionCurrencyCodes.size() != 0">
+            AND T.TRANSACTION_CURRENCY_CODE IN
+            <foreach collection="param.transactionCurrencyCodes" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+
+    </sql>
+
+    <!--VAT核对表查询列表-->
+    <select id="queryListPage" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatCheckResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatCheckParam">
+        SELECT T.ID,
+        T.ACTIVITY_PERIOD,
+        T.EBMS_SHOPS_NAME,
+        T.SYS_SITE,
+        T.TRANSACTION_CURRENCY_CODE,
+        NVL(T.SALES_VAT_SELLER,0) SALES_VAT_SELLER,
+        NVL(T.SALES_VAT_AGENT,0) SALES_VAT_AGENT,
+        NVL(T.SALES_VAT_SELLER,0) - NVL(T.SALES_VAT_AGENT,0) SALES_VAT_DIFFERENCE,
+        NVL(T.BTB_SELLER,0) BTB_SELLER,
+        NVL(T.BTB_AGENT,0) BTB_AGENT,
+        NVL(T.BTB_SELLER,0) - NVL(T.BTB_AGENT,0) BTB_DIFFERENCE,
+        NVL(T.CEE,0) CEE,
+        NVL(T.BABLANCE,0) BABLANCE,
+        NVL(T.SALES_VAT_AGENT,0) - NVL(T.CEE,0) - NVL(T.BABLANCE,0) ACTUAL_PAYMENT,
+        T.REMARK_ONE,
+        T.REMARK_TWO,
+        T.CREATE_TIME,
+        T.CREATE_PERSON_NO,
+        T.CREATE_PERSON_NAME,
+        T.UPDATE_TIME,
+        T.UPDATE_PERSON_NO,
+        T.UPDATE_PERSON_NAME FROM VAT_CHECK T
+
+        <where>
+           <include refid="List_Condition" />
+        </where>
+        order by T.ACTIVITY_PERIOD desc
+    </select>
+
+    <select id="listSum" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatCheckResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatCheckParam">
+        SELECT
+        NVL(SUM(T.SALES_VAT_SELLER),0) salesVatSeller,
+        NVL(SUM(T.SALES_VAT_AGENT),0) salesVatAgent,
+        NVL(SUM(NVL(T.SALES_VAT_SELLER,0) - NVL(T.SALES_VAT_AGENT,0)),0) salesVatDifference,
+        NVL(SUM(T.BTB_SELLER),0) btbSeller,
+        NVL(SUM(T.BTB_AGENT),0) btbAgent,
+        NVL(SUM(NVL(T.BTB_SELLER,0) - NVL(T.BTB_AGENT,0)),0) btbDifference,
+        NVL(SUM(T.CEE),0) cee,
+        NVL(SUM(T.BABLANCE),0) bablance,
+        NVL(SUM(NVL(T.SALES_VAT_AGENT,0) - NVL(T.CEE,0) - NVL(T.BABLANCE,0)),0) actualPayment
+        FROM VAT_CHECK T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+    </select>
+
+
+    <update id="commitUpdateBatch" parameterType="java.util.List">
+    begin
+    <foreach collection="reqParamList" item="item" index="index" separator=";">
+            update VAT_CHECK a
+        <trim prefix="SET" suffixOverrides=",">
+                <if test="item.salesVatSeller != null">
+                    a.SALES_VAT_SELLER = #{item.salesVatSeller},
+                </if>
+                <if test="item.salesVatAgent != null">
+                    a.SALES_VAT_AGENT = #{item.salesVatAgent},
+                </if>
+                <if test="item.btbSeller != null">
+                    a.BTB_SELLER = #{item.btbSeller},
+                </if>
+                <if test="item.btbAgent != null">
+                    a.BTB_AGENT = #{item.btbAgent},
+                </if>
+                <if test="item.cee != null">
+                    a.CEE = #{item.cee},
+                </if>
+                <if test="item.bablance != null">
+                    a.BABLANCE = #{item.bablance},
+                </if>
+                <if test="item.remarkOne != null">
+                    a.REMARK_ONE = #{item.remarkOne},
+                </if>
+                <if test="item.remarkTwo != null">
+                    a.REMARK_TWO = #{item.remarkTwo},
+                </if>
+
+                <if test="item.updatePersonNo != null">
+                    a.UPDATE_PERSON_NO = #{item.updatePersonNo},
+                </if>
+                <if test="item.updatePersonName != null">
+                    a.UPDATE_PERSON_NAME = #{item.updatePersonName},
+                </if>
+                a.UPDATE_TIME = sysdate
+        </trim>
+            WHERE
+                a.ACTIVITY_PERIOD = #{item.activityPeriod}
+                AND a.EBMS_SHOPS_NAME = #{item.ebmsShopsName}
+                AND a.SYS_SITE = #{item.sysSite}
+                AND a.TRANSACTION_CURRENCY_CODE = #{item.transactionCurrencyCode}
+        </foreach>
+        ;end;
+    </update>
+
+
+</mapper>

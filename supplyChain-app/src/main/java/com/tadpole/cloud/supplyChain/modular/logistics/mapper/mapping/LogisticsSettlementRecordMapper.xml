@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LogisticsSettlementRecordMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, PARENT_ID, LOGISTICS_COUNT_FEE, UNIT_PRICE, LOGISTICS_FEE, LOGISTICS_CURRENCY, DTP, TARIFF_FEE, CLEAR_TARIFF_FEE, BUSY_SEASON_FEE, OIL_FEE, OIL_FEE_PERCENT, OTHERS_FEE, PRODUCT_FEE,
+        LOGISTICS_SETTLEMENT_ORDER, CHANGE_TAX, DUTY, TAX_CURRENCY, TAX_ORDER, C88, C88_REMARK, VAT, TAX_INVOICE_ORDER, TOTAL_FEE, TO_CHAR(LOGISTICS_ERP_DATE, 'YYYY/MM/DD') AS LOGISTICS_ERP_DATE,
+        LOGISTICS_BILL_ORDER, TO_CHAR(TAX_ERP_DATE, 'YYYY/MM/DD') AS TAX_ERP_DATE, TAX_BILL_ORDER, REMARK, OPERATION_TYPE, CREATE_TIME, CREATE_USER, UPDATE_TIME, UPDATE_USER, SEQ_NO, DATA_MONTHS, SHIPMENT_NUM, DATA_STATUS
+    </sql>
+
+    <!--查询物流实际结算记录-->
+    <select id="queryRecordListPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LogisticsSettlementRecordParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LogisticsSettlementRecordResult">
+        SELECT 
+            <include refid="Base_Column_List"></include>
+        FROM LOGISTICS_SETTLEMENT_RECORD
+        WHERE PARENT_ID = #{param.parentId}
+        ORDER BY CREATE_TIME, UPDATE_TIME DESC
+    </select>
+</mapper>

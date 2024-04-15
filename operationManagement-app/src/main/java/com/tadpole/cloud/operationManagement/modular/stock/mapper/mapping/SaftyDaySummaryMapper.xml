@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.SaftyDaySummaryMapper">
+
+    <resultMap id="ResultMapWhitCondition" type="com.tadpole.cloud.operationManagement.modular.stock.model.result.SaftyDaySummaryResultVO">
+        <result property="id" column="ID" jdbcType="INTEGER"/>
+        <result property="platformName" column="PLATFORM_NAME" jdbcType="VARCHAR"/>
+        <result property="area" column="AREA" jdbcType="VARCHAR"/>
+        <result property="department" column="DEPARTMENT" jdbcType="VARCHAR"/>
+        <result property="team" column="TEAM" jdbcType="VARCHAR"/>
+        <result property="productType" column="PRODUCT_TYPE" jdbcType="VARCHAR"/>
+        <result property="productName" column="PRODUCT_NAME" jdbcType="VARCHAR"/>
+        <result property="style" column="STYLE" jdbcType="VARCHAR"/>
+        <result property="model" column="MODEL" jdbcType="VARCHAR"/>
+        <result property="isEnable" column="IS_ENABLE" jdbcType="INTEGER"/>
+        <collection property="valueList"
+                    ofType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SaftyDayValueResult">
+            <result property="id" column="ITEM_ID" jdbcType="INTEGER"/>
+            <result property="sortNum" column="SORT_NUM" jdbcType="INTEGER"/>
+            <result property="summaryId" column="SUMMARY_ID" jdbcType="INTEGER"/>
+            <result property="salesLow" column="SALES_LOW" jdbcType="INTEGER"/>
+            <result property="salesHigh" column="SALES_HIGH" jdbcType="INTEGER"/>
+            <result property="safeSaleDays" column="SAFE_SALE_DAYS" jdbcType="INTEGER"/>
+            <result property="orderGoodsDays" column="ORDER_GOODS_DAYS" jdbcType="INTEGER"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="ResultMapWhitCondition2" type="com.tadpole.cloud.operationManagement.modular.stock.model.result.SaftyDaySummaryResultVO">
+        <result property="id" column="ID" jdbcType="INTEGER"/>
+        <result property="platformName" column="PLATFORM_NAME" jdbcType="VARCHAR"/>
+        <result property="area" column="AREA" jdbcType="VARCHAR"/>
+        <result property="department" column="DEPARTMENT" jdbcType="VARCHAR"/>
+        <result property="team" column="TEAM" jdbcType="VARCHAR"/>
+        <result property="productType" column="PRODUCT_TYPE" jdbcType="VARCHAR"/>
+        <result property="productName" column="PRODUCT_NAME" jdbcType="VARCHAR"/>
+        <result property="style" column="STYLE" jdbcType="VARCHAR"/>
+        <result property="model" column="MODEL" jdbcType="VARCHAR"/>
+        <result property="isEnable" column="IS_ENABLE" jdbcType="INTEGER"/>
+       <!-- <collection property="valueList"
+                    ofType="cn.stylefeng.guns.cloud.system.modular.stock2.model.result.SaftyDayValueResult" select="queryDetail" column="{SID=ID}">
+        </collection>-->
+    </resultMap>
+
+
+    <select id="summaryList" resultMap="ResultMapWhitCondition">
+        select
+        a.ID,a.PLATFORM_NAME,a.AREA,a.DEPARTMENT,a.TEAM,a.PRODUCT_TYPE,a.PRODUCT_NAME,a.STYLE,a.MODEL,a.IS_ENABLE,
+               b.id ITEM_ID,b.SUMMARY_ID, b.SORT_NUM,b.SALES_LOW,b.SALES_HIGH,b.SAFE_SALE_DAYS,b.ORDER_GOODS_DAYS
+        from STOCK_SAFTY_DAY_SUMMARY a left join STOCK_SAFTY_DAY_VALUE b on  a.id = b.SUMMARY_ID
+        where a.IS_DELETE = 0
+
+        <if test="param.id != null and param.id >0">
+            and a.ID = #{param.id}
+        </if>
+        <if test="param.platformName != null and param.platformName != ''">
+            and a.PLATFORM_NAME LIKE '%' || #{param.platformName} || '%'
+        </if>
+        <if test="param.area != null and param.area != ''">
+            and a.AREA LIKE '%' || #{param.area} || '%'
+        </if>
+        <if test="param.department != null and param.department != ''">
+            and a.DEPARTMENT LIKE '%' || #{param.department} || '%'
+        </if>
+        <if test="param.team != null and param.team != ''">
+            and a.TEAM LIKE '%' || #{param.team} || '%'
+        </if>
+        <if test="param.productType != null and param.productType != ''">
+            and a.PRODUCT_TYPE LIKE '%' || #{param.productType} || '%'
+        </if>
+        <if test="param.productName != null and param.productName != ''">
+            and a.PRODUCT_NAME LIKE '%' || #{param.productName} || '%'
+        </if>
+        <if test="param.style != null and param.style != ''">
+            and a.STYLE LIKE '%' || #{param.style} || '%'
+        </if>
+        <if test="param.model != null and param.model != ''">
+            and a.MODEL LIKE '%' || #{param.model} || '%'
+        </if>
+
+    </select>
+
+    <select id="summaryList2" resultMap="ResultMapWhitCondition2">
+        select
+        a.ID,a.PLATFORM_NAME,a.AREA,a.DEPARTMENT,a.TEAM,a.PRODUCT_TYPE,a.PRODUCT_NAME,a.STYLE,a.MODEL,a.IS_ENABLE
+        from STOCK_SAFTY_DAY_SUMMARY a
+        where a.IS_DELETE = 0
+
+        <if test="param.id != null and param.id >0">
+            and a.ID = #{param.id}
+        </if>
+        <if test="param.platformName != null and param.platformName != ''">
+            and a.PLATFORM_NAME LIKE '%' || #{param.platformName} || '%'
+        </if>
+        <if test="param.area != null and param.area != ''">
+            and a.AREA LIKE '%' || #{param.area} || '%'
+        </if>
+        <if test="param.department != null and param.department != ''">
+            and a.DEPARTMENT LIKE '%' || #{param.department} || '%'
+        </if>
+        <if test="param.team != null and param.team != ''">
+            and a.TEAM LIKE '%' || #{param.team} || '%'
+        </if>
+        <if test="param.productType != null and param.productType != ''">
+            and a.PRODUCT_TYPE LIKE '%' || #{param.productType} || '%'
+        </if>
+        <if test="param.productName != null and param.productName != ''">
+            and a.PRODUCT_NAME LIKE '%' || #{param.productName} || '%'
+        </if>
+        <if test="param.style != null and param.style != ''">
+            and a.STYLE LIKE '%' || #{param.style} || '%'
+        </if>
+        <if test="param.model != null and param.model != ''">
+            and a.MODEL LIKE '%' || #{param.model} || '%'
+        </if>
+
+    </select>
+
+
+    <select id="exportExcel"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SaftyDaySummaryResult">
+        SELECT a.ID,
+        a.PLATFORM_NAME,
+        a.AREA,
+        a.DEPARTMENT,
+        a.TEAM,
+        a.PRODUCT_TYPE,
+        a.PRODUCT_NAME,
+        a.STYLE,
+        a.MODEL,
+        a.IS_ENABLE,
+        b.id ITEM_ID,
+        b.SUMMARY_ID,
+        b.SORT_NUM,
+        b.SALES_LOW,
+        b.SALES_HIGH,
+        b.SAFE_SALE_DAYS,
+        b.ORDER_GOODS_DAYS,
+        a.create_by,
+        a.update_by,
+        a.create_time,
+        a.update_time
+        FROM STOCK_SAFTY_DAY_SUMMARY a
+        LEFT JOIN STOCK_SAFTY_DAY_VALUE b
+        ON a.id = b.summary_id
+        WHERE a.IS_DELETE = 0
+
+        <if test="param.id != null and param.id >0">
+            and a.ID = #{param.id}
+        </if>
+        <if test="param.platformName != null and param.platformName != ''">
+            and a.PLATFORM_NAME LIKE '%' || #{param.platformName} || '%'
+        </if>
+        <if test="param.area != null and param.area != ''">
+            and a.AREA LIKE '%' || #{param.area} || '%'
+        </if>
+        <if test="param.department != null and param.department != ''">
+            and a.DEPARTMENT LIKE '%' || #{param.department} || '%'
+        </if>
+        <if test="param.team != null and param.team != ''">
+            and a.TEAM LIKE '%' || #{param.team} || '%'
+        </if>
+        <if test="param.productType != null and param.productType != ''">
+            and a.PRODUCT_TYPE LIKE '%' || #{param.productType} || '%'
+        </if>
+        <if test="param.productName != null and param.productName != ''">
+            and a.PRODUCT_NAME LIKE '%' || #{param.productName} || '%'
+        </if>
+        <if test="param.style != null and param.style != ''">
+            and a.STYLE LIKE '%' || #{param.style} || '%'
+        </if>
+        <if test="param.model != null and param.model != ''">
+            and a.MODEL LIKE '%' || #{param.model} || '%'
+        </if>
+        and a.id = b.SUMMARY_ID
+    </select>
+
+</mapper>

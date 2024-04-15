@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.SeasonParameterMapper">
+    <update id="saveSeaBatch">
+
+        UPDATE
+        STOCK_SEASON_PARAMETER  a
+        <set>
+            <trim prefix = "a.STOCK_STATUS = CASE" suffix = "END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    WHEN a.id = #{item.id} THEN '2'
+                </foreach>
+            </trim>
+            <trim prefix = "a.APPLY_PERSON_NO = CASE" suffix = "END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.requireBy != null and item.requireBy != ''">
+                        WHEN a.id = #{item.id} THEN #{item.requireBy}
+                    </if>
+                </foreach>
+            </trim>
+        </set>
+        <where>
+            nvl(a.sales_demand,0)>0
+            <if test="reqParamList!= null and reqParamList.size() > 0">
+                and a.id IN
+                <foreach collection="reqParamList" item="item" index="index" separator="," open="(" close=")">
+                    #{item.id}
+                </foreach>
+            </if>
+        </where>
+
+    </update>
+
+
+    <select id="queryList" parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.SeasonParameterVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SeasonParameterResult">
+
+        select a.* from STOCK_SEASON_PARAMETER a
+        where 1=1
+        <if test="reqVO != null">
+            <if test="reqVO.platformName != null and reqVO.platformName.size() != 0">
+                AND a.PLATFORM_NAME IN
+                <foreach collection="reqVO.platformName" item="platform" index="index" separator="," open="(" close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <if test="reqVO.department != null and reqVO.department.size() != 0">
+                AND a.DEPARTMENT IN
+                <foreach collection="reqVO.department" item="dept" index="index" separator="," open="(" close=")">
+                    #{dept}
+                </foreach>
+            </if>
+            <if test="reqVO.team != null and reqVO.team.size() != 0">
+                AND a.TEAM IN
+                <foreach collection="reqVO.team" item="te" index="index" separator="," open="(" close=")">
+                    #{te}
+                </foreach>
+            </if>
+            <if test="reqVO.area != null and reqVO.area.size() != 0">
+                AND a.AREA IN
+                <foreach collection="reqVO.area" item="ar" index="index" separator="," open="(" close=")">
+                    #{ar}
+                </foreach>
+            </if>
+            <if test="reqVO.productType != null and reqVO.productType.size() != 0">
+                AND a.PRODUCT_TYPE IN
+                <foreach collection="reqVO.productType" item="pType" index="index" separator="," open="(" close=")">
+                    #{pType}
+                </foreach>
+            </if>
+            <if test="reqVO.brand != null and reqVO.brand.size() != 0">
+                AND a.BRAND IN
+                <foreach collection="reqVO.brand" item="br" index="index" separator="," open="(" close=")">
+                    #{br}
+                </foreach>
+            </if>
+            <if test="reqVO.model != null and reqVO.model.size() != 0">
+                AND a.MODEL IN
+                <foreach collection="reqVO.model" item="mo" index="index" separator="," open="(" close=")">
+                    #{mo}
+                </foreach>
+            </if>
+            <if test="reqVO.festivalLabel != null and reqVO.festivalLabel.size() != 0">
+                AND a.FESTIVAL_LABEL IN
+                <foreach collection="reqVO.festivalLabel" item="festival" index="mo" separator="," open="(" close=")">
+                    #{festival}
+                </foreach>
+            </if>
+            <if test="reqVO.season != null and reqVO.season.size() != 0">
+                AND a.SEASON IN
+                <foreach collection="reqVO.season" item="sea" index="mo" separator="," open="(" close=")">
+                    #{sea}
+                </foreach>
+            </if>
+            <if test="reqVO.productName != null and reqVO.productName.size() != 0">
+                AND a.PRODUCT_NAME IN
+                <foreach collection="reqVO.productName" item="pn" index="mo" separator="," open="(" close=")">
+                    #{pn}
+                </foreach>
+            </if>
+
+        </if>
+    </select>
+    <select id="exportExcel"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SeasonParameterResult">
+
+        select a.* from STOCK_SEASON_PARAMETER a
+        <where>
+
+        <if test="reqVO != null">
+            <if test="reqVO.platformName != null and reqVO.platformName.size() != 0">
+                AND a.PLATFORM_NAME IN
+                <foreach collection="reqVO.platformName" item="platform" index="index" separator="," open="(" close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <if test="reqVO.department != null and reqVO.department.size() != 0">
+                AND a.DEPARTMENT IN
+                <foreach collection="reqVO.department" item="dept" index="index" separator="," open="(" close=")">
+                    #{dept}
+                </foreach>
+            </if>
+            <if test="reqVO.team != null and reqVO.team.size() != 0">
+                AND a.TEAM IN
+                <foreach collection="reqVO.team" item="te" index="index" separator="," open="(" close=")">
+                    #{te}
+                </foreach>
+            </if>
+            <if test="reqVO.area != null and reqVO.area.size() != 0">
+                AND a.AREA IN
+                <foreach collection="reqVO.area" item="ar" index="index" separator="," open="(" close=")">
+                    #{ar}
+                </foreach>
+            </if>
+            <if test="reqVO.productType != null and reqVO.productType.size() != 0">
+                AND a.PRODUCT_TYPE IN
+                <foreach collection="reqVO.productType" item="pType" index="index" separator="," open="(" close=")">
+                    #{pType}
+                </foreach>
+            </if>
+            <if test="reqVO.brand != null and reqVO.brand.size() != 0">
+                AND a.BRAND IN
+                <foreach collection="reqVO.brand" item="br" index="index" separator="," open="(" close=")">
+                    #{br}
+                </foreach>
+            </if>
+            <if test="reqVO.model != null and reqVO.model.size() != 0">
+                AND a.MODEL IN
+                <foreach collection="reqVO.model" item="br" index="mo" separator="," open="(" close=")">
+                    #{mo}
+                </foreach>
+            </if>
+            <if test="reqVO.festivalLabel != null and reqVO.festivalLabel.size() != 0">
+                AND a.FESTIVAL_LABEL IN
+                <foreach collection="reqVO.festivalLabel" item="festival" index="mo" separator="," open="(" close=")">
+                    #{festival}
+                </foreach>
+            </if>
+            <if test="reqVO.season != null and reqVO.season.size() != 0">
+                AND a.SEASON IN
+                <foreach collection="reqVO.season" item="sea" index="mo" separator="," open="(" close=")">
+                    #{sea}
+                </foreach>
+            </if>
+
+        </if>
+        </where>
+
+
+    </select>
+
+</mapper>

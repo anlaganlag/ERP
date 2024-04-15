@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LtB2bSettlementReportMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtB2bSettlementReportResult">
+        select  <include refid="DETAIL_COL_NOT_MAT"/>,
+         <include refid="MAT_PROP"/>
+          from LT_B2B_SETTLEMENT_REPORT A
+         LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+         ON B.MATERIAL_CODE = A.NEW_MAT_CODE
+    </select>
+
+
+    <select id="exportByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtB2bSettlementReport">
+        select * from LT_B2B_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+    <select id="downloadExport" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtB2bSettlementReportExport">
+        select * from LT_B2B_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+
+
+    <sql id ="MAT_PROP">
+        decode(B.MATERIAL_CODE,null,'0', B.CATEGORY) CATEGORY,
+         A.product_type,
+         decode(B.MATERIAL_CODE,null,'0',B.PRODUCT_NAME) PRODUCT_NAME,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE) STYLE,
+         decode(B.MATERIAL_CODE,null,'0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+         decode(B.MATERIAL_CODE,null,'0',B.DESIGN) DESIGN,
+         decode(B.MATERIAL_CODE,null,'0',B.COMPANY_BRAND) COMPANY_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.FIT_BRAND) FIT_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.MODEL) MODEL,
+         decode(B.MATERIAL_CODE,null,'0',B.COLOR) COLOR,
+         decode(B.MATERIAL_CODE,null,'0',B.SIZES) SIZES,
+         decode(B.MATERIAL_CODE,null,'0',B.PACKING) PACKING,
+         decode(B.MATERIAL_CODE,null,'0',B.VERSION) VERSION,
+         decode(B.MATERIAL_CODE,null,'0',B.TYPE) TYPE,
+         SALES_BRAND
+    </sql>
+
+    <sql id="DETAIL_COL_NOT_MAT">
+            A.id,
+            A.platform,
+            A.bill_code,
+            A.department,
+            A.team,
+            A.new_mat_code,
+            A.order_no,
+            A.qty,
+            A.currency,
+            A.sale_usd,
+            A.first_trip_fee,
+            A.fba_fee,
+            A.cost,
+            A.cost_add,
+            A.domestic_unsalable_inventory,
+            A.profit,
+            A.incentive_fund,
+            A.period,
+            A.fulfillment,
+            A.cost_unit_price,
+            A.tax_price,
+            A.customer,
+            A.customer_year,
+            A.new_old_customer,
+            A.remark,
+            A.collection_account,
+            A.collection_date,
+            A.payment_remark,
+            A.period_cal_year,
+            A.salesman,
+            A.revenue_ration,
+            A.people_num,
+            A.people_cost,
+            A.sale_ori,
+            A.small_pack_log_fee,
+            A.service_fee,
+            A.real_collection,
+            A.update_time,
+            A.update_by,
+            A.create_time,
+            A.create_by,
+            A.confirm_status
+    </sql>
+
+
+    <sql id="B2B_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <select id="mergePeople" >
+        begin
+        MERGE INTO LT_B2B_SETTLEMENT_REPORT a
+        USING (SELECT t.* FROM ALLOC_STRUCTURE t  where t.status =1) struct
+        ON (struct.period = a.period AND struct.dept3 = a.department AND struct.dept4 = a.team)
+        WHEN MATCHED THEN
+            UPDATE SET   a.people_num = ROUND(NVL(struct.b2b_alloc,0),12)
+
+        WHERE a.period = #{period};
+
+        MERGE INTO LT_B2B_SETTLEMENT_REPORT  det
+        USING (
+            SELECT detail.id,detail.PERIOD,detail.department,detail.team,
+                   case when detail.qty &lt; 0 then 0 else   detail.qty END detailSalesVol,
+                   SUM(case when detail.qty &lt; 0 then 0 else   detail.qty END) OVER(PARTITION BY detail.PERIOD, detail.department, detail.team ) AS teamsalesVol
+                    ,rowid
+            FROM  LT_B2B_SETTLEMENT_REPORT detail) src
+        ON (det.id = src.id)
+        WHEN MATCHED THEN UPDATE set
+            det.revenue_ration = DECODE (NVL(src.teamsalesVol,0),0,0, src.detailSalesVol /src.teamsalesVol),
+            det.people_num = det.people_num * DECODE (NVL(src.teamsalesVol,0),0,0, src.detailSalesVol /src.teamsalesVol)
+                          WHERE NVL(det.confirm_status,0) != 1
+                            and det.period = #{period};
+        UPDATE LT_B2B_SETTLEMENT_REPORT t
+        SET t.people_cost= 0   where t.period = #{period};
+        end;
+
+    </select>
+
+    <update id="insertStructure"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtRakutenSettlementReportParam">
+        <!--        删除避免重复插入 -->
+        BEGIN
+        DELETE FROM lt_b2b_settlement_report
+        <where>
+            CONFIRM_STATUS = '1'
+            <include refid="B2B_CONDITION"/>
+        </where>;
+        <!--                插入架构数据-->
+        INSERT INTO
+        lt_b2b_settlement_report (PERIOD ,
+        DEPARTMENT ,
+        team,
+        REVENUE_RATION ,
+        PEOPLE_NUM,
+        CREATE_TIME ,
+        CREATE_BY)
+        SELECT
+        PERIOD ,
+        DEPT3 ,
+        dept4,
+        0 REVENUE_RATION ,
+        b2b_alloc,
+        SYSDATE ,
+        #{param.createBy}
+        FROM
+        ALLOC_STRUCTURE
+        <where>
+            STATUS = '1'
+            and b2b_alloc>0
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+        </where>;
+
+        END;
+
+
+    </update>
+
+</mapper>

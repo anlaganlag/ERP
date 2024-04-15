@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsLogisticsNoCheckMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        A.ID,A.SHIPMENT_NUM,A.SHIPMENT_DATE,A.LOGISTICS_NO,A.PLATFORM,A.SYS_SHOPS_NAME,A.SYS_SITE,A.LC_CODE,A.LP_CODE,A.LP_NAME,A.LP_SIMPLE_NAME,A.IS_CUSTOMS,
+        A.HAS_TAX,A.FREIGHT_COMPANY,A.TRANSPORT_TYPE,A.LOGISTICS_CHANNEL,A.ORDER_TYPE,A.SHIPMENT_UNIT,A.SHIPMENT_QUANTITY,
+        A.WEIGHT,A.VOLUME,A.VOLUME_WEIGHT,A.CONFIRM_FEE_TYPE,A.CONFIRM_COUNT_FEE,A.SHIPMENT_ID,A.PREDICT_UNIT_PRICE,
+        A.PREDICT_LOGISTICS_FEE,A.PREDICT_OIL_FEE,A.PREDICT_BUSY_SEASON_FEE,A.PREDICT_OTHERS_FEE,A.PREDICT_CUSTOMS_FEE,
+        A.PREDICT_CLEAR_CUSTOMS_FEE,A.PREDICT_TAX_FEE,A.PREDICT_TOTAL_FEE,A.REMARK,A.SIGN_DATE,A.SIGN_USER,A.PAYMENT_COUNT,
+        A.CHECK_STATUS,A.LOCK_STATUS,A.DIFF_TOTAL_FEE,A.DATA_SOURCE,A.CREATE_TIME,A.CREATE_USER,A.UPDATE_TIME,A.UPDATE_USER,A.PREDICT_FEE_TYPE,A.PREDICT_COUNT_FEE,A.OUT_WAREHOUSE_NAME
+    </sql>
+
+    <sql id="base_select_condition">
+        <where>
+            <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                AND A.SHIPMENT_NUM IN
+                <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND A.LOGISTICS_NO IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND A.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND A.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsChannelList != null and param.logisticsChannelList.size() != 0">
+                AND A.LOGISTICS_CHANNEL IN
+                <foreach collection="param.logisticsChannelList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lcCodeList != null and param.lcCodeList.size() != 0">
+                AND A.LC_CODE IN
+                <foreach collection="param.lcCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lpNameList != null and param.lpNameList.size() != 0">
+                AND A.LP_NAME IN
+                <foreach collection="param.lpNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentIdList != null and param.shipmentIdList.size() != 0">
+                AND A.SHIPMENT_ID IN
+                <foreach collection="param.shipmentIdList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND A.SHIPMENT_DATE &gt;= to_date(#{param.shipmentStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND A.SHIPMENT_DATE &lt;= to_date(#{param.shipmentEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signStartDate != null and param.signStartDate != ''">
+                AND A.SIGN_DATE &gt;= to_date(#{param.signStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signEndDate != null and param.signEndDate != ''">
+                AND A.SIGN_DATE &lt;= to_date(#{param.signEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.isCustoms != null and param.isCustoms != ''">
+                AND A.IS_CUSTOMS = #{param.isCustoms}
+            </if>
+            <if test="param.hasTax != null and param.hasTax != ''">
+                AND A.HAS_TAX = #{param.hasTax}
+            </if>
+            <if test="param.orderType != null and param.orderType != ''">
+                AND A.ORDER_TYPE = #{param.orderType}
+            </if>
+            <if test="param.paymentCount != null and param.paymentCount != ''">
+                AND A.PAYMENT_COUNT = #{param.paymentCount}
+            </if>
+            <if test="param.checkStatus != null and param.checkStatus != ''">
+                AND A.CHECK_STATUS = #{param.checkStatus}
+            </if>
+            <if test="param.lockStatus != null and param.lockStatus != ''">
+                AND A.LOCK_STATUS = #{param.lockStatus}
+            </if>
+            <if test="param.minDiffTotalFee != null and param.minDiffTotalFee != '' and param.maxDiffTotalFee != null and param.maxDiffTotalFee != ''">
+                AND ABS(A.DIFF_TOTAL_FEE) &gt;= #{param.minDiffTotalFee}
+                AND ABS(A.DIFF_TOTAL_FEE) &lt;= #{param.maxDiffTotalFee}
+            </if>
+            <if test="(param.logisticsCheckOrderList != null and param.logisticsCheckOrderList.size() != 0)
+                   or (param.logisticsBillOrderList != null and param.logisticsBillOrderList.size() != 0)
+                   or (param.taxBillOrderList != null and param.taxBillOrderList.size() != 0)
+                   or (param.logisticsErpStartDate != null and param.logisticsErpStartDate != '')
+                   or (param.logisticsErpEndDate != null and param.logisticsErpEndDate != '')
+                   or (param.taxErpStartDate != null and param.taxErpStartDate != '')
+                   or (param.taxErpEndDate != null and param.taxErpEndDate != '')">
+                AND A.SHIPMENT_NUM IN
+                (
+                SELECT D.SHIPMENT_NUM FROM LS_LOGISTICS_NO_CHECK_DETAIL D
+                <where>
+                    <if test="param.logisticsCheckOrderList != null and param.logisticsCheckOrderList.size() != 0">
+                        AND D.LOGISTICS_CHECK_ORDER IN
+                        <foreach collection="param.logisticsCheckOrderList" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.logisticsBillOrderList != null and param.logisticsBillOrderList.size() != 0">
+                        AND D.LOGISTICS_BILL_ORDER IN
+                        <foreach collection="param.logisticsBillOrderList" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.taxBillOrderList != null and param.taxBillOrderList.size() != 0">
+                        AND D.TAX_BILL_ORDER IN
+                        <foreach collection="param.taxBillOrderList" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.logisticsErpStartDate != null and param.logisticsErpStartDate != ''">
+                        AND D.LOGISTICS_ERP_DATE &gt;= to_date(#{param.logisticsErpStartDate},'YYYY-MM-DD')
+                    </if>
+                    <if test="param.logisticsErpEndDate != null and param.logisticsErpEndDate != ''">
+                        AND D.LOGISTICS_ERP_DATE &lt;= to_date(#{param.logisticsErpEndDate},'YYYY-MM-DD')
+                    </if>
+                    <if test="param.taxErpStartDate != null and param.taxErpStartDate != ''">
+                        AND D.TAX_ERP_DATE &gt;= to_date(#{param.taxErpStartDate},'YYYY-MM-DD')
+                    </if>
+                    <if test="param.taxErpEndDate != null and param.taxErpEndDate != ''">
+                        AND D.TAX_ERP_DATE &lt;= to_date(#{param.taxErpEndDate},'YYYY-MM-DD')
+                    </if>
+                </where>
+                )
+            </if>
+        </where>
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsNoCheckParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsNoCheckResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM LS_LOGISTICS_NO_CHECK A
+            <include refid="base_select_condition"></include>
+        ORDER BY A.ID DESC
+    </select>
+
+    <!-- 分页查询列表合计 -->
+    <select id="queryPageTotal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsNoCheckParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsNoCheckResult">
+        SELECT
+            SUM(NVL(A.SHIPMENT_UNIT, 0)) AS SHIPMENT_UNIT,
+            SUM(NVL(A.SHIPMENT_QUANTITY, 0)) AS SHIPMENT_QUANTITY,
+            SUM(NVL(A.WEIGHT, 0)) AS WEIGHT,
+            SUM(NVL(A.VOLUME, 0)) AS VOLUME,
+            SUM(NVL(A.VOLUME_WEIGHT, 0)) AS VOLUME_WEIGHT,
+            SUM(NVL(A.PREDICT_LOGISTICS_FEE, 0)) AS PREDICT_LOGISTICS_FEE,
+            SUM(NVL(A.PREDICT_OIL_FEE, 0)) AS PREDICT_OIL_FEE,
+            SUM(NVL(A.PREDICT_BUSY_SEASON_FEE, 0)) AS PREDICT_BUSY_SEASON_FEE,
+            SUM(NVL(A.PREDICT_OTHERS_FEE, 0)) AS PREDICT_OTHERS_FEE,
+            SUM(NVL(A.PREDICT_CUSTOMS_FEE, 0)) AS PREDICT_CUSTOMS_FEE,
+            SUM(NVL(A.PREDICT_CLEAR_CUSTOMS_FEE, 0)) AS PREDICT_CLEAR_CUSTOMS_FEE,
+            SUM(NVL(A.PREDICT_TAX_FEE, 0)) AS PREDICT_TAX_FEE,
+            SUM(NVL(A.PREDICT_TOTAL_FEE, 0)) AS PREDICT_TOTAL_FEE
+        FROM LS_LOGISTICS_NO_CHECK A
+            <include refid="base_select_condition"></include>
+    </select>
+
+    <!-- 导出预估 -->
+    <select id="export"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsNoCheckParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsNoCheckExport0Result">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM LS_LOGISTICS_NO_CHECK A
+        <where>
+            <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                AND A.SHIPMENT_NUM IN
+                <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND A.LOGISTICS_NO IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND A.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND A.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsChannelList != null and param.logisticsChannelList.size() != 0">
+                AND A.LOGISTICS_CHANNEL IN
+                <foreach collection="param.logisticsChannelList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lcCodeList != null and param.lcCodeList.size() != 0">
+                AND A.LC_CODE IN
+                <foreach collection="param.lcCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lpNameList != null and param.lpNameList.size() != 0">
+                AND A.LP_NAME IN
+                <foreach collection="param.lpNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentIdList != null and param.shipmentIdList.size() != 0">
+                AND A.SHIPMENT_ID IN
+                <foreach collection="param.shipmentIdList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND A.SHIPMENT_DATE &gt;= to_date(#{param.shipmentStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND A.SHIPMENT_DATE &lt;= to_date(#{param.shipmentEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signStartDate != null and param.signStartDate != ''">
+                AND A.SIGN_DATE &gt;= to_date(#{param.signStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signEndDate != null and param.signEndDate != ''">
+                AND A.SIGN_DATE &lt;= to_date(#{param.signEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.isCustoms != null and param.isCustoms != ''">
+                AND A.IS_CUSTOMS = #{param.isCustoms}
+            </if>
+            <if test="param.hasTax != null and param.hasTax != ''">
+                AND A.HAS_TAX = #{param.hasTax}
+            </if>
+            <if test="param.orderType != null and param.orderType != ''">
+                AND A.ORDER_TYPE = #{param.orderType}
+            </if>
+            <if test="param.paymentCount != null and param.paymentCount != ''">
+                AND A.PAYMENT_COUNT = #{param.paymentCount}
+            </if>
+            <if test="param.checkStatus != null and param.checkStatus != ''">
+                AND A.CHECK_STATUS = #{param.checkStatus}
+            </if>
+            <if test="param.lockStatus != null and param.lockStatus != ''">
+                AND A.LOCK_STATUS = #{param.lockStatus}
+            </if>
+            <if test="param.minDiffTotalFee != null and param.minDiffTotalFee != '' and param.maxDiffTotalFee != null and param.maxDiffTotalFee != ''">
+                AND ABS(A.DIFF_TOTAL_FEE) &gt;= #{param.minDiffTotalFee}
+                AND ABS(A.DIFF_TOTAL_FEE) &lt;= #{param.maxDiffTotalFee}
+            </if>
+            <if test="(param.logisticsCheckOrderList != null and param.logisticsCheckOrderList.size() != 0)
+                   or (param.logisticsBillOrderList != null and param.logisticsBillOrderList.size() != 0)
+                   or (param.taxBillOrderList != null and param.taxBillOrderList.size() != 0)
+                   or (param.logisticsErpStartDate != null and param.logisticsErpStartDate != '')
+                   or (param.logisticsErpEndDate != null and param.logisticsErpEndDate != '')
+                   or (param.taxErpStartDate != null and param.taxErpStartDate != '')
+                   or (param.taxErpEndDate != null and param.taxErpEndDate != '')">
+                AND A.SHIPMENT_NUM IN
+                (
+                SELECT D.SHIPMENT_NUM FROM LS_LOGISTICS_NO_CHECK_DETAIL D
+                <where>
+                    <if test="param.logisticsCheckOrderList != null and param.logisticsCheckOrderList.size() != 0">
+                        AND D.LOGISTICS_CHECK_ORDER IN
+                        <foreach collection="param.logisticsCheckOrderList" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.logisticsBillOrderList != null and param.logisticsBillOrderList.size() != 0">
+                        AND D.LOGISTICS_BILL_ORDER IN
+                        <foreach collection="param.logisticsBillOrderList" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.taxBillOrderList != null and param.taxBillOrderList.size() != 0">
+                        AND D.TAX_BILL_ORDER IN
+                        <foreach collection="param.taxBillOrderList" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.logisticsErpStartDate != null and param.logisticsErpStartDate != ''">
+                        AND D.LOGISTICS_ERP_DATE &gt;= to_date(#{param.logisticsErpStartDate},'YYYY-MM-DD')
+                    </if>
+                    <if test="param.logisticsErpEndDate != null and param.logisticsErpEndDate != ''">
+                        AND D.LOGISTICS_ERP_DATE &lt;= to_date(#{param.logisticsErpEndDate},'YYYY-MM-DD')
+                    </if>
+                    <if test="param.taxErpStartDate != null and param.taxErpStartDate != ''">
+                        AND D.TAX_ERP_DATE &gt;= to_date(#{param.taxErpStartDate},'YYYY-MM-DD')
+                    </if>
+                    <if test="param.taxErpEndDate != null and param.taxErpEndDate != ''">
+                        AND D.TAX_ERP_DATE &lt;= to_date(#{param.taxErpEndDate},'YYYY-MM-DD')
+                    </if>
+                </where>
+                )
+            </if>
+        </where>
+        ORDER BY A.ID DESC
+    </select>
+
+    <!-- 导出实际 -->
+    <select id="exportDetail"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsNoCheckParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsNoCheckExport1Result">
+        SELECT
+            D.UNIT_PRICE,D.LOGISTICS_FEE,D.LOGISTICS_CURRENCY,D.CUSTOMS_FEE,D.CLEAR_CUSTOMS_FEE,D.OIL_FEE,
+            D.BUSY_SEASON_FEE,D.OTHERS_FEE,D.TAX_FEE,D.TOTAL_FEE,D.DTP,D.OIL_FEE_PERCENT,D.SUNDRY_FEE,D.LOGISTICS_CHECK_ORDER,
+            D.CHANGE_TAX,D.TAX_CURRENCY,D.TAX_ORDER,D.C88,D.C88_REMARK,D.VAT,D.TAX_INVOICE_ORDER,D.LOGISTICS_ERP_DATE,
+            D.LOGISTICS_BILL_ORDER,D.TAX_ERP_DATE,D.TAX_BILL_ORDER,D.ORDER_NUM,D.OTHERS_FEE_REMARK,
+            <include refid="Base_Column_List"></include>
+        FROM LS_LOGISTICS_NO_CHECK A
+        LEFT JOIN LS_LOGISTICS_NO_CHECK_DETAIL D ON A.SHIPMENT_NUM = D.SHIPMENT_NUM
+        <where>
+            <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                AND A.SHIPMENT_NUM IN
+                <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND A.LOGISTICS_NO IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND A.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND A.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsChannelList != null and param.logisticsChannelList.size() != 0">
+                AND A.LOGISTICS_CHANNEL IN
+                <foreach collection="param.logisticsChannelList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lcCodeList != null and param.lcCodeList.size() != 0">
+                AND A.LC_CODE IN
+                <foreach collection="param.lcCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lpNameList != null and param.lpNameList.size() != 0">
+                AND A.LP_NAME IN
+                <foreach collection="param.lpNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentIdList != null and param.shipmentIdList.size() != 0">
+                AND A.SHIPMENT_ID IN
+                <foreach collection="param.shipmentIdList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND A.SHIPMENT_DATE &gt;= to_date(#{param.shipmentStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND A.SHIPMENT_DATE &lt;= to_date(#{param.shipmentEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signStartDate != null and param.signStartDate != ''">
+                AND A.SIGN_DATE &gt;= to_date(#{param.signStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signEndDate != null and param.signEndDate != ''">
+                AND A.SIGN_DATE &lt;= to_date(#{param.signEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.isCustoms != null and param.isCustoms != ''">
+                AND A.IS_CUSTOMS = #{param.isCustoms}
+            </if>
+            <if test="param.hasTax != null and param.hasTax != ''">
+                AND A.HAS_TAX = #{param.hasTax}
+            </if>
+            <if test="param.orderType != null and param.orderType != ''">
+                AND A.ORDER_TYPE = #{param.orderType}
+            </if>
+            <if test="param.paymentCount != null and param.paymentCount != ''">
+                AND A.PAYMENT_COUNT = #{param.paymentCount}
+            </if>
+            <if test="param.checkStatus != null and param.checkStatus != ''">
+                AND A.CHECK_STATUS = #{param.checkStatus}
+            </if>
+            <if test="param.lockStatus != null and param.lockStatus != ''">
+                AND A.LOCK_STATUS = #{param.lockStatus}
+            </if>
+            <if test="param.minDiffTotalFee != null and param.minDiffTotalFee != '' and param.maxDiffTotalFee != null and param.maxDiffTotalFee != ''">
+                AND ABS(A.DIFF_TOTAL_FEE) &gt;= #{param.minDiffTotalFee}
+                AND ABS(A.DIFF_TOTAL_FEE) &lt;= #{param.maxDiffTotalFee}
+            </if>
+            <if test="param.logisticsCheckOrderList != null and param.logisticsCheckOrderList.size() != 0">
+                AND D.LOGISTICS_CHECK_ORDER IN
+                <foreach collection="param.logisticsCheckOrderList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsBillOrderList != null and param.logisticsBillOrderList.size() != 0">
+                AND D.LOGISTICS_BILL_ORDER IN
+                <foreach collection="param.logisticsBillOrderList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.taxBillOrderList != null and param.taxBillOrderList.size() != 0">
+                AND D.TAX_BILL_ORDER IN
+                <foreach collection="param.taxBillOrderList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsErpStartDate != null and param.logisticsErpStartDate != ''">
+                AND D.LOGISTICS_ERP_DATE &gt;= to_date(#{param.logisticsErpStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.logisticsErpEndDate != null and param.logisticsErpEndDate != ''">
+                AND D.LOGISTICS_ERP_DATE &lt;= to_date(#{param.logisticsErpEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.taxErpStartDate != null and param.taxErpStartDate != ''">
+                AND D.TAX_ERP_DATE &gt;= to_date(#{param.taxErpStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.taxErpEndDate != null and param.taxErpEndDate != ''">
+                AND D.TAX_ERP_DATE &lt;= to_date(#{param.taxErpEndDate},'YYYY-MM-DD')
+            </if>
+        </where>
+        ORDER BY A.ID DESC, D.ID ASC
+    </select>
+
+    <!--获取EBMS物流跟踪表的签收日期-->
+    <select id="getEbmsSignDate"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.entity.LsLogisticsNoCheck"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.LsLogisticsNoCheck">
+        SELECT c.LhrCode AS shipmentNum, c.LerSignDate AS signDate
+        FROM TbLogisticsListToEndRoute c
+        WHERE c.LhrCode IN
+        <foreach collection="param" item="item" index="index" separator="," open="(" close=")">
+            #{item.shipmentNum}
+        </foreach>
+        AND c.LerSignDate IS NOT NULL
+    </select>
+
+    <!--定时刷物流跟踪表的签收日期-->
+    <update id="refreshSignDate" parameterType="java.util.List">
+        <foreach collection="param" item="item" index="index" open="BEGIN" close=";END;" separator=";">
+            UPDATE LS_LOGISTICS_NO_CHECK SET SIGN_DATE = #{item.signDate} WHERE SHIPMENT_NUM = #{item.shipmentNum}
+        </foreach>
+    </update>
+
+    <!--批量同步锁定/解锁EBMS-->
+    <update id="batchLockEbms">
+        UPDATE TbLogisticsListToHeadRoute SET LhrLogStatus = #{lockStatus} WHERE LhrCode IN
+        <foreach collection="shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+            #{code}
+        </foreach>
+    </update>
+
+    <!--物流对账单号校验-->
+    <select id="validateCheckOrder"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsNoCheckDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.LsLogisticsNoCheck">
+        SELECT
+            DISTINCT C.LP_CODE
+        FROM LS_LOGISTICS_NO_CHECK C
+        LEFT JOIN LS_LOGISTICS_NO_CHECK_DETAIL D ON C.SHIPMENT_NUM = D.SHIPMENT_NUM
+        WHERE C.LP_CODE IS NOT NULL AND D.LOGISTICS_CHECK_ORDER = #{param.logisticsCheckOrder}
+    </select>
+
+</mapper>

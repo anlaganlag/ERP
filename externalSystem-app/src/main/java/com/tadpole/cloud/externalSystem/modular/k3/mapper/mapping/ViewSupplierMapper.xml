@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.k3.mapper.ViewSupplierMapper">
+     <select id="getSupplierGroup" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+         select g.FNUMBER,l.FNAME from T_BD_SUPPLIERGROUP_L l left join T_BD_SUPPLIERGROUP g on l.fid=g.fid
+    </select>
+    <select id="getProvince" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select e.FNUMBER,l.FDATAVALUE FNAME  from T_BAS_ASSISTANTDATAENTRY e left join T_BAS_ASSISTANTDATAENTRY_L l on e.FENTRYID=l.FENTRYID  where fid='561b798645c74f'
+    </select>
+    <select id="getCity" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select e.FNUMBER,l.FDATAVALUE FNAME   from T_BAS_ASSISTANTDATAENTRY e left join T_BAS_ASSISTANTDATAENTRY_L l on e.FENTRYID=l.FENTRYID
+        left join T_BAS_ASSISTANTDATAENTRY p on e.FPARENTID =p.FENTRYID where e.fid='561b79c245c751'
+        <if test="province != null and province != ''">
+            and p.FNUMBER=#{province}
+        </if>
+    </select>
+    <select id="getDepartment" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select l.FNAME,d.FNUMBER from T_BD_DEPARTMENT_L l left join T_BD_DEPARTMENT d on d.FDEPTID=l.FDEPTID
+    </select>
+    <select id="getPaymentCondition" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select l.FNAME,P.FNUMBER from t_BD_PaymentCondition_l  l left join t_BD_PaymentCondition p on p.FID=l.FID
+    </select>
+    <select id="getSupplierClassify" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select e.FNUMBER,l.FDATAVALUE FNAME  from T_BAS_ASSISTANTDATAENTRY e left join T_BAS_ASSISTANTDATAENTRY_L l on e.FENTRYID=l.FENTRYID  where fid='442339bbee6c4f05b7f249e6d83ac9e2'
+    </select>
+    <select id="getCurrency" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select c.FNUMBER,l.FNAME from T_BD_CURRENCY_L l left join T_BD_CURRENCY c on l.FCURRENCYID=c.FCURRENCYID
+    </select>
+    <select id="getTaxRate" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select c.FNUMBER,l.FNAME from T_BD_TAXRATE_L l left join T_BD_TAXRATE c on l.FID=c.FID where c.FDOCUMENTSTATUS='C' AND C.FFORBIDSTATUS='A'    </select>
+    <select id="getSettleType" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select c.FNUMBER,l.FNAME from T_BD_SETTLETYPE_L l left join T_BD_SETTLETYPE c on l.FID=c.FID where c.FDOCUMENTSTATUS='C' AND C.FFORBIDSTATUS='A'
+    </select>
+    <select id="getBankCountry" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select e.FNUMBER,l.FDATAVALUE FNAME  from T_BAS_ASSISTANTDATAENTRY e left join T_BAS_ASSISTANTDATAENTRY_L l on e.FENTRYID=l.FENTRYID  where fid='8a6e30f0-2c26-4639-aff5-76749daa355e'
+    </select>
+    <select id="getBankDetail" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select e.FNUMBER,l.FNAME  from T_WB_BANKDETAIL e left join T_WB_BANKDETAIL_L l on e.FID=l.FID where 1=1
+        <if test="bankDetail != null and bankDetail != ''">
+        and l.FNAME like CONCAT(CONCAT('%', #{bankDetail}), '%')
+        </if>
+    </select>
+    <select id="getTaxType" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select e.FNUMBER,l.FDATAVALUE FNAME  from T_BAS_ASSISTANTDATAENTRY e left join T_BAS_ASSISTANTDATAENTRY_L l on e.FENTRYID=l.FENTRYID  where fid='bbb2bc15b11e4bf1a04274770d736865'  and l.FLOCALEID=2052 and e.FDOCUMENTSTATUS='C' AND e.FFORBIDSTATUS='A'
+    </select>
+    <select id="getInnerSupplier" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        SELECT s.FNUMBER,l.FNAME from t_BD_Supplier s
+                                          left join t_BD_Supplier_l l on s.FSUPPLIERID=l.FSUPPLIERID
+                                          left join t_BD_SupplierGroup g on s.FPRIMARYGROUP=g.fid where g.FNUMBER='NBGYS' and FUSEORGID=1 and (unicode(l.fname) between 19968 and 40869)
+                                          and s.FDOCUMENTSTATUS='C' AND s.FFORBIDSTATUS='A'
+    </select>
+    <select id="getDeptUserId" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select u.FUSERID fname,d.FNUMBER fnumber from T_HR_Empinfo e left join T_SEC_USER u on e.FPERSONID= u.FLINKOBJECT left join t_BD_Department d on e.F_PAEZ_Base=d.fdeptid WHERE u.FUSERID is not null and e.FNUMBER=#{account}
+    </select>
+
+    <select id="getTrade" resultType="com.tadpole.cloud.externalSystem.api.k3.entity.ViewSupplier">
+        select e.FNUMBER,l.FDATAVALUE FNAME,e.fid   from T_BAS_ASSISTANTDATAENTRY e left join T_BAS_ASSISTANTDATAENTRY_L l on e.FENTRYID=l.FENTRYID
+                                                                                    left join T_BAS_ASSISTANTDATAENTRY p on e.FPARENTID =p.FENTRYID where  e.fid='5b5955bd85eb490c9df6c461f5d22616'
+    </select>
+    <select id="getSupplierQtyAmount"
+            resultType="com.tadpole.cloud.externalSystem.api.k3.model.params.results.SupplierQtyAmount">
+        select s.FNUMBER fnumber,sum(e.FQty) fqty,sum(f.FALLAMOUNT) famount from t_PUR_POOrderEntry e left join t_PUR_POOrder p on e.fid=p.fid
+                                                                                            left join T_BD_SUPPLIER s on p.FSupplierId =s.FSupplierId
+                                                                                            left join T_PUR_POORDERENTRY_F f on e.FENTRYID=f.FENTRYID
+        WHERE s.FNUMBER=#{supplierCode} group by s.FNUMBER
+    </select>
+    <select id="getSupplierNotAmount"
+            resultType="com.tadpole.cloud.externalSystem.api.k3.model.params.results.SupplierQtyAmount">
+        select s.FNUMBER fnumber,sum(e.FUNPAIDAMOUNT) famount from T_CN_PAYAPPLYENTRY e left join T_CN_PAYAPPLY p on e.fid=p.fid
+                                                                                        left join T_BD_SUPPLIER s on p.FCONTACTUNIT =s.FSupplierId
+        where p.FCONTACTUNITTYPE='BD_Supplier' and s.FNUMBER=#{supplierCode} group by s.FNUMBER
+    </select>
+</mapper>

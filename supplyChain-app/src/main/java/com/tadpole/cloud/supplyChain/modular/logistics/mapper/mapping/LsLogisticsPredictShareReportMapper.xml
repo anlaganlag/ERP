@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsLogisticsPredictShareReportMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        A.ID,A.SHIPMENT_DATE,A.SHIPMENT_NUM,A.PLATFORM,A.SYS_SHOPS_NAME,A.SYS_SITE,A.DEPARTMENT,A.TEAM,A.FREIGHT_COMPANY,A.TRANSPORT_TYPE,A.RECEIVE_WAREHOUSE,
+        A.ORDER_NO,A.LOGISTICS_NO,A.MATERIAL_CODE,A.SKU,A.FNSKU,A.PACK_DIRECT_CODE,A.QUANTITY,A.TRANSPORT_COST,A.PREDICT_TAX_FEE,A.PREDICT_TAX_FEE_TYPE,A.MAT_BOX_VOLUME,
+        A.VOLUME_WEIGHT,A.PACKAGE_WEIGHT,A.COUNT_FEE,A.TOTAL_COUNT_FEE,A.SUM_TOTAL_COUNT_FEE,A.DATA_TYPE,A.DATA_MONTH,A.CREATE_TIME,A.CREATE_USER,A.UPDATE_TIME,A.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表、导出 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsPredictShareReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsPredictShareReportResult">
+        SELECT
+            ROW_NUMBER() OVER(PARTITION BY A.LOGISTICS_NO, A.ORDER_NO,A.SKU,A.PACK_DIRECT_CODE ORDER BY A.SKU ASC) orderNum,
+            B.PRODUCT_TYPE,
+            B.PRODUCT_NAME,
+            B.STYLE,
+            B.COMPANY_BRAND,
+            B.FIT_BRAND,
+            B.TYPE,
+            B.COLOR,
+            DECODE(A.SUM_TOTAL_COUNT_FEE, 0, 0, ROUND((NVL(A.TRANSPORT_COST, 0) + NVL(A.PREDICT_TAX_FEE, 0)) / A.SUM_TOTAL_COUNT_FEE, 2)) AS UNIT_PRICE_COST_SHARE,
+            ROUND(DECODE(A.SUM_TOTAL_COUNT_FEE, 0, 0, ROUND((NVL(A.TRANSPORT_COST, 0) + NVL(A.PREDICT_TAX_FEE, 0)) / A.SUM_TOTAL_COUNT_FEE, 2)) * NVL(A.TOTAL_COUNT_FEE, 0) / A.QUANTITY, 2) AS COST_SHARE,
+            DECODE(A.SUM_TOTAL_COUNT_FEE, 0, 0, ROUND((NVL(A.TRANSPORT_COST, 0) + NVL(A.PREDICT_TAX_FEE, 0)) / A.SUM_TOTAL_COUNT_FEE, 2)) * NVL(A.TOTAL_COUNT_FEE, 0) AS TOTAL_AMT,
+            <include refid="Base_Column_List"></include>
+        FROM LS_LOGISTICS_PREDICT_SHARE_REPORT A
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B ON A.MATERIAL_CODE = B.MATERIAL_CODE
+        <where>
+            <if test="param.platformList != null and param.platformList.size() != 0">
+                AND A.PLATFORM IN
+                <foreach collection="param.platformList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNameList != null and param.sysShopsNameList.size() != 0">
+                AND A.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.departmentList != null and param.departmentList.size() != 0">
+                AND A.DEPARTMENT IN
+                <foreach collection="param.departmentList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.teamList != null and param.teamList.size() != 0">
+                AND A.TEAM IN
+                <foreach collection="param.teamList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND A.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND A.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productTypeList != null and param.productTypeList.size() != 0">
+                AND A.PRODUCT_TYPE IN
+                <foreach collection="param.productTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.orderNoList != null and param.orderNoList.size() != 0">
+                AND A.ORDER_NO IN
+                <foreach collection="param.orderNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND A.LOGISTICS_NO IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                AND A.MATERIAL_CODE IN
+                <foreach collection="param.materialCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.packDirectCodeList != null and param.packDirectCodeList.size() != 0">
+                AND A.PACK_DIRECT_CODE IN
+                <foreach collection="param.packDirectCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND A.SHIPMENT_DATE &gt;= to_date(#{param.shipmentStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND A.SHIPMENT_DATE &lt;= to_date(#{param.shipmentEndDate},'YYYY-MM-DD')
+            </if>
+        </where>
+        ORDER BY A.SHIPMENT_DATE DESC, A.LOGISTICS_NO ASC
+    </select>
+
+    <!--定时生成BTB物流投入预估分摊报表-->
+    <update id="generateBtpReport">
+        MERGE INTO LS_LOGISTICS_PREDICT_SHARE_REPORT R
+        USING (
+            SELECT
+                DECODE(T1.VOLUME_WEIGHT, NULL, T1.PACKAGE_WEIGHT, DECODE(T1.PACKAGE_WEIGHT, NULL, T1.PACKAGE_WEIGHT, GREATEST(T1.VOLUME_WEIGHT, T1.PACKAGE_WEIGHT))) AS COUNT_FEE,
+                DECODE(
+                    DECODE(T1.VOLUME_WEIGHT, NULL, T1.PACKAGE_WEIGHT, DECODE(T1.PACKAGE_WEIGHT, NULL, T1.PACKAGE_WEIGHT, GREATEST(T1.VOLUME_WEIGHT, T1.PACKAGE_WEIGHT))),
+                    NULL,
+                    NULL,
+                    ROUND(DECODE(T1.VOLUME_WEIGHT, NULL, T1.PACKAGE_WEIGHT, DECODE(T1.PACKAGE_WEIGHT, NULL, T1.PACKAGE_WEIGHT, GREATEST(T1.VOLUME_WEIGHT, T1.PACKAGE_WEIGHT))) * T1.QUANTITY / 1000, 2)
+                )  AS TOTAL_COUNT_FEE,
+                T2.SUM_TOTAL_COUNT_FEE,
+                T1.*
+            FROM
+            (
+                SELECT
+                    D.DIRECT_RATE,
+                    A.LOGISTICS_CURRENCY,
+                    A.SHIPMENT_NUM,
+                    A.SHIPMENT_DATE,
+                    A.PLATFORM,
+                    A.SYS_SHOPS_NAME,
+                    A.SYS_SITE,
+                    A.FREIGHT_COMPANY,
+                    A.TRANSPORT_TYPE,
+                    B.ORDER_NO,
+                    A.LOGISTICS_NO,
+                    C.MATERIAL_CODE,
+                    C.MATERIAL_CODE AS SKU,
+                    C.QUANTITY,
+                    DECODE(
+                        A.LOGISTICS_CURRENCY,
+                        'CNY',
+                        A.LOGISTICS_FEE + A.CUSTOMS_FEE + A.CLEAR_CUSTOMS_FEE + A.BUSY_SEASON_FEE + A.OIL_FEE + A.OTHERS_FEE,
+                        ROUND((A.LOGISTICS_FEE + A.CUSTOMS_FEE + A.CLEAR_CUSTOMS_FEE + A.BUSY_SEASON_FEE + A.OIL_FEE + A.OTHERS_FEE) * D.DIRECT_RATE, 2)
+                    ) AS TRANSPORT_COST,
+                    A.PREDICT_TAX_FEE,
+                    E.MAT_BOX_VOLUME_ORG AS MAT_BOX_VOLUME,
+                    DECODE(A.TRANSPORT_TYPE, '快递', DECODE(E.MAT_BOX_VOLUME_ORG, NULL, NULL, ROUND(E.MAT_BOX_VOLUME_ORG/5, 2)), DECODE(E.MAT_BOX_VOLUME_ORG, NULL, NULL, ROUND(E.MAT_BOX_VOLUME_ORG/6, 2))) AS VOLUME_WEIGHT,
+                    E.MAT_GROSS_WEIGHT_ORG AS PACKAGE_WEIGHT
+                FROM LS_BTB_LOGISTICS_NO A
+                LEFT JOIN
+                (
+                    SELECT SHIPMENT_NUM, ORDER_NO FROM LS_BTB_LOGISTICS_NO_DETAIL GROUP BY SHIPMENT_NUM, ORDER_NO
+                ) B ON A.SHIPMENT_NUM = B.SHIPMENT_NUM
+                LEFT JOIN
+                (
+                    SELECT ORDER_NO, MATERIAL_CODE, SUM(QUANTITY) AS QUANTITY FROM LS_BTB_PACK_BOX_DETAIL GROUP BY ORDER_NO, MATERIAL_CODE
+                ) C ON B.ORDER_NO = C.ORDER_NO
+                LEFT JOIN FINANCE.CW_FIXED_EXCHANGE_RATE D
+                    ON A.LOGISTICS_CURRENCY = D.ORIGINAL_CURRENCY
+                    AND D.TARGET_CURRENCY = 'CNY'
+                    AND D.EFFECT_DATE &lt;= TO_DATE(#{dataMonth} || '-01', 'YYYY-MM-DD')
+                    AND D.INEFFECTIVE_DATE >= TO_DATE(#{dataMonth} || '-01', 'YYYY-MM-DD')
+                LEFT JOIN PRODUCT.PROD_MATERIEL E ON C.MATERIAL_CODE = E.MAT_CODE
+                WHERE A.SHIPMENT_TYPE = '物流部发货'
+                AND TO_CHAR(A.SHIPMENT_DATE, 'YYYY-MM') = #{dataMonth}
+            ) T1
+            LEFT JOIN
+            (
+                SELECT
+                    T.LOGISTICS_NO,
+                    SUM(NVL(DECODE(T.VOLUME_WEIGHT, NULL, T.PACKAGE_WEIGHT, DECODE(T.PACKAGE_WEIGHT, NULL, T.PACKAGE_WEIGHT, GREATEST(T.VOLUME_WEIGHT, T.PACKAGE_WEIGHT))), 0) * T.QUANTITY) AS SUM_TOTAL_COUNT_FEE
+                FROM
+                (
+                    SELECT
+                        A.LOGISTICS_NO,
+                        C.QUANTITY,
+                        E.MAT_BOX_VOLUME_ORG AS MAT_BOX_VOLUME,
+                        DECODE(A.TRANSPORT_TYPE, '快递', DECODE(E.MAT_BOX_VOLUME_ORG, NULL, NULL, ROUND(E.MAT_BOX_VOLUME_ORG/5, 2)), DECODE(E.MAT_BOX_VOLUME_ORG, NULL, NULL, ROUND(E.MAT_BOX_VOLUME_ORG/6, 2))) AS VOLUME_WEIGHT,
+                        E.MAT_GROSS_WEIGHT_ORG AS PACKAGE_WEIGHT
+                    FROM LS_BTB_LOGISTICS_NO A
+                    LEFT JOIN
+                    (
+                        SELECT SHIPMENT_NUM, ORDER_NO FROM LS_BTB_LOGISTICS_NO_DETAIL GROUP BY SHIPMENT_NUM, ORDER_NO
+                    ) B ON A.SHIPMENT_NUM = B.SHIPMENT_NUM
+                    LEFT JOIN
+                    (
+                        SELECT ORDER_NO, MATERIAL_CODE, SUM(QUANTITY) AS QUANTITY FROM LS_BTB_PACK_BOX_DETAIL GROUP BY ORDER_NO, MATERIAL_CODE
+                    ) C ON B.ORDER_NO = C.ORDER_NO
+                    LEFT JOIN PRODUCT.PROD_MATERIEL E ON C.MATERIAL_CODE = E.MAT_CODE
+                    WHERE A.SHIPMENT_TYPE = '物流部发货'
+                    AND TO_CHAR(A.SHIPMENT_DATE, 'YYYY-MM') = #{dataMonth}
+                ) T
+                GROUP BY T.LOGISTICS_NO
+            )T2 ON T1.LOGISTICS_NO = T2.LOGISTICS_NO
+        ) BTB
+        ON
+        (
+            R.LOGISTICS_NO = BTB.LOGISTICS_NO
+            AND R.ORDER_NO = BTB.ORDER_NO
+            AND R.SKU = BTB.SKU
+            AND R.DATA_TYPE = 'B2B'
+            AND R.DATA_MONTH = #{dataMonth}
+
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+                R.SHIPMENT_DATE = BTB.SHIPMENT_DATE,
+                R.SHIPMENT_NUM = BTB.SHIPMENT_NUM,
+                R.PLATFORM = BTB.PLATFORM,
+                R.SYS_SHOPS_NAME = BTB.SYS_SHOPS_NAME,
+                R.SYS_SITE = BTB.SYS_SITE,
+                R.FREIGHT_COMPANY = BTB.FREIGHT_COMPANY,
+                R.TRANSPORT_TYPE = BTB.TRANSPORT_TYPE,
+                R.QUANTITY = BTB.QUANTITY,
+                R.TRANSPORT_COST = BTB.TRANSPORT_COST,
+                R.PREDICT_TAX_FEE = BTB.PREDICT_TAX_FEE,
+                R.MAT_BOX_VOLUME = BTB.MAT_BOX_VOLUME,
+                R.VOLUME_WEIGHT = BTB.VOLUME_WEIGHT,
+                R.PACKAGE_WEIGHT = BTB.PACKAGE_WEIGHT,
+                R.COUNT_FEE = BTB.COUNT_FEE,
+                R.TOTAL_COUNT_FEE = BTB.TOTAL_COUNT_FEE,
+                R.SUM_TOTAL_COUNT_FEE = BTB.SUM_TOTAL_COUNT_FEE,
+                R.UPDATE_TIME = SYSDATE,
+                R.CURRENCY = BTB.LOGISTICS_CURRENCY
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                R.SHIPMENT_DATE,
+                R.SHIPMENT_NUM,
+                R.PLATFORM,
+                R.SYS_SHOPS_NAME,
+                R.SYS_SITE,
+                R.FREIGHT_COMPANY,
+                R.TRANSPORT_TYPE,
+                R.ORDER_NO,
+                R.LOGISTICS_NO,
+                R.MATERIAL_CODE,
+                R.SKU,
+                R.QUANTITY,
+                R.TRANSPORT_COST,
+                R.PREDICT_TAX_FEE,
+                R.PREDICT_TAX_FEE_TYPE,
+                R.MAT_BOX_VOLUME,
+                R.VOLUME_WEIGHT,
+                R.PACKAGE_WEIGHT,
+                R.COUNT_FEE,
+                R.TOTAL_COUNT_FEE,
+                R.SUM_TOTAL_COUNT_FEE,
+                R.DATA_TYPE,
+                R.DATA_MONTH,
+                R.CREATE_TIME,
+                R.CURRENCY
+            )
+            VALUES
+            (
+                BTB.SHIPMENT_DATE,
+                BTB.SHIPMENT_NUM,
+                BTB.PLATFORM,
+                BTB.SYS_SHOPS_NAME,
+                BTB.SYS_SITE,
+                BTB.FREIGHT_COMPANY,
+                BTB.TRANSPORT_TYPE,
+                BTB.ORDER_NO,
+                BTB.LOGISTICS_NO,
+                BTB.MATERIAL_CODE,
+                BTB.SKU,
+                BTB.QUANTITY,
+                BTB.TRANSPORT_COST,
+                BTB.PREDICT_TAX_FEE,
+                '0',
+                BTB.MAT_BOX_VOLUME,
+                BTB.VOLUME_WEIGHT,
+                BTB.PACKAGE_WEIGHT,
+                BTB.COUNT_FEE,
+                BTB.TOTAL_COUNT_FEE,
+                BTB.SUM_TOTAL_COUNT_FEE,
+                'B2B',
+                #{dataMonth},
+                SYSDATE,
+                BTB.LOGISTICS_CURRENCY
+            )
+    </update>
+
+</mapper>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.B2bPaymentDetailMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.B2bPaymentDetailResult">
+        select * from B2B_PAYMENT_DETAIL ${ew.customSqlSegment}
+    </select>
+
+    <select id="queryK3BankAccountInfo" resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.k3.K3BankAccountInfo">
+        SELECT
+            tba.FNUMBER subjectCode , -- 科目编码
+            tbal.FFULLNAME subjectName,  -- 科目全名
+            tba.FDOCUMENTSTATUS  documentStatus , -- 审核状态
+
+            tbal.FNAME bankName,-- 银行名称-简称
+            tbal.FFULLNAME bankFullName  -- 银行名称全名
+
+        FROM T_BD_ACCOUNT tba join T_BD_ACCOUNT_L tbal on tba.FACCTID =tbal.FACCTID
+        WHERE
+            tbal.FLOCALEID = 2052 -- 简体2052 繁体3076
+          AND tba.FDC=1                 -- 贷方
+          AND tba.FDOCUMENTSTATUS='C' -- 已审核
+          AND tba.FNUMBER =(SELECT F_BSC_ACCOUNT   FROM T_CN_BANKACNT tcb join T_ORG_Organizations too on tcb.FUSEORGID =too.FORGID
+                            WHERE  tcb.FNUMBER=#{bankNo} and  too.FNUMBER=#{orgCode})
+    </select>
+    <select id="queryK3BankInfoByOrgCode" resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.k3.K3BankAccountInfo">
+        SELECT
+            --tcb.*,
+            TBL.FNAME  bankName, -- 银行账户名称-简体
+            tcb.FNUMBER bankNo,-- 银行账号
+            too.FNUMBER  orgCode-- 使用组织编码
+
+        FROM T_CN_BANKACNT tcb
+
+                 join T_ORG_Organizations too on tcb.FUSEORGID =too.FORGID
+
+                 JOIN T_CN_BANKACNT_L tbl ON tbl.FBANKACNTID = tcb.FBANKACNTID
+
+        WHERE    tbl.FLOCALEID = 2052 -- 简体中文
+          AND tcb.FFORBIDSTATUS='A' --警用状态 A:启用，B:禁用
+          AND tcb.FDOCUMENTSTATUS='C' --  数据状态 A创建，B审核中，C已审核，D 重新审核，Z 暂存
+          AND too.FNUMBER=#{orgCode}
+    </select>
+</mapper>

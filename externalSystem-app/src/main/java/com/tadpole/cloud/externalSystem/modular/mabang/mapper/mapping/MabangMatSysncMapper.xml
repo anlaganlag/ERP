@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.MabangMatSysncMapper">
+
+    <select id="getNewWarehouseList"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangWarehouse">
+        SELECT mw.* FROM MABANG_WAREHOUSE mw
+        WHERE mw .ID NOT IN (SELECT MABANG_WAREHOUSE_ID FROM MABANG_MAT_SYNC  GROUP BY  MABANG_WAREHOUSE_ID )
+        UNION all (
+            SELECT m.* FROM MABANG_WAREHOUSE m , (SELECT MABANG_WAREHOUSE_ID,MIN(MAT_CREATE_TIME) MIN_MAT_CREATE_TIME  FROM MABANG_MAT_SYNC  GROUP BY  MABANG_WAREHOUSE_ID ) S
+            WHERE   m.ID = s.MABANG_WAREHOUSE_ID
+              AND m.CREATE_TIME > #{creatStartDate}
+              AND s.MIN_MAT_CREATE_TIME > m.CREATE_TIME
+        )
+
+
+    </select>
+    <select id="listPage"
+
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangMatSyncResult">
+
+            select * from MABANG_MAT_SYNC t
+            <where>
+                <if test="paramCondition.stockId != null and paramCondition.stockId != ''">
+                    AND t.STOCK_ID = #{paramCondition.platOrdId}
+                </if>
+                <if test="paramCondition.matCode != null and paramCondition.matCode != ''">
+                    AND t.MAT_CODE = #{paramCondition.matCode}
+                </if>
+                <if test="paramCondition.stockSku != null and paramCondition.stockSku != ''">
+                    AND t.STOCK_SKU = #{paramCondition.stockSku}
+                </if>
+                <if test="paramCondition.mabangWarehouseId != null and paramCondition.mabangWarehouseId != ''">
+                    AND t.MABANG_WAREHOUSE_ID = #{paramCondition.mabangWarehouseId}
+                </if>
+                <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+                    AND t.SYNC_STATUS = #{paramCondition.syncStatus}
+                </if>
+                <if test="paramCondition.bizType != null and paramCondition.bizType != ''">
+                    AND t.BIZ_TYPE = #{paramCondition.bizType}
+                </if>
+                <if test="paramCondition.mabangWarehouseName != null and paramCondition.mabangWarehouseName != ''">
+                    AND t.MABANG_WAREHOUSE_NAME = #{paramCondition.mabangWarehouseName}
+                </if>
+
+                <if test="paramCondition.status != null and paramCondition.status != ''">
+                    AND t.STATUS = #{paramCondition.status}
+                </if>
+                <if test="paramCondition.syncType != null and paramCondition.syncType != ''">
+                    AND t.SYNC_TYPE = #{paramCondition.syncType}
+                </if>
+
+                <if
+                        test="paramCondition.syncStartTime != null  and paramCondition.syncEndTime != null ">
+                    and t.sync_time >= #{paramCondition.syncStartTime}
+                    AND t.sync_time &lt; #{paramCondition.syncEndTime}+1
+                </if>
+                <if
+                        test="paramCondition.matCreateStartTime != null  and paramCondition.matCreateEndTime != null ">
+                    and t.MAT_CREATE_TIME >= #{paramCondition.matCreateStartTime}
+                    AND t.MAT_CREATE_TIME &lt; #{paramCondition.matCreateEndTime}+1
+                </if>
+                <if
+                        test="paramCondition.matUpdateStartTime != null  and paramCondition.matUpdateEndTime != null ">
+                    and t.MAT_UPDATE_TIME >= #{paramCondition.matUpdateStartTime}
+                    AND t.MAT_UPDATE_TIME &lt; #{paramCondition.matUpdateEndTime}+1
+                </if>
+
+
+            </where>
+            order by t.MAT_CREATE_TIME desc, t.MAT_CODE
+
+
+
+    </select>
+</mapper>

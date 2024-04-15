@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.SaleReturnOrderMapper">
+
+    <!-- 销售退货分页查询列表 -->
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.SaleReturnOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.ExportSaleReturnOrderResult">
+        SELECT  A.BILL_NO,
+                A.YEARS,
+                A.MONTH,
+                B.PLAT_NAME,
+                B.SHOP_NAME,
+                B.SITE_CODE,
+                A.FINANCE_CODE,
+                B.WAREHOUSE_ID,
+                B.WAREHOUSE_NAME,
+                B.DEPARTMENT,
+                B.TEAM,
+                B.PLAT_ORD_ID,
+                B.STOCK_SKU  AS MATERIAL_CODE,
+                B.PLAT_SKU  AS STOCK_SKU,
+                A.SAL_ORG_CODE,
+                A.SAL_ORG_NAME,
+                D.CREATE_DATE,
+                A.SYNC_TIME,
+                B.RETURN_QTY,
+                B.INBOUND_STATUS,
+                B.RTN_ORD_STATUS,
+                B.EMPLOYEE_NAME,
+                A.SYNC_STATUS,
+                CASE WHEN A.SYNC_STATUS='-1' THEN '未推送'
+                WHEN A.SYNC_STATUS='0' THEN '推送失败'
+                WHEN A.SYNC_STATUS='1' THEN '推送成功'
+                END AS syncStatusTxt,
+                A.SYNC_RESULT_MSG
+        FROM SALE_RETURN_ORDER A
+        LEFT JOIN SALE_RETURN_ORDER_ITEM B
+        ON B.SALE_OUT_ORDER_ID = A.ID
+        --                 LEFT JOIN K3_CROSS_TRANSFER C
+        --                           ON C.ORDER_ID = A.ORDER_ID AND C.BIZ_TYPE='XSTHDD'
+        LEFT JOIN MABANG_RETURN_ORDER D
+        ON D.PLAT_ORD_ID  = B.PLAT_ORD_ID
+        <where>
+            <if test="param.billNo != null and param.billNo != ''">
+                AND A.BILL_NO LIKE '%'||#{param.billNo}||'%'
+            </if>
+            <if test="param.yearsList != null and param.yearsList.size() != 0">
+                AND A.YEARS IN
+                <foreach collection="param.yearsList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.monthList != null and param.monthList.size() != 0">
+                AND A.MONTH IN
+                <foreach collection="param.monthList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.platformNames != null and param.platformNames.size() != 0">
+                AND B.PLAT_NAME IN
+                <foreach collection="param.platformNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shopNames != null and param.shopNames.size() != 0">
+                AND B.SHOP_NAME IN
+                <foreach collection="param.shopNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sites != null and param.sites.size() != 0">
+                AND B.SITE_CODE IN
+                <foreach collection="param.sites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.financeCode != null and param.financeCode != ''">
+                AND A.FINANCE_CODE LIKE '%'||#{param.financeCode}||'%'
+            </if>
+            <if test="param.department != null and param.department != ''">
+                AND B.DEPARTMENT LIKE '%'||#{param.department}||'%'
+            </if>
+            <if test="param.team != null and param.team != ''">
+                AND B.TEAM LIKE '%'||#{param.team}||'%'
+            </if>
+            <if test="param.platOrdId != null and param.platOrdId != ''">
+                AND B.PLAT_ORD_ID LIKE '%'||#{param.platOrdId}||'%'
+            </if>
+
+            <if test="param.stockSku != null and param.stockSku != ''">
+                AND B.STOCK_SKU LIKE '%'||#{param.stockSku}||'%'
+            </if>
+            <if test="param.syncStatus != null and param.syncStatus != ''">
+                AND A.SYNC_STATUS = #{param.syncStatus}
+            </if>
+
+            <if test="param.startCreateTime != null and param.startCreateTime != ''">
+                and D.CREATE_DATE &gt;=to_date(#{param.startCreateTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.endCreateTime != null and param.endCreateTime != ''">
+                and D.CREATE_DATE &lt;=to_date(#{param.endCreateTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+
+            <if test="param.startSyncTime != null and param.startSyncTime != ''">
+                and D.SYNC_TIME &gt;=to_date(#{param.startSyncTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.endSyncTime != null and param.endSyncTime != ''">
+                and D.SYNC_TIME &lt;=to_date(#{param.endSyncTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+        </where>
+        ORDER BY A.YEARS DESC,A.MONTH DESC,A.FINANCE_CODE ASC,A.SAL_ORG_CODE ASC,B.STOCK_SKU ASC
+    </select>
+
+    <!--马帮退货订单同步k3列表 -->
+    <select id="syncMabangReturnOrders"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangReturnOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangReturnOrder">
+        SELECT A.ID,
+               A.PLAT_ORD_ID,
+               A.PLATFORM_ORDER_ID,
+               A.SHOP_ID,
+               A.SHOP_NAME,
+               A.PAID_TIME,
+               A.EXPRESS_TIME,
+               A.STATUS,
+               A.SALES_RECORD_NUMBER,
+               A.ORDER_FEE,
+               A.ORDER_WEIGHT,
+               A.MY_LOGISTICS_CHANNEL_ID,
+               A.MY_LOGISTICS_CHANNEL_NAME,
+               A.MY_LOGISTICS_ID,
+               A.MY_LOGISTICS_NAME,
+               A.TRACK_NUMBER,
+               A.PLATFORM_ID,
+               A.TYPE,
+               A.COUNTRY_CODE,
+               A.COUNTRY_NAME_EN,
+               A.COUNTRY_NAME_CN,
+               A.BUYER_USER_ID,
+               A.BUYER_NAME,
+               A.EMPLOYEE_ID,
+               A.EMPLOYEE_NAME,
+               A.REMARK,
+               A.CREATE_DATE,
+               A.REFUND_TIME,
+               A.IN_TIME,
+               A.CURRENCY_ID,
+               A.CURRENCY_RATE,
+               A.RETURN_TRACKNUMBER,
+               A.RETURN_TYPE,
+               A.CREATE_SALE_RETURN_ORDER,
+               A.SYNC_TYPE,
+               A.SYNC_TIME,
+               A.SYNC_STATUS,
+               A.SYNC_SUCCESS_TIMES,
+               A.SYNC_FAIL_TIMES,
+               A.SYNC_RESULT_MSG,
+               A.CREATE_TIME,
+               A.UPDATE_TIME
+        FROM  MABANG_RETURN_ORDER A WHERE A.ID IN (
+            SELECT DISTINCT o.ID  FROM MABANG_RETURN_ORDER o  JOIN MABANG_RETURN_ORDER_ITEM i ON i.PLAT_ORD_ID = o.PLAT_ORD_ID
+             WHERE  o.STATUS = '4' AND ( i.STATUS = '2' or i.STATUS ='8' ) AND o.CREATE_SALE_RETURN_ORDER = '0'
+        )
+    </select>
+
+    <select id="syncMabangReturnOrderItem"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangReturnOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangReturnOrderItem">
+        select * from mabang_return_order_item t
+        where t.PLAT_ORD_ID=#{paramCondition.platOrdId}
+    </select>
+
+</mapper>

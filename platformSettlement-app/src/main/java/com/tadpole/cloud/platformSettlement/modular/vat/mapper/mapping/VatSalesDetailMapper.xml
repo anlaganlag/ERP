@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.VatSalesDetailMapper">
+
+    <sql id="List_Condition">
+        <if test="param.activityPeriod != null and param.activityPeriod != ''">
+            AND T.ACTIVITY_PERIOD = #{param.activityPeriod}
+        </if>
+        <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+            AND T.SYS_SHOPS_NAME IN
+            <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND T.SYS_SITE IN
+            <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.generateStatus != null">
+            AND T.GENERATE_STATUS = #{param.generateStatus}
+        </if>
+    </sql>
+
+    <!--税金测算Sales明细查询列表-->
+    <select id="queryListPage" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatSalesDetailResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatSalesDetailParam">
+        SELECT T.ID,
+        T.ACTIVITY_PERIOD,
+        T.SYS_SHOPS_NAME,
+        T.SYS_SITE,
+        T.TRANSACTION_CURRENCY_CODE,
+        NVL(T.SALE_DEPART_COUNTRY,0) AS SALE_DEPART_COUNTRY,
+        NVL(T.SALE_ARRIVAL_COUNTRY,0) AS SALE_ARRIVAL_COUNTRY,
+        NVL(T.MAKETPLACE,0) AS MAKETPLACE,
+        NVL(T.SALE_DEPART_COUNTRY_B,0) AS SALE_DEPART_COUNTRY_B,
+        CASE WHEN T.GENERATE_STATUS=0 THEN '未生成'
+        WHEN T.GENERATE_STATUS=1 THEN '已生成'
+        END AS GENERATE_STATUS,
+        T.CREATE_PERSON,
+        T.CREATE_TIME,
+        T.UPDATE_TIME,
+        T.UPDATE_PERSON FROM VAT_SALES_DETAIL T
+
+        <where>
+            <include refid="List_Condition" />
+        </where>
+        order by T.ACTIVITY_PERIOD desc
+    </select>
+
+    <select id="listSum" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatSalesDetailResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatSalesDetailParam">
+        SELECT
+        NVL(SUM(T.SALE_DEPART_COUNTRY),0) saleDepartCountry,
+        NVL(SUM(T.SALE_ARRIVAL_COUNTRY),0) saleArrivalCountry,
+        NVL(SUM(NVL(T.MAKETPLACE,0)),0) maketplace,
+        NVL(SUM(T.SALE_DEPART_COUNTRY_B),0) saleDepartCountryB
+        FROM VAT_SALES_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+    </select>
+    <select id="notTaxRate"
+            resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatSalesDetailResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatSalesDetailParam">
+        SELECT A.ACTIVITY_PERIOD, A.SYS_SITE
+        FROM VAT_SALES_DETAIL A
+        LEFT JOIN BASE_TAX_RATE B
+        ON B.SITE = A.SYS_SITE AND  B.STATUS=1
+        WHERE (TO_DATE(A.ACTIVITY_PERIOD || '-28', 'YYYY-MM-DD') &lt; B.EFFECTIVE_DATE OR TO_DATE(A.ACTIVITY_PERIOD || '-1', 'YYYY-MM-DD') > B.EXPIRATION_DATE)
+        AND A.ACTIVITY_PERIOD=#{param.activityPeriod}
+        AND A.GENERATE_STATUS=#{param.generateStatus}
+        OR  b.tax_rate IS NULL
+        GROUP BY A.ACTIVITY_PERIOD, A.SYS_SITE
+    </select>
+
+    <update id="generateVatDetail" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatSalesDetailParam">
+        MERGE INTO VAT_DETAIL T1
+            USING (SELECT A.ACTIVITY_PERIOD,
+                          A.SYS_SHOPS_NAME,
+                          A.SYS_SITE,
+                          A.TRANSACTION_CURRENCY_CODE,
+                          DECODE(B.TAX_RATE, 0, 0,
+                                 A.SALE_DEPART_COUNTRY / (1 + B.TAX_RATE) * B.TAX_RATE)  SALE_DEPART_COUNTRY,
+                          DECODE(B.TAX_RATE, 0, 0,
+                                 A.SALE_ARRIVAL_COUNTRY / (1 + B.TAX_RATE) * B.TAX_RATE) SALE_ARRIVAL_COUNTRY,
+                          NVL(A.MAKETPLACE,0) * B.TAX_RATE                       MAKETPLACE,
+                          A.SALE_DEPART_COUNTRY_B * B.TAX_RATE                           SALE_DEPART_COUNTRY_B
+                   FROM VAT_SALES_DETAIL A
+                            LEFT JOIN BASE_TAX_RATE B
+                ON  B.SITE = A.SYS_SITE AND B.STATUS=1
+                WHERE A.ACTIVITY_PERIOD=#{param.activityPeriod}
+                AND A.GENERATE_STATUS=#{param.generateStatus}
+                AND (TO_DATE(A.ACTIVITY_PERIOD || '-01', 'YYYY-MM-DD') >= B.EFFECTIVE_DATE
+                         and TO_DATE(A.ACTIVITY_PERIOD || '-28', 'YYYY-MM-DD') &lt; B.EXPIRATION_DATE) ) T2
+            ON (T1.ACTIVITY_PERIOD = T2.ACTIVITY_PERIOD AND T1.EBMS_SHOPS_NAME = T2.SYS_SHOPS_NAME AND
+                T1.SYS_SITE = T2.SYS_SITE)
+            WHEN NOT MATCHED THEN
+                INSERT (T1.ACTIVITY_PERIOD, T1.EBMS_SHOPS_NAME, T1.SYS_SITE, T1.TRANSACTION_CURRENCY_CODE,T1.SALE_DEPART_COUNTRY,
+                        T1.SALE_ARRIVAL_COUNTRY, T1.MAKETPLACE,
+                        T1.SALE_DEPART_COUNTRY_B,T1.CREATE_PERSON,T1.CREATE_TIME) VALUES ( T2.ACTIVITY_PERIOD, T2.SYS_SHOPS_NAME, T2.SYS_SITE
+                                                                                         , T2.TRANSACTION_CURRENCY_CODE
+                                                                                         , T2.SALE_DEPART_COUNTRY
+                                                                                         , T2.SALE_ARRIVAL_COUNTRY, T2.MAKETPLACE, T2.SALE_DEPART_COUNTRY_B,#{param.createPerson},sysdate)
+    </update>
+
+</mapper>

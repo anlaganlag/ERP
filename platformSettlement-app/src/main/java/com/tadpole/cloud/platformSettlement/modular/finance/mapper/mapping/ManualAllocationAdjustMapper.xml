@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.ManualAllocationAdjustMapper">
+    <update id="updateToReport" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ManualAllocationAdjustParam">
+        MERGE INTO RP_SETTLEMENT_REPORT T1
+            USING (SELECT * FROM RP_MANUAL_ALLOCATION_ADJUST where ALLOC_ID = #{paramCondition.id} and CONFIRM_STATUS=0) T2
+            ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and T1.REPORT_TYPE = T2.REPORT_TYPE and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T1.SKU = '0' and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM
+                and T1.MATERIAL_CODE ='0' and T1.PRODUCT_TYPE = T2.PRODUCT_TYPE and T1.CONFIRM_STATUS=0)
+            WHEN NOT MATCHED THEN
+                INSERT
+                    (T1.FISCAL_PERIOD,
+                     T1.REPORT_TYPE,
+                     T1.INCOME_TYPE,
+                     T1.SHOP_NAME,
+                     T1.SITE,
+                     T1.SKU,
+                     T1.DEPARTMENT,
+                     T1.TEAM,
+                     T1.MATERIAL_CODE,
+                     T1.SALES_BRAND,
+                     T1.PRODUCT_TYPE,
+                     T1.VOLUME_NORMAL,T1.VOLUME_REISSUE,T1.SALES_EXCLUDING_TAX,T1.TAX,T1.SALES_PROMOTION,
+                     T1.REFUND,T1.REFUND_PROMOTION,T1.GIFTWARP_SHIPPING,T1.COMMISSION,T1.REFUND_COMMISSION
+                        ,T1.GOODWILL,T1.AMAZON_FEES,T1.STORAGE_FEE,T1.REIMBURSEMENT,T1.OTHER,T1.WITHHELD_TAX,T1.REMOVAL_DEAL,T1.DISPOSE_FEE
+                        ,T1.ADVERTISING,T1.NET_SALES)
+                    VALUES
+                        (T2.FISCAL_PERIOD,
+                         T2.REPORT_TYPE,
+                         T2.INCOME_TYPE,
+                         T2.SHOP_NAME,
+                         T2.SITE,
+                         '0',
+                         T2.DEPARTMENT,
+                         T2.TEAM,
+                         '0',
+                         '0',
+                         T2.PRODUCT_TYPE,
+                         T2.VOLUME_NORMAL,T2.VOLUME_REISSUE,T2.SALES_EXCLUDING_TAX,T2.TAX,T2.SALES_PROMOTION,
+                         T2.REFUND,T2.REFUND_PROMOTION,T2.GIFTWARP_SHIPPING,T2.COMMISSION,T2.REFUND_COMMISSION
+                            ,T2.GOODWILL,T2.AMAZON_FEES,T2.STORAGE_FEE,T2.REIMBURSEMENT,T2.OTHER,T2.WITHHELD_TAX,T2.REMOVAL_DEAL,T2.DISPOSE_FEE
+                            ,T2.ADVERTISING,T2.SALES_EXCLUDING_TAX+T2.TAX
+                             +T2.SALES_PROMOTION+T2.REFUND+T2.REFUND_PROMOTION+T2.GIFTWARP_SHIPPING
+                        )
+            WHEN MATCHED THEN
+                UPDATE SET  T1.VOLUME_NORMAL = T1.VOLUME_NORMAL + T2.VOLUME_NORMAL ,
+                    T1.VOLUME_REISSUE = T1.VOLUME_REISSUE + T2.VOLUME_REISSUE,
+                    T1.SALES_EXCLUDING_TAX = T1.SALES_EXCLUDING_TAX + T2.SALES_EXCLUDING_TAX,
+                    T1.TAX= T1.TAX + T2.TAX,
+                    T1.SALES_PROMOTION = T1.SALES_PROMOTION + T2.SALES_PROMOTION,
+                    T1.REFUND = T1.REFUND + T2.REFUND,
+                    T1.REFUND_PROMOTION = T1.REFUND_PROMOTION + T2.REFUND_PROMOTION,
+                    T1.GIFTWARP_SHIPPING = T1.GIFTWARP_SHIPPING + T2.GIFTWARP_SHIPPING,
+                    T1.COMMISSION = T1.COMMISSION + T2.COMMISSION,
+                    T1.REFUND_COMMISSION = T1.REFUND_COMMISSION + T2.REFUND_COMMISSION
+                    ,T1.GOODWILL = T1.GOODWILL + T2.GOODWILL,
+                    T1.AMAZON_FEES = T1.AMAZON_FEES + T2.AMAZON_FEES,
+                    T1.STORAGE_FEE = T1.STORAGE_FEE + T2.STORAGE_FEE,
+                    T1.REIMBURSEMENT = T1.REIMBURSEMENT + T2.REIMBURSEMENT,
+                    T1.OTHER = T1.OTHER + T2.OTHER,T1.WITHHELD_TAX = T1.WITHHELD_TAX + T2.WITHHELD_TAX,
+                    T1.REMOVAL_DEAL = T1.REMOVAL_DEAL + T2.REMOVAL_DEAL,
+                    T1.DISPOSE_FEE = T1.DISPOSE_FEE + T2.DISPOSE_FEE,
+                    T1.ADVERTISING = T1.ADVERTISING + T2.ADVERTISING,
+                    T1.NET_SALES = T1.NET_SALES + T2.SALES_EXCLUDING_TAX+T2.TAX
+                        +T2.SALES_PROMOTION+T2.REFUND+T2.REFUND_PROMOTION+T2.GIFTWARP_SHIPPING
+    </update>
+    <update id="updateAmountOrInsert" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetailUsd">
+        MERGE INTO RP_MANUAL_ALLOCATION_ADJUST T1
+            USING (SELECT * FROM RP_SETTLEMENT_DETAIL_USD where id = #{paramCondition.id}) T2
+            ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and T1.REPORT_TYPE = T2.REPORT_TYPE and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T2.SKU = '0' and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM
+                 and T1.PRODUCT_TYPE = T2.PRODUCT_TYPE and T1.CONFIRM_STATUS=0)
+            WHEN NOT MATCHED THEN
+                INSERT
+                    (
+                     T1.CREATE_BY,
+                     T1.CREATE_AT,
+                     T1.FISCAL_PERIOD,
+                     T1.REPORT_TYPE,
+                     T1.INCOME_TYPE,
+                     T1.SHOP_NAME,
+                     T1.SITE,
+                     '0',
+                     T1.DEPARTMENT,
+                     T1.TEAM,
+                     T1.PRODUCT_TYPE,
+                     T1.VOLUME_NORMAL,T1.VOLUME_REISSUE,T1.SALES_EXCLUDING_TAX,T1.TAX,T1.SALES_PROMOTION,
+                     T1.REFUND,T1.REFUND_PROMOTION,T1.GIFTWARP_SHIPPING,T1.COMMISSION,T1.REFUND_COMMISSION
+                        ,T1.GOODWILL,T1.AMAZON_FEES,T1.STORAGE_FEE,T1.REIMBURSEMENT,T1.OTHER,T1.WITHHELD_TAX,T1.REMOVAL_DEAL,T1.DISPOSE_FEE
+                        ,T1.ADVERTISING)
+                    VALUES
+                        (
+                         #{paramCondition.confirmBy},
+                         #{paramCondition.confirmDate},
+                         T2.FISCAL_PERIOD,
+                         T2.REPORT_TYPE,
+                         T2.INCOME_TYPE,
+                         T2.SHOP_NAME,
+                         T2.SITE,
+                         T2.SKU,
+                         T2.DEPARTMENT,
+                         T2.TEAM,
+                         '0',
+                         T2.VOLUME_NORMAL,T2.VOLUME_REISSUE,T2.SALES_EXCLUDING_TAX,T2.TAX,T2.SALES_PROMOTION,
+                         T2.REFUND,T2.REFUND_PROMOTION,T2.GIFTWARP_SHIPPING,T2.COMMISSION,T2.REFUND_COMMISSION
+                            ,T2.GOODWILL,T2.AMAZON_FEES,T2.STORAGE_FEE,T2.REIMBURSEMENT,T2.OTHER,T2.WITHHELD_TAX,T2.REMOVAL_DEAL,T2.DISPOSE_FEE
+                            ,T2.ADVERTISING
+                        )
+            WHEN MATCHED THEN
+                UPDATE SET  T1.VOLUME_NORMAL = T1.VOLUME_NORMAL + T2.VOLUME_NORMAL ,
+                    T1.VOLUME_REISSUE = T1.VOLUME_REISSUE + T2.VOLUME_REISSUE,
+                    T1.SALES_EXCLUDING_TAX = T1.SALES_EXCLUDING_TAX + T2.SALES_EXCLUDING_TAX,
+                    T1.TAX= T1.TAX + T2.TAX,
+                    T1.SALES_PROMOTION = T1.SALES_PROMOTION + T2.SALES_PROMOTION,
+                    T1.REFUND = T1.REFUND + T2.REFUND,
+                    T1.REFUND_PROMOTION = T1.REFUND_PROMOTION + T2.REFUND_PROMOTION,
+                    T1.GIFTWARP_SHIPPING = T1.GIFTWARP_SHIPPING + T2.GIFTWARP_SHIPPING,
+                    T1.COMMISSION = T1.COMMISSION + T2.COMMISSION,
+                    T1.REFUND_COMMISSION = T1.REFUND_COMMISSION + T2.REFUND_COMMISSION
+                    ,T1.GOODWILL = T1.GOODWILL + T2.GOODWILL,
+                    T1.AMAZON_FEES = T1.AMAZON_FEES + T2.AMAZON_FEES,
+                    T1.STORAGE_FEE = T1.STORAGE_FEE + T2.STORAGE_FEE,
+                    T1.REIMBURSEMENT = T1.REIMBURSEMENT + T2.REIMBURSEMENT,
+                    T1.OTHER = T1.OTHER + T2.OTHER,T1.WITHHELD_TAX = T1.WITHHELD_TAX + T2.WITHHELD_TAX,
+                    T1.REMOVAL_DEAL = T1.REMOVAL_DEAL + T2.REMOVAL_DEAL,
+                    T1.DISPOSE_FEE = T1.DISPOSE_FEE + T2.DISPOSE_FEE,
+                    T1.ADVERTISING = T1.ADVERTISING + T2.ADVERTISING,
+                    T1.CREATE_BY = #{paramCondition.confirmBy},
+                    T1.CREATE_AT = #{paramCondition.confirmDate}
+    </update>
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ManualAllocationAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ManualAllocationAdjustResult">
+
+        select t.*,case t.CONFIRM_STATUS when 0 then '未确认'
+                                         when 1 then '已确认' else '' end CONFIRM_STATUS_TXT
+        from RP_MANUAL_ALLOCATION_ADJUST t
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod!=''">
+                t.FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName!=''">
+                AND t.SHOP_NAME =#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site!=''">
+                AND t.SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department!=''">
+                AND t.DEPARTMENT =#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team!=''">
+                AND t.TEAM =#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus!=''">
+                AND t.CONFIRM_STATUS =#{paramCondition.confirmStatus}
+            </if>
+        </where>
+        order by  t.FISCAL_PERIOD,
+        t.INCOME_TYPE,
+        t.SHOP_NAME,
+        t.SITE,T.ALLOC_ID desc
+    </select>
+    <select id="queryList"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ManualAllocationAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ManualAllocationAdjustResult">
+        select t.*,case t.CONFIRM_STATUS when 0 then '未确认'
+                                         when 1 then '已确认' else '' end CONFIRM_STATUS_TXT
+        from RP_MANUAL_ALLOCATION_ADJUST t
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod!=''">
+                t.FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName!=''">
+                AND t.SHOP_NAME =#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site!=''">
+                AND t.SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department!=''">
+                AND t.DEPARTMENT =#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team!=''">
+                AND t.TEAM =#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus!=''">
+                AND t.CONFIRM_STATUS =#{paramCondition.confirmStatus}
+            </if>
+        </where>
+    </select>
+    <select id="getQuantity" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ManualAllocationAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ManualAllocationAdjustResult">
+        select
+            sum(VOLUME_NORMAL) VOLUME_NORMAL,
+            sum(VOLUME_REISSUE) VOLUME_REISSUE,
+            sum(SALES_EXCLUDING_TAX) SALES_EXCLUDING_TAX,
+            sum(TAX) TAX,
+            sum(SALES_PROMOTION) SALES_PROMOTION,
+            sum(REFUND) REFUND,
+            sum(REFUND_PROMOTION) REFUND_PROMOTION,
+            sum(GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+            sum(COMMISSION) COMMISSION,
+            sum(REFUND_COMMISSION) REFUND_COMMISSION,
+            sum(GOODWILL) GOODWILL,
+            sum(AMAZON_FEES) AMAZON_FEES,
+            sum(STORAGE_FEE) STORAGE_FEE,
+            sum(REIMBURSEMENT) REIMBURSEMENT,
+            sum(OTHER) OTHER,
+            sum(WITHHELD_TAX) WITHHELD_TAX,
+            sum(REMOVAL_DEAL) REMOVAL_DEAL,
+            sum(DISPOSE_FEE) DISPOSE_FEE,
+            sum(ADVERTISING) ADVERTISING
+        FROM RP_MANUAL_ALLOCATION_ADJUST
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod!=''">
+                FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName!=''">
+                AND SHOP_NAME =#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site!=''">
+                AND SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department!=''">
+                AND DEPARTMENT =#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team!=''">
+                AND TEAM =#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus!=''">
+                AND CONFIRM_STATUS =#{paramCondition.confirmStatus}
+            </if>
+        </where>
+    </select>
+    <select id="queryConfirm" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ManualAllocationAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ManualAllocationAdjustParam">
+
+        select id from RP_MANUAL_ALLOCATION_ADJUST t
+        <where>
+            t.CONFIRM_STATUS=0
+            and t.ALLOC_ID IS NULL
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and t.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.sites != null and paramCondition.sites.size()>0">
+                and t.SITE  in
+                <foreach collection="paramCondition.sites" open="(" close=")" separator=","
+                         item="site">
+                    #{site}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="getManualAllocationAdjust" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailUsdParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementDetailUsdResult">
+        select D.fiscal_period,
+        D.report_type,
+        D.income_type,
+        D.shop_name,
+        D.site,
+        D.department,
+        D.team,
+        D.volume_normal,
+        sum(D.SALES_EXCLUDING_TAX) SALES_EXCLUDING_TAX,
+        sum(D.TAX) TAX,
+        sum(D.SALES_PROMOTION) SALES_PROMOTION,
+        sum(D.REFUND) REFUND,
+        sum(D.REFUND_COMMISSION) REFUND_COMMISSION,
+        sum(D.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+        sum(D.COMMISSION) COMMISSION,
+        sum(D.REFUND_PROMOTION) REFUND_PROMOTION,
+        sum(D.GOODWILL) GOOD_WILL,
+        sum(D.REIMBURSEMENT) REIMBURSEMENT,
+        sum(D.OTHER) OTHER,
+        sum(D.WITHHELD_TAX) WITHHELD_TAX,
+        sum(D.REMOVAL_DEAL) REMOVAL_DEAL,
+        sum(D.DISPOSE_FEE) DISPOSE_FEE,
+        sum(D.ADVERTISING) ADVERTISING
+        FROM RP_SETTLEMENT_DETAIL_USD D
+        <where>
+            D.sku='0'
+            and D.income_type='调整'  and D.id = #{paramCondition.id}
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and D.fiscal_period = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and D.report_type=#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and D.SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and D.SITE=#{paramCondition.site}
+            </if>
+        </where>
+        group by D.fiscal_period,
+        D.report_type,
+        D.income_type,
+        D.shop_name,
+        D.site,
+        D.department,
+        D.team,
+        D.volume_normal
+    </select>
+</mapper>

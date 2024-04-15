@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgCustomsTaxRateMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        C.ID,C.COUNTRY_CODE,C.COUNTRY_NAME,C.HSCODE,C.CHANGE_TAX_RATE,C.TAX_RATE,C.ADD_TAX_RATE,C.CREATE_TIME,C.CREATE_USER,C.UPDATE_TIME,C.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsTaxRateParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsTaxRateResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_TAX_RATE C
+        <where>
+            <if test="param.countryCode != null and param.countryCode != ''">
+                AND C.COUNTRY_CODE = #{param.countryCode}
+            </if>
+            <if test="param.hsCode != null and param.hsCode != ''">
+                AND C.HSCODE = #{param.hsCode}
+            </if>
+        </where>
+        ORDER BY C.CREATE_TIME DESC, C.ID DESC
+    </select>
+
+    <!-- 目的国下拉 -->
+    <select id="targetCountrySelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT C.COUNTRY_CODE AS code, C.COUNTRY_NAME AS name FROM TG_CUSTOMS_TAX_RATE C
+        WHERE C.COUNTRY_CODE IS NOT NULL AND C.COUNTRY_NAME IS NOT NULL
+        GROUP BY C.COUNTRY_CODE, C.COUNTRY_NAME
+    </select>
+
+    <!-- 根据国家级联HSCode下拉 -->
+    <select id="hsCodeSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT C.HSCODE AS name FROM TG_CUSTOMS_TAX_RATE C WHERE C.COUNTRY_CODE = #{countryCode} AND C.HSCODE IS NOT NULL
+    </select>
+</mapper>

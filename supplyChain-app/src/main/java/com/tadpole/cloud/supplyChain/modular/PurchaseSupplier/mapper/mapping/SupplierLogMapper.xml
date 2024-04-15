@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.PurchaseSupplier.mapper.SupplierLogMapper">
+
+    <select id="listPage"
+            resultType="com.tadpole.cloud.supplyChain.modular.PurchaseSupplier.model.result.SupplierLogResult">
+        select log.* from SUPPLIER_LOG log WHERE SYS_SUP_CODE = #{paramCondition.sysSupCode } order by SYS_UPDATE_DATE desc
+    </select>
+</mapper>

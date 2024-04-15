@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsLogisticsFeePaymentDetailMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        A.ID,A.LOGISTICS_FEE_NO,A.SHIPMENT_NUM,A.LOGISTICS_CHECK_ORDER,A.LOGISTICS_NO,A.UNIT_PRICE,A.LOGISTICS_FEE,
+        A.LOGISTICS_CURRENCY,A.CUSTOMS_FEE,A.CLEAR_CUSTOMS_FEE,A.OIL_FEE,A.BUSY_SEASON_FEE,A.OTHERS_FEE,A.OIL_FEE_PERCENT,
+        A.SUNDRY_FEE,A.DTP,A.CHANGE_TAX,A.TAX_FEE,A.TAX_CURRENCY,A.TAX_ORDER,A.C88,A.C88_REMARK,A.VAT,A.TAX_INVOICE_ORDER,
+        A.TOTAL_FEE,A.ORDER_NUM,A.CREATE_TIME,A.CREATE_USER,A.UPDATE_TIME,A.UPDATE_USER
+    </sql>
+
+    <!-- 列表查询 -->
+    <select id="queryList"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsFeePaymentDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsFeePaymentDetailResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM LS_LOGISTICS_FEE_PAYMENT_DETAIL A
+        WHERE A.LOGISTICS_FEE_NO = #{param.logisticsFeeNo}
+        ORDER BY A.ID ASC
+    </select>
+
+    <!-- 列表合计 -->
+    <select id="queryListTotal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsFeePaymentDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsFeePaymentDetailResult">
+        SELECT
+            SUM(NVL(A.LOGISTICS_FEE, 0)) AS LOGISTICS_FEE,
+            SUM(NVL(A.DTP, 0)) AS DTP,
+            SUM(NVL(A.CUSTOMS_FEE, 0)) AS CUSTOMS_FEE,
+            SUM(NVL(A.CLEAR_CUSTOMS_FEE, 0)) AS CLEAR_CUSTOMS_FEE,
+            SUM(NVL(A.BUSY_SEASON_FEE, 0)) AS BUSY_SEASON_FEE,
+            SUM(NVL(A.OIL_FEE, 0)) AS OIL_FEE,
+            SUM(NVL(A.OIL_FEE_PERCENT, 0)) AS OIL_FEE_PERCENT,
+            SUM(NVL(A.SUNDRY_FEE, 0)) AS SUNDRY_FEE,
+            SUM(NVL(A.OTHERS_FEE, 0)) AS OTHERS_FEE,
+            SUM(NVL(A.CHANGE_TAX, 0)) AS CHANGE_TAX,
+            SUM(NVL(A.TAX_FEE, 0)) AS TAX_FEE,
+            SUM(NVL(A.TOTAL_FEE, 0)) AS TOTAL_FEE
+        FROM LS_LOGISTICS_FEE_PAYMENT_DETAIL A
+        WHERE A.LOGISTICS_FEE_NO = #{param.logisticsFeeNo}
+    </select>
+
+</mapper>

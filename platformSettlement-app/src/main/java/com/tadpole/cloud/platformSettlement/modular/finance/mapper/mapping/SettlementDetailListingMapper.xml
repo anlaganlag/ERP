@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.SettlementDetailListingMapper">
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementDetailListingResult">
+        select  A.ID,
+                A.FISCAL_PERIOD,
+                A.SETTLEMENT_ID,
+                A.REPORT_TYPE,
+                A.INCOME_TYPE,
+                A.PLATFORM_NAME,
+                A.SHOP_NAME,
+                A.SITE,
+                A.ORIGINAL_CURRENCY,
+                A.SKU,
+                A.DEPARTMENT,
+                A.TEAM,
+                A.MATERIAL_CODE,
+                decode(A.material_code,'0','0',A.sales_brand) sales_brand,
+                A.VOLUME_NORMAL,
+                A.VOLUME_REISSUE,
+                A.SALES_EXCLUDING_TAX,
+                A.TAX,
+                A.SALES_PROMOTION,
+                A.REFUND,
+                A.REFUND_PROMOTION,
+                A.GIFTWARP_SHIPPING,
+                A.COMMISSION,
+                A.REFUND_COMMISSION,
+                A.GOODWILL,
+                A.AMAZON_FEES,
+                A.STORAGE_FEE,
+                A.REIMBURSEMENT,
+                A.OTHER,
+                A.WITHHELD_TAX,
+                A.REMOVAL_DEAL,
+                A.DISPOSE_FEE,
+                A.ADVERTISING,
+                A.CONFIRM_DATE,
+                A.CONFIRM_BY,
+                CASE WHEN A.CONFIRM_STATUS=0 THEN '未确认'
+                WHEN A.CONFIRM_STATUS=1 THEN '已确认'
+                END AS CONFIRM_STATUS,
+                A.CREATE_AT,
+                A.LATEST_DATE,
+                decode(A.material_code,'0','0',B.product_type) product_type,
+                decode(A.material_code,'0','0',B.CATEGORY) CATEGORY,
+                decode(A.material_code,'0','0',B.PRODUCT_NAME) PRODUCT_NAME,
+                decode(A.material_code,'0','0',B.STYLE) STYLE,
+                decode(A.material_code,'0','0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+                decode(A.material_code,'0','0',B.DESIGN) DESIGN,
+                decode(A.material_code,'0','0',B.COMPANY_BRAND) COMPANY_BRAND,
+                decode(A.material_code,'0','0',B.FIT_BRAND) FIT_BRAND,
+                decode(A.material_code,'0','0',B.MODEL) MODEL,
+                decode(A.material_code,'0','0',B.COLOR) COLOR,
+                decode(A.material_code,'0','0',B.SIZES) SIZES,
+                decode(A.material_code,'0','0',B.PACKING) PACKING,
+                decode(A.material_code,'0','0',B.VERSION) VERSION,
+                decode(A.material_code,'0','0',B.TYPE) TYPE,
+                decode(A.material_code,'0','0',B.BUYER) BUYER,
+                decode(A.material_code,'0','0',B.DEVELOPER) DEVELOPER,
+                decode(A.material_code,'0','0',to_char(B.ACCOUNT_DATE,'yyyy-mm-dd')) ACCOUNT_DATE,
+                decode(A.material_code,'0','0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL
+        FROM  RP_SETTLEMENT_DETAIL_LISTING A
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE=A.MATERIAL_CODE
+        <where>
+        <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+             A.SHOP_NAME=#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site !=''">
+            and A.SITE=#{paramCondition.site}
+        </if>
+        <if test="paramCondition.reportType != null and paramCondition.reportType !=''">
+            and A.REPORT_TYPE=#{paramCondition.reportType}
+        </if>
+        <if test="paramCondition.incomeType != null and paramCondition.incomeType !=''">
+            and A.INCOME_TYPE=#{paramCondition.incomeType}
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+            and A.SETTLEMENT_ID like '%'||#{paramCondition.settlementId}||'%'
+        </if>
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            and A.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+        </if>
+        <if test="paramCondition.isDefect != null and paramCondition.isDefect == true ">
+            AND A.DEPARTMENT='0'
+        </if>
+        <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != '' ">
+            AND A.CONFIRM_STATUS= #{paramCondition.confirmStatus}
+        </if>
+        <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != '' ">
+            AND A.CONFIRM_STATUS= #{paramCondition.confirmStatus}
+        </if>
+        <if test="paramCondition.isSkuZero != null and paramCondition.isSkuZero == true ">
+            AND A.SKU !='0'
+        </if>
+        <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+            AND A.SKU IN
+            <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                #{sku}
+            </foreach>
+        </if>
+        <if test="paramCondition.materialCodes != null and paramCondition.materialCodes.size>0">
+            AND A.MATERIAL_CODE IN
+            <foreach collection="paramCondition.materialCodes" open="(" close=")" separator="," item="material">
+                    #{material}
+            </foreach>
+        </if>
+        </where>
+    </select>
+
+
+    <sql id="STATION_CONDITION">
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            AND fiscal_Period  = #{paramCondition.fiscalPeriod}
+        </if>
+
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND shop_Name  = #{paramCondition.shopName}
+        </if>
+
+        <if test="paramCondition.sites != null and paramCondition.sites.size() != 0">
+            AND site IN
+            <foreach collection="paramCondition.sites" item="sites" index="index" separator="," open="(" close=")">
+                #{sites}
+            </foreach>
+        </if>
+    </sql>
+
+    <!--根据SettlementId和会计期间获取Settlement金额-->
+    <select id="getSettlementMoney" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail">
+        SELECT D.SETTLEMENT_ID,
+               D.SKU,
+               D.SYS_SHOPS_NAME,
+               D.SYS_SITE,
+               SUM(D.SALES_PROMOTION) SALES_PROMOTION,
+               SUM(D.COMMISSION) COMMISSION ,
+               SUM(D.PREVIOUS_RESERVE_AMOUNT) PREVIOUS_RESERVE_AMOUNT ,
+               SUM(D.REFUND_COMMISSION) REFUND_COMMISSION ,
+               SUM(D.DISPOSAL_FEE) DISPOSAL_FEE ,
+               SUM(D.LONG_TERM_STORAGE_FEE) LONG_TERM_STORAGE_FEE ,
+               SUM(D.GOOD_WILL) GOOD_WILL ,
+               SUM(D.REFUND_PROMOTION) REFUND_PROMOTION ,
+               SUM(D.ADVERTISING) ADVERTISING ,
+               SUM(D.AMAZON_FEE) AMAZON_FEE ,
+               SUM(D.SALES_TAX) SALES_TAX ,
+               SUM(D.SALES_OTHER) SALES_OTHER ,
+               SUM(D.REIMBURSEMENT) REIMBURSEMENT ,
+               SUM(D.OTHER) OTHER ,
+               SUM(D.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING ,
+               SUM(D.STORAGE_FEE) STORAGE_FEE ,
+               SUM(D.REFUND) REFUND ,
+               SUM(D.WITHHELD_TAX) WITHHELD_TAX ,
+               SUM(D.CURRENT_RESERVE_AMOUNT) CURRENT_RESERVE_AMOUNT,
+               SUM(D.UNSUCCESSFUL_TRANSFER) UNSUCCESSFUL_TRANSFER ,
+               SUM(D.REMOVAL_FEE) REMOVAL_FEE ,
+               SUM(D.SALES_PRINCIPAL) SALES_PRINCIPAL,
+               SUM(D.LIGHTNING_DEAL_FEE) LIGHTNING_DEAL_FEE,
+               SUM(D.SUCCESSFUL_CHARGE) SUCCESSFUL_CHARGE,
+               SUM(D.PAYABLE_TO_AMAZON) PAYABLE_TO_AMAZON,
+               SUM(D.AMOUNT) AMOUNT,
+               SUM(D.SALES_TAX) TAX,
+               SUM(D.REFUND) REFUND,
+               SUM(D.REFUND_PROMOTION) REFUND_PROMOTION,
+               SUM(D.Commission) COMMISSION,
+               SUM(D.REFUND_COMMISSION) REFUND_COMMISSION,
+               SUM(D.Storage_Fee) STORAGE_FEE,
+               SUM(D.Disposal_Fee) DISPOSE_FEE,
+               SUM(D.REMOVAL_FEE) REMOVAL_DEAL
+        FROM CW_SETTLEMENT_DETAIL D
+        LEFT JOIN  CW_SETTLEMENT S ON S.SETTLEMENT_ID=D.SETTLEMENT_ID
+        WHERE D.SETTLEMENT_ID = #{paramCondition.settlementId}
+          AND to_char(D.POSTED_DATE_TIME,'YYYY-MM') = #{paramCondition.platform}
+          AND S.STATUS = 2
+          AND D.PLATFORM = 'Amazon'
+        GROUP BY D.SETTLEMENT_ID,D.SKU,D.SYS_SHOPS_NAME,D.SYS_SITE
+    </select>
+
+    <!--根据SKU刷物料-->
+    <update id="afreshListing" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam">
+        MERGE INTO (
+            SELECT * FROM RP_SETTLEMENT_DETAIL_LISTING WHERE DEPARTMENT IS NULL OR DEPARTMENT = '0'
+        ) d
+        USING mcms_base_data.INV_PRODUCT_GALLERY g
+        ON (UPPER(d.sku) = UPPER(g.sku) AND d.site = g.SYS_SITE AND d.shop_name = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+            UPDATE SET d.department = g.department, d.team = g.team, d.material_code = g.material_code, d.sales_brand = g.sales_brand
+            WHERE
+                d.CONFIRM_STATUS = 0
+                <if test="paramCondition.id != null and paramCondition.id !=''">
+                    and d.ID = #{paramCondition.id}
+                </if>
+    </update>
+
+    <!--根据SKU刷物料（存档）-->
+    <update id="afreshListingFile" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam">
+        MERGE INTO (
+            SELECT * FROM RP_SETTLEMENT_DETAIL_LISTING WHERE DEPARTMENT IS NULL OR DEPARTMENT = '0'
+        ) D
+        USING (
+            SELECT
+              SKU,
+              SYS_SITE,
+              SYS_SHOPS_NAME,
+              MATERIAL_CODE,
+              DEPARTMENT,
+              TEAM,
+              LAST_UPDATE_DATE
+              FROM (
+                SELECT
+                  SKU,
+                  SYS_SITE,
+                  SYS_SHOPS_NAME,
+                  MATERIAL_CODE,
+                  DEPARTMENT,
+                  TEAM,
+                  LAST_UPDATE_DATE,
+                  ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME ORDER BY LAST_UPDATE_DATE DESC) AS rn
+                FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE
+              ) t
+          WHERE t.rn = 1
+        ) G
+      ON (UPPER(d.sku) = UPPER(g.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+      UPDATE SET
+        D.DEPARTMENT = G.DEPARTMENT,
+        D.TEAM = G.TEAM,
+        D.MATERIAL_CODE = G.MATERIAL_CODE
+    WHERE
+        d.CONFIRM_STATUS = 0
+        <if test="paramCondition.id != null and paramCondition.id !=''">
+            AND d.ID = #{paramCondition.id}
+        </if>
+    </update>
+
+    <!--根据SettlementId和会计期间获取DataRange金额-->
+    <select id="getDataRangeMoney" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm">
+        SELECT D.SETTLEMENT_ID,
+               D.BATCHNO,
+               D.SKU,
+               D.SYS_SHOPS_NAME,
+               D.SYS_SITE,
+               SUM(D.SALES_PROMOTION) SALES_PROMOTION,
+               SUM(D.COMMISSION) COMMISSION ,
+               SUM(D.PREVIOUS_RESERVE_AMOUNT) PREVIOUS_RESERVE_AMOUNT ,
+               SUM(D.REFUND_COMMISSION) REFUND_COMMISSION ,
+               SUM(D.DISPOSAL_FEE) DISPOSAL_FEE ,
+               SUM(D.LONG_TERM_STORAGE_FEE) LONG_TERM_STORAGE_FEE ,
+               SUM(D.GOOD_WILL) GOOD_WILL ,
+               SUM(D.REFUND_PROMOTION) REFUND_PROMOTION ,
+               SUM(D.ADVERTISING) ADVERTISING ,
+               SUM(D.AMAZON_FEE) AMAZON_FEE ,
+               SUM(D.SALES_TAX) SALES_TAX ,
+               SUM(D.SALES_OTHER) SALES_OTHER ,
+               SUM(D.REIMBURSEMENT) REIMBURSEMENT ,
+               SUM(D.OTHER) OTHER ,
+               SUM(D.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING ,
+               SUM(D.STORAGE_FEE) STORAGE_FEE ,
+               SUM(D.REFUND) REFUND ,
+               SUM(D.WITHHELD_TAX) WITHHELD_TAX ,
+               SUM(D.CURRENT_RESERVE_AMOUNT) CURRENT_RESERVE_AMOUNT,
+               SUM(D.UNSUCCESSFUL_TRANSFER) UNSUCCESSFUL_TRANSFER ,
+               SUM(D.REMOVAL_FEE) REMOVAL_FEE ,
+               SUM(D.SALES_PRINCIPAL) SALES_PRINCIPAL,
+               SUM(D.LIGHTNING_DEAL_FEE) LIGHTNING_DEAL_FEE,
+               SUM(D.SUCCESSFUL_CHARGE) SUCCESSFUL_CHARGE,
+               SUM(D.AMT_SOURCE) AMT_SOURCE,
+               SUM(D.MONEY_TRANSFER) MONEY_TRANSFER
+        FROM CW_DATARANGE_DETAIL_COMFIRM D
+        LEFT JOIN CW_DATARANGE R ON D.SETTLEMENT_ID=R.SETTLEMENT_ID AND D.BATCHNO=R.BATCHNO
+        WHERE D.SETTLEMENT_ID = #{paramCondition.settlementId}
+          AND to_char(D.POSTED_DATE,'YYYY-MM') = #{paramCondition.platform}
+          AND R.STATUS = 3
+          AND D.PLATFORM ='Amazon'
+        GROUP BY D.SETTLEMENT_ID,
+                 D.BATCHNO,
+                 D.SKU,
+                 D.SYS_SHOPS_NAME,
+                 D.SYS_SITE
+    </select>
+
+    <select id="getQuantity"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementDetailListingResult">
+        select
+        sum(VOLUME_NORMAL) volumeNormal,
+        sum(VOLUME_REISSUE) volumeReissue,
+        sum(SALES_EXCLUDING_TAX) salesExcludingTax,
+        sum(TAX) tax,
+        sum(SALES_PROMOTION) salesPromotion,
+        sum(REFUND) refund,
+        sum(REFUND_PROMOTION) REFUND_PROMOTION,
+        sum(GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+        sum(COMMISSION) COMMISSION,
+        sum(REFUND_COMMISSION) REFUND_COMMISSION,
+        sum(GOODWILL) GOODWILL,
+        sum(AMAZON_FEES) AMAZON_FEES,
+        sum(STORAGE_FEE) STORAGE_FEE,
+        sum(REIMBURSEMENT) REIMBURSEMENT,
+        sum(OTHER) OTHER,
+        sum(WITHHELD_TAX) WITHHELD_TAX,
+        sum(REMOVAL_DEAL) REMOVAL_DEAL,
+        sum(DISPOSE_FEE) DISPOSE_FEE,
+        sum(ADVERTISING) ADVERTISING
+        FROM RP_SETTLEMENT_DETAIL_LISTING
+        <where>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and SITE=#{paramCondition.site}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType !=''">
+                and REPORT_TYPE=#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.incomeType != null and paramCondition.incomeType !=''">
+                and INCOME_TYPE=#{paramCondition.incomeType}
+            </if>
+            <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+                and SETTLEMENT_ID like '%'||#{paramCondition.settlementId}||'%'
+            </if>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.isDefect != null and paramCondition.isDefect == true ">
+                AND DEPARTMENT is null
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != '' ">
+                AND CONFIRM_STATUS= #{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.isSkuZero != null and paramCondition.isSkuZero == true ">
+                AND SKU !='0'
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+            <if test="paramCondition.materialCodes != null and paramCondition.materialCodes.size>0">
+                AND MATERIAL_CODE IN
+                <foreach collection="paramCondition.materialCodes" open="(" close=")" separator="," item="material">
+                    #{material}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!--根据SettlementId和会计期间获取DataRange数量-->
+    <select id="getDataRangeNumber" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm">
+        SELECT q.sku,
+               q.settlement_id,
+               q.Transaction_Type,
+               SUM(q.GROUP_TOTAL_QUANTITY) quantity_purchased
+        FROM (
+             SELECT t.settlement_id,
+                    t.order_id,
+                    t.sku,
+                    t.GROUP_TOTAL_QUANTITY,
+                    t.posted_date,
+                    t.platform,
+                    t.Transaction_Type,
+                    t.sys_site,
+                    t.sys_shops_name
+             FROM CW_DATARANGE_DETAIL_COMFIRM t
+             WHERE
+                t.Transaction_Type IN
+                (
+                    'Order','Bestellung','Bestelling','Commande','Ordine','Pedido','注文','Bestellung_Wiedereinzug',
+                    'Cargo retroactivo','Order_Retrocharge','FBA Customer Return Fee','Frais de retour client FBA'
+                )
+                AND t.settlement_id = #{paramCondition.settlementId}
+                AND to_char(t.POSTED_DATE,'YYYY-MM') = #{paramCondition.platform}
+                AND t.PLATFORM='Amazon'
+             GROUP BY t.settlement_id,
+                      t.order_id,
+                      t.sku,
+                      t.GROUP_TOTAL_QUANTITY,
+                      t.posted_date,
+                      t.platform,
+                      t.Transaction_Type,
+                      t.sys_site,
+                      t.sys_shops_name
+        ) q
+        GROUP BY q.sku, q.settlement_id, q.Transaction_Type
+    </select>
+
+    <!--根据SettlementId和会计期间获取Settlement数量-->
+    <select id="getSettlementNumber" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail">
+        SELECT SUM(t.quantity_purchased) quantity_purchased,
+               t.sku,
+               t.settlement_id,
+               t.type
+        FROM CW_SETTLEMENT_DETAIL t
+        WHERE t.amount_type = 'ItemPrice'
+          AND t.amount_description = 'Principal'
+          AND t.settlement_id = #{paramCondition.settlementId}
+          AND to_char(t.posted_date_time,'YYYY-MM') = #{paramCondition.platform}
+          AND t.PLATFORM = 'Amazon'
+        GROUP BY t.sku, t.settlement_id,t.type
+    </select>
+
+    <select id="emailList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementDetailListingResult">
+        select * from rp_settlement_detail_listing t where t.material_code='0' and t.sku!='0'
+    </select>
+
+    <!--根据SettlementId和会计期间获取Settlement（确认）和DataRange（预估）数量-->
+    <select id="getSettlementDataRangeNumber"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementDetailResult">
+        SELECT se.*,
+               ra.SKU SKU_RANGE,
+               ra.quantity_purchased QUANTITY_PURCHASED_RANGE
+        FROM (SELECT sum(t.quantity_purchased) quantity_purchased,
+                     NVL(t.sku,'0') sku,
+                     t.settlement_id,
+                     t.type
+              FROM CW_SETTLEMENT_DETAIL t
+              WHERE t.amount_type = 'ItemPrice'
+                AND t.amount_description = 'Principal'
+                AND t.settlement_id=#{paramSettlement.settlementId}
+                AND to_char(t.posted_date_time,'YYYY-MM') =#{paramSettlement.platform}
+                AND t.PLATFORM = 'Amazon'
+              GROUP BY NVL(t.sku,'0'), t.settlement_id,t.type
+        ) se
+        FULL OUTER JOIN (
+            SELECT
+                q.sku,
+                q.settlement_id,
+                SUM(q.quantity_purchased) quantity_purchased
+            FROM (
+                SELECT
+                    t.settlement_id,
+                    t.order_id,
+                    NVL(t.sku,'0') sku,
+                    t.quantity_purchased,
+                    t.posted_date,
+                    t.platform,
+                    t.Transaction_Type,
+                    t.sys_site,
+                    t.sys_shops_name,
+                    t.parent_id
+                FROM CW_DATARANGE_DETAIL_COMFIRM t
+                WHERE t.Transaction_Type IN
+                (
+                    'Order',
+                    'Bestellung',
+                    'Bestelling',
+                    'Commande',
+                    'Ordine',
+                    'Pedido',
+                    '注文',
+                    'Bestellung_Wiedereinzug',
+                    'Cargo retroactivo',
+                    'Order_Retrocharge',
+                    'FBA Customer Return Fee',
+                    'Frais de retour client FBA'
+                )
+                AND t.settlement_id = #{paramSettlement.settlementId}
+                AND to_char(t.POSTED_DATE,'YYYY-MM') = #{paramDataRange.platform}
+                AND t.PLATFORM = 'Amazon'
+                GROUP BY
+                    t.settlement_id,
+                    t.order_id,
+                    NVL(t.sku,'0'),
+                    t.quantity_purchased,
+                    t.posted_date,
+                    t.platform,
+                    t.Transaction_Type,
+                    t.sys_site,
+                    t.sys_shops_name,
+                    t.parent_id
+            ) q
+          GROUP BY q.sku, q.settlement_id
+        ) ra ON se.sku = ra.sku AND se.settlement_id = ra.settlement_id
+    </select>
+    <select id="getDataRangeDiffrencelist"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm">
+        SELECT
+            ra.*
+        FROM (
+            SELECT
+                D.SETTLEMENT_ID,
+                D.BATCHNO,
+                D.SKU,
+                D.SYS_SHOPS_NAME,
+                D.SYS_SITE,
+                SUM(D.SALES_PROMOTION) SALES_PROMOTION,
+                SUM(D.COMMISSION) COMMISSION,
+                SUM(D.PREVIOUS_RESERVE_AMOUNT) PREVIOUS_RESERVE_AMOUNT,
+                SUM(D.REFUND_COMMISSION) REFUND_COMMISSION,
+                SUM(D.DISPOSAL_FEE) DISPOSAL_FEE,
+                SUM(D.LONG_TERM_STORAGE_FEE) LONG_TERM_STORAGE_FEE,
+                SUM(D.GOOD_WILL) GOOD_WILL,
+                SUM(D.REFUND_PROMOTION) REFUND_PROMOTION,
+                SUM(D.ADVERTISING) ADVERTISING,
+                SUM(D.AMAZON_FEE) AMAZON_FEE,
+                SUM(D.SALES_TAX) SALES_TAX,
+                SUM(D.SALES_OTHER) SALES_OTHER,
+                SUM(D.REIMBURSEMENT) REIMBURSEMENT,
+                SUM(D.OTHER) OTHER,
+                SUM(D.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+                SUM(D.STORAGE_FEE) STORAGE_FEE,
+                SUM(D.REFUND) REFUND,
+                SUM(D.WITHHELD_TAX) WITHHELD_TAX,
+                SUM(D.CURRENT_RESERVE_AMOUNT) CURRENT_RESERVE_AMOUNT,
+                SUM(D.UNSUCCESSFUL_TRANSFER) UNSUCCESSFUL_TRANSFER,
+                SUM(D.REMOVAL_FEE) REMOVAL_FEE,
+                SUM(D.SALES_PRINCIPAL) SALES_PRINCIPAL,
+                SUM(D.LIGHTNING_DEAL_FEE) LIGHTNING_DEAL_FEE,
+                SUM(D.SUCCESSFUL_CHARGE) SUCCESSFUL_CHARGE,
+                SUM(D.AMT_SOURCE) AMT_SOURCE,
+                SUM(D.MONEY_TRANSFER) MONEY_TRANSFER
+            FROM CW_DATARANGE_DETAIL_COMFIRM D
+            LEFT JOIN CW_DATARANGE R ON D.SETTLEMENT_ID = R.SETTLEMENT_ID AND D.BATCHNO = R.BATCHNO
+            WHERE D.settlement_id = #{paramDataRange.settlementId}
+                AND to_char(D.POSTED_DATE,'YYYY-MM') = #{paramDataRange.platform}
+                AND R.STATUS = 3
+                AND D.PLATFORM = 'Amazon'
+            GROUP BY
+                D.SETTLEMENT_ID,
+                D.BATCHNO,
+                D.SKU,
+                D.SYS_SHOPS_NAME,
+                D.SYS_SITE
+        ) ra
+        LEFT JOIN (
+            SELECT
+                D.SETTLEMENT_ID, D.SKU, D.SYS_SHOPS_NAME, D.SYS_SITE
+            FROM CW_SETTLEMENT_DETAIL D
+            LEFT JOIN CW_SETTLEMENT S ON S.SETTLEMENT_ID = D.SETTLEMENT_ID
+            WHERE D.settlement_id = #{paramSettlement.settlementId}
+                AND to_char(D.POSTED_DATE_TIME,'YYYY-MM') = #{paramSettlement.platform}
+                AND S.STATUS = 2
+                AND D.PLATFORM = 'Amazon'
+            GROUP BY D.SETTLEMENT_ID, D.SKU, D.SYS_SHOPS_NAME, D.SYS_SITE
+        ) se ON ra.SETTLEMENT_ID = se.SETTLEMENT_ID AND ra.SKU = se.SKU AND ra.SYS_SHOPS_NAME = se.SYS_SHOPS_NAME AND ra.SYS_SITE = se.SYS_SITE
+        WHERE se.SETTLEMENT_ID IS NULL
+    </select>
+
+    <!--批量将原币结算单明细表插入到美金结算单明细表-->
+    <update id="insertBatchSettlementUsd" parameterType = "com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam">
+        MERGE INTO RP_SETTLEMENT_DETAIL_USD E
+        USING (
+            SELECT
+                A.ID LISTING_ID,
+                A.*,
+                CASE WHEN A.ORIGINAL_CURRENCY = 'USD' THEN 1 ELSE NVL(B.DIRECT_RATE, 0) END AS DIRECT_RATE,
+                CASE WHEN A.MATERIAL_CODE = '0' THEN '0' ELSE C.PRODUCT_TYPE END AS PRODUCT_TYPE
+            FROM
+                RP_SETTLEMENT_DETAIL_LISTING A
+            LEFT JOIN RP_SPOT_EXCHANGE_RATE B ON (
+                A.ORIGINAL_CURRENCY = B.ORIGINAL_CURRENCY
+                AND (
+                    B.INEFFECTIVE_DATE &gt;= TO_DATE( A.FISCAL_PERIOD || '-01', 'YYYY-MM-DD' )
+                    AND B.EFFECT_DATE &lt;= TO_DATE( A.FISCAL_PERIOD || '-01', 'YYYY-MM-DD' )
+                )
+            )
+            LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL C ON C.MATERIAL_CODE = A.MATERIAL_CODE
+            WHERE
+                 A.SHOP_NAME = #{paramCondition.shopName}
+                <if test="paramCondition.sites != null and paramCondition.sites.size() > 0">
+                    AND A.SITE IN
+                    <foreach collection="paramCondition.sites" item="item" index="index" separator=","  open="(" close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                AND A.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+                AND A.CONFIRM_STATUS = 0
+                <if test="paramCondition.confirmType != null and paramCondition.confirmType == 0">
+                    AND(
+                    A.DEPARTMENT != '0'
+                    OR A.SKU = '0'
+                    )
+                </if>
+                <if test="paramCondition.confirmType != null and paramCondition.confirmType == 1">
+                    AND A.DEPARTMENT  = '0'
+                    AND TO_CHAR(A.LATEST_DATE, 'yyyy-mm-dd hh24:mi:ss') &lt;= TO_CHAR(#{paramCondition.confirmDate}, 'yyyy-mm-dd hh24:mi:ss')
+                </if>
+                <if test="paramCondition.confirmType != null and paramCondition.confirmType == 2">
+                    AND A.DEPARTMENT  = '0'
+                    AND (TO_CHAR(A.LATEST_DATE, 'yyyy-mm-dd hh24:mi:ss') &gt; TO_CHAR(#{paramCondition.confirmDate}, 'yyyy-mm-dd hh24:mi:ss')
+                    OR  LATEST_DATE IS NULL)
+                </if>
+        ) D ON ( D.LISTING_ID = E.LISTING_ID )
+        WHEN NOT MATCHED THEN
+        INSERT
+        (
+            E.LISTING_ID,
+            E.FISCAL_PERIOD,
+            E.SETTLEMENT_ID,
+            E.REPORT_TYPE,
+            E.INCOME_TYPE,
+            E.SHOP_NAME,
+            E.SITE,
+            E.SKU,
+            E.DEPARTMENT,
+            E.TEAM,
+            E.MATERIAL_CODE,
+            E.PRODUCT_TYPE,
+            E.SALES_BRAND,
+            E.ACCOUNTING_CURRENCY,
+            E.CREATE_BY,
+            E.CREATE_AT,
+            E.VOLUME_NORMAL,
+            E.VOLUME_REISSUE,
+            E.SALES_EXCLUDING_TAX,
+            E.TAX,
+            E.SALES_PROMOTION,
+            E.REFUND,
+            E.REFUND_PROMOTION,
+            E.REFUND_COMMISSION,
+            E.GIFTWARP_SHIPPING,
+            E.COMMISSION,
+            E.GOODWILL,
+            E.AMAZON_FEES,
+            E.STORAGE_FEE,
+            E.REIMBURSEMENT,
+            E.OTHER,
+            E.WITHHELD_TAX,
+            E.REMOVAL_DEAL,
+            E.DISPOSE_FEE,
+            E.ADVERTISING
+        )
+        VALUES(
+            D.ID,
+            D.FISCAL_PERIOD,
+            D.SETTLEMENT_ID,
+            D.REPORT_TYPE,
+            D.INCOME_TYPE,
+            D.SHOP_NAME,
+            D.SITE,
+            <if test="paramCondition.confirmType != null and paramCondition.confirmType == 0">
+                D.SKU,
+            </if>
+            <if test="paramCondition.confirmType != null and paramCondition.confirmType == 1">
+                '0',
+            </if>
+            <if test="paramCondition.confirmType != null and paramCondition.confirmType == 2">
+                '0',
+            </if>
+            D.DEPARTMENT,
+            D.TEAM,
+            D.MATERIAL_CODE,
+            D.PRODUCT_TYPE,
+            D.SALES_BRAND,
+            'USD',
+            #{paramCondition.confirmBy},
+            #{paramCondition.confirmDate},
+            D.VOLUME_NORMAL,
+            D.VOLUME_REISSUE,
+            D.SALES_EXCLUDING_TAX * D.DIRECT_RATE,
+            D.TAX * D.DIRECT_RATE,
+            D.SALES_PROMOTION * D.DIRECT_RATE,
+            D.REFUND * D.DIRECT_RATE,
+            D.REFUND_PROMOTION * D.DIRECT_RATE,
+            D.REFUND_COMMISSION * D.DIRECT_RATE,
+            D.GIFTWARP_SHIPPING * D.DIRECT_RATE,
+            D.COMMISSION * D.DIRECT_RATE,
+            D.GOODWILL * D.DIRECT_RATE,
+            D.AMAZON_FEES * D.DIRECT_RATE,
+            D.STORAGE_FEE * D.DIRECT_RATE,
+            D.REIMBURSEMENT * D.DIRECT_RATE,
+            D.OTHER * D.DIRECT_RATE,
+            D.WITHHELD_TAX * D.DIRECT_RATE,
+            D.REMOVAL_DEAL * D.DIRECT_RATE,
+            D.DISPOSE_FEE * D.DIRECT_RATE,
+            D.ADVERTISING * D.DIRECT_RATE
+        )
+    </update>
+
+    <!--批量确认更新原币结算单明细表-->
+    <update id="updateConfirmDetailListing" parameterType = "com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam">
+        UPDATE RP_SETTLEMENT_DETAIL_LISTING
+        SET
+        <choose>
+            <when test="paramCondition.confirmType != null and paramCondition.confirmType == 1">
+                SKU = '0',
+            </when>
+            <when test="paramCondition.confirmType != null and paramCondition.confirmType == 2">
+                SKU = '0',
+            </when>
+            <otherwise></otherwise>
+        </choose>
+        CONFIRM_BY = #{paramCondition.confirmBy},
+        CONFIRM_DATE = #{paramCondition.confirmDate},
+        CONFIRM_STATUS = #{paramCondition.confirmStatus}
+        WHERE
+        SHOP_NAME = #{paramCondition.shopName}
+        <if test="paramCondition.sites != null and paramCondition.sites.size() > 0">
+            AND SITE IN
+            <foreach collection="paramCondition.sites" item="item" index="index" separator=","  open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        AND FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+        AND CONFIRM_STATUS = 0
+        <if test="paramCondition.confirmType != null and paramCondition.confirmType == 0">
+            AND(
+                DEPARTMENT != '0'
+                OR SKU = '0'
+            )
+        </if>
+        <if test="paramCondition.confirmType != null and paramCondition.confirmType == 1">
+            AND DEPARTMENT  = '0'
+            AND TO_CHAR(LATEST_DATE, 'yyyy-mm-dd hh24:mi:ss') &lt;= TO_CHAR(#{paramCondition.confirmDate}, 'yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="paramCondition.confirmType != null and paramCondition.confirmType == 2">
+            AND DEPARTMENT  = '0'
+            AND (TO_CHAR(LATEST_DATE, 'yyyy-mm-dd hh24:mi:ss') &gt; TO_CHAR(#{paramCondition.confirmDate}, 'yyyy-mm-dd hh24:mi:ss')
+            OR  LATEST_DATE IS NULL)
+        </if>
+    </update>
+
+    <!--将SettlementDetail的sku为null的设置为0-->
+    <update id="updateSettlementDetailSkuNullToZero">
+        update CW_SETTLEMENT_DETAIL set sku='0' where sku is null
+    </update>
+
+    <!--将dataRangeDetail的sku为null的设置为0-->
+    <update id="updateRangeDetailSkuNullToZero">
+        update CW_DATARANGE_DETAIL_COMFIRM set sku='0' where sku is null
+    </update>
+
+    <!--根据FNSKU匹配物料表刷SKU-->
+    <update id="afreshListingSku" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam">
+        MERGE INTO (
+            SELECT * FROM RP_SETTLEMENT_DETAIL_LISTING WHERE DEPARTMENT IS NULL OR DEPARTMENT = '0'
+        ) d
+        USING
+        (
+            SELECT
+                a.FNSKU,
+                a.SYS_SITE,
+                a.SYS_SHOPS_NAME,
+                MAX(a.sku) AS sku
+            FROM mcms_base_data.INV_PRODUCT_GALLERY a
+            WHERE a.FNSKU IS NOT NULL AND a.FNSKU != 'NULL'
+            GROUP BY
+                a.FNSKU,
+                a.SYS_SITE,
+                a.SYS_SHOPS_NAME
+
+        ) g
+        ON (UPPER(d.FNSKU) = UPPER(g.FNSKU) AND d.site = g.SYS_SITE AND d.shop_name = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+            UPDATE SET d.SKU = g.SKU
+            WHERE
+                d.CONFIRM_STATUS = 0
+                <if test="paramCondition.id != null and paramCondition.id !=''">
+                    AND d.ID = #{paramCondition.id}
+                </if>
+    </update>
+
+    <!--根据FNSKU匹配物料表刷SKU（存档）-->
+    <update id="afreshListingSkuFile" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam">
+        MERGE INTO (
+            SELECT * FROM RP_SETTLEMENT_DETAIL_LISTING WHERE DEPARTMENT IS NULL OR DEPARTMENT = '0'
+        ) d
+        USING
+        (
+            SELECT
+                a.FNSKU,
+                a.SYS_SITE,
+                a.SYS_SHOPS_NAME,
+                MAX(a.sku) AS sku
+            FROM mcms_base_data.INV_PRODUCT_GALLERY_FILE  a
+            WHERE a.FNSKU IS NOT NULL AND a.FNSKU != 'NULL'
+            GROUP BY
+                a.FNSKU,
+                a.SYS_SITE,
+                a.SYS_SHOPS_NAME
+
+        ) g
+        ON (UPPER(d.FNSKU) = UPPER(g.FNSKU) AND d.site = g.SYS_SITE AND d.shop_name = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+        UPDATE SET d.SKU = g.SKU
+        WHERE
+            d.CONFIRM_STATUS = 0
+            <if test="paramCondition.id != null and paramCondition.id !=''">
+                AND d.ID = #{paramCondition.id}
+            </if>
+    </update>
+
+    <!--FNSKU为空的将SKU赋值于FNSKU-->
+    <update id="afreshListingFnsku"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailListingParam">
+        UPDATE RP_SETTLEMENT_DETAIL_LISTING SET FNSKU = SKU WHERE FNSKU IS NULL AND CONFIRM_STATUS = 0
+    </update>
+
+
+    <update id="assignAllocId"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam">
+       BEGIN
+        <!--       更新alloc_id-->
+        MERGE INTO (SELECT * FROM RP_STATION_MANUAL_ALLOCATION t
+        <where>
+            AND t.alloc_id IS NOT NULL
+            AND t.CONFIRM_BY = '保留广告数据'
+            <include refid="STATION_CONDITION"/>
+        </where>) A
+        USING ( SELECT * FROM (SELECT  id,
+                                       fiscal_period,
+                                       shop_name,
+                                       site,
+                                       row_number() OVER (PARTITION BY fiscal_period,shop_name,site ORDER BY report_type DESC) lev
+                                FROM RP_STATION_MANUAL_ALLOCATION
+                                    <where>
+                                        <include refid="STATION_CONDITION"/>
+                                        AND	alloc_id IS NULL
+                                        AND confirm_status = 0
+                                    </where>) WHERE lev = 1 ) B
+        ON (A.fiscal_period = B.fiscal_period AND A.shop_name = B.shop_name AND A.site = B.site)
+        WHEN MATCHED THEN
+          UPDATE SET A.alloc_id = B.id;
+
+<!--        广告费汇总到总行-->
+        MERGE INTO(SELECT
+                        *
+                    FROM
+                        RP_STATION_MANUAL_ALLOCATION
+                    <where>
+                        <include refid="STATION_CONDITION"/>
+                        AND ALLOC_ID IS NULL
+                    </where>) det
+        USING (SELECT
+                    sum(ADVERTISING) ADVERTISING,
+                    ALLOC_ID
+                FROM
+                    RP_STATION_MANUAL_ALLOCATION
+                <where>
+                    <include refid="STATION_CONDITION"/>
+                    AND CONFIRM_STATUS = 0
+                    AND ALLOC_ID IS NOT NULL
+                    AND ADVERTISING != 0
+                </where>
+                GROUP BY ALLOC_ID) src
+        ON (det.id = src.ALLOC_ID)
+        WHEN MATCHED THEN
+        UPDATE
+        SET
+            det.ADVERTISING = src.ADVERTISING;
+    END;
+
+    </update>
+
+
+
+
+</mapper>

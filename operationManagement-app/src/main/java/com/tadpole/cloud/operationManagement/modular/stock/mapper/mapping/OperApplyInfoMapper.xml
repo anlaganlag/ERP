@@ -1,0 +1,2035 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.OperApplyInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.operationManagement.modular.stock.entity.OperApplyInfo">
+        <id column="ID" property="id"/>
+        <result column="STOCK_STATUS" property="stockStatus"/>
+        <result column="APPLY_PERSON_NO" property="applyPersonNo"/>
+        <result column="APPLY_PERSON_NAME" property="applyPersonName"/>
+        <result column="APPLY_DATE" property="applyDate"/>
+        <result column="OPER_CUR_MONTH_QTY" property="operCurMonthQty"/>
+        <result column="OPER_CUR_MONTH_ADD1_QTY" property="operCurMonthAdd1Qty"/>
+        <result column="OPER_CUR_MONTH_ADD2_QTY" property="operCurMonthAdd2Qty"/>
+        <result column="OPER_CUR_MONTH_ADD3_QTY" property="operCurMonthAdd3Qty"/>
+        <result column="OPER_CUR_MONTH_ADD4_QTY" property="operCurMonthAdd4Qty"/>
+        <result column="OPER_CUR_MONTH_ADD5_QTY" property="operCurMonthAdd5Qty"/>
+        <result column="OPER_CUR_MONTH_ADD6_QTY" property="operCurMonthAdd6Qty"/>
+        <result column="SALES_STOCK_DAYS" property="salesStockDays"/>
+        <result column="OPER_COVERS_SALES_DATE" property="operCoversSalesDate"/>
+        <result column="EXTRA_DAYS" property="extraDays"/>
+        <result column="SALES_DEMAND" property="salesDemand"/>
+        <result column="STOCK_QTY_AREA" property="stockQtyArea"/>
+        <result column="TURNOVER_DAYS_AREA" property="turnoverDaysArea"/>
+        <result column="STOCK_REASON" property="stockReason"/>
+        <result column="OVER_TIME_NOT" property="overTimeNot"/>
+        <result column="BILL_TYPE" property="billType"/>
+        <result column="COMIT_TYPE" property="comitType"/>
+        <result column="ALL_COMIT" property="allComit"/>
+        <result column="TEAM_VERIF_NO" property="teamVerifNo"/>
+        <result column="DEPT_TEAM_VERIF_NO" property="deptTeamVerifNo"/>
+        <result column="BIZDATE" property="bizdate"/>
+        <result column="AREA" property="area"/>
+        <result column="PLATFORM" property="platform"/>
+        <result column="ASIN" property="asin"/>
+        <result column="DEPARTMENT" property="department"/>
+        <result column="TEAM" property="team"/>
+        <result column="MATERIAL_CODE" property="materialCode"/>
+        <result column="CREATE_DATE" property="createDate"/>
+        <result column="RECOM_DELIVERY_TYPE" property="recomDeliveryType"/>
+        <result column="PRODUCT_TYPE" property="productType"/>
+        <result column="PRODUCT_NAME" property="productName"/>
+        <result column="STYLE" property="style"/>
+        <result column="MAIN_MATERIAL" property="mainMaterial"/>
+        <result column="PATTERN" property="pattern"/>
+        <result column="COMPANY_BRAND" property="companyBrand"/>
+        <result column="BRAND" property="brand"/>
+        <result column="MODEL" property="model"/>
+        <result column="COLOR" property="color"/>
+        <result column="SIZES" property="sizes"/>
+        <result column="PACKING" property="packing"/>
+        <result column="VERSION_DES" property="versionDes"/>
+        <result column="MATSTYLESECONDLABEL" property="matstylesecondlabel"/>
+        <result column="MATPROCYCLE" property="matprocycle"/>
+        <result column="TYPE" property="type"/>
+        <result column="MINPOQTY" property="minpoqty"/>
+        <result column="SPU" property="spu"/>
+        <result column="NBDU" property="nbdu"/>
+        <result column="FESTIVAL_LABEL" property="festivalLabel"/>
+        <result column="DELIVERY_TYPE" property="deliveryType"/>
+        <result column="SUPPLYCLE" property="supplycle"/>
+        <result column="CANUSEQTY" property="canuseqty"/>
+        <result column="UNPURCHASE" property="unpurchase"/>
+        <result column="NOPICK" property="nopick"/>
+        <result column="UNPACK" property="unpack"/>
+        <result column="UNSEND" property="unsend"/>
+        <result column="INTERNAL_STAY_DELIVER_QTY" property="internalStayDeliverQty"/>
+        <result column="AMAZON_AVAILABLE_QTY" property="amazonAvailableQty"/>
+        <result column="AMAZON_RESERVED_QTY" property="amazonReservedQty"/>
+        <result column="AMAZON_STAY_DELIVER_QTY" property="amazonStayDeliverQty"/>
+        <result column="AIR_QTY" property="airQty"/>
+        <result column="SHIPPING_QTY" property="shippingQty"/>
+        <result column="TRAIN_QTY" property="trainQty"/>
+        <result column="CAR_QTY" property="carQty"/>
+        <result column="IN_STOCK_QTY" property="inStockQty"/>
+        <result column="STORE_ONTIME_TOTAL_QTY" property="storeOntimeTotalQty"/>
+        <result column="DELIVERY_NUM_OVERSEA" property="deliveryNumOversea"/>
+        <result column="INVENTORY_NUM_OVERSEA" property="inventoryNumOversea"/>
+        <result column="TOTAL_INVENTORY_NUM_OVERSEA" property="totalInventoryNumOversea"/>
+        <result column="OVER_D180_INV_AGE_QTY" property="overD180InvAgeQty"/>
+        <result column="OVER_D180_INV_AGE_QTY_RATE" property="overD180InvAgeQtyRate"/>
+        <result column="FIRST_ROUTE_INSTOCK_DATE" property="firstRouteInstockDate"/>
+        <result column="FIRST_ROUTE_DELIVERY_QTY" property="firstRouteDeliveryQty"/>
+        <result column="DAY7QTY" property="day7qty"/>
+        <result column="DAY14QTY" property="day14qty"/>
+        <result column="DAY30QTY" property="day30qty"/>
+        <result column="CUR_PRE_MONTH_QTY" property="curPreMonthQty"/>
+        <result column="LAST_PRE_MONTH_QTY" property="lastPreMonthQty"/>
+        <result column="CUR_PRE_MONTH_LAST_PRE_MONTH" property="curPreMonthLastPreMonth"/>
+        <result column="CUR_MONTH_MINUS3_QTY" property="curMonthMinus3Qty"/>
+        <result column="CUR_MONTH_MINUS2_QTY" property="curMonthMinus2Qty"/>
+        <result column="CUR_MONTH_MINUS1_QTY" property="curMonthMinus1Qty"/>
+        <result column="CUR_MONTH_QTY" property="curMonthQty"/>
+        <result column="CUR_MONTH_ADD1_QTY" property="curMonthAdd1Qty"/>
+        <result column="CUR_MONTH_ADD2_QTY" property="curMonthAdd2Qty"/>
+        <result column="CUR_MONTH_ADD3_QTY" property="curMonthAdd3Qty"/>
+        <result column="CUR_MONTH_ADD4_QTY" property="curMonthAdd4Qty"/>
+        <result column="CUR_MONTH_ADD5_QTY" property="curMonthAdd5Qty"/>
+        <result column="CUR_MONTH_ADD6_QTY" property="curMonthAdd6Qty"/>
+        <result column="PRODUCT_SALE_LEVEL" property="productSaleLevel"/>
+        <result column="PRODUCT_SALE_LEVEL_TEAM" property="productSaleLevelTeam" />
+        <result column="DAYAVGQTY" property="dayavgqty"/>
+        <result column="SHOP_SUPPLYDAYS" property="shopSupplydays"/>
+        <result column="RECOM_PRE_QTY" property="recomPreQty"/>
+        <result column="SEASON_LABEL" property="seasonLabel"/>
+        <result column="VERSION" property="version"/>
+        <result column="FLAG" property="flag"/>
+        <result column="SELLABLE_SUPPLYDAYS" property="sellableSupplydays"/>
+        <result column="CATEGORY" property="category"/>
+        <result column="MINPOQTY_NOTES" property="minpoqtyNotes"/>
+        <result column="SPELL_ORDERNUM " property="spellOrdernum" />
+        <result column="SPELL_ORDERNUM_REMARK " property="spellOrdernumRemark" />
+        <result column="FBA_FIRST_RECEIVEDATE" property="fbaFirstReceivedate"/>
+        <result column="NOTE" property="note"/>
+        <result column="SAFE_SALEDAYS" property="safeSaledays"/>
+        <result column="ORDER_DAYS" property="orderDays"/>
+        <result column="DELIVERY_DAYS" property="deliveryDays"/>
+        <result column="ORDER_DEAL_DAY" property="orderDealDay"/>
+        <result column="OUTER_DEAL_DAY" property="outerDealDay"/>
+        <result column="INNER_DEAL_DAY" property="innerDealDay"/>
+        <result column="TOTAL_BACK_DAYS" property="totalBackDays"/>
+        <result column="FORMULA" property="formula"/>
+        <result column="FORMULA_NUM" property="formulaNum"/>
+        <result column="PREPARE_DAYS" property="prepareDays"/>
+        <result column="FORMULA_PREQTY" property="formulaPreqty"/>
+        <result column="TURNOVER_DAYS" property="turnoverDays"/>
+        <result column="APPROVE_QTY" property="approveQty"/>
+        <result column="RECOM_BACK_OVER_DAYS" property="recomBackOverDays"/>
+        <result column="PRE_SALE_QTY" property="preSaleQty"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+        <result column="EXPECTED_DELIVERY_DATE" property="expectedDeliveryDate"/>
+        <result column="TOTAL_VOLUME" property="totalVolume"/>
+        <result column="OPER_EXPECTED_DATE" property="operExpectedDate"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, STOCK_STATUS, APPLY_PERSON_NO, APPLY_PERSON_NAME, APPLY_DATE, OPER_CUR_MONTH_QTY, OPER_CUR_MONTH_ADD1_QTY, OPER_CUR_MONTH_ADD2_QTY, OPER_CUR_MONTH_ADD3_QTY, OPER_CUR_MONTH_ADD4_QTY, OPER_CUR_MONTH_ADD5_QTY, OPER_CUR_MONTH_ADD6_QTY, SALES_STOCK_DAYS, OPER_COVERS_SALES_DATE, EXTRA_DAYS, SALES_DEMAND, STOCK_QTY_AREA, TURNOVER_DAYS_AREA, STOCK_REASON, OVER_TIME_NOT, BILL_TYPE, COMIT_TYPE, ALL_COMIT, TEAM_VERIF_NO, DEPT_TEAM_VERIF_NO, BIZDATE, AREA, PLATFORM, ASIN, DEPARTMENT, TEAM, MATERIAL_CODE, CREATE_DATE, RECOM_DELIVERY_TYPE, PRODUCT_TYPE, PRODUCT_NAME, STYLE, MAIN_MATERIAL, PATTERN, COMPANY_BRAND, BRAND, MODEL, COLOR, SIZES, PACKING, VERSION_DES, MATSTYLESECONDLABEL, MATPROCYCLE, TYPE, MINPOQTY, SPU, NBDU, FESTIVAL_LABEL, DELIVERY_TYPE, SUPPLYCLE, CANUSEQTY, UNPURCHASE, NOPICK, UNPACK, UNSEND, INTERNAL_STAY_DELIVER_QTY, AMAZON_AVAILABLE_QTY, AMAZON_RESERVED_QTY, AMAZON_STAY_DELIVER_QTY, AIR_QTY, SHIPPING_QTY, TRAIN_QTY, CAR_QTY, IN_STOCK_QTY, STORE_ONTIME_TOTAL_QTY, DELIVERY_NUM_OVERSEA, INVENTORY_NUM_OVERSEA, TOTAL_INVENTORY_NUM_OVERSEA, OVER_D180_INV_AGE_QTY, OVER_D180_INV_AGE_QTY_RATE, FIRST_ROUTE_INSTOCK_DATE, FIRST_ROUTE_DELIVERY_QTY, DAY7QTY, DAY14QTY, DAY30QTY, CUR_PRE_MONTH_QTY, LAST_PRE_MONTH_QTY, CUR_PRE_MONTH_LAST_PRE_MONTH, CUR_MONTH_MINUS3_QTY, CUR_MONTH_MINUS2_QTY, CUR_MONTH_MINUS1_QTY, CUR_MONTH_QTY, CUR_MONTH_ADD1_QTY, CUR_MONTH_ADD2_QTY, CUR_MONTH_ADD3_QTY, CUR_MONTH_ADD4_QTY, CUR_MONTH_ADD5_QTY, CUR_MONTH_ADD6_QTY, PRODUCT_SALE_LEVEL,PRODUCT_SALE_LEVEL_TEAM, DAYAVGQTY, SHOP_SUPPLYDAYS, RECOM_PRE_QTY, SEASON_LABEL, VERSION, FLAG, SELLABLE_SUPPLYDAYS, CATEGORY, MINPOQTY_NOTES, SPELL_ORDERNUM , SPELL_ORDERNUM_REMARK ,FBA_FIRST_RECEIVEDATE, NOTE, SAFE_SALEDAYS, ORDER_DAYS, DELIVERY_DAYS, ORDER_DEAL_DAY, OUTER_DEAL_DAY, INNER_DEAL_DAY, TOTAL_BACK_DAYS, FORMULA, FORMULA_NUM, PREPARE_DAYS, FORMULA_PREQTY, TURNOVER_DAYS, APPROVE_QTY, RECOM_BACK_OVER_DAYS, PRE_SALE_QTY, CREATE_TIME, UPDATE_TIME, EXPECTED_DELIVERY_DATE, TOTAL_VOLUME, OPER_EXPECTED_DATE
+    </sql>
+    <update id="commitBatch" parameterType="list">
+        UPDATE
+        STOCK_OPER_APPLY_INFO a
+        <set>
+            <trim prefix="a.STOCK_STATUS = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    WHEN a.id = #{item.id} THEN 1
+                </foreach>
+            </trim>
+            <trim prefix="a.APPLY_PERSON_NO = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.requireBy != null and item.requireBy != ''">
+                        WHEN a.id = #{item.id} THEN #{item.requireBy}
+                    </if>
+                </foreach>
+            </trim>
+        </set>
+        WHERE a.STOCK_STATUS = 0 AND a.note is null
+        AND a.id IN
+        <foreach collection="reqParamList" item="item" index="index" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+    </update>
+    <!--日常备货全部区域提交申请，更新all_team_area标记为全部提交-->
+    <update id="updateStockAreaList" parameterType="java.util.HashSet">
+
+        MERGE INTO (select * from STOCK_OPER_APPLY_INFO where ALL_COMIT = 0 and note is null and over_time_not =0) a
+        using (SELECT b.platform, b.material_code,
+        b.Team,
+        b.area,
+        count(1) statusCount,
+        sum(b.STOCK_STATUS) statusSum
+        FROM STOCK_OPER_APPLY_INFO b
+        WHERE b.ALL_COMIT = 0 AND b.note is null and b.over_time_not =0
+        AND b.STOCK_STATUS IN (0, 1)
+        AND b.platform || b.material_code || b.Team || b.AREA IN
+        (
+        <foreach collection="platformMaterialCodeTeamAreaSet" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+        )
+        GROUP BY b.platform, b.material_code, b.Team, b.area) c
+        ON (a.platform = c.platform AND a.material_code = c.material_code AND a.Team = c.Team AND a.area = c.area and c.statusCount = c.statusSum )
+        WHEN MATCHED THEN UPDATE SET a.ALL_COMIT = 1
+
+    </update>
+    <update id="updateCommitStatus" parameterType="String">
+
+        update STOCK_OPER_APPLY_INFO t
+        set t.STOCK_STATUS=2,
+            TEAM_VERIF_NO=#{id}
+        where t.all_comit = 1
+          and t.OVER_TIME_NOT != 1
+          and STOCK_STATUS = 1
+          and note is null
+          and t.platform || t.material_code || t.team || t.area = #{platformMaterialCodeTeamArea}
+
+    </update>
+
+    <update id="batchUpdateCommitStatus" parameterType="map">
+
+        update STOCK_OPER_APPLY_INFO t
+        <set>
+            t.STOCK_STATUS=2,
+            <trim prefix="t.TEAM_VERIF_NO = CASE" suffix="END,">
+                <foreach collection="upMap" item="item" index="index">
+                    <if test="item.platformMaterialCodeTeamArea != null and item.requireBy != ''">
+                        WHEN t.platform || t.material_code||t.team||t.area = #{item.platformMaterialCodeTeamArea} THEN #{item.teamVerifId}
+                    </if>
+                </foreach>
+            </trim>
+        </set>
+        where t.all_comit=1 and t.OVER_TIME_NOT!=1 and STOCK_STATUS=1 and (note is null or note like '%建议淘汰产品%')
+        <if test="keyList != null and keyList.size() != 0">
+            and t.platform || t.material_code||t.team||t.area IN
+            <foreach collection="keyList" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+
+    </update>
+    <select id="queryPage" parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.OperApplyInfoResult">
+
+        select a.* from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join STOCK_OPER_APPLY_INFO a
+        on l.platform = a.platform
+        AND l.team = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND OVER_TIME_NOT = 0
+        -- AND a.material_code ='P0321601'
+        and a.note is null
+        <if test="reqVO.eform != null">
+
+            <if test="reqVO.eform.stockStatus != null and reqVO.eform.stockStatus !=''">
+                AND a.stock_status = #{reqVO.eform.stockStatus}
+            </if>
+            <if test="reqVO.eform.salesRequireLow != null and reqVO.eform.salesRequireLow !=''">
+                AND a.SALES_DEMAND >= #{reqVO.eform.salesRequireLow}
+            </if>
+            <if test="reqVO.eform.salesRequireHigh != null and reqVO.eform.salesRequireHigh !=''">
+                AND a.SALES_DEMAND &lt; #{reqVO.eform.salesRequireHigh}
+            </if>
+            <if test="reqVO.eform.stockQtyAreaLow != null and reqVO.eform.stockQtyAreaLow !=''">
+                AND a.STOCK_QTY_AREA >= #{reqVO.eform.stockQtyAreaLow}
+            </if>
+            <if test="reqVO.eform.stockQtyAreaHeight != null and reqVO.eform.stockQtyAreaHeight !=''">
+                AND a.STOCK_QTY_AREA &lt; #{reqVO.eform.stockQtyAreaHeight}
+            </if>
+            <if test="reqVO.eform.teamVerifNo != null and reqVO.eform.teamVerifNo !=''">
+                AND a.TEAM_VERIF_NO = #{reqVO.eform.teamVerifNo}
+            </if>
+            <if test="reqVO.eform.TeamVerifNoLists != null and reqVO.eform.TeamVerifNoLists.size() != 0">
+                AND a.TEAM_VERIF_NO IN
+                <foreach collection="reqVO.eform.TeamVerifNoLists" item="teamVerifNo" index="index" separator=","
+                         open="(" close=")">
+                    #{teamVerifNo}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.stockStatus ==0 and reqVO.eform.operator != null and reqVO.eform.operator !=''">
+                AND l.operator like '%'||#{reqVO.eform.operator}||'%'
+            </if>
+            <if test="reqVO.eform.area != null and reqVO.eform.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.eform.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.materialcode != null and reqVO.eform.materialcode.size() != 0">
+                AND a.material_code IN
+                <foreach collection="reqVO.eform.materialcode" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.category != null and reqVO.eform.category.size() != 0">
+                AND a.category IN
+                <foreach collection="reqVO.eform.category" item="category" index="index" separator="," open="("
+                         close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productType != null and reqVO.eform.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.eform.productType" item="productType" index="index" separator="," open="("
+                         close=")">
+                    #{productType}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productname != null and reqVO.eform.productname.size() != 0">
+                AND a.product_name IN
+                <foreach collection="reqVO.eform.productname" item="productname" index="index" separator="," open="("
+                         close=")">
+                    #{productname}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.style != null and reqVO.eform.style.size() != 0">
+                AND a.style IN
+                <foreach collection="reqVO.eform.style" item="style" index="index" separator="," open="(" close=")">
+                    #{style}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.mainmaterial != null and reqVO.eform.mainmaterial.size() != 0">
+                AND a.main_material IN
+                <foreach collection="reqVO.eform.mainmaterial" item="mainmaterial" index="index" separator="," open="("
+                         close=")">
+                    #{mainmaterial}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.design != null and reqVO.eform.design.size() != 0">
+                AND a.pattern IN
+                <foreach collection="reqVO.eform.design" item="design" index="index" separator="," open="(" close=")">
+                    #{design}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.brand != null and reqVO.eform.brand.size() != 0">
+                AND a.brand IN
+                <foreach collection="reqVO.eform.brand" item="brand" index="index" separator="," open="(" close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.companybrand != null and reqVO.eform.companybrand.size() != 0">
+                AND a.company_brand IN
+                <foreach collection="reqVO.eform.companybrand" item="companybrand" index="index" separator="," open="("
+                         close=")">
+                    #{companybrand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.model != null and reqVO.eform.model.size() != 0">
+                AND a.model IN
+                <foreach collection="reqVO.eform.model" item="model" index="index" separator="," open="(" close=")">
+                    #{model}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.color != null and reqVO.eform.color.size() != 0">
+                AND a.color IN
+                <foreach collection="reqVO.eform.color" item="color" index="index" separator="," open="(" close=")">
+                    #{color}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.sizes != null and reqVO.eform.sizes.size() != 0">
+                AND a.sizes IN
+                <foreach collection="reqVO.eform.sizes" item="sizes" index="index" separator="," open="(" close=")">
+                    #{sizes}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.packing != null and reqVO.eform.packing.size() != 0">
+                AND a.packing IN
+                <foreach collection="reqVO.eform.packing" item="packing" index="index" separator="," open="(" close=")">
+                    #{packing}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.version != null and reqVO.eform.version.size() != 0">
+                AND a.version IN
+                <foreach collection="reqVO.eform.version" item="version" index="index" separator="," open="(" close=")">
+                    #{version}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.styleSecondLabel != null and reqVO.eform.styleSecondLabel.size() > 0 ">
+                AND a.MATSTYLESECONDLABEL IN
+                <foreach collection="reqVO.eform.styleSecondLabel" item="styleLabel" index="index" separator=","
+                         open="(" close=")">
+                    #{styleLabel}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.Team != null and reqVO.eform.Team.size() != 0">
+                AND a.Team IN
+                <foreach collection="reqVO.eform.Team" item="Team" index="index" separator="," open="(" close=")">
+                    #{Team}
+                </foreach>
+            </if>
+        </if>
+        order by a.material_code,a.area,a.asin
+    </select>
+    <select id="selectCommit" parameterType="String"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.entity.OperApplyInfo">
+        select max(t.bizdate)                              bizdate,
+               max(t.platform)                             platform,
+               max(t.area)                                 area,
+               max(department)                             department,
+               max(t.team)                                 team,
+               max(t.material_code)                        material_code,
+               max(t.apply_date)                           apply_date,
+               max(t.create_date)                          create_date,
+               max(NVL(t.product_type, 0))                 product_type,
+               max(NVL(t.product_name, 0))                 product_name,
+               max(t.style)                        style,
+               max(t.main_material)                main_material,
+               max(t.pattern)                      pattern,
+               max(t.company_brand)                company_brand,
+               max(t.brand)                        brand,
+               max(t.model)                        model,
+               max(t.color)                        color,
+               max(t.sizes)                        sizes,
+               max(t.packing)                      packing,
+               max(t.version_des)                  version_des,
+               max(NVL(t.version, 0))                      version,
+               max(NVL(t.matstylesecondlabel, 0))          matstylesecondlabel,
+               max(NVL(t.matprocycle, 0))                  matprocycle,
+               max(t.type)                         type,
+               max(NVL(t.minpoqty, 0))                     minpoqty,
+               max(NVL(t.minpoqty_notes, 0))               minpoqty_notes,
+               max(NVL(t.SPELL_ORDERNUM , 0))               SPELL_ORDERNUM ,
+               max(NVL(t.SPELL_ORDERNUM_REMARK , 0))               SPELL_ORDERNUM_REMARK ,
+               max(t.spu)                          spu,
+               max(t.nbdu)                         nbdu,
+               max(t.festival_label)               festival_label,
+               max(NVL(t.delivery_type, 0))                delivery_type,
+               max(NVL(t.supplycle, 0))                    supplycle,
+               max(t.recom_delivery_type)                  recom_delivery_type,
+               sum(NVL(t.oper_cur_month_qty, 0))           oper_cur_month_qty,
+               sum(NVL(t.oper_cur_month_add1_qty, 0))      oper_cur_month_add1_qty,
+               sum(NVL(t.oper_cur_month_add2_qty, 0))      oper_cur_month_add2_qty,
+               sum(NVL(t.oper_cur_month_add3_qty, 0))      oper_cur_month_add3_qty,
+               sum(NVL(t.oper_cur_month_add4_qty, 0))      oper_cur_month_add4_qty,
+               sum(NVL(t.oper_cur_month_add5_qty, 0))      oper_cur_month_add5_qty,
+               sum(NVL(t.oper_cur_month_add6_qty, 0))      oper_cur_month_add6_qty,
+               ROUND(avg(NVL(t.sales_stock_days, 0)))      sales_stock_days,
+               sum(NVL(t.extra_days, 0))                   extra_days,
+               sum(NVL(t.sales_demand, 0))                 sales_demand,
+               sum(NVL(t.stock_qty_area, 0))               stock_qty_area,
+               sum(NVL(t.TOTAL_VOLUME, 0))                 TOTAL_VOLUME,
+               sum(NVL(t.STORE_ONTIME_TOTAL_QTY, 0))       STORE_ONTIME_TOTAL_QTY,
+               sum(NVL(t.turnover_days_area, 0))           turnover_days_area,
+               --  max(t.stock_reason,0)),
+               max(NVL(t.bill_type, 0))                    bill_type,
+               max(NVL(t.comit_type, 0))                   comit_type,
+               max(NVL(t.delivery_type, 0))                delivery_type,
+               max(NVL(t.canuseqty, 0))                    canuseqty,
+               max(NVL(t.unpurchase, 0))                   unpurchase,
+               max(NVL(t.approve_qty, 0))                  approve_qty,
+               max(NVL(t.nopick, 0))                       nopick,
+               max(NVL(t.unpack, 0))                       unpack,
+               max(NVL(t.unsend, 0))                       unsend,
+               sum(NVL(t.internal_stay_deliver_qty, 0))    internal_stay_deliver_qty,
+               sum(NVL(t.amazon_available_qty, 0))         amazon_available_qty,
+               sum(NVL(t.amazon_reserved_qty, 0))          amazon_reserved_qty,
+               sum(NVL(t.amazon_stay_deliver_qty, 0))      amazon_stay_deliver_qty,
+               sum(NVL(t.air_qty, 0))                      air_qty,
+               sum(NVL(t.shipping_qty, 0))                 shipping_qty,
+               sum(NVL(t.train_qty, 0))                    train_qty,
+               sum(NVL(t.car_qty, 0))                      car_qty,
+               sum(NVL(t.in_stock_qty, 0))                 in_stock_qty,
+               sum(NVL(t.store_ontime_total_qty, 0))       store_ontime_total_qty,
+               sum(NVL(t.delivery_num_oversea, 0))         delivery_num_oversea,
+               sum(NVL(t.inventory_num_oversea, 0))        inventory_num_oversea,
+               sum(NVL(t.total_inventory_num_oversea, 0))  total_inventory_num_oversea,
+               sum(NVL(t.over_d180_inv_age_qty, 0))        over_d180_inv_age_qty,
+               sum(NVL(t.over_d180_inv_age_qty_rate, 0))   over_d180_inv_age_qty_rate,
+               max(t.first_route_instock_date)             first_route_instock_date,
+               sum(NVL(t.first_route_delivery_qty, 0))     first_route_delivery_qty,
+               sum(NVL(t.day7qty, 0))                      day7qty,
+               sum(NVL(t.day14qty, 0))                     day14qty,
+               sum(NVL(t.day30qty, 0))                     day30qty,
+               sum(NVL(t.cur_pre_month_qty, 0))            cur_pre_month_qty,
+               sum(NVL(t.last_pre_month_qty, 0))           last_pre_month_qty,
+               sum(NVL(t.cur_pre_month_last_pre_month, 0)) cur_pre_month_last_pre_month,
+               sum(NVL(t.cur_month_minus3_qty, 0))         cur_month_minus3_qty,
+               sum(NVL(t.cur_month_minus2_qty, 0))         cur_month_minus2_qty,
+               sum(NVL(t.cur_month_minus1_qty, 0))         cur_month_minus1_qty,
+               sum(NVL(t.cur_month_qty, 0))                cur_month_qty,
+               sum(NVL(t.cur_month_add1_qty, 0))           cur_month_add1_qty,
+               sum(NVL(t.cur_month_add2_qty, 0))           cur_month_add2_qty,
+               sum(NVL(t.cur_month_add3_qty, 0))           cur_month_add3_qty,
+               sum(NVL(t.cur_month_add4_qty, 0))           cur_month_add4_qty,
+               sum(NVL(t.cur_month_add5_qty, 0))           cur_month_add5_qty,
+               sum(NVL(t.cur_month_add6_qty, 0))           cur_month_add6_qty,
+               max(t.product_sale_level)                   product_sale_level,
+               max(t.product_sale_level_team)              product_sale_level_team,
+               sum(NVL(t.dayavgqty, 0))                    dayavgqty,
+               --  sum(NVL(t.shop_supplydays,0)),
+               sum(NVL(t.recom_pre_qty, 0))                recom_pre_qty,
+               max(t.season_label)                         season_label,
+               max(t.flag)                                 flag,
+               -- sum(NVL(t.sellable_supplydays,0)),
+               max(t.fba_first_receivedate)                fba_first_receivedate,
+               max(t.note)                                 note,
+               sum(NVL(t.safe_saledays, 0))                safe_saledays,
+               sum(NVL(t.order_days, 0))                   order_days,
+               max(NVL(t.delivery_days, 0))                delivery_days,
+               sum(NVL(t.order_deal_day, 0))               order_deal_day,
+               sum(NVL(t.outer_deal_day, 0))               outer_deal_day,
+               sum(NVL(t.inner_deal_day, 0))               inner_deal_day,
+               DECODE((SUM(NVL(t.PRE_SALE_QTY,0))),0,(MAX(NVL(t.total_back_days,0))),round ((SUM(NVL(t.PRE_SALE_QTY,0) *NVL(t.total_back_days,0))/SUM(NVL(t.PRE_SALE_QTY,0))))) total_back_days,
+               --  sum(NVL(t.formula,0)),
+               --  sum(NVL(t.formula_num,0)),
+               sum(NVL(t.prepare_days, 0))                 prepare_days,
+               --  sum(NVL(t.formula_preqty,0)),
+               sum(NVL(t.turnover_days, 0))                turnover_days,
+               max(t.recom_back_over_days)                 recom_back_over_days,
+               min(t.EXPECTED_DELIVERY_DATE)               EXPECTED_DELIVERY_DATE,
+               min(t.OPER_EXPECTED_DATE)                   OPER_EXPECTED_DATE,
+               sum(NVL(t.pre_sale_qty, 0))                 pre_sale_qty,
+               TRUNC (AVG(  DECODE(SIGN(SALES_STOCK_DAYS) ,1,SALES_STOCK_DAYS, 0, NULL,-1,NULL, SALES_STOCK_DAYS) ))  SALES_STOCK_DAYS
+
+        from STOCK_OPER_APPLY_INFO t
+        where t.all_comit = 1
+          and t.OVER_TIME_NOT != 1
+          and STOCK_STATUS = 1
+          and note is null
+          and t.platform || t.material_code || t.team || t.area = #{platformMaterialCodeTeamArea}
+    </select>
+
+
+    <select id="batchSelectCommit" parameterType="list"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.entity.OperApplyInfo">
+        select max(t.bizdate) bizdate,
+        max(t.platform) platform,
+        max(t.area) area,
+        max(department) department,
+        max(t.team) team,
+        max(t.material_code) material_code,
+        max(t.apply_date) apply_date,
+        max(t.create_date) create_date,
+        max(NVL(t.product_type, 0)) product_type,
+        max(NVL(t.product_name, 0)) product_name,
+        max(t.style) style,
+        max(t.main_material) main_material,
+        max(t.pattern) pattern,
+        max(t.company_brand) company_brand,
+        max(t.brand) brand,
+        max(t.model) model,
+        max(t.color) color,
+        max(t.sizes) sizes,
+        max(t.packing) packing,
+        max(t.version_des) version_des,
+        max(NVL(t.version, 0)) version,
+        max(NVL(t.matstylesecondlabel, 0)) matstylesecondlabel,
+        max(NVL(t.matprocycle, 0)) matprocycle,
+        max(t.type) type,
+        max(NVL(t.minpoqty, 0)) minpoqty,
+        max(NVL(t.minpoqty_notes, 0)) minpoqty_notes,
+        max(NVL(t.SPELL_ORDERNUM , 0)) SPELL_ORDERNUM ,
+        max(NVL(t.SPELL_ORDERNUM_REMARK , 0)) SPELL_ORDERNUM_REMARK ,
+        max(t.spu) spu,
+        max(t.nbdu) nbdu,
+        max(t.festival_label) festival_label,
+        max(NVL(t.delivery_type, 0)) delivery_type,
+        max(NVL(t.supplycle, 0)) supplycle,
+        max(t.recom_delivery_type) recom_delivery_type,
+        sum(NVL(t.oper_cur_month_qty, 0)) oper_cur_month_qty,
+        sum(NVL(t.oper_cur_month_add1_qty, 0)) oper_cur_month_add1_qty,
+        sum(NVL(t.oper_cur_month_add2_qty, 0)) oper_cur_month_add2_qty,
+        sum(NVL(t.oper_cur_month_add3_qty, 0)) oper_cur_month_add3_qty,
+        sum(NVL(t.oper_cur_month_add4_qty, 0)) oper_cur_month_add4_qty,
+        sum(NVL(t.oper_cur_month_add5_qty, 0)) oper_cur_month_add5_qty,
+        sum(NVL(t.oper_cur_month_add6_qty, 0)) oper_cur_month_add6_qty,
+        --ROUND(avg(NVL(t.sales_stock_days, 0))) sales_stock_days,
+        sum(NVL(t.extra_days, 0)) extra_days,
+        sum(NVL(t.sales_demand, 0)) sales_demand,
+        sum(NVL(t.stock_qty_area, 0)) stock_qty_area,
+        sum(NVL(t.TOTAL_VOLUME, 0)) TOTAL_VOLUME,
+        sum(NVL(t.STORE_ONTIME_TOTAL_QTY, 0)) STORE_ONTIME_TOTAL_QTY,
+        sum(NVL(t.turnover_days_area, 0)) turnover_days_area,
+        -- max(t.stock_reason,0)),
+        max(NVL(t.bill_type, 0)) bill_type,
+        max(NVL(t.comit_type, 0)) comit_type,
+        max(NVL(t.delivery_type, 0)) delivery_type,
+        max(NVL(t.canuseqty, 0)) canuseqty,
+        max(NVL(t.unpurchase, 0)) unpurchase,
+        max(NVL(t.approve_qty, 0)) approve_qty,
+        max(NVL(t.nopick, 0)) nopick,
+        max(NVL(t.unpack, 0)) unpack,
+        max(NVL(t.unsend, 0)) unsend,
+        sum(NVL(t.internal_stay_deliver_qty, 0)) internal_stay_deliver_qty,
+        sum(NVL(t.amazon_available_qty, 0)) amazon_available_qty,
+        sum(NVL(t.amazon_reserved_qty, 0)) amazon_reserved_qty,
+        sum(NVL(t.amazon_stay_deliver_qty, 0)) amazon_stay_deliver_qty,
+        sum(NVL(t.air_qty, 0)) air_qty,
+        sum(NVL(t.shipping_qty, 0)) shipping_qty,
+        sum(NVL(t.train_qty, 0)) train_qty,
+        sum(NVL(t.car_qty, 0)) car_qty,
+        sum(NVL(t.in_stock_qty, 0)) in_stock_qty,
+        sum(NVL(t.store_ontime_total_qty, 0)) store_ontime_total_qty,
+        sum(NVL(t.delivery_num_oversea, 0)) delivery_num_oversea,
+        sum(NVL(t.inventory_num_oversea, 0)) inventory_num_oversea,
+        sum(NVL(t.total_inventory_num_oversea, 0)) total_inventory_num_oversea,
+        sum(NVL(t.over_d180_inv_age_qty, 0)) over_d180_inv_age_qty,
+        sum(NVL(t.over_d180_inv_age_qty_rate, 0)) over_d180_inv_age_qty_rate,
+        max(t.first_route_instock_date) first_route_instock_date,
+        sum(NVL(t.first_route_delivery_qty, 0)) first_route_delivery_qty,
+        sum(NVL(t.day7qty, 0)) day7qty,
+        sum(NVL(t.day14qty, 0)) day14qty,
+        sum(NVL(t.day30qty, 0)) day30qty,
+        sum(NVL(t.cur_pre_month_qty, 0)) cur_pre_month_qty,
+        sum(NVL(t.last_pre_month_qty, 0)) last_pre_month_qty,
+        sum(NVL(t.cur_pre_month_last_pre_month, 0)) cur_pre_month_last_pre_month,
+        sum(NVL(t.cur_month_minus3_qty, 0)) cur_month_minus3_qty,
+        sum(NVL(t.cur_month_minus2_qty, 0)) cur_month_minus2_qty,
+        sum(NVL(t.cur_month_minus1_qty, 0)) cur_month_minus1_qty,
+        sum(NVL(t.cur_month_qty, 0)) cur_month_qty,
+        sum(NVL(t.cur_month_add1_qty, 0)) cur_month_add1_qty,
+        sum(NVL(t.cur_month_add2_qty, 0)) cur_month_add2_qty,
+        sum(NVL(t.cur_month_add3_qty, 0)) cur_month_add3_qty,
+        sum(NVL(t.cur_month_add4_qty, 0)) cur_month_add4_qty,
+        sum(NVL(t.cur_month_add5_qty, 0)) cur_month_add5_qty,
+        sum(NVL(t.cur_month_add6_qty, 0)) cur_month_add6_qty,
+        max(t.product_sale_level) product_sale_level,
+        max(t.product_sale_level_team) product_sale_level_team,
+        sum(NVL(t.dayavgqty, 0)) dayavgqty,
+        -- sum(NVL(t.shop_supplydays,0)),
+        sum(NVL(t.recom_pre_qty, 0)) recom_pre_qty,
+        max(t.season_label) season_label,
+        max(t.flag) flag,
+        -- sum(NVL(t.sellable_supplydays,0)),
+        max(t.fba_first_receivedate) fba_first_receivedate,
+        max(t.note) note,
+        sum(NVL(t.safe_saledays, 0)) safe_saledays,
+        sum(NVL(t.order_days, 0)) order_days,
+        max(NVL(t.delivery_days, 0)) delivery_days,
+        sum(NVL(t.order_deal_day, 0)) order_deal_day,
+        sum(NVL(t.outer_deal_day, 0)) outer_deal_day,
+        sum(NVL(t.inner_deal_day, 0)) inner_deal_day,
+        DECODE((SUM(NVL(t.PRE_SALE_QTY,0))),0,(MAX(NVL(t.total_back_days,0))),round ((SUM(NVL(t.PRE_SALE_QTY,0) *NVL(t.total_back_days,0))/SUM(NVL(t.PRE_SALE_QTY,0))))) total_back_days,
+        -- sum(NVL(t.formula,0)),
+        -- sum(NVL(t.formula_num,0)),
+        sum(NVL(t.prepare_days, 0)) prepare_days,
+        -- sum(NVL(t.formula_preqty,0)),
+        sum(NVL(t.turnover_days, 0)) turnover_days,
+        max(t.recom_back_over_days) recom_back_over_days,
+        min(t.EXPECTED_DELIVERY_DATE) EXPECTED_DELIVERY_DATE,
+        min(t.OPER_EXPECTED_DATE) OPER_EXPECTED_DATE,
+        sum(NVL(t.pre_sale_qty, 0)) pre_sale_qty,
+        TRUNC (AVG(  DECODE(SIGN(SALES_STOCK_DAYS) ,1,SALES_STOCK_DAYS, 0, NULL,-1,NULL, SALES_STOCK_DAYS) ))  sales_stock_days
+        from STOCK_OPER_APPLY_INFO t
+        where
+        t.all_comit=1 and t.OVER_TIME_NOT!=1 and STOCK_STATUS=1 and  (note is null or note like '%建议淘汰产品%') and t.bill_type='RCBH'
+
+        <if test="platformMaterialCodeTeamArea != null and platformMaterialCodeTeamArea.size() != 0">
+            AND t.platform || t.material_code||t.team||t.area IN
+            <foreach collection="platformMaterialCodeTeamArea" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by t.platform||t.material_code||t.team||t.area
+    </select>
+
+
+    <select id="operExport" parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.entity.OperApplyInfo">
+
+        select a.* from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join STOCK_OPER_APPLY_INFO a
+        on l.platform = a.platform
+        AND kkteam = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND a.OVER_TIME_NOT = 0
+        -- AND STOCK_STATUS = 0
+        <if test="operator != null and operator !=''">
+            AND l.operator like '%'||#{operator}||'%'
+        </if>
+
+        <if test="stockStatu != null ">
+            AND a.STOCK_STATUS = #{stockStatu}
+        </if>
+        order by a.material_code,a.area,a.asin
+    </select>
+    <select id="recordList"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.OperApplyInfoResult">
+
+        select a.* from STOCK_OPER_APPLY_INFO a
+        WHERE
+        a.material_code IS NOT NULL
+        and a.note is null
+        <if test="reqVO.eform != null">
+
+            <if test="reqVO.eform.stockStatus != null and reqVO.eform.stockStatus !=''">
+                AND a.stock_status = #{reqVO.eform.stockStatus}
+            </if>
+
+            <if test="reqVO.eform.teamVerifNo != null and reqVO.eform.teamVerifNo !=''">
+                AND a.TEAM_VERIF_NO = #{reqVO.eform.teamVerifNo}
+            </if>
+            <if test="reqVO.eform.TeamVerifNoLists != null and reqVO.eform.TeamVerifNoLists.size() != 0">
+                AND a.TEAM_VERIF_NO IN
+                <foreach collection="reqVO.eform.TeamVerifNoLists" item="teamVerifNo" index="index" separator=","
+                         open="(" close=")">
+                    #{teamVerifNo}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.materialcode != null and reqVO.eform.materialcode.size() != 0">
+                AND a.material_code IN
+                <foreach collection="reqVO.eform.materialcode" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.Team != null and reqVO.eform.Team.size() != 0">
+                AND a.Team IN
+                <foreach collection="reqVO.eform.Team" item="Team" index="index" separator="," open="(" close=")">
+                    #{Team}
+                </foreach>
+            </if>
+        </if>
+
+    </select>
+
+    <select id="specialExport"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.SpecialApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SpecialApplyInfoResult">
+
+        select a.* from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join SPECIAL_APPLY_INFO a
+        on l.platform = a.platform
+        AND l.team = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND OVER_TIME_NOT = 0
+        AND a.material_code ='P00LK901'
+        and a.note is null
+        <if test="reqVO.eform != null">
+
+            <if test="reqVO.eform.stockStatus != null and reqVO.eform.stockStatus !=''">
+                AND a.stock_status = #{reqVO.eform.stockStatus}
+            </if>
+
+            <if test="reqVO.eform.teamVerifNo != null and reqVO.eform.teamVerifNo !=''">
+                AND a.TEAM_VERIF_NO = #{reqVO.eform.teamVerifNo}
+            </if>
+            <if test="reqVO.eform.TeamVerifNoLists != null and reqVO.eform.TeamVerifNoLists.size() != 0">
+                AND a.TEAM_VERIF_NO IN
+                <foreach collection="reqVO.eform.TeamVerifNoLists" item="teamVerifNo" index="index" separator=","
+                         open="(" close=")">
+                    #{teamVerifNo}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.stockStatus ==0 and reqVO.eform.operator != null and reqVO.eform.operator !=''">
+                AND l.operator like '%'||#{reqVO.eform.operator}||'%'
+            </if>
+            <if test="reqVO.eform.area != null and reqVO.eform.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.eform.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.materialcode != null and reqVO.eform.materialcode.size() != 0">
+                AND a.material_code IN
+                <foreach collection="reqVO.eform.materialcode" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.category != null and reqVO.eform.category.size() != 0">
+                AND a.category IN
+                <foreach collection="reqVO.eform.category" item="category" index="index" separator="," open="("
+                         close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productType != null and reqVO.eform.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.eform.productType" item="productType" index="index" separator="," open="("
+                         close=")">
+                    #{productType}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productname != null and reqVO.eform.productname.size() != 0">
+                AND a.product_name IN
+                <foreach collection="reqVO.eform.productname" item="productname" index="index" separator="," open="("
+                         close=")">
+                    #{productname}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.style != null and reqVO.eform.style.size() != 0">
+                AND a.style IN
+                <foreach collection="reqVO.eform.style" item="style" index="index" separator="," open="(" close=")">
+                    #{style}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.mainmaterial != null and reqVO.eform.mainmaterial.size() != 0">
+                AND a.main_material IN
+                <foreach collection="reqVO.eform.mainmaterial" item="mainmaterial" index="index" separator="," open="("
+                         close=")">
+                    #{mainmaterial}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.design != null and reqVO.eform.design.size() != 0">
+                AND a.pattern IN
+                <foreach collection="reqVO.eform.design" item="design" index="index" separator="," open="(" close=")">
+                    #{design}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.brand != null and reqVO.eform.brand.size() != 0">
+                AND a.brand IN
+                <foreach collection="reqVO.eform.brand" item="brand" index="index" separator="," open="(" close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.companybrand != null and reqVO.eform.companybrand.size() != 0">
+                AND a.company_brand IN
+                <foreach collection="reqVO.eform.companybrand" item="companybrand" index="index" separator="," open="("
+                         close=")">
+                    #{companybrand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.model != null and reqVO.eform.model.size() != 0">
+                AND a.model IN
+                <foreach collection="reqVO.eform.model" item="model" index="index" separator="," open="(" close=")">
+                    #{model}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.color != null and reqVO.eform.color.size() != 0">
+                AND a.color IN
+                <foreach collection="reqVO.eform.color" item="color" index="index" separator="," open="(" close=")">
+                    #{color}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.sizes != null and reqVO.eform.sizes.size() != 0">
+                AND a.sizes IN
+                <foreach collection="reqVO.eform.sizes" item="sizes" index="index" separator="," open="(" close=")">
+                    #{sizes}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.packing != null and reqVO.eform.packing.size() != 0">
+                AND a.packing IN
+                <foreach collection="reqVO.eform.packing" item="packing" index="index" separator="," open="(" close=")">
+                    #{packing}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.version != null and reqVO.eform.version.size() != 0">
+                AND a.version IN
+                <foreach collection="reqVO.eform.version" item="version" index="index" separator="," open="(" close=")">
+                    #{version}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.styleSecondLabel != null and reqVO.eform.styleSecondLabel.size() > 0 ">
+                AND a.style_second_label IN
+                <foreach collection="reqVO.eform.styleSecondLabel" item="styleLabel" index="index" separator=","
+                         open="(" close=")">
+                    #{styleLabel}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.Team != null and reqVO.eform.Team.size() != 0">
+                AND a.Team IN
+                <foreach collection="reqVO.eform.Team" item="Team" index="index" separator="," open="(" close=")">
+                    #{Team}
+                </foreach>
+            </if>
+        </if>
+
+    </select>
+
+
+    <select id="operExportFast" parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.params.OperApplyInfoExcelParam">
+
+        select a.*,rownum from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join STOCK_OPER_APPLY_INFO a
+        on l.platform = a.platform
+        AND l.team = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND a.OVER_TIME_NOT = 0
+        -- AND STOCK_STATUS = 0
+        <if test="operator != null and operator !=''">
+            AND l.operator like '%'||#{operator}||'%'
+        </if>
+
+        <if test="stockStatu != null ">
+            AND a.STOCK_STATUS = #{stockStatu}
+        </if>
+        -- order by a.material_code,a.area,a.asin
+
+    </select>
+
+
+    <select id="operExportFast2" parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.params.OperApplyInfoExcelExportParam">
+
+        select a.*,rownum from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join STOCK_OPER_APPLY_INFO a
+        on l.platform = a.platform
+        AND l.team = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND a.OVER_TIME_NOT = 0
+        -- AND STOCK_STATUS = 0
+        <if test="operator != null and operator !=''">
+            AND l.operator like '%'||#{operator}||'%'
+        </if>
+
+        <if test="stockStatu != null ">
+            AND a.STOCK_STATUS = #{stockStatu}
+        </if>
+        -- order by a.material_code,a.area,a.asin
+
+    </select>
+
+
+    <update id="importCommitBatch" parameterType="list">
+        UPDATE
+        STOCK_OPER_APPLY_INFO a
+        <set>
+            <trim prefix="a.STOCK_STATUS = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    WHEN a.id = #{item.id} THEN 1
+                </foreach>
+            </trim>
+            <trim prefix="a.APPLY_PERSON_NO = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.applyPersonNo != null and item.applyPersonNo != ''">
+                        WHEN a.id = #{item.id} THEN #{item.applyPersonNo}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="a.APPLY_PERSON_NAME = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.applyPersonName != null and item.applyPersonName != ''">
+                        WHEN a.id = #{item.id} THEN #{item.applyPersonName}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.TURNOVER_DAYS_AREA = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.turnoverDaysArea != null">
+                        WHEN a.id = #{item.id} THEN #{item.turnoverDaysArea}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.STOCK_QTY_AREA = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.stockQtyArea != null">
+                        WHEN a.id = #{item.id} THEN #{item.stockQtyArea}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_COVERS_SALES_DATE = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCoversSalesDate != null">
+                        WHEN a.id = #{item.id} THEN #{item.operCoversSalesDate}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.SALES_DEMAND = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.salesDemand != null">
+                        WHEN a.id = #{item.id} THEN #{item.salesDemand}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.EXTRA_DAYS = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.extraDays != null">
+                        WHEN a.id = #{item.id} THEN #{item.extraDays}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.STOCK_REASON = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.stockReason != null and item.stockReason != ''">
+                        WHEN a.id = #{item.id} THEN #{item.stockReason}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_EXPECTED_DATE = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operExpectedDate != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operExpectedDate}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.SALES_STOCK_DAYS = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.salesStockDays != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.salesStockDays}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_CUR_MONTH_QTY = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCurMonthQty != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operCurMonthQty}
+                    </if>
+                </foreach>
+            </trim>
+
+
+            <trim prefix="a.OPER_CUR_MONTH_ADD1_QTY = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCurMonthAdd1Qty != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operCurMonthAdd1Qty}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_CUR_MONTH_ADD2_QTY = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCurMonthAdd2Qty != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operCurMonthAdd2Qty}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_CUR_MONTH_ADD3_QTY = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCurMonthAdd3Qty != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operCurMonthAdd3Qty}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_CUR_MONTH_ADD4_QTY = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCurMonthAdd4Qty != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operCurMonthAdd4Qty}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_CUR_MONTH_ADD5_QTY = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCurMonthAdd5Qty != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operCurMonthAdd5Qty}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.OPER_CUR_MONTH_ADD6_QTY = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.operCurMonthAdd6Qty != null  ">
+                        WHEN a.id = #{item.id} THEN #{item.operCurMonthAdd6Qty}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.APPLY_DATE = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.applyDate != null">
+                        WHEN a.id = #{item.id} THEN #{item.applyDate}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix="a.UPDATE_TIME = CASE" suffix="END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    WHEN a.id = #{item.id} THEN SYSDATE
+                </foreach>
+            </trim>
+        </set>
+        WHERE a.STOCK_STATUS = 0 AND a.note is null
+        AND a.id IN
+        <foreach collection="reqParamList" item="item" index="index" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+    </update>
+
+    <select id="queryByConditions"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.entity.OperApplyInfo">
+
+        select a.* from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join STOCK_OPER_APPLY_INFO a
+        on l.platform = a.platform
+        AND l.team = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND OVER_TIME_NOT = 0
+        and a.note is null
+        <if test="reqVO.eform != null">
+
+            <if test="reqVO.eform.stockStatus != null and reqVO.eform.stockStatus !=''">
+                AND a.stock_status = #{reqVO.eform.stockStatus}
+            </if>
+            <if test="reqVO.eform.salesRequireLow != null and reqVO.eform.salesRequireLow !=''">
+                AND a.SALES_DEMAND >= #{reqVO.eform.salesRequireLow}
+            </if>
+            <if test="reqVO.eform.salesRequireHigh != null and reqVO.eform.salesRequireHigh !=''">
+                AND a.SALES_DEMAND &lt; #{reqVO.eform.salesRequireHigh}
+            </if>
+            <if test="reqVO.eform.salesRequireHigh != null and reqVO.eform.salesRequireHigh !=''">
+                AND a.SALES_DEMAND &lt; #{reqVO.eform.salesRequireHigh}
+            </if>
+            <if test="reqVO.eform.stockQtyAreaLow != null and reqVO.eform.stockQtyAreaLow !=''">
+                AND a.STOCK_QTY_AREA >= #{reqVO.eform.stockQtyAreaLow}
+            </if>
+            <if test="reqVO.eform.teamVerifNo != null and reqVO.eform.teamVerifNo !=''">
+                AND a.TEAM_VERIF_NO = #{reqVO.eform.teamVerifNo}
+            </if>
+            <if test="reqVO.eform.TeamVerifNoLists != null and reqVO.eform.TeamVerifNoLists.size() != 0">
+                AND a.TEAM_VERIF_NO IN
+                <foreach collection="reqVO.eform.TeamVerifNoLists" item="teamVerifNo" index="index" separator=","
+                         open="(" close=")">
+                    #{teamVerifNo}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.stockStatus ==0 and reqVO.eform.operator != null and reqVO.eform.operator !=''">
+                AND l.operator like '%'||#{reqVO.eform.operator}||'%'
+            </if>
+            <if test="reqVO.eform.area != null and reqVO.eform.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.eform.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.materialcode != null and reqVO.eform.materialcode.size() != 0">
+                AND a.material_code IN
+                <foreach collection="reqVO.eform.materialcode" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.category != null and reqVO.eform.category.size() != 0">
+                AND a.category IN
+                <foreach collection="reqVO.eform.category" item="category" index="index" separator="," open="("
+                         close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productType != null and reqVO.eform.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.eform.productType" item="productType" index="index" separator="," open="("
+                         close=")">
+                    #{productType}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productname != null and reqVO.eform.productname.size() != 0">
+                AND a.product_name IN
+                <foreach collection="reqVO.eform.productname" item="productname" index="index" separator="," open="("
+                         close=")">
+                    #{productname}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.style != null and reqVO.eform.style.size() != 0">
+                AND a.style IN
+                <foreach collection="reqVO.eform.style" item="style" index="index" separator="," open="(" close=")">
+                    #{style}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.mainmaterial != null and reqVO.eform.mainmaterial.size() != 0">
+                AND a.main_material IN
+                <foreach collection="reqVO.eform.mainmaterial" item="mainmaterial" index="index" separator="," open="("
+                         close=")">
+                    #{mainmaterial}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.design != null and reqVO.eform.design.size() != 0">
+                AND a.pattern IN
+                <foreach collection="reqVO.eform.design" item="design" index="index" separator="," open="(" close=")">
+                    #{design}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.brand != null and reqVO.eform.brand.size() != 0">
+                AND a.brand IN
+                <foreach collection="reqVO.eform.brand" item="brand" index="index" separator="," open="(" close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.companybrand != null and reqVO.eform.companybrand.size() != 0">
+                AND a.company_brand IN
+                <foreach collection="reqVO.eform.companybrand" item="companybrand" index="index" separator="," open="("
+                         close=")">
+                    #{companybrand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.model != null and reqVO.eform.model.size() != 0">
+                AND a.model IN
+                <foreach collection="reqVO.eform.model" item="model" index="index" separator="," open="(" close=")">
+                    #{model}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.color != null and reqVO.eform.color.size() != 0">
+                AND a.color IN
+                <foreach collection="reqVO.eform.color" item="color" index="index" separator="," open="(" close=")">
+                    #{color}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.sizes != null and reqVO.eform.sizes.size() != 0">
+                AND a.sizes IN
+                <foreach collection="reqVO.eform.sizes" item="sizes" index="index" separator="," open="(" close=")">
+                    #{sizes}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.packing != null and reqVO.eform.packing.size() != 0">
+                AND a.packing IN
+                <foreach collection="reqVO.eform.packing" item="packing" index="index" separator="," open="(" close=")">
+                    #{packing}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.version != null and reqVO.eform.version.size() != 0">
+                AND a.version IN
+                <foreach collection="reqVO.eform.version" item="version" index="index" separator="," open="(" close=")">
+                    #{version}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.styleSecondLabel != null and reqVO.eform.styleSecondLabel.size() > 0 ">
+                AND a.style_second_label IN
+                <foreach collection="reqVO.eform.styleSecondLabel" item="styleLabel" index="index" separator=","
+                         open="(" close=")">
+                    #{styleLabel}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.Team != null and reqVO.eform.Team.size() != 0">
+                AND a.Team IN
+                <foreach collection="reqVO.eform.Team" item="Team" index="index" separator="," open="(" close=")">
+                    #{Team}
+                </foreach>
+            </if>
+        </if>
+        order by a.material_code,a.area,a.asin
+    </select>
+
+
+    <select id="queryByCondition"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.entity.OperApplyInfo">
+
+        select a.* from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join STOCK_OPER_APPLY_INFO a
+        on l.platform = a.platform
+        AND l.team = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND OVER_TIME_NOT = 0
+        -- AND a.material_code ='P0321601'
+        and a.note is null
+        <if test="reqVO.eform != null">
+
+            <if test="reqVO.eform.stockStatus != null and reqVO.eform.stockStatus !=''">
+                AND a.stock_status = #{reqVO.eform.stockStatus}
+            </if>
+            <if test="reqVO.eform.salesRequireLow != null and reqVO.eform.salesRequireLow !=''">
+                AND a.SALES_DEMAND >= #{reqVO.eform.salesRequireLow}
+            </if>
+            <if test="reqVO.eform.salesRequireHigh != null and reqVO.eform.salesRequireHigh !=''">
+                AND a.SALES_DEMAND &lt; #{reqVO.eform.salesRequireHigh}
+            </if>
+            <if test="reqVO.eform.stockQtyAreaLow != null and reqVO.eform.stockQtyAreaLow !=''">
+                AND a.STOCK_QTY_AREA >= #{reqVO.eform.stockQtyAreaLow}
+            </if>
+            <if test="reqVO.eform.stockQtyAreaHeight != null and reqVO.eform.stockQtyAreaHeight !=''">
+                AND a.STOCK_QTY_AREA &lt; #{reqVO.eform.stockQtyAreaHeight}
+            </if>
+            <if test="reqVO.eform.teamVerifNo != null and reqVO.eform.teamVerifNo !=''">
+                AND a.TEAM_VERIF_NO = #{reqVO.eform.teamVerifNo}
+            </if>
+            <if test="reqVO.eform.TeamVerifNoLists != null and reqVO.eform.TeamVerifNoLists.size() != 0">
+                AND a.TEAM_VERIF_NO IN
+                <foreach collection="reqVO.eform.TeamVerifNoLists" item="teamVerifNo" index="index" separator=","
+                         open="(" close=")">
+                    #{teamVerifNo}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.stockStatus ==0 and reqVO.eform.operator != null and reqVO.eform.operator !=''">
+                AND l.operator like '%'||#{reqVO.eform.operator}||'%'
+            </if>
+            <if test="reqVO.eform.area != null and reqVO.eform.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.eform.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.materialcode != null and reqVO.eform.materialcode.size() != 0">
+                AND a.material_code IN
+                <foreach collection="reqVO.eform.materialcode" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.category != null and reqVO.eform.category.size() != 0">
+                AND a.category IN
+                <foreach collection="reqVO.eform.category" item="category" index="index" separator="," open="("
+                         close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productType != null and reqVO.eform.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.eform.productType" item="productType" index="index" separator="," open="("
+                         close=")">
+                    #{productType}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productname != null and reqVO.eform.productname.size() != 0">
+                AND a.product_name IN
+                <foreach collection="reqVO.eform.productname" item="productname" index="index" separator="," open="("
+                         close=")">
+                    #{productname}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.style != null and reqVO.eform.style.size() != 0">
+                AND a.style IN
+                <foreach collection="reqVO.eform.style" item="style" index="index" separator="," open="(" close=")">
+                    #{style}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.mainmaterial != null and reqVO.eform.mainmaterial.size() != 0">
+                AND a.main_material IN
+                <foreach collection="reqVO.eform.mainmaterial" item="mainmaterial" index="index" separator="," open="("
+                         close=")">
+                    #{mainmaterial}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.design != null and reqVO.eform.design.size() != 0">
+                AND a.pattern IN
+                <foreach collection="reqVO.eform.design" item="design" index="index" separator="," open="(" close=")">
+                    #{design}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.brand != null and reqVO.eform.brand.size() != 0">
+                AND a.brand IN
+                <foreach collection="reqVO.eform.brand" item="brand" index="index" separator="," open="(" close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.companybrand != null and reqVO.eform.companybrand.size() != 0">
+                AND a.company_brand IN
+                <foreach collection="reqVO.eform.companybrand" item="companybrand" index="index" separator="," open="("
+                         close=")">
+                    #{companybrand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.model != null and reqVO.eform.model.size() != 0">
+                AND a.model IN
+                <foreach collection="reqVO.eform.model" item="model" index="index" separator="," open="(" close=")">
+                    #{model}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.color != null and reqVO.eform.color.size() != 0">
+                AND a.color IN
+                <foreach collection="reqVO.eform.color" item="color" index="index" separator="," open="(" close=")">
+                    #{color}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.sizes != null and reqVO.eform.sizes.size() != 0">
+                AND a.sizes IN
+                <foreach collection="reqVO.eform.sizes" item="sizes" index="index" separator="," open="(" close=")">
+                    #{sizes}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.packing != null and reqVO.eform.packing.size() != 0">
+                AND a.packing IN
+                <foreach collection="reqVO.eform.packing" item="packing" index="index" separator="," open="(" close=")">
+                    #{packing}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.version != null and reqVO.eform.version.size() != 0">
+                AND a.version IN
+                <foreach collection="reqVO.eform.version" item="version" index="index" separator="," open="(" close=")">
+                    #{version}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.styleSecondLabel != null and reqVO.eform.styleSecondLabel.size() > 0 ">
+                AND a.style_second_label IN
+                <foreach collection="reqVO.eform.styleSecondLabel" item="styleLabel" index="index" separator=","
+                         open="(" close=")">
+                    #{styleLabel}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.Team != null and reqVO.eform.Team.size() != 0">
+                AND a.Team IN
+                <foreach collection="reqVO.eform.Team" item="Team" index="index" separator="," open="(" close=")">
+                    #{Team}
+                </foreach>
+            </if>
+        </if>
+        order by a.material_code,a.area,a.asin
+    </select>
+
+
+
+    <select id="getAllComintByPlatformTeamMaterialCode" parameterType="java.util.List"
+            resultType="java.lang.String">
+
+                SELECT distinct b.platform || b.material_code || b.Team as platformMaterialCodeTeam
+                FROM STOCK_OPER_APPLY_INFO b
+                WHERE b.ALL_COMIT = 0 AND b.note is null and b.over_time_not =0
+                AND b.STOCK_STATUS IN (0, 1)
+                AND b.platform || b.material_code || b.Team IN
+                (
+                <foreach collection="platformMaterialCodeTeamList" item="item" index="index" separator=",">
+                    #{item}
+                </foreach>
+                )
+                GROUP BY b.platform, b.material_code, b.Team
+
+
+    </select>
+
+
+    <select id="queryList" parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqVO"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.OperApplyInfoResult">
+
+        select a.* from
+        (
+        SELECT product_type,platform,team,area,operator
+        FROM product_line2
+        GROUP BY product_type,platform,team,area,operator
+        ) l
+        join STOCK_OPER_APPLY_INFO a
+        on l.platform = a.platform
+        AND l.team = a.Team
+        AND l.area = a.area
+        AND l.product_type = a.product_type
+        WHERE
+        a.material_code IS NOT NULL
+        AND OVER_TIME_NOT = 0
+        -- AND a.material_code ='P0321601'
+        and a.note is null
+        <if test="reqVO.eform != null">
+
+            <if test="reqVO.eform.stockStatus != null and reqVO.eform.stockStatus !=''">
+                AND a.stock_status = #{reqVO.eform.stockStatus}
+            </if>
+            <if test="reqVO.eform.salesRequireLow != null and reqVO.eform.salesRequireLow !=''">
+                AND a.SALES_DEMAND >= #{reqVO.eform.salesRequireLow}
+            </if>
+            <if test="reqVO.eform.salesRequireHigh != null and reqVO.eform.salesRequireHigh !=''">
+                AND a.SALES_DEMAND &lt; #{reqVO.eform.salesRequireHigh}
+            </if>
+            <if test="reqVO.eform.stockQtyAreaLow != null and reqVO.eform.stockQtyAreaLow !=''">
+                AND a.STOCK_QTY_AREA >= #{reqVO.eform.stockQtyAreaLow}
+            </if>
+            <if test="reqVO.eform.stockQtyAreaHeight != null and reqVO.eform.stockQtyAreaHeight !=''">
+                AND a.STOCK_QTY_AREA &lt; #{reqVO.eform.stockQtyAreaHeight}
+            </if>
+            <if test="reqVO.eform.teamVerifNo != null and reqVO.eform.teamVerifNo !=''">
+                AND a.TEAM_VERIF_NO = #{reqVO.eform.teamVerifNo}
+            </if>
+            <if test="reqVO.eform.TeamVerifNoLists != null and reqVO.eform.TeamVerifNoLists.size() != 0">
+                AND a.TEAM_VERIF_NO IN
+                <foreach collection="reqVO.eform.TeamVerifNoLists" item="teamVerifNo" index="index" separator=","
+                         open="(" close=")">
+                    #{teamVerifNo}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.stockStatus ==0 and reqVO.eform.operator != null and reqVO.eform.operator !=''">
+                AND l.operator like '%'||#{reqVO.eform.operator}||'%'
+            </if>
+            <if test="reqVO.eform.area != null and reqVO.eform.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.eform.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.materialcode != null and reqVO.eform.materialcode.size() != 0">
+                AND a.material_code IN
+                <foreach collection="reqVO.eform.materialcode" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.category != null and reqVO.eform.category.size() != 0">
+                AND a.category IN
+                <foreach collection="reqVO.eform.category" item="category" index="index" separator="," open="("
+                         close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productType != null and reqVO.eform.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.eform.productType" item="productType" index="index" separator="," open="("
+                         close=")">
+                    #{productType}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.productname != null and reqVO.eform.productname.size() != 0">
+                AND a.product_name IN
+                <foreach collection="reqVO.eform.productname" item="productname" index="index" separator="," open="("
+                         close=")">
+                    #{productname}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.style != null and reqVO.eform.style.size() != 0">
+                AND a.style IN
+                <foreach collection="reqVO.eform.style" item="style" index="index" separator="," open="(" close=")">
+                    #{style}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.mainmaterial != null and reqVO.eform.mainmaterial.size() != 0">
+                AND a.main_material IN
+                <foreach collection="reqVO.eform.mainmaterial" item="mainmaterial" index="index" separator="," open="("
+                         close=")">
+                    #{mainmaterial}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.design != null and reqVO.eform.design.size() != 0">
+                AND a.pattern IN
+                <foreach collection="reqVO.eform.design" item="design" index="index" separator="," open="(" close=")">
+                    #{design}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.brand != null and reqVO.eform.brand.size() != 0">
+                AND a.brand IN
+                <foreach collection="reqVO.eform.brand" item="brand" index="index" separator="," open="(" close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.companybrand != null and reqVO.eform.companybrand.size() != 0">
+                AND a.company_brand IN
+                <foreach collection="reqVO.eform.companybrand" item="companybrand" index="index" separator="," open="("
+                         close=")">
+                    #{companybrand}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.model != null and reqVO.eform.model.size() != 0">
+                AND a.model IN
+                <foreach collection="reqVO.eform.model" item="model" index="index" separator="," open="(" close=")">
+                    #{model}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.color != null and reqVO.eform.color.size() != 0">
+                AND a.color IN
+                <foreach collection="reqVO.eform.color" item="color" index="index" separator="," open="(" close=")">
+                    #{color}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.sizes != null and reqVO.eform.sizes.size() != 0">
+                AND a.sizes IN
+                <foreach collection="reqVO.eform.sizes" item="sizes" index="index" separator="," open="(" close=")">
+                    #{sizes}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.packing != null and reqVO.eform.packing.size() != 0">
+                AND a.packing IN
+                <foreach collection="reqVO.eform.packing" item="packing" index="index" separator="," open="(" close=")">
+                    #{packing}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.version != null and reqVO.eform.version.size() != 0">
+                AND a.version IN
+                <foreach collection="reqVO.eform.version" item="version" index="index" separator="," open="(" close=")">
+                    #{version}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.styleSecondLabel != null and reqVO.eform.styleSecondLabel.size() > 0 ">
+                AND a.style_second_label IN
+                <foreach collection="reqVO.eform.styleSecondLabel" item="styleLabel" index="index" separator=","
+                         open="(" close=")">
+                    #{styleLabel}
+                </foreach>
+            </if>
+            <if test="reqVO.eform.Team != null and reqVO.eform.Team.size() != 0">
+                AND a.Team IN
+                <foreach collection="reqVO.eform.Team" item="Team" index="index" separator="," open="(" close=")">
+                    #{Team}
+                </foreach>
+            </if>
+        </if>
+        order by a.material_code,a.area,a.asin
+
+    </select>
+
+    <select id="queryListV3" parameterType="com.tadpole.cloud.operationManagement.modular.stock.vo.req.OperApplyInfoReqV3"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.OperApplyInfoResultV3">
+
+        SELECT
+            a.MATERIAL_CODE,
+            MAX(a.DEPARTMENT) AS DEPARTMENT,
+            MAX(a.TEAM) AS TEAM,
+            MAX(a.BIZDATE) AS BIZDATE,
+            MAX(material.PRODUCT_TYPE) AS PRODUCT_TYPE,
+            MAX(material.PRODUCT_NAME) AS PRODUCT_NAME ,
+            MAX(material.STYLE) AS  STYLE ,
+            MAX(material.MAIN_MATERIAL)  AS MAIN_MATERIAL,
+            MAX(material.DESIGN) AS PATTERN,
+            MAX(material.COMPANY_BRAND) AS COMPANY_BRAND,
+            MAX(material.FIT_BRAND) AS BRAND,
+            MAX(material.MODEL)  AS MODEL,
+            MAX(material.COLOR) AS COLOR,
+            MAX(material.SIZES) AS SIZES,
+            MAX(material.PACKING) AS PACKING,
+            MAX(material.VERSION_DES) AS VERSION_DES,
+            MAX(material.VERSION) AS VERSION,
+            COUNT(a.ASIN) AS ASIN_COUNT ,
+            SUM(a.RECOM_PRE_QTY) AS RECOM_PRE_QTY_SUM,-- 建议备货数量合计算  SALES_DEMAND
+            SUM(a.SALES_DEMAND) AS SALES_DEMAND_SUM,-- 申请备货数量合计算  ,
+            SUM(a.STOCK_QTY_AREA) AS STOCK_QTY_AREA_SUM,-- 申请区域备货数量合计算  ,
+            LISTAGG(a.id,',') WITHIN GROUP(ORDER BY a.id) AS ids
+        FROM (SELECT product_type, platform, team, area, operator
+                FROM product_line2
+        GROUP BY product_type, platform, team, area, operator) l
+        JOIN  STOCKING.STOCK_OPER_APPLY_INFO a
+            ON l.platform = a.platform
+            AND l.team = a.Team
+            AND l.area = a.area
+            AND l.product_type = a.product_type
+        JOIN MCMS_BASE_DATA.RP_MATERIAL material
+        ON a.MATERIAL_CODE = material.MATERIAL_CODE
+        WHERE
+        a.material_code IS NOT NULL
+        AND OVER_TIME_NOT = 0
+        and (a.note is null or a.note like '%建议淘汰产品%')
+        <if test="reqVO != null">
+            <if test="reqVO.stockStatus ==0 and reqVO.operator != null and reqVO.operator !=''">
+                AND l.operator like '%'||#{reqVO.operator}||'%'
+            </if>
+
+            <if test="reqVO.stockStatus != null and reqVO.stockStatus !=''">
+                AND a.stock_status = #{reqVO.stockStatus}
+            </if>
+            <if test="reqVO.salesRequireLow != null and reqVO.salesRequireLow !=''">
+                AND a.SALES_DEMAND >= #{reqVO.salesRequireLow}
+            </if>
+            <if test="reqVO.salesRequireHigh != null and reqVO.salesRequireHigh !=''">
+                AND a.SALES_DEMAND &lt; #{reqVO.salesRequireHigh}
+            </if>
+            <if test="reqVO.stockQtyAreaLow != null and reqVO.stockQtyAreaLow !=''">
+                AND a.STOCK_QTY_AREA >= #{reqVO.stockQtyAreaLow}
+            </if>
+            <if test="reqVO.stockQtyAreaHeight != null and reqVO.stockQtyAreaHeight !=''">
+                AND a.STOCK_QTY_AREA &lt; #{reqVO.stockQtyAreaHeight}
+            </if>
+            <if test="reqVO.teamVerifNo != null and reqVO.teamVerifNo !=''">
+                AND a.TEAM_VERIF_NO = #{reqVO.teamVerifNo}
+            </if>
+            <if test="reqVO.TeamVerifNoLists != null and reqVO.TeamVerifNoLists.size() != 0">
+                AND a.TEAM_VERIF_NO IN
+                <foreach collection="reqVO.TeamVerifNoLists" item="teamVerifNo" index="index" separator=","
+                         open="(" close=")">
+                    #{teamVerifNo}
+                </foreach>
+            </if>
+
+            <if test="reqVO.areaList != null and reqVO.areaList.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.areaList" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.materialcode != null and reqVO.materialcode !=''">
+                AND a.material_code = #{reqVO.materialcode}
+            </if>
+            <if test="reqVO.materialcodeList != null and reqVO.materialcodeList.size() != 0">
+                AND a.material_code IN
+                <foreach collection="reqVO.materialcodeList" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+
+            <if test="reqVO.category != null and reqVO.category.size() != 0">
+                AND material.category IN
+                <foreach collection="reqVO.category" item="category" index="index" separator="," open="("
+                         close=")">
+                    #{category}
+                </foreach>
+            </if>
+
+            <if test="reqVO.productType != null and reqVO.productType !=''">
+                AND material.product_type = #{reqVO.productType}
+            </if>
+            <if test="reqVO.productTypeList != null and reqVO.productTypeList.size() != 0">
+                AND material.product_type IN
+                <foreach collection="reqVO.productTypeList" item="productType" index="index" separator="," open="("
+                         close=")">
+                    #{productType}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.productname != null and reqVO.productname !=''">
+                AND material.product_name = #{reqVO.productname}
+            </if>
+            <if test="reqVO.productnameList != null and reqVO.productnameList.size() != 0">
+                AND material.product_name IN
+                <foreach collection="reqVO.productnameList" item="productname" index="index" separator="," open="("
+                         close=")">
+                    #{productname}
+                </foreach>
+            </if>
+
+            <if test="reqVO.style != null and reqVO.style !=''">
+                AND material.style = #{reqVO.style}
+            </if>
+            <if test="reqVO.styleList != null and reqVO.styleList.size() != 0">
+                AND material.style IN
+                <foreach collection="reqVO.styleList" item="style" index="index" separator="," open="(" close=")">
+                    #{style}
+                </foreach>
+            </if>
+
+
+
+            <if test="reqVO.mainmaterial != null and reqVO.mainmaterial !=''">
+                AND material.main_material = #{reqVO.mainmaterial}
+            </if>
+            <if test="reqVO.mainmaterialList != null and reqVO.mainmaterialList.size() != 0">
+                AND material.main_material IN
+                <foreach collection="reqVO.mainmaterialList" item="mainmaterial" index="index" separator="," open="("
+                         close=")">
+                    #{mainmaterial}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.design != null and reqVO.design !=''">
+                AND material.DESIGN = #{reqVO.design}
+            </if>
+            <if test="reqVO.designList != null and reqVO.designList.size() != 0">
+                AND material.DESIGN IN
+                <foreach collection="reqVO.designList" item="design" index="index" separator="," open="(" close=")">
+                    #{design}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.brand != null and reqVO.brand !=''">
+                AND material.FIT_BRAND = #{reqVO.brand}
+            </if>
+            <if test="reqVO.brandList != null and reqVO.brandList.size() != 0">
+                AND material.FIT_BRAND IN
+                <foreach collection="reqVO.brandList" item="brand" index="index" separator="," open="(" close=")">
+                    #{brand}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.companybrand != null and reqVO.companybrand.size() != 0">
+                AND material.company_brand IN
+                <foreach collection="reqVO.companybrand" item="companybrand" index="index" separator="," open="("
+                         close=")">
+                    #{companybrand}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.model != null and reqVO.model !=''">
+                AND material.model = #{reqVO.model}
+            </if>
+            <if test="reqVO.modelList != null and reqVO.modelList.size() != 0">
+                AND material.model IN
+                <foreach collection="reqVO.modelList" item="model" index="index" separator="," open="(" close=")">
+                    #{model}
+                </foreach>
+            </if>
+
+
+
+            <if test="reqVO.color != null and reqVO.color !=''">
+                AND material.color = #{reqVO.color}
+            </if>
+            <if test="reqVO.colorList != null and reqVO.colorList.size() != 0">
+                AND material.color IN
+                <foreach collection="reqVO.colorList" item="color" index="index" separator="," open="(" close=")">
+                    #{color}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.sizes != null and reqVO.sizes !=''">
+                AND material.sizes = #{reqVO.sizes}
+            </if>
+            <if test="reqVO.sizesList != null and reqVO.sizesList.size() != 0">
+                AND material.sizes IN
+                <foreach collection="reqVO.sizesList" item="sizes" index="index" separator="," open="(" close=")">
+                    #{sizes}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.packing != null and reqVO.packing !=''">
+                AND material.packing = #{reqVO.packing}
+            </if>
+            <if test="reqVO.packingList != null and reqVO.packingList.size() != 0">
+                AND material.packing IN
+                <foreach collection="reqVO.packingList" item="packing" index="index" separator="," open="(" close=")">
+                    #{packing}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.version != null and reqVO.version !=''">
+                AND material.version = #{reqVO.version}
+            </if>
+            <if test="reqVO.versionList != null and reqVO.versionList.size() != 0">
+                AND material.version IN
+                <foreach collection="reqVO.versionList" item="version" index="index" separator="," open="(" close=")">
+                    #{version}
+                </foreach>
+            </if>
+
+            <if test="reqVO.styleSecondLabel != null and reqVO.styleSecondLabel.size() > 0 ">
+                AND material.MATSTYLESECONDLABEL IN
+                <foreach collection="reqVO.styleSecondLabel" item="styleLabel" index="index" separator=","
+                         open="(" close=")">
+                    #{styleLabel}
+                </foreach>
+            </if>
+            <if test="reqVO.Team != null and reqVO.Team.size() != 0">
+                AND a.Team IN
+                <foreach collection="reqVO.Team" item="Team" index="index" separator="," open="(" close=")">
+                    #{Team}
+                </foreach>
+            </if>
+        </if>
+
+      <!--      <if test="reqVO.dataScopePeople != null and reqVO.dataScopePeople !=''">
+                  ${reqVO.dataScopePeople}
+            </if>-->
+
+            <if test="reqVO.dataScopeMaterial != null and reqVO.dataScopeMaterial !=''">
+                 ${reqVO.dataScopeMaterial}
+            </if>
+
+            <if test="reqVO.dataScopeArea != null and reqVO.dataScopeArea !=''">
+                ${reqVO.dataScopeArea}
+            </if>
+
+        GROUP BY a.MATERIAL_CODE
+        ORDER BY a.MATERIAL_CODE
+    </select>
+
+    <update id="updateStockAreaListV3" parameterType="java.util.List">
+
+        MERGE INTO (select * from STOCK_OPER_APPLY_INFO where ALL_COMIT = 0 and (note is null or note like '%建议淘汰产品%') and over_time_not =0) a
+        using (SELECT b.platform, b.material_code,
+        b.Team,
+        b.area,
+        count(1) statusCount,
+        sum(b.STOCK_STATUS) statusSum
+        FROM STOCK_OPER_APPLY_INFO b
+        WHERE b.ALL_COMIT = 0 AND (b.note is null or b.note like '%建议淘汰产品%') and b.over_time_not =0
+        AND b.STOCK_STATUS IN (0, 1)
+        AND b.platform || b.material_code || b.Team || b.AREA IN
+        (
+        <foreach collection="platformMaterialCodeTeamAreaSet" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+        )
+        GROUP BY b.platform, b.material_code, b.Team, b.area) c
+        ON (a.platform = c.platform AND a.material_code = c.material_code AND a.Team = c.Team AND a.area = c.area and c.statusCount = c.statusSum )
+        WHEN MATCHED THEN UPDATE SET a.ALL_COMIT = 1
+
+    </update>
+
+
+    <select id="applyQtyCountMat"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.OperApplyInfoResultV3">
+
+    SELECT
+    a.MATERIAL_CODE,
+    a.PLATFORM,
+    a.AREA,
+    MAX(a.BIZDATE) AS BIZDATE,
+    MAX(material.PRODUCT_TYPE) AS PRODUCT_TYPE,
+    MAX(material.PRODUCT_NAME) AS PRODUCT_NAME ,
+    MAX(material.STYLE) AS  STYLE ,
+    MAX(material.MAIN_MATERIAL)  AS MAIN_MATERIAL,
+    MAX(material.DESIGN) AS PATTERN,
+    MAX(material.COMPANY_BRAND) AS COMPANY_BRAND,
+    MAX(material.FIT_BRAND) AS BRAND,
+    MAX(material.MODEL)  AS MODEL,
+    MAX(material.COLOR) AS COLOR,
+    MAX(material.SIZES) AS SIZES,
+    MAX(material.PACKING) AS PACKING,
+    MAX(material.VERSION_DES) AS VERSION_DES,
+    MAX(material.VERSION) AS VERSION,
+    COUNT(a.ASIN) AS ASIN_COUNT ,
+    SUM(a.RECOM_PRE_QTY) AS RECOM_PRE_QTY_SUM,-- 建议备货数量合计算
+    SUM(a.SALES_DEMAND) AS SALES_DEMAND_SUM,-- 申请备货数量合计算  ,
+    SUM(a.STOCK_QTY_AREA) AS STOCK_QTY_AREA_SUM,-- 申请区域备货数量合计算  ,
+    SUM(a.PRE_SALE_QTY) AS PRE_SALE_QTY_SUM,-- 预估销量合计算  ,
+    LISTAGG(a.id,',') WITHIN GROUP(ORDER BY a.id) AS ids
+    FROM STOCK_OPER_APPLY_INFO a join MCMS_BASE_DATA.RP_MATERIAL material
+        ON a.MATERIAL_CODE = material.MATERIAL_CODE
+    WHERE
+    a.material_code IS NOT NULL
+        <if test="materialCode != null and materialCode !=''">
+            AND a.MATERIAL_CODE = #{materialCode}
+        </if>
+    GROUP BY a.MATERIAL_CODE,a.PLATFORM,a.AREA
+    </select>
+
+    <update id="updateBatchOperApplyInfo"  parameterType="java.util.List">
+
+        <foreach collection="updateOperInofList" item="item" index="index" open="BEGIN" close=";END;" separator=";">
+            update STOCK_OPER_APPLY_INFO
+            <set>
+                <if test="item.operCurMonthQty != null ">
+                    OPER_CUR_MONTH_QTY= NVL(#{item.operCurMonthQty},0),
+                </if>
+                <if test="item.operCurMonthAdd1Qty != null ">
+                    OPER_CUR_MONTH_ADD1_QTY= NVL(#{item.operCurMonthAdd1Qty},0),
+                </if>
+                <if test="item.operCurMonthAdd2Qty != null ">
+                    OPER_CUR_MONTH_ADD2_QTY= NVL(#{item.operCurMonthAdd2Qty},0),
+                </if>
+                <if test="item.operCurMonthAdd3Qty != null ">
+                    OPER_CUR_MONTH_ADD3_QTY= NVL(#{item.operCurMonthAdd3Qty},0),
+                </if>
+                <if test="item.operCurMonthAdd4Qty != null ">
+                    OPER_CUR_MONTH_ADD4_QTY= NVL(#{item.operCurMonthAdd4Qty},0),
+                </if>
+                <if test="item.operCurMonthAdd5Qty != null ">
+                    OPER_CUR_MONTH_ADD5_QTY= NVL(#{item.operCurMonthAdd5Qty},0),
+                </if>
+                <if test="item.operCurMonthAdd6Qty != null ">
+                    OPER_CUR_MONTH_ADD6_QTY= NVL(#{item.operCurMonthAdd6Qty},0),
+                </if>
+
+                SALES_STOCK_DAYS= NVL(#{item.salesStockDays},0),
+                <if test="item.operExpectedDate != null ">
+                    OPER_EXPECTED_DATE= nvl(#{item.operExpectedDate},sysdate),
+                </if>
+
+                <if test="item.stockReason != null and item.stockReason !=''">
+                    STOCK_REASON= #{item.stockReason},
+                </if>
+                EXTRA_DAYS= nvl(#{item.extraDays},0),
+                SALES_DEMAND= nvl(#{item.salesDemand},0),
+                OPER_COVERS_SALES_DATE= nvl(#{item.operCoversSalesDate},sysdate),
+                STOCK_QTY_AREA= nvl(#{item.stockQtyArea},0),
+                TURNOVER_DAYS_AREA= nvl(#{item.turnoverDaysArea},0),
+                UPDATE_TIME= nvl(#{item.updateTime},sysdate),
+                APPLY_DATE= nvl(#{item.applyDate},sysdate),
+                APPLY_PERSON_NO= nvl(#{item.applyPersonNo},0),
+                APPLY_PERSON_NAME= nvl(#{item.applyPersonName},0),
+                STOCK_STATUS= nvl(#{item.stockStatus},0)
+            </set>
+            <where>
+                id= #{item.id}
+            </where>
+
+        </foreach>
+
+    </update>
+
+
+    <update id="batchUseAdvice"  parameterType="java.util.List">
+       <!-- <foreach collection="idList" item="item" index="index" open="BEGIN" close=";END;" separator=";">
+            update STOCK_OPER_APPLY_INFO
+            <set>
+                OPER_CUR_MONTH_QTY= CUR_MONTH_QTY,
+                OPER_CUR_MONTH_ADD1_QTY= CUR_MONTH_ADD1_QTY,
+                OPER_CUR_MONTH_ADD2_QTY= CUR_MONTH_ADD2_QTY,
+                OPER_CUR_MONTH_ADD3_QTY= CUR_MONTH_ADD3_QTY,
+                OPER_CUR_MONTH_ADD4_QTY= CUR_MONTH_ADD4_QTY,
+                OPER_CUR_MONTH_ADD5_QTY= CUR_MONTH_ADD5_QTY,
+                OPER_CUR_MONTH_ADD6_QTY= CUR_MONTH_ADD6_QTY,
+                SALES_STOCK_DAYS= TOTAL_BACK_DAYS,
+                OPER_COVERS_SALES_DATE= RECOM_BACK_OVER_DAYS,
+                EXTRA_DAYS= 0,
+                SALES_DEMAND= PRE_SALE_QTY,
+                STOCK_QTY_AREA= RECOM_PRE_QTY,
+                TURNOVER_DAYS_AREA= GREATEST (NVL(TOTAL_BACK_DAYS,0),NVL(PREPARE_DAYS,0)),
+                OPER_EXPECTED_DATE= EXPECTED_DELIVERY_DATE,
+                APPLY_PERSON_NAME= #{userName},
+                APPLY_PERSON_NO= #{userNo},
+                UPDATE_TIME= SYSDATE,
+                STOCK_REASON= '使用推荐值备货'
+            </set>
+            <where>
+                ID = #{item}
+            </where>
+        </foreach>-->
+
+
+        update STOCK_OPER_APPLY_INFO
+            SET
+                OPER_CUR_MONTH_QTY= CUR_MONTH_QTY,
+                OPER_CUR_MONTH_ADD1_QTY= CUR_MONTH_ADD1_QTY,
+                OPER_CUR_MONTH_ADD2_QTY= CUR_MONTH_ADD2_QTY,
+                OPER_CUR_MONTH_ADD3_QTY= CUR_MONTH_ADD3_QTY,
+                OPER_CUR_MONTH_ADD4_QTY= CUR_MONTH_ADD4_QTY,
+                OPER_CUR_MONTH_ADD5_QTY= CUR_MONTH_ADD5_QTY,
+                OPER_CUR_MONTH_ADD6_QTY= CUR_MONTH_ADD6_QTY,
+                SALES_STOCK_DAYS= TOTAL_BACK_DAYS,
+                OPER_COVERS_SALES_DATE= RECOM_BACK_OVER_DAYS,
+                EXTRA_DAYS= 0,
+                SALES_DEMAND= PRE_SALE_QTY,
+                STOCK_QTY_AREA= RECOM_PRE_QTY,
+                TURNOVER_DAYS_AREA= GREATEST (NVL(TOTAL_BACK_DAYS,0),NVL(PREPARE_DAYS,0)),
+                OPER_EXPECTED_DATE= EXPECTED_DELIVERY_DATE,
+                APPLY_PERSON_NAME= #{userName},
+                APPLY_PERSON_NO= #{userNo},
+                UPDATE_TIME= SYSDATE,
+                STOCK_REASON= '使用推荐值备货'
+
+        WHERE ID IN
+        <foreach collection="idList" item="id" index="index" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

@@ -1,0 +1,1152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.SettlementRepoertAdjustMapper">
+
+    <sql id="net_sales">
+        t.SALES_EXCLUDING_TAX + t.TAX + t.SALES_PROMOTION + t.REFUND + t.REFUND_PROMOTION + t.GIFTWARP_SHIPPING
+    </sql>
+
+  <sql id="net_sales_sum">
+    SUM(T.SALES_EXCLUDING_TAX)+SUM(T.TAX)+SUM(T.SALES_PROMOTION)+SUM(T.REFUND)+SUM(T.REFUND_PROMOTION)+SUM(T.GIFTWARP_SHIPPING)
+  </sql>
+
+    <sql id="collection">
+        <include refid="net_sales"/> + t.COMMISSION + t.REFUND_COMMISSION + t.GOODWILL + t.AMAZON_FEES + t.STORAGE_FEE + t.REIMBURSEMENT + t.OTHER + t.WITHHELD_TAX + t.DISPOSE_FEE + t.REMOVAL_DEAL
+    </sql>
+
+
+  <sql id="collection_sum">
+    <include refid="net_sales_sum"/> + SUM(T.COMMISSION)+SUM(T.REFUND_COMMISSION)+SUM(T.GOODWILL)+SUM(T.AMAZON_FEES)+SUM(T.STORAGE_FEE)+SUM(T.REIMBURSEMENT)+SUM(T.OTHER)+SUM(T.WITHHELD_TAX)+SUM(T.DISPOSE_FEE)+SUM(T.REMOVAL_DEAL)
+  </sql>
+
+  <sql id="profit">
+    <include refid="collection"/>  + t.ADVERTISING - t.KINDLE_ADVERTISING_FEE - t.OTHER_ADVERTISEMENTS - t.BRUSHING_VALUE - t.BRUSHING_SERVICE_CHARGE - t.LOCAL_LOGISTICS_FEE - t.OVERSEAS_WAREHOUSE_FEE - t.DISPOSE_PURCHASE_FEE - t.DISPOSE_LOGISTICS_FEE - t.DOMESTIC_UNSALABLE_INVENTORY - t.COST_ACCOUNTING_FEE - t.ADDITIONAL_COST_AMOUNT - t.FIRST_TRIP_FEE -OVERSEA_TAX_FEE
+  </sql>
+
+
+    <sql id = "FINAL_COLUMN">
+        FISCAL_PERIOD,
+        REPORT_TYPE,
+        INCOME_TYPE,
+        SHOP_NAME,
+        SITE,
+        ACCOUNTING_CURRENCY,
+        SKU,
+        DEPARTMENT,
+        TEAM,
+        MATERIAL_CODE,
+        PRODUCT_TYPE,
+        SALES_BRAND,
+        COST_AUXILIARY_DESCRIPTION,
+        VOLUME_NORMAL,
+        VOLUME_REISSUE,
+        VOLUME_BILL_QUANTITY,
+        VOLUME_RETURN,
+        SALES_EXCLUDING_TAX,
+        TAX,
+        SALES_PROMOTION,
+        REFUND,
+        REFUND_PROMOTION,
+        GIFTWARP_SHIPPING,
+        NET_SALES,
+        COMMISSION,
+        REFUND_COMMISSION,
+        GOODWILL,
+        AMAZON_FEES,
+        STORAGE_FEE,
+        REIMBURSEMENT,
+        OTHER,
+        WITHHELD_TAX,
+        DISPOSE_FEE,
+        REMOVAL_DEAL,
+        COLLECTION,
+        ADVERTISING,
+        KINDLE_ADVERTISING_FEE,
+        OTHER_ADVERTISEMENTS,
+        BRUSHING_VALUE,
+        BRUSHING_SERVICE_CHARGE,
+        COST_ACCOUNTING_FEE,
+        ADDITIONAL_COST_AMOUNT,
+        FIRST_TRIP_FEE,
+        LOCAL_LOGISTICS_FEE,
+        OVERSEAS_WAREHOUSE_FEE,
+        OVERSEA_TAX_FEE,
+        DISPOSE_PURCHASE_FEE,
+        DISPOSE_LOGISTICS_FEE,
+        DOMESTIC_UNSALABLE_INVENTORY,
+        MOLD_OPENING_COST,
+        PROFIT,
+        ADVERTISING_SUBSIDY,
+        INCENTIVE_FUND
+
+    </sql>
+    <sql id = "ADJUST_COLUMN">
+        b.FISCAL_PERIOD,
+        b.REPORT_TYPE,
+        b.INCOME_TYPE,
+        b.SHOP_NAME,
+        b.SITE,
+        b.ACCOUNTING_CURRENCY,
+        b.SKU,
+        b.DEPARTMENT,
+        b.TEAM,
+        b.MATERIAL_CODE,
+        b.PRODUCT_TYPE,
+        b.SALES_BRAND,
+        b.COST_AUXILIARY_DESCRIPTION,
+        b.VOLUME_NORMAL,
+        b.VOLUME_REISSUE,
+        b.VOLUME_BILL_QUANTITY,
+        b.VOLUME_RETURN,
+        b.SALES_EXCLUDING_TAX,
+        b.TAX,
+        b.SALES_PROMOTION,
+        b.REFUND,
+        b.REFUND_PROMOTION,
+        b.GIFTWARP_SHIPPING,
+        b.NET_SALES,
+        b.COMMISSION,
+        b.REFUND_COMMISSION,
+        b.GOODWILL,
+        b.AMAZON_FEES,
+        b.STORAGE_FEE,
+        b.REIMBURSEMENT,
+        b.OTHER,
+        b.WITHHELD_TAX,
+        b.DISPOSE_FEE,
+        b.REMOVAL_DEAL,
+        b.COLLECTION,
+        b.ADVERTISING,
+        b.KINDLE_ADVERTISING_FEE,
+        b.OTHER_ADVERTISEMENTS,
+        b.BRUSHING_VALUE,
+        b.BRUSHING_SERVICE_CHARGE,
+        b.COST_ACCOUNTING_FEE,
+        b.ADDITIONAL_COST_AMOUNT,
+        b.FIRST_TRIP_FEE,
+        b.LOCAL_LOGISTICS_FEE,
+        b.OVERSEAS_WAREHOUSE_FEE,
+        b.OVERSEA_TAX_FEE,
+        b.DISPOSE_PURCHASE_FEE,
+        b.DISPOSE_LOGISTICS_FEE,
+        b.DOMESTIC_UNSALABLE_INVENTORY,
+        b.MOLD_OPENING_COST,
+        b.PROFIT,
+        b.ADVERTISING_SUBSIDY,
+        b.INCENTIVE_FUND
+    </sql>
+
+    <sql id="SETTLEMENT_REPORT_CONDITION">
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            AND fiscal_Period  = #{paramCondition.fiscalPeriod}
+        </if>
+
+        <if test="paramCondition.shopNames != null and paramCondition.shopNames.size() > 0">
+            AND shop_Name IN
+            <foreach collection="paramCondition.shopNames" item="shopName" index="index" separator="," open="(" close=")">
+                #{shopName}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND shop_Name  = #{paramCondition.shopName}
+        </if>
+
+        <if test="paramCondition.sites != null and paramCondition.sites.size() > 0">
+            AND site IN
+            <foreach collection="paramCondition.sites" item="sites" index="index" separator="," open="(" close=")">
+                #{sites}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            AND site  = #{paramCondition.site}
+        </if>
+</sql>
+
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            AND period  = #{paramCondition.fiscalPeriod}
+        </if>
+    </sql>
+
+    <sql id="ADJUST_DETAIL_DIMENSION">
+        detail.fiscal_period || detail.shop_name || detail.site || detail.sku || detail.income_type || detail.report_type || detail.department || detail.team || detail.material_code || detail.product_type
+    </sql>
+
+
+    <sql id="ADJUST_CHOOSE_DIMENSION">
+        choose.fiscal_period || choose.shop_name || choose.site || choose.sku || choose.income_type || choose.report_type || choose.department || choose.team || choose.material_code || choose.product_type
+    </sql>
+
+
+
+    <sql id="detail_col">
+        detail.ID,
+        detail.FISCAL_PERIOD,
+        detail.REPORT_TYPE,
+        detail.INCOME_TYPE,
+        detail.SHOP_NAME,
+        detail.SITE,
+        detail.ACCOUNTING_CURRENCY,
+        detail.SKU,
+        detail.DEPARTMENT,
+        detail.TEAM,
+        detail.MATERIAL_CODE,
+        detail.PRODUCT_TYPE,
+
+        detail.SALES_BRAND,
+        detail.COST_AUXILIARY_DESCRIPTION,
+        detail.VOLUME_NORMAL,
+        detail.VOLUME_REISSUE,
+        detail.VOLUME_BILL_QUANTITY,
+        detail.VOLUME_RETURN,
+        detail.SALES_EXCLUDING_TAX,
+        detail.TAX,
+        detail.SALES_PROMOTION,
+        detail.REFUND,
+        detail.REFUND_PROMOTION,
+        detail.GIFTWARP_SHIPPING,
+        detail.NET_SALES,
+        detail.COMMISSION,
+        detail.REFUND_COMMISSION,
+        detail.GOODWILL,
+        detail.AMAZON_FEES,
+        detail.STORAGE_FEE,
+        detail.REIMBURSEMENT,
+        detail.OTHER,
+        detail.WITHHELD_TAX,
+        detail.DISPOSE_FEE,
+        detail.REMOVAL_DEAL,
+        detail.COLLECTION,
+        detail.ADVERTISING,
+        detail.KINDLE_ADVERTISING_FEE,
+        detail.OTHER_ADVERTISEMENTS,
+        detail.BRUSHING_VALUE,
+        detail.BRUSHING_SERVICE_CHARGE,
+        detail.COST_ACCOUNTING_FEE,
+        detail.ADDITIONAL_COST_AMOUNT,
+        detail.FIRST_TRIP_FEE,
+        detail.LOCAL_LOGISTICS_FEE,
+        detail.OVERSEAS_WAREHOUSE_FEE,
+        detail.OVERSEA_TAX_FEE,
+        detail.DISPOSE_PURCHASE_FEE,
+        detail.DISPOSE_LOGISTICS_FEE,
+        detail.DOMESTIC_UNSALABLE_INVENTORY,
+        detail.MOLD_OPENING_COST,
+        detail.PROFIT,
+        detail.ADVERTISING_SUBSIDY,
+        detail.INCENTIVE_FUND,
+        detail.CONFIRM_STATUS,
+        detail.CONFIRM_DATE,
+        detail.CONFIRM_BY,
+        detail.REPORT_ID,
+        detail.REVENUE_RATIO,
+        detail.PEOPLE_NUM,
+        detail.PEOPLE_COST
+    </sql>
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportAdjustResult">
+
+        select t.fiscal_period,
+                t.shop_name,
+                t.site,
+                t.accounting_currency,
+                t.sku,
+                t.material_code,
+                decode(t.material_code,'0','0',t.sales_brand) sales_brand,
+                t.department,
+                t.team,
+                t.cost_auxiliary_description,
+                t.report_type,
+                t.income_type,
+                t.volume_normal,
+                t.volume_reissue,
+                t.volume_bill_quantity,
+                t.volume_return,
+                t.sales_excluding_tax,
+                t.tax,
+                t.sales_promotion,
+                t.refund,
+                t.refund_promotion,
+                t.giftwarp_shipping,
+                <include refid="net_sales"/>  net_sales,
+                t.commission,
+                t.refund_commission,
+                t.goodwill,
+                t.amazon_fees,
+                t.storage_fee,
+                t.reimbursement,
+                t.other,
+                t.withheld_tax,
+                t.dispose_fee,
+                t.removal_deal,
+                <include refid="collection"/>  collection,
+                t.advertising,
+                t.kindle_advertising_fee,
+                t.other_advertisements,
+                t.brushing_value,
+                t.brushing_service_charge,
+                t.local_logistics_fee,
+                t.overseas_warehouse_fee,
+                t.dispose_purchase_fee,
+                t.dispose_logistics_fee,
+                t.domestic_unsalable_inventory,
+                t.cost_accounting_fee,
+                t.additional_cost_amount,
+                t.first_trip_fee,
+                t.oversea_tax_fee,
+                t.profit,
+                t.advertising_subsidy,
+                t.incentive_fund,
+                t.confirm_date,
+                t.confirm_by,
+                t.confirm_status,
+                t.id,
+                decode(t.material_code,'0',t.product_type,B.product_type) product_type,
+                t.mold_opening_cost,
+                case t.CONFIRM_STATUS
+                           when 0 then '未确认'
+                           when 1 then '已确认'
+                           else ''
+                           end CONFIRM_STATUS_TXT,
+                decode(t.material_code,'0','0',B.CATEGORY) CATEGORY,
+                decode(t.material_code,'0','0',B.PRODUCT_NAME) PRODUCT_NAME,
+                decode(t.material_code,'0','0',B.STYLE) STYLE,
+                decode(t.material_code,'0','0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+                decode(t.material_code,'0','0',B.DESIGN) DESIGN,
+                decode(t.material_code,'0','0',B.COMPANY_BRAND) COMPANY_BRAND,
+                decode(t.material_code,'0','0',B.FIT_BRAND) FIT_BRAND,
+                decode(t.material_code,'0','0',B.MODEL) MODEL,
+                decode(t.material_code,'0','0',B.COLOR) COLOR,
+                decode(t.material_code,'0','0',B.SIZES) SIZES,
+                decode(t.material_code,'0','0',B.PACKING) PACKING,
+                decode(t.material_code,'0','0',B.VERSION) VERSION,
+                decode(t.material_code,'0','0',B.TYPE) TYPE,
+                decode(t.material_code,'0','0',B.BUYER) BUYER,
+                decode(t.material_code,'0','0',B.DEVELOPER) DEVELOPER,
+                decode(t.material_code,'0','0',to_char(B.ACCOUNT_DATE,'yyyy-mm-dd')) ACCOUNT_DATE,
+                decode(t.material_code,'0','0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL,
+                case when
+                B.ACCOUNT_DATE is not null
+                and trunc(last_day(to_date(t.fiscal_period,'yyyy-mm'))-B.ACCOUNT_DATE)>365
+                then
+                '旧品'
+                when  B.ACCOUNT_DATE is not null and  trunc(last_day(to_date(t.fiscal_period,'yyyy-mm'))-B.ACCOUNT_DATE)&lt;=365
+                then
+                '新品'
+                else '0'
+                end as Is_New
+        from rp_settlement_report_adjust t
+                 LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+                           ON B.MATERIAL_CODE=t.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and t.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and t.SITE = #{paramCondition.site}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+                and t.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                and t.DEPARTMENT = #{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team != ''">
+                and t.TEAM = #{paramCondition.team}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and T.REPORT_TYPE = #{paramCondition.reportType}
+            </if>
+          	<if test="paramCondition.incomeType != null and paramCondition.incomeType != ''">
+            	and T.INCOME_TYPE = #{paramCondition.incomeType}
+          	</if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                and t.SKU in
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY t.fiscal_period DESC,t.report_type,t.income_type,t.shop_name,t.site,t.accounting_currency,t.sku,t.department,t.team,t.material_code
+    </select>
+
+    <select id="adjustRepeatDimension" resultType="java.util.Map">
+
+      SELECT <include refid="ADJUST_DETAIL_DIMENSION"/> dimension,COUNT(*) cnt
+      FROM rp_settlement_report_adjust detail
+      JOIN (SELECT t.*, t.rowid
+              FROM rp_settlement_report_adjust t
+            <where>
+                <if test="paramCondition.id != null and paramCondition.id != ''">
+                    AND id  = #{paramCondition.id}
+                </if>
+            </where>) choose
+        ON <include refid="ADJUST_DETAIL_DIMENSION"/> = <include refid="ADJUST_CHOOSE_DIMENSION"/>
+
+      GROUP BY <include refid="ADJUST_DETAIL_DIMENSION"/>
+            HAVING COUNT(*) > 1
+
+    </select>
+
+
+    <select id="adjustReportByMerge"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam">
+
+        BEGIN
+
+        <!--        删除未确认最终结算报告-->
+        DELETE FROM rp_settlement_report_final
+        <where>
+            confirm_status = 0
+            <include refid="SETTLEMENT_REPORT_CONDITION"/>
+        </where>;
+
+<!--        结算报告插入最终结算报告,相当于复制了结算报告默认状态为未确认-->
+        INSERT INTO rp_settlement_report_final  (
+        <include refid="FINAL_COLUMN"/>,
+        people_num,
+        people_cost,
+        revenue_ratio,
+        platform,
+        confirm_status,
+        create_time,
+        create_by
+        )
+        SELECT <include refid="FINAL_COLUMN"/>,
+        0,
+        0,
+        0,
+        'Amazon',
+        0,
+        sysdate,
+        #{paramCondition.createBy} FROM rp_settlement_report
+        <where>
+            confirm_status = '1'
+            <include refid="SETTLEMENT_REPORT_CONDITION"/>
+        </where>;
+
+        <!--        调整报告更新结算报告生成最终结算报告 -->
+        MERGE INTO (SELECT * FROM rp_settlement_report_final
+        <where>
+            AND confirm_status = 0
+            <include refid="SETTLEMENT_REPORT_CONDITION"/>
+        </where>) a
+        USING ( SELECT *
+        FROM rp_settlement_report_adjust
+        <where>
+            AND confirm_status = 1
+            <include refid="SETTLEMENT_REPORT_CONDITION"/>
+        </where>) b
+        ON (a.fiscal_period || a.shop_name || a.site || a.sku || a.income_type || a.report_type || nvl(a.department,'0') || nvl(a.team,'0') || nvl(a.material_code,'0') || nvl(a.product_type,'0')= b.fiscal_period || b.shop_name || b.site || b.sku || b.income_type || b.report_type  || nvl(b.department,'0') || nvl(b.team,'0') || nvl(b.material_code,'0') || nvl(b.product_type,'0'))
+        WHEN MATCHED THEN
+        UPDATE SET
+        a.VOLUME_NORMAL = a.VOLUME_NORMAL + b.VOLUME_NORMAL,
+        a.VOLUME_REISSUE = a.VOLUME_REISSUE + b.VOLUME_REISSUE,
+        a.VOLUME_BILL_QUANTITY = a.VOLUME_BILL_QUANTITY + b.VOLUME_BILL_QUANTITY,
+        a.VOLUME_RETURN = a.VOLUME_RETURN + b.VOLUME_RETURN,
+        a.SALES_EXCLUDING_TAX = a.SALES_EXCLUDING_TAX + b.SALES_EXCLUDING_TAX,
+        a.TAX = a.TAX + b.TAX,
+        a.SALES_PROMOTION = a.SALES_PROMOTION + b.SALES_PROMOTION,
+        a.REFUND = a.REFUND + b.REFUND,
+        a.REFUND_PROMOTION = a.REFUND_PROMOTION + b.REFUND_PROMOTION,
+        a.GIFTWARP_SHIPPING = a.GIFTWARP_SHIPPING + b.GIFTWARP_SHIPPING,
+        a.NET_SALES = a.NET_SALES + b.NET_SALES,
+        a.COMMISSION = a.COMMISSION + b.COMMISSION,
+        a.REFUND_COMMISSION = a.REFUND_COMMISSION + b.REFUND_COMMISSION,
+        a.GOODWILL = a.GOODWILL + b.GOODWILL,
+        a.AMAZON_FEES = a.AMAZON_FEES + b.AMAZON_FEES,
+        a.STORAGE_FEE = a.STORAGE_FEE + b.STORAGE_FEE,
+        a.REIMBURSEMENT = a.REIMBURSEMENT + b.REIMBURSEMENT,
+        a.OTHER = a.OTHER + b.OTHER,
+        a.WITHHELD_TAX = a.WITHHELD_TAX + b.WITHHELD_TAX,
+        a.DISPOSE_FEE = a.DISPOSE_FEE + b.DISPOSE_FEE,
+        a.REMOVAL_DEAL = a.REMOVAL_DEAL + b.REMOVAL_DEAL,
+        a.COLLECTION = a.COLLECTION + b.COLLECTION,
+        a.ADVERTISING = a.ADVERTISING + b.ADVERTISING,
+        a.KINDLE_ADVERTISING_FEE = a.KINDLE_ADVERTISING_FEE + b.KINDLE_ADVERTISING_FEE,
+        a.OTHER_ADVERTISEMENTS = a.OTHER_ADVERTISEMENTS + b.OTHER_ADVERTISEMENTS,
+        a.BRUSHING_VALUE = a.BRUSHING_VALUE + b.BRUSHING_VALUE,
+        a.BRUSHING_SERVICE_CHARGE = a.BRUSHING_SERVICE_CHARGE + b.BRUSHING_SERVICE_CHARGE,
+        a.LOCAL_LOGISTICS_FEE = a.LOCAL_LOGISTICS_FEE + b.LOCAL_LOGISTICS_FEE,
+        a.OVERSEAS_WAREHOUSE_FEE = a.OVERSEAS_WAREHOUSE_FEE + b.OVERSEAS_WAREHOUSE_FEE,
+        a.DISPOSE_PURCHASE_FEE = a.DISPOSE_PURCHASE_FEE + b.DISPOSE_PURCHASE_FEE,
+        a.DISPOSE_LOGISTICS_FEE = a.DISPOSE_LOGISTICS_FEE + b.DISPOSE_LOGISTICS_FEE,
+        a.DOMESTIC_UNSALABLE_INVENTORY = a.DOMESTIC_UNSALABLE_INVENTORY + b.DOMESTIC_UNSALABLE_INVENTORY,
+        a.COST_ACCOUNTING_FEE = a.COST_ACCOUNTING_FEE + b.COST_ACCOUNTING_FEE,
+        a.ADDITIONAL_COST_AMOUNT = a.ADDITIONAL_COST_AMOUNT + b.ADDITIONAL_COST_AMOUNT,
+        a.FIRST_TRIP_FEE = a.FIRST_TRIP_FEE + b.FIRST_TRIP_FEE,
+        a.OVERSEA_TAX_FEE = a.OVERSEA_TAX_FEE + b.OVERSEA_TAX_FEE,
+        a.PROFIT = a.PROFIT + b.PROFIT,
+        a.ADVERTISING_SUBSIDY = a.ADVERTISING_SUBSIDY + b.ADVERTISING_SUBSIDY,
+        a.INCENTIVE_FUND = a.INCENTIVE_FUND + b.INCENTIVE_FUND,
+        a.MOLD_OPENING_COST = a.MOLD_OPENING_COST + b.MOLD_OPENING_COST
+        WHEN NOT MATCHED THEN
+        INSERT (
+             <include refid="FINAL_COLUMN"/>,
+            people_num,
+            people_cost,
+            revenue_ratio,
+            platform,
+            confirm_status,
+            create_time,
+            create_by
+        ) VALUES (
+         <include refid="ADJUST_COLUMN"/>,
+        0,
+        0,
+        0,
+        'Amazon',
+        0,
+        sysdate,
+        #{paramCondition.createBy}
+        ) ;
+        END;
+    </select>
+
+
+    <select id="export" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportExportResult">
+
+        select t.fiscal_period,
+        t.shop_name,
+        t.site,
+        t.accounting_currency,
+        t.sku,
+        t.material_code,
+        decode(t.material_code,'0','0',t.sales_brand) sales_brand,
+        t.department,
+        t.team,
+        t.cost_auxiliary_description,
+        t.report_type,
+        t.income_type,
+        t.volume_normal,
+        t.volume_reissue,
+        t.volume_bill_quantity,
+        t.volume_return,
+        t.sales_excluding_tax,
+        t.tax,
+        t.sales_promotion,
+        t.refund,
+        t.refund_promotion,
+        t.giftwarp_shipping,
+        <include refid="net_sales"/>  net_sales,
+        t.commission,
+        t.refund_commission,
+        t.goodwill,
+        t.amazon_fees,
+        t.storage_fee,
+        t.reimbursement,
+        t.other,
+        t.withheld_tax,
+        t.dispose_fee,
+        t.removal_deal,
+        <include refid="collection"/>  collection,
+        t.advertising,
+        t.kindle_advertising_fee,
+        t.other_advertisements,
+        t.brushing_value,
+        t.brushing_service_charge,
+        t.local_logistics_fee,
+        t.overseas_warehouse_fee,
+        t.dispose_purchase_fee,
+        t.dispose_logistics_fee,
+        t.domestic_unsalable_inventory,
+        t.cost_accounting_fee,
+        t.additional_cost_amount,
+        t.first_trip_fee,
+        t.oversea_tax_fee,
+        t.profit,
+        t.advertising_subsidy,
+        t.incentive_fund,
+        t.confirm_date,
+        t.confirm_by,
+        t.confirm_status,
+        t.id,
+        decode(t.material_code,'0',t.product_type,B.product_type) product_type,
+        t.mold_opening_cost,
+        case t.CONFIRM_STATUS
+        when 0 then '未确认'
+        when 1 then '已确认'
+        else ''
+        end CONFIRM_STATUS_TXT,
+        decode(t.material_code,'0','0',B.CATEGORY) CATEGORY,
+        decode(t.material_code,'0','0',B.PRODUCT_NAME) PRODUCT_NAME,
+        decode(t.material_code,'0','0',B.STYLE) STYLE,
+        decode(t.material_code,'0','0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+        decode(t.material_code,'0','0',B.DESIGN) DESIGN,
+        decode(t.material_code,'0','0',B.COMPANY_BRAND) COMPANY_BRAND,
+        decode(t.material_code,'0','0',B.FIT_BRAND) FIT_BRAND,
+        decode(t.material_code,'0','0',B.MODEL) MODEL,
+        decode(t.material_code,'0','0',B.COLOR) COLOR,
+        decode(t.material_code,'0','0',B.SIZES) SIZES,
+        decode(t.material_code,'0','0',B.PACKING) PACKING,
+        decode(t.material_code,'0','0',B.VERSION) VERSION,
+        decode(t.material_code,'0','0',B.TYPE) TYPE,
+        decode(t.material_code,'0','0',B.BUYER) BUYER,
+        decode(t.material_code,'0','0',B.DEVELOPER) DEVELOPER,
+        decode(t.material_code,'0','0',to_char(B.ACCOUNT_DATE,'yyyy-mm-dd')) ACCOUNT_DATE,
+        decode(t.material_code,'0','0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL,
+        case when
+        B.ACCOUNT_DATE is not null
+        and trunc(last_day(to_date(t.fiscal_period,'yyyy-mm'))-B.ACCOUNT_DATE)>365
+        then
+        '旧品'
+        when  B.ACCOUNT_DATE is not null and  trunc(last_day(to_date(t.fiscal_period,'yyyy-mm'))-B.ACCOUNT_DATE)&lt;=365
+        then
+        '新品'
+        else '0'
+        end as Is_New
+        from rp_settlement_report_adjust t
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE=t.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.id != null and paramCondition.id != ''">
+                t.id = #{paramCondition.id}
+            </if>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and t.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and t.SITE = #{paramCondition.site}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+                and t.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                and t.DEPARTMENT = #{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team != ''">
+                and t.TEAM = #{paramCondition.team}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and T.REPORT_TYPE = #{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.incomeType != null and paramCondition.incomeType != ''">
+                and T.INCOME_TYPE = #{paramCondition.incomeType}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                and t.SKU in
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+    <select id="getQuantity"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportAdjustResult">
+
+        select
+            SUM(T.VOLUME_NORMAL) volumeNormal,
+            SUM(T.VOLUME_REISSUE) volumeReissue,
+            SUM(T.VOLUME_BILL_QUANTITY) volumeBillQuantity,
+            SUM(T.VOLUME_RETURN) volumeReturn,
+            SUM(T.SALES_EXCLUDING_TAX) salesExcludingTax,
+            SUM(T.TAX) tax,
+            SUM(T.SALES_PROMOTION) salesPromotion,
+            SUM(T.REFUND) refund,
+            SUM(T.REFUND_PROMOTION) refundPromotion,
+            SUM(T.GIFTWARP_SHIPPING) giftwarpShipping,
+            <include refid="net_sales_sum"/> netSales,
+            SUM(T.COMMISSION) commission,
+            SUM(T.REFUND_COMMISSION) refundCommission,
+            SUM(T.GOODWILL) goodwill,
+            SUM(T.AMAZON_FEES) amazonFees,
+            SUM(T.STORAGE_FEE) storageFee,
+            SUM(T.REIMBURSEMENT) reimbursement,
+            SUM(T.OTHER) other,
+            SUM(T.WITHHELD_TAX) withheldTax,
+            SUM(T.DISPOSE_FEE) disposeFee,
+            SUM(T.REMOVAL_DEAL) removalDeal,
+            <include refid="collection_sum"/> collection,
+            SUM(T.ADVERTISING) advertising,
+            SUM(T.KINDLE_ADVERTISING_FEE) kindleAdvertisingFee,
+            SUM(T.OTHER_ADVERTISEMENTS) otherAdvertisements,
+            SUM(T.BRUSHING_VALUE) brushingValue,
+            SUM(T.BRUSHING_SERVICE_CHARGE) brushingServiceCharge,
+            SUM(T.LOCAL_LOGISTICS_FEE) localLogisticsFee,
+            SUM(T.OVERSEAS_WAREHOUSE_FEE) overseasWarehouseFee,
+            SUM(T.DISPOSE_PURCHASE_FEE) disposePurchaseFee,
+            SUM(T.DISPOSE_LOGISTICS_FEE) disposeLogisticsFee,
+            SUM(T.DOMESTIC_UNSALABLE_INVENTORY) domesticUnsalableInventory,
+            SUM(T.COST_ACCOUNTING_FEE) costAccountingFee,
+            SUM(T.ADDITIONAL_COST_AMOUNT) additionalCostAmount,
+            SUM(T.FIRST_TRIP_FEE) firstTripFee,
+            SUM(T.OVERSEA_TAX_FEE) overseaTaxFee,
+            SUM(T.profit) profit,
+            SUM(T.ADVERTISING_SUBSIDY) advertisingSubsidy,
+            SUM(T.INCENTIVE_FUND) incentiveFund,
+            SUM(T.MOLD_OPENING_COST) moldOpeningCost
+        from rp_settlement_report_adjust T
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                T.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and T.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and T.SITE = #{paramCondition.site}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+                and T.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                and T.DEPARTMENT = #{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team != ''">
+                and T.TEAM = #{paramCondition.team}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and T.REPORT_TYPE = #{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.incomeType != null and paramCondition.incomeType != ''">
+                and T.INCOME_TYPE = #{paramCondition.incomeType}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                and T.SKU in
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+    <select id="adjustReport"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementReportFinal">
+
+    SELECT rp.id report_id,
+           rpa.id adjust_id,
+           COALESCE(rp.Fiscal_Period,rpa.Fiscal_Period) Fiscal_Period,
+           COALESCE(rp.Shop_Name,rpa.Shop_Name) Shop_Name,
+           COALESCE(rp.Site,rpa.Site) Site,
+           COALESCE(rp.Accounting_Currency,rpa.Accounting_Currency) Accounting_Currency,
+           COALESCE(rp.sku,rpa.sku) sku,
+           COALESCE(rp.Material_Code,rpa.Material_Code) Material_Code,
+           COALESCE(rp.Sales_Brand,rpa.Sales_Brand) Sales_Brand,
+           COALESCE(rp.Department,rpa.Department) Department,
+           COALESCE(rp.Team,rpa.Team) Team,
+           COALESCE(rp.Cost_Auxiliary_Description,rpa.Cost_Auxiliary_Description) Cost_Auxiliary_Description,
+           COALESCE(rp.Report_Type,rpa.Report_Type) Report_Type,
+           COALESCE(rp.Income_Type,rpa.Income_Type) Income_Type,
+           NVL(rp.VOLUME_NORMAL,0) + NVL(rpa.VOLUME_NORMAL,0) VOLUME_NORMAL,
+           NVL(rp.VOLUME_REISSUE,0) + NVL(rpa.VOLUME_REISSUE,0) VOLUME_REISSUE,
+           NVL(rp.VOLUME_BILL_QUANTITY,0) + NVL(rpa.VOLUME_BILL_QUANTITY,0) VOLUME_BILL_QUANTITY,
+           NVL(rp.VOLUME_RETURN,0) + NVL(rpa.VOLUME_RETURN,0) VOLUME_RETURN,
+           NVL(rp.SALES_EXCLUDING_TAX,0) + NVL(rpa.SALES_EXCLUDING_TAX,0) SALES_EXCLUDING_TAX,
+           NVL(rp.TAX,0) + NVL(rpa.TAX,0) TAX,
+           NVL(rp.SALES_PROMOTION,0) + NVL(rpa.SALES_PROMOTION,0) SALES_PROMOTION,
+           NVL(rp.REFUND,0) + NVL(rpa.REFUND,0) REFUND,
+           NVL(rp.REFUND_PROMOTION,0) + NVL(rpa.REFUND_PROMOTION,0) REFUND_PROMOTION,
+           NVL(rp.GIFTWARP_SHIPPING,0) + NVL(rpa.GIFTWARP_SHIPPING,0) GIFTWARP_SHIPPING,
+           NVL(rp.net_sales,0) + NVL(rpa.net_sales,0) net_sales,
+           NVL(rp.COMMISSION,0) + NVL(rpa.COMMISSION,0) COMMISSION,
+           NVL(rp.REFUND_COMMISSION,0) + NVL(rpa.REFUND_COMMISSION,0) REFUND_COMMISSION,
+           NVL(rp.GOODWILL,0) + NVL(rpa.GOODWILL,0) GOODWILL,
+           NVL(rp.AMAZON_FEES,0) + NVL(rpa.AMAZON_FEES,0) AMAZON_FEES,
+           NVL(rp.STORAGE_FEE,0) + NVL(rpa.STORAGE_FEE,0) STORAGE_FEE,
+           NVL(rp.REIMBURSEMENT,0) + NVL(rpa.REIMBURSEMENT,0) REIMBURSEMENT,
+           NVL(rp.OTHER,0) + NVL(rpa.OTHER,0) OTHER,
+           NVL(rp.WITHHELD_TAX,0) + NVL(rpa.WITHHELD_TAX,0) WITHHELD_TAX,
+           NVL(rp.DISPOSE_FEE,0) + NVL(rpa.DISPOSE_FEE,0) DISPOSE_FEE,
+           NVL(rp.REMOVAL_DEAL,0) + NVL(rpa.REMOVAL_DEAL,0) REMOVAL_DEAL,
+           NVL(rp.collection,0) + NVL(rpa.collection,0) collection,
+           NVL(rp.ADVERTISING,0) + NVL(rpa.ADVERTISING,0) ADVERTISING,
+           NVL(rp.KINDLE_ADVERTISING_FEE,0) + NVL(rpa.KINDLE_ADVERTISING_FEE,0) KINDLE_ADVERTISING_FEE,
+           NVL(rp.OTHER_ADVERTISEMENTS,0) + NVL(rpa.OTHER_ADVERTISEMENTS,0) OTHER_ADVERTISEMENTS,
+           NVL(rp.BRUSHING_VALUE,0) + NVL(rpa.BRUSHING_VALUE,0) BRUSHING_VALUE,
+           NVL(rp.BRUSHING_SERVICE_CHARGE,0) + NVL(rpa.BRUSHING_SERVICE_CHARGE,0) BRUSHING_SERVICE_CHARGE,
+           NVL(rp.LOCAL_LOGISTICS_FEE,0) + NVL(rpa.LOCAL_LOGISTICS_FEE,0) LOCAL_LOGISTICS_FEE,
+           NVL(rp.OVERSEAS_WAREHOUSE_FEE,0) + NVL(rpa.OVERSEAS_WAREHOUSE_FEE,0) OVERSEAS_WAREHOUSE_FEE,
+           NVL(rp.DISPOSE_PURCHASE_FEE,0) + NVL(rpa.DISPOSE_PURCHASE_FEE,0) DISPOSE_PURCHASE_FEE,
+           NVL(rp.DISPOSE_LOGISTICS_FEE,0) + NVL(rpa.DISPOSE_LOGISTICS_FEE,0) DISPOSE_LOGISTICS_FEE,
+           NVL(rp.DOMESTIC_UNSALABLE_INVENTORY,0) DOMESTIC_UNSALABLE_INVENTORY,
+           NVL(rp.COST_ACCOUNTING_FEE,0) + NVL(rpa.COST_ACCOUNTING_FEE,0) COST_ACCOUNTING_FEE,
+           NVL(rp.ADDITIONAL_COST_AMOUNT,0) + NVL(rpa.ADDITIONAL_COST_AMOUNT,0) ADDITIONAL_COST_AMOUNT,
+           NVL(rp.FIRST_TRIP_FEE,0) + NVL(rpa.FIRST_TRIP_FEE,0) FIRST_TRIP_FEE,
+           NVL(rp.OVERSEA_TAX_FEE,0) + NVL(rpa.OVERSEA_TAX_FEE,0) OVERSEA_TAX_FEE,
+           NVL(rp.profit,0) + NVL(rpa.profit,0) profit,
+           NVL(rp.ADVERTISING_SUBSIDY,0) + NVL(rpa.ADVERTISING_SUBSIDY,0) ADVERTISING_SUBSIDY,
+           NVL(rp.INCENTIVE_FUND,0) + NVL(rpa.INCENTIVE_FUND,0) INCENTIVE_FUND,
+           NVL(rp.MOLD_OPENING_COST,0) + NVL(rpa.MOLD_OPENING_COST,0) MOLD_OPENING_COST
+      FROM rp_settlement_report rp
+      LEFT JOIN rp_settlement_report_adjust rpa
+        ON rp.fiscal_period = rpa.fiscal_period
+       AND rp.shop_name = rpa.shop_name
+       AND rp.site = rpa.site
+       AND rp.sku = rpa.sku
+       AND rp.income_type = rpa.income_type
+       AND rp.report_type = rpa.report_type
+
+
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and rp.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and rp.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and rp.SITE = #{paramCondition.site}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+                and rp.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                and rp.DEPARTMENT = #{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team != ''">
+                and rp.TEAM = #{paramCondition.team}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and rp.REPORT_TYPE = #{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.incomeType != null and paramCondition.incomeType != ''">
+                and rp.INCOME_TYPE = #{paramCondition.incomeType}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                and rp.SKU in
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="mergeFinalSettleNallocStruct"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportFinalResult">
+    SELECT
+        <include refid="detail_col"/>  ,
+        abs(detail.net_sales - detail.BRUSHING_VALUE) detailSalesVol,
+        abs(SUM(detail.net_sales - detail.BRUSHING_VALUE) OVER(PARTITION BY detail.Fiscal_Period, detail.department, detail.team ORDER BY detail.Fiscal_Period, detail.department, detail.team)) AS teamsalesVol,
+        struct.id struct_id,
+        struct.period,
+        struct.dept3,
+        struct.dept4,
+        struct.amazon_alloc
+    FROM rp_settlement_report_final detail
+    FULL JOIN (SELECT t.*, t.rowid FROM alloc_structure t WHERE t.AMAZON_ALLOC > 0) struct
+         ON struct.period = detail.Fiscal_Period
+        AND struct.dept3 = detail.department
+        AND struct.dept4 = detail.team
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and detail.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and detail.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and detail.SITE = #{paramCondition.site}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+                and detail.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                and detail.DEPARTMENT = #{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team != ''">
+                and detail.TEAM = #{paramCondition.team}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and detail.REPORT_TYPE = #{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.incomeType != null and paramCondition.incomeType != ''">
+                and detail.INCOME_TYPE = #{paramCondition.incomeType}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                and detail.SKU in
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
+
+    <select id="updateFinalBatch"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam"
+           >
+        UPDATE
+        rp_settlement_report_final a
+        <set>
+            <trim prefix = "a.REVENUE_RATIO = CASE" suffix = "END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                    <if test="item.revenueRatio != null">
+                        WHEN a.id = #{item.id} THEN #{item.revenueRatio}
+                    </if>
+                </foreach>
+            </trim>
+
+            <trim prefix = "a.PEOPLE_NUM = CASE" suffix = "END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                        WHEN a.id = #{item.id} THEN #{item.peopleNum}
+                </foreach>
+            </trim>
+
+            <trim prefix = "a.PEOPLE_COST = CASE" suffix = "END,">
+                <foreach collection="reqParamList" item="item" index="index">
+                        WHEN a.id = #{item.id} THEN #{item.peopleCost}
+                </foreach>
+            </trim>
+        </set>
+
+        <where>
+            AND a.id IN
+            <foreach collection="reqParamList" item="item" index="index" separator="," open="(" close=")">
+                #{item.id}
+            </foreach>
+        </where>
+
+    </select>
+
+
+    <select id="fill1"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementReportFinal">
+     MERGE INTO
+        (select * from  rp_settlement_report_final
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and SITE = #{paramCondition.site}
+            </if>
+        </where> ) A
+        USING (SELECT
+        id,
+        DECODE(teamsalesVol, 0, 1, detailSalesVol / teamsalesVol) REVENUE_RATIO,
+        DECODE(teamsalesVol, 0, amazon_alloc, detailSalesVol*amazon_alloc / teamsalesVol) PEOPLE_NUM,
+        -7000*#{paramCondition.directRate}*DECODE(teamsalesVol, 0, amazon_alloc, detailSalesVol*amazon_alloc / teamsalesVol) PEOPLE_COST
+        FROM (SELECT detail.net_sales - detail.BRUSHING_VALUE detailSalesVol,
+        SUM(detail.net_sales - detail.BRUSHING_VALUE) OVER(PARTITION BY detail.Fiscal_Period, detail.department, detail.team ) AS teamsalesVol,
+
+        struct.period,
+        struct.dept3,
+        struct.dept4,
+        struct.amazon_alloc,
+        colec detail.id
+        FROM rp_settlement_report_final detail
+        FULL JOIN (SELECT *
+        FROM alloc_structure
+        WHERE AMAZON_ALLOC > 0) struct
+        ON struct.period = detail.Fiscal_Period
+        AND struct.dept3 = detail.department
+        AND struct.dept4 = detail.team) ) B
+        ON (A.id = B.id)
+        WHEN  MATCHED THEN
+            UPDATE SET A.REVENUE_RATIO = B.REVENUE_RATIO ,
+                       A.PEOPLE_NUM = B.PEOPLE_NUM ,
+                       A.PEOPLE_COST = B.PEOPLE_COST
+
+
+
+    </select>
+
+
+
+    <select id="fillPeopleCost"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam">
+        BEGIN
+            MERGE INTO (SELECT * FROM rp_settlement_report_final
+            <where>
+                AND confirm_status = 0
+                <include refid="SETTLEMENT_REPORT_CONDITION"/>
+            </where>) A
+            USING (SELECT id,struct_id,
+                          NVL(DECODE(teamsalesVol, 0, 1, round(detailSalesVol / teamsalesVol, 12)),0) revenue_ratio,
+                          NVL(DECODE(teamsalesVol,0,amazon_alloc,round(detailSalesVol * amazon_alloc / teamsalesVol, 12)),0) people_num,
+                          -7000 * nvl(#{paramCondition.directRate},1) * NVL(DECODE(teamsalesVol,0,amazon_alloc,round(detailSalesVol * amazon_alloc / teamsalesVol, 12)),0) people_cost,
+                          fiscal_period,
+                          department,
+                          team,
+                          amazon_alloc
+                     FROM (
+                     SELECT       CASE WHEN detail.volume_normal+detail.volume_reissue+detail.volume_return &lt; 0 THEN 0 ELSE  detail.volume_normal+detail.volume_reissue+detail.volume_return END detailSalesVol,
+                                  NVL(SUM(CASE WHEN detail.volume_normal+detail.volume_reissue+detail.volume_return &lt; 0 THEN 0 ELSE  detail.volume_normal+detail.volume_reissue+detail.volume_return END) OVER(PARTITION BY detail.Fiscal_Period, detail.department, detail.team),0)  teamsalesVol,
+                                  NVL(detail.fiscal_period,struct.period) fiscal_period,
+                                  NVL(detail.department,struct.dept4) department,
+                                  NVL(detail.team,struct.dept3) team,
+                                  NVL(struct.amazon_alloc,0) amazon_alloc,
+                                  detail.id id ,
+                                  struct.id struct_id
+                             FROM (SELECT * FROM  rp_settlement_report_final
+                                <where>
+                                    <include refid="SETTLEMENT_REPORT_CONDITION"/>
+                                </where>) detail
+                             FULL JOIN (SELECT *
+                                         FROM alloc_structure
+                                            <where>
+                                                AND amazon_alloc > 0
+                                                <include refid="ALLOC_STRUCTURE_CONDITION"/>
+                                            </where>) struct
+                             ON detail.Fiscal_Period = struct.period
+                                 AND   detail.department = struct.dept3
+                                 AND  detail.team = struct.dept4)) B
+            ON (A.id = B.id)
+            WHEN MATCHED THEN
+              UPDATE
+                 SET A.revenue_ratio = B.revenue_ratio,
+                     A.people_num    = B.people_num,
+                     A.people_cost   = B.people_cost
+            WHEN NOT MATCHED THEN INSERT
+                (A.fiscal_period,
+                 A.department,
+                 A.team,
+                 A.revenue_ratio,
+                 A.people_num,
+                 A.people_cost,
+                 A.SHOP_NAME,
+                 A.SITE,
+                 A.SKU,
+                 A.MATERIAL_CODE,
+                 A.REPORT_TYPE,
+                 A.INCOME_TYPE,
+                 A.PLATFORM,
+                 A.CREATE_TIME,
+                 A.CREATE_BY
+            )
+            VALUES
+                    (B.fiscal_period,
+                     B.department,
+                     B.team,
+                     1,
+                     B.amazon_alloc,
+                     round(amazon_alloc * -7000 * #{paramCondition.directRate},12),
+                     0,
+                     0,
+                     0,
+                     0,
+                     0,
+                     0,
+                     'Amazon',
+                     #{paramCondition.createTime},
+                     #{paramCondition.createBy}||'(架构差异插入)'
+                 );
+        <!--        因架构大于结算报告插入的同维度数据只保留一条,避免架构数据重复插入-->
+        DELETE FROM rp_settlement_report_final
+        WHERE (fiscal_period, department, team, people_num,shop_name,site) IN (
+            SELECT fiscal_period, department, team, people_num,shop_name,site
+                FROM (
+                SELECT fiscal_period, department, team, people_num,NVL(shop_name,'0') shop_name,NVL(site,'0') site,
+                ROW_NUMBER() OVER (PARTITION BY fiscal_period, department, team, people_num ,NVL(shop_name,'0') ,NVL(site,'0') ORDER BY ROWID ) AS rn
+                FROM rp_settlement_report_final
+                WHERE NVL(shop_name,'0') = '0' AND  NVL(site,'0') = '0'
+                ) t
+            WHERE rn > 1
+        );
+        END;
+
+    </select>
+
+
+    <select id="fillPeopleCostNew"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam">
+        BEGIN
+        <!--        1.更新人数架构多的部分插入-->
+        MERGE INTO (select * from rp_settlement_report_final where confirm_status = 0 AND fiscal_period  = #{paramCondition.fiscalPeriod}) a
+        USING (SELECT * FROM ALLOC_STRUCTURE   where status = 1  AND period = #{paramCondition.fiscalPeriod} AND amazon_alloc > 0) struct
+        ON (a.fiscal_period = struct.period AND a.department = struct.dept3 AND a.team = struct.dept4)
+        WHEN MATCHED THEN
+            UPDATE SET a.people_num = struct.amazon_alloc
+        WHEN NOT MATCHED THEN INSERT
+            (a.fiscal_period,
+             a.department,
+             a.team,
+             a.revenue_ratio,
+             a.people_num,
+             a.people_cost,
+             a.platform,
+             a.create_time,
+             a.create_by
+            )
+            VALUES
+            (struct.period,
+             struct.dept3,
+             struct.dept4,
+             1,
+             struct.amazon_alloc,
+             round(struct.amazon_alloc * -7000 * #{paramCondition.directRate},12),
+             'Amazon',
+             #{paramCondition.createTime},
+             #{paramCondition.createBy}||'(有分摊架构无对应结算差异插入)'
+            );
+
+
+        <!--        2.更新销量占比,销量乘以人数,销量占比*人数*人工成本-->
+        MERGE INTO rp_settlement_report_final  det
+        USING (SELECT id,
+                      CASE WHEN volume_normal+volume_reissue+volume_return &lt; 0 THEN 0 ELSE  volume_normal+volume_reissue+volume_return END detailSalesVol,
+                      SUM(CASE WHEN volume_normal+volume_reissue+volume_return &lt; 0 THEN 0 ELSE  volume_normal+volume_reissue+volume_return END) OVER(PARTITION BY fiscal_period, department, team) teamsalesVol
+                FROM  rp_settlement_report_final
+                where NVL(confirm_status,0) != 1 AND fiscal_period  = #{paramCondition.fiscalPeriod}) src
+        ON (det.id = src.id)
+        WHEN MATCHED THEN UPDATE set
+        det.revenue_ratio =  DECODE(teamsalesVol, 0, 1, round(detailSalesVol / teamsalesVol, 12)),
+        det.people_num = det.people_num *  DECODE(teamsalesVol, 0, 1, round(detailSalesVol / teamsalesVol, 6)),
+        det.people_cost = det.people_num *  DECODE(teamsalesVol, 0, 1, round(detailSalesVol / teamsalesVol, 12)) * (-7000 * nvl(#{paramCondition.directRate},1));
+
+<!--        删除重复插入差异架构-->
+        DELETE FROM rp_settlement_report_final
+        WHERE   INSTR(create_by, '分摊架构') > 0
+                AND NVL(confirm_status,0) != 1
+                AND fiscal_period  = #{paramCondition.fiscalPeriod}
+                AND (id, fiscal_period || department || team) NOT IN
+                            (SELECT id, dm
+                            FROM (SELECT id,
+                                       fiscal_period || department || team dm,
+                                       ROW_NUMBER() OVER(PARTITION BY fiscal_period || department || team ORDER BY id desc) AS row_num
+                                  FROM rp_settlement_report_final
+                                 WHERE INSTR(CREATE_BY, '分摊架构') > 0) t
+                            WHERE row_num = 1);
+        END;
+
+
+
+
+    </select>
+
+
+    <update id="updatePeopleCostZero"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportAdjustParam">
+                MERGE INTO rp_settlement_report_final det
+                    USING (
+                        SELECT
+                            *
+                        FROM
+                            alloc_structure as2
+                        WHERE
+                            status = 1
+                            AND is_labor_cost = '否'
+                        <include refid="ALLOC_STRUCTURE_CONDITION"/>) src
+                              ON (src.period = det.fiscal_period
+                              AND src.dept3 = det.department
+                              AND src.dept4 = det.team)
+                        WHEN MATCHED THEN
+                    UPDATE
+                    SET
+                        det.PEOPLE_COST = 0
+            </update>
+
+
+
+</mapper>

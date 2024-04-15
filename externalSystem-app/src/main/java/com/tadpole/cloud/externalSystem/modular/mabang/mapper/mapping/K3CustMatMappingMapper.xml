@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.K3CustMatMappingMapper">
+
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.K3CustMatMapping">
+        <id column="ID" property="id" />
+        <result column="SUMMARY_ID" property="summaryId" />
+        <result column="FINANCE_CODE" property="financeCode" />
+        <result column="NAME" property="name" />
+        <result column="SALE_ORG_ID" property="saleOrgId" />
+        <result column="CUSTOMER_ID" property="customerId" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" />
+        <result column="IS_MULTIPLE" property="isMultiple" />
+        <result column="CUST_MAT_NO" property="custMatNo" />
+        <result column="CUST_MAT_NAME" property="custMatName" />
+        <result column="MATERIAL_ID" property="materialId" />
+        <result column="MATERIAL_NAME" property="materialName" />
+        <result column="EFFECTIVE" property="effective" />
+        <result column="FNSKU" property="fnsku" />
+        <result column="DEF_CARRY" property="defCarry" />
+        <result column="SHORT_DESC" property="shortDesc" />
+        <result column="STATION" property="station" />
+        <result column="BSC_COLOR" property="bscColor" />
+        <result column="BSC_TEMPLATE_NAME" property="bscTemplateName" />
+        <result column="IS_DELETE" property="isDelete" />
+        <result column="SYNC_TYPE" property="syncType" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="SYNC_STATUS" property="syncStatus" />
+        <result column="SYNC_SUCCESS_TIMES" property="syncSuccessTimes" />
+        <result column="SYNC_FAIL_TIMES" property="syncFailTimes" />
+        <result column="SYNC_RESULT_MSG" property="syncResultMsg" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, SUMMARY_ID,FINANCE_CODE, NAME, SALE_ORG_ID, CUSTOMER_ID, DOCUMENT_STATUS, IS_MULTIPLE, CUST_MAT_NO, CUST_MAT_NAME, MATERIAL_ID, MATERIAL_NAME, EFFECTIVE, FNSKU, DEF_CARRY, SHORT_DESC, STATION, BSC_COLOR, BSC_TEMPLATE_NAME, IS_DELETE, SYNC_TYPE, SYNC_TIME, SYNC_STATUS, SYNC_SUCCESS_TIMES, SYNC_FAIL_TIMES, SYNC_RESULT_MSG, CREATE_TIME, UPDATE_TIME
+    </sql>
+
+
+    <sql id="Page_Column_List">
+        t.ID,
+        t.PLAT_ORD_ID,
+        t.SALES_RECORD_NUMBER,
+        t.ORDER_STATUS,
+        t.CREATE_DATE,
+        t.EXPRESS_TIME,
+        t.SHOP_ID,
+        t.SHOP_NAME,
+        s.FINANCE_CODE,
+        s.ORIGINAL_FINANCE_CODE,
+        t.PLATFORM_ID,
+        t.ITEM_TOTAL_ORIGIN,
+        t.CURRENCY_ID,
+        t.SYNC_TIME,
+        d.PLATFORM_SKU,
+        d.STOCK_SKU,
+        d.PLATFORM_QUANTITY,
+        d.STOCK_WAREHOUSE_NAME,
+        STOCK_GRID, --商品仓位
+        CASE d.status WHEN '1' THEN '未付款' WHEN '2' THEN '未发货' WHEN '3' THEN '已发货' WHEN '4' THEN '已作废' ELSE '空' END STATUS --库存状态
+    </sql>
+
+
+    <sql id="Display_List">
+        T.BILL_CODE,
+        T.SUMMARY_ID,
+        T.NAME,
+        T.FINANCE_CODE,
+        T.SALE_ORG_ID,
+        T.CUSTOMER_ID,
+        T.DOCUMENT_STATUS,
+        T.IS_MULTIPLE,
+        T.CUST_MAT_NO,
+        T.CUST_MAT_NAME,
+        T.MATERIAL_ID,
+        T.MATERIAL_NAME,
+        T.EFFECTIVE,
+        T.FNSKU,
+        T.DEF_CARRY,
+        T.SHORT_DESC,
+        T.STATION,
+        T.BSC_COLOR,
+        T.BSC_TEMPLATE_NAME,
+        T.SYNC_STATUS,
+        T.SYNC_TIME,
+        DBMS_LOB.SUBSTR(T.SYNC_RESULT_MSG,300) SYNC_RESULT_MSG
+    </sql>
+
+
+    <sql id="List_Condition">
+        <if test="paramCondition.summaryId != null and paramCondition.summaryId != ''">
+            AND BILL_CODE like '%' || #{paramCondition.summaryId} ||'%'
+
+        </if>
+
+        <if test="paramCondition.financeCode != null and paramCondition.financeCode != ''">
+            AND  FINANCE_CODE like '%' || #{paramCondition.financeCode} ||'%'
+
+        </if>
+        <if test="paramCondition.name != null and paramCondition.name != ''">
+            AND NAME like '%' || #{paramCondition.name} ||'%'
+
+        </if>
+        <if test="paramCondition.customerId != null and paramCondition.customerId != ''">
+
+            AND CUSTOMER_ID like '%' || #{paramCondition.customerId} ||'%'
+
+        </if>
+        <if test="paramCondition.custMatNo != null and paramCondition.custMatNo != ''">
+            AND CUST_MAT_NO like '%' || #{paramCondition.custMatNo} ||'%'
+
+        </if>
+        <if test="paramCondition.materialId != null and paramCondition.materialId != ''">
+            AND MATERIAL_ID like '%' || #{paramCondition.materialId} ||'%'
+
+        </if>
+        <if test="paramCondition.materialName != null and paramCondition.materialName != ''">
+            AND MATERIAL_NAME like '%' || #{paramCondition.materialName} ||'%'
+
+        </if>
+        <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+            AND SYNC_STATUS = #{paramCondition.syncStatus}
+        </if>
+
+        <if test="paramCondition.names != null and paramCondition.names.size()>0">
+            AND NAME IN
+            <foreach collection="paramCondition.names" index="index" item="name" open="(" separator="," close=")">
+                #{name}
+            </foreach>
+        </if>
+    </sql>
+
+
+
+    <update id="updateOrdersStatus">
+        MERGE INTO MABANG_ORDERS T1
+        USING (SELECT O.id
+        FROM MABANG_ORDERS O
+         JOIN MABANG_ORDER_ITEM OI
+        ON O.ERP_ORDER_ID = OI.ORIGIN_ORDER_ID
+         JOIN MABANG_SHOP_LIST S
+        ON O.SHOP_ID = S.ID
+        WHERE           S.FINANCE_CODE IS NOT NULL
+                    AND O.PLATFORM_ID IS NOT NULL
+                    AND O.SHOP_ID IS NOT NULL
+                    AND OI.STOCK_SKU IS NOT NULL
+                    AND OI.PLATFORM_SKU IS NOT NULL
+                    AND O.CREATE_MAT = 0 GROUP BY O.id
+        ) T2
+        ON (T1.id = T2.id)
+        WHEN  MATCHED THEN UPDATE SET T1.CREATE_MAT = 1
+    </update>
+
+
+    <update id="updatePlatFormSku">
+        UPDATE MABANG_ORDER_ITEM t SET t.platform_sku = t.stock_sku
+        WHERE t.platform_sku IS NULL OR
+        (t.stock_sku != t.platform_sku AND
+        (length(t.platform_sku) = 9 AND length(t.stock_sku) = 9 OR
+        length(t.platform_sku) = 8 AND length(t.stock_sku) = 8))
+    </update>
+
+
+
+        <update id="refreshInfo">
+
+        UPDATE K3_CUST_MAT_MAPPING
+        SET BILL_CODE = #{paramCondition.billCode},
+            SALE_ORG_ID = #{paramCondition.saleOrgId},
+            SUMMARY_ID = #{paramCondition.summaryId},
+            NAME = #{paramCondition.name}
+
+        WHERE FINANCE_CODE = #{paramCondition.financeCode}
+
+
+    </update>
+    <update id="updateSeaOrdersStatus">
+        MERGE INTO MABANG_ORDERS T1
+        USING (SELECT O.id
+                 FROM MABANG_ORDERS O
+                 JOIN MABANG_ORDER_ITEM OI
+                   ON O.ERP_ORDER_ID = OI.ORIGIN_ORDER_ID
+                WHERE OI.STOCK_WAREHOUSE_ID = '1049872'
+                  AND (O.CREATE_MAT = 0 OR CREATE_CROSS_TRANSFER = 0)
+                GROUP BY O.id) T2
+        ON (T1.id = T2.id)
+        WHEN MATCHED THEN
+          UPDATE SET T1.CREATE_MAT = 2, T1.CREATE_CROSS_TRANSFER = 2
+    </update>
+
+    <select id="beginProcedureSync"
+
+
+        parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3CustMatMappingResult"
+        statementType="CALLABLE" resultMap="BaseResultMap">
+        {
+        CALL SyncCodeToErp(
+        #{paramCondition.name,mode=IN,jdbcType=VARCHAR},
+        #{paramCondition.custMatNo,mode=IN,jdbcType=VARCHAR},
+        #{paramCondition.materialId,mode=IN,jdbcType=VARCHAR},
+
+        "-", "short_desc", null, "color", "tmmb",
+        "in_product_name", "in_product_mode", "mrp", "qty", "box_qty",
+        "manufacture", "manufacture_addr", "import", "import_addr",
+        #{paramCondition.effective,mode=IN,jdbcType=INTEGER}
+
+        )
+
+        }
+    </select>
+
+
+    <select id="getSyncList"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3CustMatMappingResult">
+        SELECT * FROM K3_CUST_MAT_MAPPING
+        WHERE CUSTOMER_ID IS NULL
+            AND FINANCE_CODE IS NOT NULL
+            AND SYNC_STATUS = 0
+            AND SYNC_SUCCESS_TIMES = 0
+
+    </select>
+
+
+
+    <select id="getFinCodeList" resultType="java.lang.String">
+        SELECT  DISTINCT FINANCE_CODE FROM K3_CUST_MAT_MAPPING
+        WHERE (CUSTOMER_ID IS NULL OR NAME IS NULL)
+        AND FINANCE_CODE IS NOT NULL
+        AND SYNC_STATUS = 0
+    </select>
+
+
+     <select id="getCustId" resultType="java.lang.String">
+        SELECT top 1 FCUSTID
+        FROM T_BD_CUSTOMER t1
+        JOIN T_SAl_CUSTMATMAPPING t2
+        ON t1.FCUSTID = t2.FCUSTOMERID
+        WHERE t1.FNUMBER = #{finCode}
+        AND t2.FUSEORGID = '100269'
+    </select>
+
+
+
+
+
+
+
+
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.K3CustMatMappingParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3CustMatMappingResult">
+
+        SELECT      <include refid="Display_List"/>  FROM K3_CUST_MAT_MAPPING T
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY SYNC_TIME DESC
+
+
+    </select>
+    <select id="getK3One" resultType="java.lang.String">
+
+
+        select top 1 '1'  from  T_SAL_CUSTMATMAPPINGENTRY
+    <where>
+
+        <if test="paramCondition.materialId != null and paramCondition.materialId != ''">
+            AND FMATERIALID = #{paramCondition.materialId}
+
+        </if>
+    </where>
+
+
+    </select>
+
+
+    <select id="getCreateMatList" resultType="com.tadpole.cloud.externalSystem.modular.mabang.entity.K3CustMatMapping">
+        SELECT  O.PLATFORM_ID,
+                O.SHOP_ID,
+                OI.PLATFORM_SKU CUST_MAT_NO,
+                OI.STOCK_SKU    MATERIAL_ID,
+                S.FINANCE_CODE
+        FROM MABANG_ORDERS O  LEFT JOIN MABANG_ORDER_ITEM OI
+            ON O.ERP_ORDER_ID = OI.ORIGIN_ORDER_ID
+        LEFT JOIN MABANG_SHOP_LIST S
+            ON O.SHOP_ID = S.ID
+        WHERE       S.FINANCE_CODE IS NOT NULL
+                    AND O.PLATFORM_ID IS NOT NULL
+                    AND O.SHOP_ID IS NOT NULL
+                    AND OI.STOCK_SKU IS NOT NULL
+                    AND OI.PLATFORM_SKU IS NOT NULL
+                    AND OI.STOCK_WAREHOUSE_NAME NOT LIKE '%递四方%'
+                    AND OI.STOCK_WAREHOUSE_ID  !='1049872'
+                    AND O.PLATFORM_ID  IN('LAZADA', 'eBay','速卖通','Shopee','Mercadolibre')
+                    AND (OI.Stock_Warehouse_Name ='雁田定制仓' OR OI.STOCK_WAREHOUSE_ID = 1047844)
+                    AND OI.STATUS = 3
+                    AND O.CREATE_MAT = 0
+        GROUP BY    O.PLATFORM_ID,
+                    O.SHOP_ID,
+                    OI.PLATFORM_SKU,
+                    OI.STOCK_SKU,
+                    S.FINANCE_CODE
+    </select>
+    <select id="exportList"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3CustMatMappingResult">
+
+        SELECT          T.BILL_CODE,
+                        T.SUMMARY_ID,
+                        T.NAME,
+                        T.FINANCE_CODE,
+                        T.SALE_ORG_ID,
+                        T.CUSTOMER_ID,
+                        T.DOCUMENT_STATUS,
+                        T.IS_MULTIPLE,
+                        T.CUST_MAT_NO,
+                        T.CUST_MAT_NAME,
+                        T.MATERIAL_ID,
+                        T.MATERIAL_NAME,
+                        CASE T.EFFECTIVE WHEN '1' THEN '启用' ELSE '未启用' END EFFECTIVE,
+                        T.FNSKU,
+                        T.DEF_CARRY,
+                        T.SHORT_DESC,
+                        T.STATION,
+                        T.BSC_COLOR,
+                        T.BSC_TEMPLATE_NAME,
+                        CASE T.SYNC_STATUS  WHEN  '0' THEN '同步失败' WHEN  '1' THEN '同步成功' ELSE '其他' END SYNC_STATUS,
+                        T.SYNC_TIME  FROM K3_CUST_MAT_MAPPING T
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY SYNC_TIME DESC
+
+
+    </select>
+    <select id="queryNames" resultType="java.lang.String">
+        SELECT DISTINCT  NAME  FROM K3_CUST_MAT_MAPPING  WHERE NAME IS NOT NULL  ORDER BY UPPER(NAME)
+    </select>
+
+
+    <insert id="createMat" parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.K3CustMatMappingParam">
+        MERGE INTO K3_CUST_MAT_MAPPING T1
+        USING (SELECT O.PLATFORM_ID,
+                      O.SHOP_ID,
+                      OI.PLATFORM_SKU MATERIAL_ID,
+                      OI.STOCK_SKU    CUST_MAT_NO,
+                      S.FINANCE_CODE,
+                      O.CREATE_MAT
+        FROM MABANG_ORDERS O
+        LEFT JOIN MABANG_ORDER_ITEM OI
+            ON O.ERP_ORDER_ID = OI.ORIGIN_ORDER_ID
+        LEFT JOIN MABANG_SHOP_LIST S
+            ON O.SHOP_ID = S.ID
+        WHERE       S.FINANCE_CODE IS NOT NULL
+                    AND O.PLATFORM_ID IS NOT NULL
+                    AND O.SHOP_ID IS NOT NULL
+                    AND OI.STOCK_SKU IS NOT NULL
+                    AND OI.PLATFORM_SKU IS NOT NULL
+                    AND O.CREATE_MAT != 1
+        GROUP BY O.PLATFORM_ID,
+                 O.SHOP_ID,
+                 OI.PLATFORM_SKU,
+                 OI.STOCK_SKU,
+                 S.FINANCE_CODE,
+                 O.CREATE_MAT) T2
+        ON (T1.PLATFORM_ID = T2.PLATFORM_ID AND T1.SHOP_ID = T2.SHOP_ID AND T1.MATERIAL_ID = T2.MATERIAL_ID AND T1.CUST_MAT_NO = T2.CUST_MAT_NO AND T1.FINANCE_CODE = T2.FINANCE_CODE)
+        WHEN NOT MATCHED THEN
+            INSERT
+                (PLATFORM_ID,
+                SHOP_ID,
+                MATERIAL_ID,
+                CUST_MAT_NO,
+                FINANCE_CODE,
+                UPDATE_TIME)
+        VALUES
+                (T2.PLATFORM_ID,
+                T2.SHOP_ID,
+                T2.MATERIAL_ID,
+                T2.CUST_MAT_NO,
+                T2.FINANCE_CODE,
+                SYSDATE)
+
+
+</insert>
+
+
+</mapper>

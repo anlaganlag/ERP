@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productplan.mapper.RdPreProposalUpMapper">
+    <insert id="savaBatch" parameterType="com.tadpole.cloud.product.api.productplan.model.params.RdPreProposalUpParam">
+        INSERT INTO PRODUCT.RD_PRE_PROPOSAL_UP(
+            ID, SYS_YA_CODE, SYS_G_NUM, SYS_IMPROVE_POINT, SYS_IMPROVE_POINT_PIC, SYS_SEVERITY, SYS_IS_ADOPT, SYS_NOT_ADOPT_DESC
+        )
+        values
+        <foreach collection="paramList" separator="," item="offer">
+        (
+            #{offer.id},
+            #{offer.sysYaCode},
+            #{offer.sysGNum},
+            #{offer.sysImprovePoint},
+            #{offer.sysImprovePointPic},
+            #{offer.sysSeverity},
+            #{offer.sysIsAdopt},
+            #{offer.sysNotAdoptDesc}
+        );
+        </foreach>
+    </insert>
+
+</mapper>

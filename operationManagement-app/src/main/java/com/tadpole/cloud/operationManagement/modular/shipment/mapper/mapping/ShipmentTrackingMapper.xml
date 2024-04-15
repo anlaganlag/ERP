@@ -1,0 +1,662 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.shipment.mapper.ShipmentTrackingMapper">
+
+    <sql id="List_Condition">
+            1=1
+
+            <if test="paramCondition.departmentList != null and paramCondition.departmentList.size()>0">
+                AND t1.department IN
+                <foreach collection="paramCondition.departmentList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.teamList != null and paramCondition.teamList.size()>0">
+                AND t1.team IN
+                <foreach collection="paramCondition.teamList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.areaList != null and paramCondition.areaList.size()>0">
+                AND t1.area IN
+                <foreach collection="paramCondition.areaList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.asin != null and paramCondition.asin != ''">
+                AND t1.asin = #{paramCondition.asin}
+            </if>
+            <if test="paramCondition.asinList != null and paramCondition.asinList.size()>0">
+                AND t1.asin IN
+                <foreach collection="paramCondition.asinList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.materialCode != null and paramCondition.materialCode != ''">
+                AND t1.material_code = #{paramCondition.materialCode}
+            </if>
+
+            <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size()>0">
+                AND t1.material_code IN
+                <foreach collection="paramCondition.materialCodeList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+        <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size()>0">
+            AND t1.product_type IN
+            <foreach collection="paramCondition.productTypeList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.productNameList != null and paramCondition.productNameList.size()>0">
+            AND t1.product_name IN
+            <foreach collection="paramCondition.productNameList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.applyPerson != null and paramCondition.applyPerson != ''">
+            AND t1.APLLY_PERSON = #{paramCondition.applyPerson}
+        </if>
+
+
+        <if test="paramCondition.shipmentId != null and paramCondition.shipmentId != ''">
+            AND t4.shipment_id = #{paramCondition.shipmentId}
+        </if>
+
+
+        <if test="paramCondition.billNo != null and paramCondition.billNo != ''">
+            AND t2.bill_no = #{paramCondition.billNo}
+        </if>
+
+        <if test="paramCondition.billNoList != null and paramCondition.billNoList.size()>0">
+            AND t2.bill_no IN
+            <foreach collection="paramCondition.billNoList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.sku != null and paramCondition.sku != ''">
+            AND t2.SKU = #{paramCondition.sku}
+        </if>
+
+
+        <if test="paramCondition.trackState != null and paramCondition.trackState != ''">
+            AND t1.tracking_status = #{paramCondition.trackState}
+        </if>
+
+        <if test="paramCondition.checkStatus != null and paramCondition.checkStatus >=0 ">
+            AND t1.check_status = #{paramCondition.checkStatus}
+        </if>
+
+        <if test="paramCondition.applyTrackStatus != null and paramCondition.applyTrackStatus != '' ">
+            AND t3.apply_track_status = #{paramCondition.applyTrackStatus}
+        </if>
+
+        <if test="paramCondition.applyTrackStatusNameList != null and paramCondition.applyTrackStatusNameList.size()>0">
+            AND CASE t3.apply_track_status
+                WHEN 0 THEN        '待审核'
+                WHEN 1 THEN        '已通过'
+                WHEN 2 THEN        '未通过'
+                WHEN 3 THEN        '待拣货'
+                WHEN 4 THEN        '拣货中'
+                WHEN 5 THEN        '装箱中'
+                WHEN 6 THEN        '物流中'
+                WHEN 7 THEN        '接收中'
+                WHEN 8 THEN        '已完结'
+                WHEN 9 THEN        '已撤销'        ELSE        '未知状态'        END  IN
+            <foreach collection="paramCondition.applyTrackStatusNameList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.transportationType != null and paramCondition.transportationType != '' ">
+            AND t2.transportation_type = #{paramCondition.transportationType}
+        </if>
+
+        <if test="paramCondition.transportationTypeList != null and paramCondition.transportationTypeList.size()>0">
+            AND t2.transportation_type IN
+            <foreach collection="paramCondition.transportationTypeList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.sysShopsName != null and paramCondition.sysShopsName != '' ">
+            AND t2.sys_shops_name = #{paramCondition.sysShopsName}
+        </if>
+
+
+        <if test="paramCondition.sysSite != null and paramCondition.sysSite != '' ">
+            AND t2.sys_site = #{paramCondition.sysSite}
+        </if>
+
+
+
+        <if test="paramCondition.sysShopsNameList != null and paramCondition.sysShopsNameList.size()>0">
+            AND t2.sys_shops_name IN
+            <foreach collection="paramCondition.sysShopsNameList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.sysSiteList != null and paramCondition.sysSiteList.size()>0">
+            AND t2.sys_site IN
+            <foreach collection="paramCondition.sysSiteList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+
+
+        <if test="paramCondition.checkStatusList != null and paramCondition.checkStatusList.size()>0">
+            AND t1.check_status IN
+            <foreach collection="paramCondition.checkStatusList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+
+        <if test="paramCondition.applyDateStart != null">
+            AND t1.apply_date >= #{paramCondition.applyDateStart}
+        </if>
+        <if test="paramCondition.applyDateEnd != null">
+            AND t1.apply_date &lt;=  #{paramCondition.applyDateEnd} +1-interval '1' SECOND
+        </if>
+
+        <if test="paramCondition.checkDateStart != null">
+            AND t1.check_date >= #{paramCondition.checkDateStart}
+        </if>
+        <if test="paramCondition.checkDateEnd != null">
+            AND t1.check_date &lt;=  #{paramCondition.checkDateEnd} +1-interval '1' SECOND
+        </if>
+
+--         数据权限
+        <if test="paramCondition.dataScopePeople != null and paramCondition.dataScopePeople !=''">
+            and t1.APLLY_PERSON_NO IN  ${paramCondition.dataScopePeople}
+        </if>
+
+        <if test="paramCondition.dataScopeMaterial != null and paramCondition.dataScopeMaterial !=''">
+            ${paramCondition.dataScopeMaterial}
+        </if>
+
+        <if test="paramCondition.dataScopeArea != null and paramCondition.dataScopeArea !=''">
+            ${paramCondition.dataScopeArea}
+        </if>
+
+    </sql>
+
+
+    <select id="getErpTransfer" parameterType="java.util.Set"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ErpTransferResult">
+
+        SELECT
+            --h.FID ,
+        MAX(h.FBILLNO) pickListCode, -- 拣货单号,
+        MAX(h.F_UNW_SOURCEBILLNO) billNo, -- 调拨申请编号,
+        MAX(h.FAPPROVEDATE) pickFinishDate, --拣货完成日期
+
+            case max(h.FCANCELSTATUS)
+            when 'A' then '未作废'
+            when 'B' then '已作废'
+            end fcancelStatus, --  作废状态,
+
+            case max(h.F_UNW_PICKINGMETHOD)
+            when 'A' then '待拣货'
+            when 'B' then  '已拣货'
+            end fUnwPickingmethod, -- 拣货状态,
+
+            case max(h.FDOCUMENTSTATUS)
+            when 'A' then '创建'
+            when 'B' then '审核中'
+            when 'C' then  '已审核'
+            when 'D' then '重新审核'
+            when 'Z' then '暂存'
+            end fDocumentStatus, -- 数据状态,
+        MAX(h.FDOCUMENTSTATUS) fDocumentStatus, -- 数据状态,
+           -- h.FMODIFYDATE1 拣货完成日期,
+           -- h.FCREATEDATE 拣货单创建日期,
+           -- i.F_UNW_SKU,
+           -- i.F_UNW_MATERIALID,
+        SUM(i.F_UNW_APPLYQTY) applySendQty, -- 申请数量,
+           -- i.F_UNW_UNPICKEDQTY pickQty-- 待拣数量 ,
+        SUM(i.FSCANQTY) pickQty,  -- 已拣数量 ,
+           -- f.F_UNW_PACKINGAPPLYQTY 拣货单总的sku申请数量,
+           --f.F_UNW_PACKINGACTUALPICKING 实际拣货数量,
+        MAX(f.F_UNW_RETURNQTY) returnQty, -- 返仓数量,
+        SUM(f.F_UNW_PACKINGQTY) actualSendQty -- 装箱数量,
+            --f.F_UNW_PACKINGINTERCEPTQTY 结票数量,
+            --f.F_UNW_PACKINGSHIPMENTQTY 出货数量
+        from
+            UNW_PickingBill h
+                join UNW_PickingBillEntry i on
+                h.FID = i.FID
+                JOIN UNW_PackingInfoEntry f on
+                h.FID = f.FID
+        WHERE 1=1
+            <if test="billNoSet != null and billNoSet.size>0">
+                AND h.F_UNW_SOURCEBILLNO IN --调拨单号
+                <foreach collection="billNoSet" open="(" close=")" separator=","
+                         item="billNo">
+                    #{billNo}
+                </foreach>
+            </if>
+
+        GROUP  BY  h.FBILLNO, h.F_UNW_SOURCEBILLNO
+           -- h.FCANCELSTATUS = 'A' AND-- 作废状态 A 未作废，B已作废
+           -- H.F_UNW_PICKINGMETHOD = 'B'AND -- 拣货状态 A 待拣货，B已拣货
+           -- h.FDOCUMENTSTATUS = 'C'  -- 数据状态 A创建，B审核中，C已审核，D 重新审核，Z 暂存
+    </select>
+
+
+    <select id="getErpShipping" parameterType="java.util.Set"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.TrackingShippingResult">
+        SELECT
+            case MAX(h.FDOCUMENTSTATUS)
+            when 'A' then '创建'
+            when 'B' then '审核中'
+            when 'C' then  '已审核'
+            when 'D' then '重新审核'
+            when 'Z' then '暂存'
+            end fDocumentStatus, -- 数据状态,
+        MAX(h.FBILLNO) shippingListCode, --出货清单号,
+        MAX(h.FFBA) shipmentId,-- FBA编号,
+        MAX(i.FPICKLISTBILLNO) pickListCode, -- 拣货单号,
+        MAX(i.FTRANSFERAPPLYBILLNO) billNo, -- 调拨单号,
+          --i.FBOXSEQ 箱号,
+        SUM(i.FQTY) shipingQty, --出货清单数量,
+        MAX(h.FCREATEDATE) packingFinishDate -- 出货清单创建时间
+        FROM
+            T_UNW_ShippingList h join T_UNW_ShippingListEntry i on h.FID =i.FID
+        WHERE
+            <if test="pickCodeSet != null and pickCodeSet.size>0">
+                 i.FPICKLISTBILLNO IN --拣货单号
+                <foreach collection="pickCodeSet" open="(" close=")" separator=","
+                         item="pickCode">
+                    #{pickCode}
+                </foreach>
+            </if>
+        GROUP BY h.FBILLNO,h.FFBA,i.FPICKLISTBILLNO,i.FTRANSFERAPPLYBILLNO
+
+    </select>
+
+    <select id="getEbmsLogistics" parameterType="java.util.Set"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.TrackingLogisticsResult">
+        SELECT
+            MAX(C.LhrCode) sendBatchNo, --发货批次号 ,
+            MAX(c.LhrSendGoodDate) logisticsSendDate, --发货日期 ,
+            MAX(c.LogTraMode2) logisticsMode, --运输方式 ,
+            MAX(c.LhrOddNumb) logisticsNumber,-- 物流单号,
+            MAX(x.pickListCode) pickListCode ,-- 拣货单号,
+            MAX(c.PackCode) shippingListCode, -- 出货清单号,
+            MAX(c.ShipmentID) shipmentId,
+            SUM(x.Quantity) logisticsSendQty ,-- 发货数量,
+            MAX(LhrdState) logisticsState, -- 物流状态,
+            MAX(c.LerSignDate) signDate, --签收日期
+            MAX(c.LhrNote) remark,   --备注
+            MAX(c.LhrPreArriveDate) preArriveDate --预计到达日期
+        FROM
+        TbLogisticsPackingListDet2 x
+        join
+        (
+             SELECT
+                 a.LhrCode,  --发货批次号
+                 a.LhrSendGoodDate, -- 发货日期
+                 a.LogTraMode2, -- 运输方式
+                 b.LhrOddNumb ,  --物流单号
+                 b.PackCode,
+                 ShipmentID ,
+                 b.LhrdState,
+                 PackDetBoxNum,
+                 a2.LerSignDate,
+                 a.LhrNote,
+                 a.LhrPreArriveDate
+             FROM
+                  TbLogisticsListToHeadRoute a
+                     join (
+                     SELECT
+                         MAX(LhrCode) LhrCode ,
+                         MAX(LhrOddNumb) LhrOddNumb,
+                         MAX(PackCode) PackCode,
+                         MAX(ShipmentID) ShipmentID,
+                         MAX(LhrdState)LhrdState,
+                         PackDetBoxNum
+                     FROM
+                          TbLogisticsListToHeadRouteDet
+                     --						WHERE PackCode ='CHQD20210520033'
+                     GROUP by
+                         LhrCode ,
+                         PackCode,
+                         LhrOddNumb,
+                         PackDetBoxNum
+                     ) b
+            ON a.LhrCode = b.LhrCode
+            JOIN TbLogisticsListToEndRoute a2 on a.LhrOddNumb = a2.LhrOddNumb AND a.LhrCode = a2.LhrCode
+        ) c
+        ON x.packCode = c.PackCode AND x.packDetBoxNum = c.PackDetBoxNum
+        WHERE
+
+            <if test="shippingListCodeSet != null and shippingListCodeSet.size>0">
+                x.PackCode  IN --出货清单号
+                <foreach collection="shippingListCodeSet" open="(" close=")" separator=","
+                         item="shippingListCode">
+                    #{shippingListCode}
+                </foreach>
+            </if>
+
+        GROUP by
+            c.LhrCode,
+            c.LhrSendGoodDate,
+            c.LogTraMode2,
+            c.LhrOddNumb,
+            c.PackCode,
+            c.ShipmentID,
+            x.pickListCode
+
+    </select>
+
+    <select id="getCompensateDataFromEbms" parameterType="java.util.Set"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.EbmsCompensateResult">
+
+        select
+--             MAX(t1.pkClaimID),
+            MAX(t1.busShipmentID) shipmentId ,
+            MAX(t2.busLhrOddNumb) logisticsNumber , -- 物流单号
+            MAX(t2.busSKU) sku ,
+            SUM(t2.busReceiveQty) receiveQty , -- 接收数量
+            MAX(t2.busComWarehouseName) busComWarehouseName, -- 发货仓库名称：国内仓，海外仓
+            MAX(t1.busShipmentID) + MAX(t2.busLhrOddNumb) + MAX(t2.busSKU)  mergeField  -- shipmentId + logisticsNumber + sku 更新接收数量
+        from
+            TbLogisticsClaimToAmazon t1
+            join TbLogisticsClaimDetToAmazon t2 on t1 .pkClaimID = t2 .pkClaimID
+        WHERE
+                <if test="shipmentIdSet != null and shipmentIdSet.size>0">
+                    t1.busShipmentID IN --shipmentId
+                    <foreach collection="shipmentIdSet" open="(" close=")" separator=","
+                     item="shipmentId">
+                        #{shipmentId}
+                    </foreach>
+                </if>
+        GROUP BY
+         t1.busShipmentID,
+         t2.busLhrOddNumb,
+         t2.busSKU
+    </select>
+
+    <select id="getReceiveQtyFromWareHouse" parameterType="java.util.Set"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.WareHouseReceiveResult">
+
+        SELECT
+            MAX(REFERENCE_ID) shipmentId,
+            MAX(SYS_SHOPS_NAME) sysShopsName,
+            MAX(ASIN) asin ,
+            MAX(FNSKU) fnsku ,
+            MAX(SKU) sku,
+            MAX(SYS_SITE) sysSite,
+            SUM(QUANTITY) receiveQty ,
+            MAX(BUSINESS_DATE) businessDate ,
+            MAX(REFERENCE_ID)||MAX(SKU)||MAX(SYS_SITE)  mergeField
+        FROM
+        INVENTORY_LEDGER_DETAILED
+        WHERE
+            EVENT_TYPE = 'Receipts'
+            <if test="shipmentIdSet != null and shipmentIdSet.size>0">
+                AND REFERENCE_ID IN --shipmentId
+                <foreach collection="shipmentIdSet" open="(" close=")" separator=","
+                     item="shipmentId">
+                    #{shipmentId}
+                </foreach>
+            </if>
+
+        GROUP BY
+            REFERENCE_ID ,
+            FNSKU,
+            ASIN,
+            SKU,
+            SYS_SITE,
+            SYS_SHOPS_NAME
+
+
+    </select>
+
+
+
+    <select id="trackFlatList"
+            parameterType="com.tadpole.cloud.operationManagement.modular.shipment.model.params.TrackParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.TrackingFlatVO">
+        SELECT
+            t1.apply_batch_no,
+            t1.data_source_type,
+            t1.apply_date,
+            t1.aplly_person,
+            t1.aplly_person_no,
+            t1.platform,
+            t1.area,
+            t1.department,
+            t1.team,
+            t1.material_code,
+            t1.asin,
+            t1.send_qty,
+            t1.transportation_type batch_transportation_type,
+            t1.apply_status,
+            t1.check_date batch_check_date,
+            t1.check_person,
+            t1.check_reason,
+            t1.tracking_status,
+            t1.actual_send_qty batch_actual_send_qty,
+            t1.actual_arrival_qty,
+            case t1.check_status
+            when 0 then '待审核'
+            when 1 then '已通过'
+            when 2 then '未通过'
+            else '未知状态' end as checkStatusName,
+            t1.material_Info,
+            t2.bill_no,
+            t3.pick_list_code,
+            t2.sys_shops_name,
+            t2.sys_site,
+            t2.sku,
+            t3.shop_name,
+            t2.fba_no,
+            t3.receive_warehouse,
+            t3.apply_send_qty,
+            t3.transportation_type,
+            CASE t3.apply_track_status
+            WHEN 0 THEN        '待审核'
+            WHEN 1 THEN        '已通过'
+            WHEN 2 THEN        '未通过'
+            WHEN 3 THEN        '待拣货'
+            WHEN 4 THEN        '拣货中'
+            WHEN 5 THEN        '装箱中'
+            WHEN 6 THEN        '物流中'
+            WHEN 7 THEN        '接收中'
+            WHEN 8 THEN        '已完结'
+            WHEN 9 THEN        '已撤销'        ELSE        '未知状态'        END AS applyTrackStatusName,
+            t3.check_date,
+            t3.sync_time,
+            t3.pick_finish_date,
+            t3.pick_qty,
+            t3.return_qty, -- 返仓数量
+            t3.actual_send_qty,
+            t4.shipping_list_code,
+            t4.packing_finish_date,
+            t4.shipment_id,
+            t4.receive_end_date,
+            t4.shiping_qty ,
+            t4.receive_qty,
+            t5.logistics_number,
+            t5.logistics_send_date,
+            t5.logistics_mode,
+            t5.logistics_send_qty,
+            t5.logistics_state,
+            t5.sign_date,
+            t5.sign_qty,
+            t5.remark,
+            t5.pre_arrive_date,
+            t3.revoke_person,
+            t3.revoke_date,
+            t3.revoke_reason,
+            t3.revoke_erp_result,
+            t2.unw_type
+        FROM shipment_tracking t1
+            JOIN MCMS_BASE_DATA.RP_MATERIAL material
+                ON t1.MATERIAL_CODE = material.MATERIAL_CODE
+            LEFT JOIN shipment_apply_item t2
+                ON t1.apply_batch_no = t2.apply_batch_no
+            LEFT JOIN tracking_transfer t3
+                ON t2.bill_no=t3.bill_no
+            LEFT JOIN tracking_shipping t4
+                ON  t3.PICK_LIST_CODE =t4.PICK_LIST_CODE AND t4.BILL_NO =t3.BILL_NO
+        LEFT JOIN tracking_logistics t5
+                ON   t4.SHIPPING_LIST_CODE = t5.SHIPPING_LIST_CODE  AND t5.BILL_NO =t3.BILL_NO
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+
+        ORDER BY t1.CREATED_TIME DESC ,t1.ID  DESC
+
+    </select>
+
+
+
+    <select id="trackBatchList"
+            parameterType="com.tadpole.cloud.operationManagement.modular.shipment.model.params.TrackParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ShipmentTrackingResult">
+        SELECT t1.*,
+            case t1.CHECK_STATUS
+            when 0 then '待审核'
+            when 1 then '已通过'
+            when 2 then '未通过'
+            else '未知状态' end as checkStatusName
+
+        FROM SHIPMENT_TRACKING t1
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t1.CREATED_TIME DESC
+
+    </select>
+
+
+    <select id="trackTransferList"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.TrackingTransferResult">
+        SELECT t.*,
+--         0待审核-1已通过-2未通过-3待拣货-4拣货中-5装箱中-6物流中-7接收中-8已完结-9已撤销
+               case t.APPLY_TRACK_STATUS
+                   when 0 then '待审核'
+                   when 1 then '已通过'
+                   when 2 then '未通过'
+                   when 3 then '待拣货'
+                   when 4 then '拣货中'
+                   when 5 then '装箱中'
+                   when 6 then '物流中'
+                   when 7 then '接收中'
+                   when 8 then '已完结'
+                   when 9 then '已撤销'
+                   else '未知状态' end as applyTrackStatusName,
+                   t2.unw_type
+               FROM TRACKING_TRANSFER t
+               JOIN (SELECT  bill_no, max(unw_type) unw_type FROM SHIPMENT_APPLY_ITEM GROUP BY bill_no) t2
+               ON t.bill_no = t2.bill_no
+        <where>
+            <if test="applyBatchNo != null and applyBatchNo != ''">
+                AND t.apply_batch_no = #{applyBatchNo}
+            </if>
+        </where>
+
+
+    </select>
+
+
+    <select id="trackLogisticsList"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.TrackingShipLogResult">
+        SELECT * FROM TRACKING_SHIPPING T1
+            LEFT JOIN TRACKING_LOGISTICS T2 ON T1.BILL_NO = T2.BILL_NO
+        <where>
+                AND t1.BILL_NO = #{billNo}
+        </where>
+    </select>
+    <select id="getSkuStatus" resultType="java.lang.String">
+
+        SELECT
+            DISTINCT  a.ShipmentID + a.MerchantSKU
+        FROM TbLogisticsPackListBoxRecDet a join TbLogisticsPackListBoxRec b on a.SysID = b.SysID
+        WHERE
+              A.ShipmentRealStatus  ='已完成'
+        <if test="mergeFields != null and mergeFields.size > 0">
+            AND  a.ShipmentID + a.MerchantSKU IN
+            <foreach collection="mergeFields" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+
+
+    <update  id="calcSumQty"   parameterType="java.util.List">
+        merge into SHIPMENT_TRACKING a
+        USING (
+            SELECT SUM(ACTUAL_SEND_QTY) ACTUAL_SEND_QTY,
+                    SUM(RECEIVE_QTY) RECEIVE_QTY,
+                    SUM(APPLY_SEND_QTY) APPLY_SEND_QTY,
+                    CASE (MIN(APPLY_TRACK_STATUS))
+                    WHEN 8 then '已完结'
+                    WHEN 9 then '已完结'
+                    ELSE '执行中' END TRACK_STATUS,
+                    MAX(APPLY_BATCH_NO) APPLY_BATCH_NO
+
+            FROM (
+                        SELECT SUM(NVL(ACTUAL_SEND_QTY, 0)) ACTUAL_SEND_QTY,
+                                SUM(NVL(APPLY_SEND_QTY, 0)) APPLY_SEND_QTY,
+                                0 RECEIVE_QTY,
+                                MIN(NVL(APPLY_TRACK_STATUS,0)) APPLY_TRACK_STATUS,
+                                MAX(APPLY_BATCH_NO) APPLY_BATCH_NO
+                         FROM TRACKING_TRANSFER
+                            WHERE APPLY_TRACK_STATUS != 9
+                            <if test="batchNoList != null and batchNoList.size > 0">
+                                AND APPLY_BATCH_NO IN
+                                    <foreach collection="batchNoList"
+                                     index="index" item="item" open="(" separator="," close=")">
+                                         #{item}
+                                    </foreach>
+                             </if>
+                            GROUP BY APPLY_BATCH_NO
+                        UNION ALL
+                        (SELECT 0 ACTUAL_SEND_QTY,
+                                0 APPLY_SEND_QTY,
+                                SUM(NVL(RECEIVE_QTY, 0)) RECEIVE_QTY,
+                                99 APPLY_TRACK_STATUS,
+                                MAX(APPLY_BATCH_NO)      APPLY_BATCH_NO
+                         FROM TRACKING_SHIPPING
+                         WHERE
+                               <if test="batchNoList != null and batchNoList.size > 0">
+                                 APPLY_BATCH_NO IN
+                                   <foreach collection="batchNoList" index="index" item="item" open="(" separator="," close=")">
+                                       #{item}
+                                   </foreach>
+                               </if>
+                         GROUP BY APPLY_BATCH_NO
+                        )
+                   )GROUP BY APPLY_BATCH_NO
+                ) b ON (a.APPLY_BATCH_NO = b.APPLY_BATCH_NO)
+            WHEN MATCHED THEN
+                update set a.ACTUAL_SEND_QTY = b.ACTUAL_SEND_QTY ,
+                           a.ACTUAL_ARRIVAL_QTY = b.RECEIVE_QTY,
+                           a.SEND_QTY = b.APPLY_SEND_QTY,
+                           a.TRACKING_STATUS=b. TRACK_STATUS
+                        WHERE   a.APPLY_BATCH_NO =b.APPLY_BATCH_NO AND a.TRACKING_STATUS ='执行中'
+    </update>
+
+
+</mapper>

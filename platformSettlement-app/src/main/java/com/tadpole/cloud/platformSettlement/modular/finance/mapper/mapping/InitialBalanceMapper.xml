@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.InitialBalanceMapper">
+
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.InitialBalanceResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.InitialBalanceParam">
+        select
+        B.*,S.ORIGINAL_CURRENCY
+        from CW_INITIAL_BALANCE B left join  CW_SHOP_CURRENCY S
+            ON B.PLATFORM_NAME=S.PLATFORM_NAME AND B.SHOP_NAME=S.SHOP_NAME AND B.SITE=S.SITE where 1=1
+      <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and B.SHOP_NAME =#{paramCondition.shopName}
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site != ''">
+            and B.site =#{paramCondition.site}
+      </if>
+    </select>
+
+  <select id="exportInitialBalanceList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.InitialBalanceResult"
+    parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.InitialBalanceParam">
+      select
+      B.*,S.ORIGINAL_CURRENCY
+      from CW_INITIAL_BALANCE B left join  CW_SHOP_CURRENCY S
+      ON B.PLATFORM_NAME=S.PLATFORM_NAME AND B.SHOP_NAME=S.SHOP_NAME AND B.SITE=S.SITE where 1=1
+      <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+          and B.SHOP_NAME =#{paramCondition.shopName}
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site != ''">
+          and B.site =#{paramCondition.site}
+      </if>
+  </select>
+
+</mapper>

@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: bsc-cloud-operationManagement
+  profiles:
+    active:  dev
+  servlet:
+    multipart:
+      max-file-size: 51200000000     # 文件上传大小限制为500MB
+      max-request-size: 51200000000  # 请求大小限制为500MB
+
+
+
+

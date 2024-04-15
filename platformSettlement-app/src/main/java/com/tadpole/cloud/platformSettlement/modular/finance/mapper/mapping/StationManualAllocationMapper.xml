@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.StationManualAllocationMapper">
+
+
+    <sql id="STATION_CONDITION">
+    <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+        AND fiscal_Period  = #{param.fiscalPeriod}
+    </if>
+
+    <if test="param.shopName != null and param.shopName != ''">
+        AND shop_Name  = #{param.shopName}
+    </if>
+
+    <if test="param.sites != null and param.sites.size() != 0">
+        AND site IN
+        <foreach collection="param.sites" item="sites" index="index" separator="," open="(" close=")">
+            #{sites}
+        </foreach>
+    </if>
+
+    <if test="param.shopNames != null and param.shopNames.size() != 0">
+        AND shop_Name IN
+        <foreach collection="param.shopNames" item="shopName" index="index" separator="," open="(" close=")">
+            #{shopName}
+        </foreach>
+    </if>
+</sql>
+
+
+    <sql id="DESTORY_CONDITION">
+        <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+            AND to_char(DURATION, 'yyyy-mm')  = #{param.fiscalPeriod}
+        </if>
+
+        <if test="param.shopName != null and param.shopName != ''">
+            AND sys_shops_name  = #{param.shopName}
+        </if>
+
+
+        <if test="param.shopNames != null and param.shopNames.size() != 0">
+            AND sys_shops_name IN
+            <foreach collection="param.shopNames" item="shopName" index="index" separator="," open="(" close=")">
+                #{shopName}
+            </foreach>
+        </if>
+
+        <if test="param.site != null and param.site != ''">
+            AND sys_site  = #{param.site}
+        </if>
+
+
+        <if test="param.sites != null and param.sites.size() != 0">
+            AND sys_site IN
+            <foreach collection="param.sites" item="sites" index="index" separator="," open="(" close=")">
+                #{sites}
+            </foreach>
+        </if>
+
+    </sql>
+
+
+    <sql id="PRODUCT_CONDITION">
+        <if test="param.shopName != null and param.shopName != ''">
+            AND sys_shops_name  = #{param.shopName}
+        </if>
+
+
+        <if test="param.shopNames != null and param.shopNames.size() != 0">
+            AND sys_shops_name IN
+            <foreach collection="param.shopNames" item="shopName" index="index" separator="," open="(" close=")">
+                #{shopName}
+            </foreach>
+        </if>
+
+        <if test="param.site != null and param.site != ''">
+            AND sys_site  = #{param.site}
+        </if>
+
+
+        <if test="param.sites != null and param.sites.size() != 0">
+            AND sys_site IN
+            <foreach collection="param.sites" item="sites" index="index" separator="," open="(" close=")">
+                #{sites}
+            </foreach>
+        </if>
+
+    </sql>
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.StationManualAllocationResult">
+
+        SELECT  A.ID,A.ALLOC_ID,
+        A.FISCAL_PERIOD,
+        A.REPORT_TYPE,
+        A.INCOME_TYPE,
+        A.SHOP_NAME,
+        A.SITE,
+        A.SKU,
+        A.DEPARTMENT,
+        A.TEAM,
+        A.MATERIAL_CODE,
+        A.ACCOUNTING_CURRENCY,
+        A.SALES_BRAND,
+        A.ADVERTISING,
+        A.STORAGE_FEE,
+        A.CONFIRM_DATE,
+        A.CONFIRM_BY,
+        CASE A.CONFIRM_STATUS
+        WHEN 1 THEN '已确认'
+        ELSE '未确认'
+        END AS CONFIRM_STATUS_TXT,
+        A.Dispose_Fee,
+        A.Removal_Deal,
+        A.Storage_Fee_Ori,
+        A.Storage_Fee_Alloc_Rate,
+        A.Create_By,
+        A.Create_At,
+        decode(A.material_code,'0',A.PRODUCT_TYPE,B.product_type) product_type,
+        decode(A.material_code,'0','0',B.CATEGORY) CATEGORY,
+        decode(A.material_code,'0','0',B.PRODUCT_NAME) PRODUCT_NAME,
+        decode(A.material_code,'0','0',B.STYLE) STYLE,
+        decode(A.material_code,'0','0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+        decode(A.material_code,'0','0',B.DESIGN) DESIGN,
+        decode(A.material_code,'0','0',B.COMPANY_BRAND) COMPANY_BRAND,
+        decode(A.material_code,'0','0',B.FIT_BRAND) FIT_BRAND,
+        decode(A.material_code,'0','0',B.MODEL) MODEL,
+        decode(A.material_code,'0','0',B.COLOR) COLOR,
+        decode(A.material_code,'0','0',B.SIZES) SIZES,
+        decode(A.material_code,'0','0',B.PACKING) PACKING,
+        decode(A.material_code,'0','0',B.VERSION) VERSION,
+        decode(A.material_code,'0','0',B.TYPE) TYPE,
+        decode(A.material_code,'0','0',B.BUYER) BUYER,
+        decode(A.material_code,'0','0',B.DEVELOPER) DEVELOPER,
+        decode(A.material_code,'0','0',to_char(B.ACCOUNT_DATE,'yyyy-mm-dd')) ACCOUNT_DATE,
+        decode(A.material_code,'0','0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL
+        FROM RP_STATION_MANUAL_ALLOCATION A
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE = A.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and A.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and A.report_type=#{paramCondition.reportType}
+            </if>
+
+            <choose>
+                <when test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != '' and paramCondition.confirmStatus == 0 ">
+                    AND NVL(A.CONFIRM_STATUS,0) != 1
+                </when>
+
+                <when test="paramCondition.confirmStatus != null and   paramCondition.confirmStatus != '' and paramCondition.confirmStatus == 1 ">
+                    and A.CONFIRM_STATUS = 1
+                </when>
+            </choose>
+
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and A.SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and A.SITE=#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department !=''">
+                and A.DEPARTMENT=#{paramCondition.department}
+            </if>
+
+
+            <if test="paramCondition.team != null and paramCondition.team !=''">
+                and A.TEAM=#{paramCondition.team}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND A.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY A.ALLOC_ID DESC,
+        CASE WHEN A.sku = '超库容费' THEN 1 ELSE 0 END,
+        A.ID,
+        A.FISCAL_PERIOD,
+        A.REPORT_TYPE,
+        A.INCOME_TYPE,
+        A.SHOP_NAME,
+        A.SITE
+    </select>
+
+    <select id="getQuantity"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.StationManualAllocationResult">
+        SELECT
+        SUM(T.STORAGE_FEE) STORAGE_FEE,
+        SUM(T.ADVERTISING) ADVERTISING,
+        SUM(T.STORAGE_FEE_ORI) STORAGE_FEE_ORI,
+        SUM(T.DISPOSE_FEE) DISPOSE_FEE,
+        SUM(T.REMOVAL_DEAL) REMOVAL_DEAL
+        FROM RP_STATION_MANUAL_ALLOCATION T
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and report_type=#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and SITE=#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department !=''">
+                and DEPARTMENT=#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team !=''">
+                and TEAM=#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus !=''">
+                and CONFIRM_STATUS=#{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+            and ALLOC_ID is not null
+        </where>
+    </select>
+
+    <update id="updateToReport" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam">
+        MERGE INTO RP_SETTLEMENT_REPORT T1
+            USING (SELECT
+                       FISCAL_PERIOD,
+                       REPORT_TYPE,
+                       INCOME_TYPE,
+                       SHOP_NAME,
+                       SITE,
+                       SKU,
+                       DEPARTMENT,
+                       TEAM,
+                       A.MATERIAL_CODE,
+                       NVL(B.PRODUCT_TYPE, A.PRODUCT_TYPE) PRODUCT_TYPE,
+                       max(SALES_BRAND) SALES_BRAND,
+                       sum(STORAGE_FEE) STORAGE_FEE,
+                       sum(ADVERTISING) ADVERTISING,
+                       sum(REMOVAL_DEAL) REMOVAL_DEAL,
+                       sum(DISPOSE_FEE) DISPOSE_FEE
+                   FROM RP_STATION_MANUAL_ALLOCATION A
+                   LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B ON B.MATERIAL_CODE = A.MATERIAL_CODE
+                   where  ALLOC_ID = #{paramCondition.id} and CONFIRM_STATUS=0 and ALLOC_ID is not null
+                   group by FISCAL_PERIOD,
+                            REPORT_TYPE,
+                            INCOME_TYPE,
+                            SHOP_NAME,
+                            SITE,
+                            SKU,
+                            DEPARTMENT,
+                            TEAM,
+                            A.MATERIAL_CODE,
+                            NVL(B.PRODUCT_TYPE, A.PRODUCT_TYPE)) T2
+            ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and T1.REPORT_TYPE = T2.REPORT_TYPE and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T1.SKU = T2.SKU and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM and T1.MATERIAL_CODE = T2.MATERIAL_CODE and NVL(T1.PRODUCT_TYPE, '0') = case T2.MATERIAL_CODE
+                                                                                                                                                                                                                                                                                                                                when '0' then NVL(T2.PRODUCT_TYPE, '0') else NVL(T1.PRODUCT_TYPE, '0') end)
+            WHEN NOT MATCHED THEN
+                INSERT
+                    (T1.FISCAL_PERIOD,
+                     T1.REPORT_TYPE,
+                     T1.INCOME_TYPE,
+                     T1.SHOP_NAME,
+                     T1.SITE,
+                     T1.SKU,
+                     T1.DEPARTMENT,
+                     T1.TEAM,
+                     T1.MATERIAL_CODE,
+                     T1.PRODUCT_TYPE,
+                     T1.SALES_BRAND,
+                     T1.STORAGE_FEE,
+                     T1.ADVERTISING,
+                     T1.REMOVAL_DEAL,
+                     T1.DISPOSE_FEE
+                    )
+                    VALUES
+                    (T2.FISCAL_PERIOD,
+                     T2.REPORT_TYPE,
+                     T2.INCOME_TYPE,
+                     T2.SHOP_NAME,
+                     T2.SITE,
+                     T2.SKU,
+                     T2.DEPARTMENT,
+                     T2.TEAM,
+                     T2.MATERIAL_CODE,
+                     NVL(T2.PRODUCT_TYPE, '0'),
+                     T2.SALES_BRAND,
+                     T2.STORAGE_FEE,
+                     T2.ADVERTISING,
+                     T2.REMOVAL_DEAL,
+                     T2.DISPOSE_FEE
+                    )
+            WHEN MATCHED THEN
+                UPDATE
+                    SET T1.STORAGE_FEE = T1.STORAGE_FEE + T2.STORAGE_FEE,
+                        T1.ADVERTISING = T1.ADVERTISING + T2.ADVERTISING,
+                        T1.REMOVAL_DEAL = T1.REMOVAL_DEAL + T2.REMOVAL_DEAL,
+                        T1.DISPOSE_FEE = T1.DISPOSE_FEE + T2.DISPOSE_FEE
+    </update>
+
+
+    <update id="pullStorageFee">
+<!--        MERGE INTO RP_STATION_MANUAL_ALLOCATION A-->
+<!--        USING (-->
+<!--            SELECT t1.wd,t1.fee1+t2.fee2 feeOri FROM (-->
+
+<!--                                                                         SELECT t.month_of_charge || t.sys_shops_name || t.sys_site || t.sku AS wd,-->
+<!--                                                                                COUNT(*),-->
+<!--                                                                                SUM(t.storage_fee) fee1-->
+<!--                                                                         FROM MONTHLY_STORAGE_FEES t-->
+<!--                                                                         WHERE t.month_of_charge  in (SELECT TO_CHAR(ADD_MONTHS(SYSDATE, -LEVEL), 'YYYY-MM')  FROM dual CONNECT BY LEVEL &lt;= 6)-->
+<!--                                                                         GROUP BY t.month_of_charge || t.sys_shops_name || t.sys_site || t.sku ) t1-->
+<!--                                                                         JOIN (SELECT TO_CHAR(t.SNAPSHOT_DATE, 'YYYY-MM') || t.sys_shops_name || t.sys_site || t.sku AS wd,-->
+<!--                                                                                      COUNT(*),-->
+<!--                                                                                      SUM(t.storage_fee)  fee2-->
+<!--                                                                               FROM long_term_storage_fee_charges t-->
+<!--                                                                               WHERE TO_CHAR(t.SNAPSHOT_DATE, 'YYYY-MM') in (SELECT TO_CHAR(ADD_MONTHS(SYSDATE, -LEVEL), 'YYYY-MM')  FROM dual CONNECT BY LEVEL &lt;= 6)-->
+<!--                                                                               GROUP BY TO_CHAR(t.SNAPSHOT_DATE, 'YYYY-MM') || t.sys_shops_name || t.sys_site || t.sku ) t2-->
+<!--                                                                              ON t1.wd = t2.wd-->
+
+<!--        ) B-->
+<!--        ON (         A.fiscal_period||A.shop_name||A.site || A.sku= B.wd             )-->
+<!--        WHEN MATCHED THEN-->
+<!--            UPDATE SET A.STORAGE_FEE_ORI = B.feeOri ,-->
+<!--                       A.STORAGE_FEE_ALLOC_RATE = CASE WHEN NVL(A.STORAGE_FEE,0) = 0 THEN NULL  ELSE B.feeOri / A.STORAGE_FEE END-->
+
+
+    </update>
+
+    <select id="refreshListing" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.StationManualAllocation">
+        SELECT
+        S.id,B.Department,B.Team,B.MATERIAL_CODE
+        FROM (SELECT * FROM  RP_STATION_MANUAL_ALLOCATION
+        <where>
+            sku IS NOT NULL AND
+            ( DEPARTMENT IS NULL OR team IS NULL OR MATERIAL_CODE IS NULL ) AND
+             ALLOC_ID is not null
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and SITE=#{paramCondition.site}
+            </if>
+
+            <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+                AND SITE IN
+                <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+                    #{site}
+                </foreach>
+            </if>
+        </where>
+             )S
+        LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY B ON S.Shop_Name = B.SYS_SHOPS_NAME AND S.Site = B.SYS_SITE AND S.SKU = B.SKU
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON B.MATERIAL_CODE = M.MATERIAL_CODE
+        WHERE B.Department IS NOT NULL OR  B.Team IS NOT NULL OR B.MATERIAL_CODE IS NOT NULL
+
+
+    </select>
+    <select id="fillListing" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam">
+        BEGIN
+        MERGE INTO (SELECT *
+        FROM RP_STATION_MANUAL_ALLOCATION t
+        <where>
+            AND NVL(department, '0') = '0'
+            AND t.alloc_id IS NOT NULL
+            <include refid="STATION_CONDITION"/>
+        </where>) a
+
+         USING (SELECT department,team,material_code,sku,sys_shops_name,sys_site
+                          FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY t
+                         <where>
+                             <include refid="PRODUCT_CONDITION"/>
+                         </where>) b
+         ON (a.shop_name = b.sys_shops_name AND a.site = b.sys_site AND UPPER(a.sku) = UPPER(b.sku))
+         WHEN MATCHED THEN
+                UPDATE
+                    SET a.department    = NVL(b.department,'0'),
+                        a.team          = NVL(b.team,'0'),
+                        a.material_code = NVL(b.material_code,'0');
+
+        MERGE INTO (SELECT *
+        FROM RP_STATION_MANUAL_ALLOCATION t
+        <where>
+            AND NVL(department, '0') = '0'
+            AND t.alloc_id IS NOT NULL
+            <include refid="STATION_CONDITION"/>
+        </where>) a
+
+        USING (SELECT department,team,material_code,sku,sys_shops_name,sys_site
+        FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE t
+        <where>
+            <include refid="PRODUCT_CONDITION"/>
+        </where>) b
+        ON (a.shop_name = b.sys_shops_name AND a.site = b.sys_site AND UPPER(a.sku) = UPPER(b.sku))
+        WHEN MATCHED THEN
+        UPDATE
+        SET a.department    = NVL(b.department,'0'),
+        a.team          = NVL(b.team,'0'),
+        a.material_code = NVL(b.material_code,'0');
+        END;
+
+    </select>
+
+
+
+    <select id="fillSalesBrand" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam">
+        MERGE INTO
+        (SELECT *
+        FROM RP_STATION_MANUAL_ALLOCATION t
+        <where>
+             t.alloc_id IS NOT NULL
+            <include refid="STATION_CONDITION"/>
+        </where>) a
+       USING (SELECT material_code, MAX(sales_brand) sales_brand
+         FROM mcms_base_data.INV_PRODUCT_GALLERY t
+        <where>
+            AND NVL(t.sales_brand, '0') != '0'
+            AND NVL(t.material_code, '0') != '0'
+        </where>
+        GROUP BY material_code) b
+       ON (a.material_code = b.material_code)
+        WHEN MATCHED THEN
+          UPDATE SET a.sales_brand = b.sales_brand
+    </select>
+
+
+
+
+
+    <select id="fnskuFillDestroyListing" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StationManualAllocationParam">
+        BEGIN
+<!--        1 fnsku用sku-->
+        UPDATE total_destroy_fee
+        SET FNSKU = SKU
+        <where>
+            AND FNSKU IS NULL
+            AND status IN (1, 2, 3)
+            AND type = 2
+            <include refid="DESTORY_CONDITION"/>
+        </where>;
+
+        <!--2fnsku用sku-->
+
+        MERGE INTO (SELECT *
+              FROM total_destroy_fee
+        <where>
+             NVL(department, '0') = '0'
+             AND status IN (1, 2, 3)
+             AND type = 2
+            <include refid="DESTORY_CONDITION"/>
+        </where>) d
+        USING (SELECT a.FNSKU,
+                      a.SYS_SITE,
+                      a.SYS_SHOPS_NAME,
+                      MAX(a.sku) AS sku
+                 FROM mcms_base_data.INV_PRODUCT_GALLERY a
+                WHERE NVL(a.fnsku, 'NULL') != 'NULL'
+                GROUP BY a.FNSKU, a.SYS_SITE, a.SYS_SHOPS_NAME
+               ) g
+        ON (UPPER(d.FNSKU) = UPPER(g.FNSKU) AND d.SYS_SITE = g.SYS_SITE AND d.SYS_SHOPS_NAME = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+          UPDATE SET d.SKU = g.SKU;
+        <!--3fnsku用sku-->
+        MERGE INTO (SELECT *
+        FROM total_destroy_fee
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2 , 3)
+            AND type = 2
+            <include refid="DESTORY_CONDITION"/>
+        </where>) d
+        USING (SELECT a.FNSKU, a.SYS_SITE, a.SYS_SHOPS_NAME, MAX(a.sku) AS sku
+                 FROM mcms_base_data.INV_PRODUCT_GALLERY_FILE a
+                WHERE NVL(a.fnsku, 'NULL') != 'NULL'
+                GROUP BY a.fnsku, a.sys_site, a.sys_shops_name
+               ) g
+        ON (UPPER(d.fnsku) = UPPER(g.fnsku) AND d.sys_site = g.sys_site AND d.sys_shops_name = g.sys_shops_name)
+        WHEN MATCHED THEN
+          UPDATE
+             SET d.SKU = g.SKU;
+        <!--4ASIN用sku-->
+        MERGE INTO (SELECT *
+        FROM total_destroy_fee
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            AND type = 2
+            <include refid="DESTORY_CONDITION"/>
+        </where>) d
+        USING (SELECT a.ASIN,
+        a.SYS_SITE,
+        a.SYS_SHOPS_NAME,
+        MAX(a.sku) AS sku
+        FROM mcms_base_data.INV_PRODUCT_GALLERY a
+        WHERE NVL(a.ASIN, 'NULL') != 'NULL'
+        GROUP BY a.ASIN, a.SYS_SITE, a.SYS_SHOPS_NAME ) g
+        ON (UPPER(d.FNSKU) = UPPER(g.ASIN) AND d.SYS_SITE = g.SYS_SITE AND d.SYS_SHOPS_NAME = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+        UPDATE SET d.SKU = g.SKU;
+
+        <!--5ASIN用sku-->
+        MERGE INTO (SELECT *
+        FROM total_destroy_fee
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            AND type = 2
+            <include refid="DESTORY_CONDITION"/>
+        </where>) d
+        USING (SELECT a.ASIN,
+        a.SYS_SITE,
+        a.SYS_SHOPS_NAME,
+        MAX(a.sku) AS sku
+        FROM mcms_base_data.INV_PRODUCT_GALLERY_FILE a
+        WHERE NVL(a.ASIN, 'NULL') != 'NULL'
+        GROUP BY a.ASIN, a.SYS_SITE, a.SYS_SHOPS_NAME ) g
+        ON (UPPER(d.FNSKU) = UPPER(g.ASIN) AND d.SYS_SITE = g.SYS_SITE AND d.SYS_SHOPS_NAME = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+        UPDATE SET d.SKU = g.SKU;
+
+        <!--6 -->
+        MERGE INTO (SELECT *
+        FROM total_destroy_fee
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            AND type = 2
+            <include refid="DESTORY_CONDITION"/>
+        </where>) d
+        USING mcms_base_data.INV_PRODUCT_GALLERY g ON (UPPER(d.sku) = UPPER(g.sku) AND d.sys_site = g.sys_site AND d.sys_shops_name = g.sys_shops_name)
+        WHEN MATCHED THEN
+        UPDATE
+        SET d.department    = NVL(g.department,'0'),
+            d.team          = NVL(g.team,'0'),
+            d.material_code = NVL(g.material_code,'0');
+
+        MERGE INTO (SELECT *
+        FROM total_destroy_fee
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+            AND type = 2
+            <include refid="DESTORY_CONDITION"/>
+        </where>) d
+        USING (SELECT SKU,
+              SYS_SITE,
+              SYS_SHOPS_NAME,
+              MATERIAL_CODE,
+              DEPARTMENT,
+              TEAM,
+              LAST_UPDATE_DATE
+         FROM (SELECT SKU,
+                      SYS_SITE,
+                      SYS_SHOPS_NAME,
+                      MATERIAL_CODE,
+                      DEPARTMENT,
+                      TEAM,
+                      LAST_UPDATE_DATE,
+                      ROW_NUMBER() OVER(PARTITION BY UPPER(SKU), SYS_SITE, SYS_SHOPS_NAME ORDER BY LAST_UPDATE_DATE DESC) AS rn
+                 FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE) t
+        WHERE t.rn = 1) G
+        ON (UPPER(d.sku) = UPPER(g.sku) AND D.sys_site = G.sys_site AND D.sys_shops_name = G.sys_shops_name)
+        WHEN MATCHED THEN
+          UPDATE
+             SET D.DEPARTMENT    = NVL(G.DEPARTMENT,'0'),
+                 D.TEAM          = NVL(G.TEAM,'0'),
+                 D.MATERIAL_CODE = NVL(G.MATERIAL_CODE,'0');
+
+<!--更新销毁移除类目和运营大类-->
+
+        MERGE INTO (SELECT *
+        FROM total_destroy_fee
+        <where>
+            AND status IN (1, 2, 3)
+            AND type = 2
+            AND material_code IS NOT NULL
+            AND category IS NULL
+            <include refid="DESTORY_CONDITION"/>
+        </where>) d
+        USING  MCMS_BASE_DATA.RP_MATERIAL  g
+        ON (d.material_code = g.MATERIAL_CODE)
+        WHEN MATCHED THEN UPDATE SET d.category = g.category , d.product_type = g.product_type;
+
+
+        END;
+
+    </select>
+
+
+</mapper>

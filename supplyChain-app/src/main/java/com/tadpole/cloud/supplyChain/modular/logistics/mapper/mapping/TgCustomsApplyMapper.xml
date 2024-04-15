@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgCustomsApplyMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        C.ID,C.POST_COMPANY_NAME_CN,C.POST_ADDR_CN,C.POST_CONTACT_INFO,C.POST_FAX,C.POST_COMPANY_NUM,C.OPERATE_COMPANY,C.CUSTOMS_NUM,C.ARRIVAL_COUNTRY_CODE,C.ARRIVAL_COUNTRY_NAME,C.RECEIVE_CONTACT_USER,
+        C.RECEIVE_ADDR_CN,C.RECEIVE_PHONE,C.SIGNING_ADDR,C.SIGNING_NO,C.APPLY_DATE,C.EXPORT_DATE,C.DIRECT_PORT,C.TRADE_MODE,C.EXEMPTION_NATURE,C.SETTLEMENT_TYPE,
+        C.TRADING_TYPE,C.PACKAGE_TYPE,C.BOX_NUM,C.PACKAGE_WEIGHT,C.SOURCE_ADDR,C.CUSTOMS_APPLY,C.DATA_TYPE,C.CREATE_TIME,C.CREATE_USER,C.UPDATE_TIME,C.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_APPLY C
+        <where>
+            <if test="param.postCompanyNameCnList != null and param.postCompanyNameCnList.size() != 0">
+                C.POST_COMPANY_NAME_CN IN
+                <foreach collection="param.postCompanyNameCnList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.customsNumList != null and param.customsNumList.size() != 0">
+                AND C.CUSTOMS_NUM IN
+                <foreach collection="param.customsNumList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.arrivalCountryNameList != null and param.arrivalCountryNameList.size() != 0">
+                C.ARRIVAL_COUNTRY_NAME IN
+                <foreach collection="param.arrivalCountryNameList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.signingNoList != null and param.signingNoList.size() != 0">
+                AND C.SIGNING_NO IN
+                <foreach collection="param.signingNoList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.applyDateStart != null and param.applyDateStart != ''">
+                AND C.APPLY_DATE &gt;= TO_DATE(#{param.applyDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.applyDateEnd != null and param.applyDateEnd != ''">
+                AND C.APPLY_DATE &lt;= TO_DATE(#{param.applyDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.exportDateStart != null and param.exportDateStart != ''">
+                AND C.EXPORT_DATE &gt;= TO_DATE(#{param.exportDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.exportDateEnd != null and param.exportDateEnd != ''">
+                AND C.EXPORT_DATE &lt;= TO_DATE(#{param.exportDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="(param.skuList != null and param.skuList.size() != 0) or (param.materialCodeList != null and param.materialCodeList.size() != 0)">
+                AND C.ID IN (
+                    SELECT D.PID FROM TG_CUSTOMS_APPLY_DETAIL D
+                    <where>
+                        <if test="param.skuList != null and param.skuList.size() != 0">
+                            D.SKU IN
+                            <foreach collection="param.skuList" item="item" index="index" separator="," open="(" close=")">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                            AND D.MATERIAL_CODE IN
+                            <foreach collection="param.materialCodeList" item="item" index="index" separator="," open="(" close=")">
+                                #{item}
+                            </foreach>
+                        </if>
+                    </where>
+                )
+            </if>
+        </where>
+        ORDER BY C.CREATE_TIME DESC, C.ID DESC
+    </select>
+
+    <!-- 获取EBMS出货订单数据 -->
+    <select id="selectLogisticsPacking" parameterType="java.util.List"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgLogisticsPackingResult">
+        SELECT
+            P.packCode,
+            P.ShopPlatName AS platform,
+            P.shopNameSimple AS shopName,
+            P.countryCode AS site,
+            P.packTotalWeight,
+            P.packDate,
+            '否' AS isDeal
+        FROM TbLogisticsPackingList P
+        WHERE P.packCode IN
+        <foreach collection="packCodeList" item="item" index="index" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!-- 获取EBMS出货订单明细数据 -->
+    <select id="selectLogisticsPackingDetail" parameterType="java.lang.String"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.TgCustomsApplyDetail">
+        SELECT
+            'USD' AS currency,
+            '否' AS isDeal,
+            'false' AS isSelect,
+            D1.packCode,
+            D1.packDetBoxNum AS boxNo,
+            D1.packDetBoxType AS boxType,
+            D1.packDetBoxNumUpload AS boxNoName,
+            D1.packDetBoxLength AS goodsLong,
+            D1.packDetBoxWidth AS wide,
+            D1.packDetBoxHeight AS high,
+            D1.packDetBoxWeight AS weight,
+            D1.packDetBoxWeigUnit,
+            D1.packDetBoxVolume,
+            D1.packDetBoxVoluUnit,
+            D2.SKU,
+            D2.Quantity,
+            CASE WHEN D2.mateCode IS NOT NULL THEN D2.mateCode ELSE '0' END AS materialCode,
+            D2.PackDirectCode AS packDirectCode,
+            M.matQtyUnit AS unit,
+            M.matModeSpec AS type,
+            M.matInvoiceNorm AS style,
+            M.matComBrand AS companyBrand,
+            M.matSetAttributes AS attribute,
+            M.matInvoiceProName AS invoiceProNameCn
+        FROM TbLogisticsPackingListDet1 D1
+        LEFT JOIN TbLogisticsPackingListDet2 D2 ON D1.packCode = D2.packCode AND D1.packDetBoxNum = D2.packDetBoxNum
+        LEFT JOIN TbComMateriel M ON D2.MateCode = M.matCode
+        WHERE D1.packCode = #{packCode}
+        ORDER BY D1.packDetBoxNum ASC
+    </select>
+
+    <!-- 根据出货清单号获取EBMS出货订单ShipmentID数据 -->
+    <select id="selectLogisticsPackingShipment" parameterType="java.util.List"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgLogisticsPackingResult">
+        SELECT
+            C.PackCode,
+            C.ShipmentID
+        FROM TbLogisticsPackListBoxRec C
+        WHERE
+            C.PackCode IS NOT NULL
+            AND C.PackCode IN
+            <foreach collection="packCodeList" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        GROUP BY C.PackCode, C.ShipmentID
+    </select>
+
+    <!-- 出货清单号下拉 -->
+    <select id="packCodeSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT P.packCode AS code, P.packCode AS name FROM TbLogisticsPackingList P GROUP BY P.packCode
+    </select>
+
+    <!--获取最新的合同协议号-->
+    <select id="getNowBgdOrder" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT MAX(C.SIGNING_NO) AS nowOrder FROM TG_CUSTOMS_APPLY C WHERE C.SIGNING_NO LIKE  #{orderPre} || '%'
+    </select>
+
+    <!--生成国内报关单sheet0数据-->
+    <select id="generateExport0"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyExport0ListResult">
+        SELECT
+            ROWNUM AS orderNo,
+            T.*
+        FROM (
+            SELECT
+                P.INVOICE_PRO_NAME_CN || D.CUSTOMS_NUM || D.ESSENTIAL_FACTOR || D.UNIT || D.ATTRIBUTE || D.CURRENCY AS groupStr,
+                P.INVOICE_PRO_NAME_CN,
+                D.CUSTOMS_NUM,
+                D.ESSENTIAL_FACTOR,
+                D.UNIT,
+                D.ATTRIBUTE,
+                D.CURRENCY,
+                A.ARRIVAL_COUNTRY_NAME,
+				A.SOURCE_ADDR,
+				'照章征税' AS EXEMPTION_NATURE,
+                SUBSTR(D.ESSENTIAL_FACTOR, 0, INSTR(D.ESSENTIAL_FACTOR, '|')-1) AS goodsName,
+                SUM(D.QUANTITY) AS totalQuantity,
+                '1' AS isMergeUpCell
+            FROM TG_CUSTOMS_APPLY A
+            LEFT JOIN TG_CUSTOMS_APPLY_DETAIL D ON A.ID = D.PID
+            LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+            WHERE A.ID = #{param.id}
+            GROUP BY
+                A.ARRIVAL_COUNTRY_NAME,
+                A.SOURCE_ADDR,
+                P.INVOICE_PRO_NAME_CN,
+                D.CUSTOMS_NUM,
+                D.ESSENTIAL_FACTOR,
+                D.UNIT,
+                D.ATTRIBUTE,
+                D.CURRENCY
+            ORDER BY NLSSORT(SUBSTR(D.ESSENTIAL_FACTOR, 4, INSTR(D.ESSENTIAL_FACTOR, '|')-4),'NLS_SORT = SCHINESE_PINYIN_M') ASC
+        ) T
+    </select>
+
+    <!--关联获取产品基本信息的K3价格、是否含税和重量单位-->
+    <select id="getBaseProductInfo"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyExport0ListResult">
+        SELECT
+            DD.*,
+            P.INCLUDE_TAX,
+            P.WEIGHT_UNIT_ORG,
+            P.K3_PRICE,
+            P.GROSS_PROFIT_RATE,
+            P.INVOICE_PRO_NAME_CN AS SUB_INVOICE_PRO_NAME_CN,
+            P.STYLE,
+            P.GROSS_WEIGHT_ORG,
+            P.ADVICE_SUPPLIER
+        FROM
+        (
+            SELECT
+                P.INVOICE_PRO_NAME_CN || D.CUSTOMS_NUM || D.ESSENTIAL_FACTOR || D.UNIT || D.ATTRIBUTE || D.CURRENCY AS groupStr,
+                P.INVOICE_PRO_NAME_CN,
+                D.CUSTOMS_NUM,
+                D.ESSENTIAL_FACTOR,
+                D.UNIT,
+                D.ATTRIBUTE,
+                D.CURRENCY,
+                D.MATERIAL_CODE,
+                SUM(D.QUANTITY) AS totalQuantity
+            FROM TG_CUSTOMS_APPLY A
+            LEFT JOIN TG_CUSTOMS_APPLY_DETAIL D ON A.ID = D.PID
+            LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+            WHERE A.ID = #{param.id}
+            GROUP BY
+                P.INVOICE_PRO_NAME_CN,
+                D.CUSTOMS_NUM,
+                D.ESSENTIAL_FACTOR,
+                D.UNIT,
+                D.ATTRIBUTE,
+                D.CURRENCY,
+                D.MATERIAL_CODE
+        ) DD
+        LEFT JOIN TG_BASE_PRODUCT P ON DD.MATERIAL_CODE = P.MATERIAL_CODE
+        WHERE P.DATA_TYPE = '0'
+    </select>
+
+    <!--生成国内报关单sheet2数据-->
+    <select id="generateExport2"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyExport2ListResult">
+        SELECT
+            SUBSTR(D.ESSENTIAL_FACTOR, 0, INSTR(D.ESSENTIAL_FACTOR, '|')-1) AS goodsName,
+			D.ESSENTIAL_FACTOR,
+			D.ATTRIBUTE,
+            SUM(D.QUANTITY) AS totalQuantity,
+            '1' AS isMergeUpCell
+        FROM TG_CUSTOMS_APPLY A
+        LEFT JOIN TG_CUSTOMS_APPLY_DETAIL D ON A.ID = D.PID
+        LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+        WHERE A.ID = #{param.id}
+        GROUP BY
+            A.ARRIVAL_COUNTRY_NAME,
+            A.SOURCE_ADDR,
+            P.INVOICE_PRO_NAME_CN,
+            D.CUSTOMS_NUM,
+            D.ESSENTIAL_FACTOR,
+            D.UNIT,
+            D.ATTRIBUTE,
+            D.CURRENCY
+        ORDER BY NLSSORT(SUBSTR(D.ESSENTIAL_FACTOR, 4, INSTR(D.ESSENTIAL_FACTOR, '|')-4),'NLS_SORT = SCHINESE_PINYIN_M') ASC
+    </select>
+
+    <!--生成国内报关单sheet3数据-->
+    <select id="generateExport3"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyExport3ListResult">
+        SELECT
+            P.INVOICE_PRO_NAME_CN || D.CUSTOMS_NUM || D.ESSENTIAL_FACTOR || D.UNIT || D.ATTRIBUTE || D.CURRENCY AS groupStr,
+            SUBSTR(D.ESSENTIAL_FACTOR, 0, INSTR(D.ESSENTIAL_FACTOR, '|')-1) AS goodsName,
+			D.ESSENTIAL_FACTOR,
+            D.UNIT,
+            D.ATTRIBUTE,
+            D.CURRENCY,
+            SUM(D.QUANTITY) AS totalQuantity,
+            '1' AS isMergeUpCell
+        FROM TG_CUSTOMS_APPLY A
+        LEFT JOIN TG_CUSTOMS_APPLY_DETAIL D ON A.ID = D.PID
+        LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+        WHERE A.ID = #{param.id}
+        GROUP BY
+            A.ARRIVAL_COUNTRY_NAME,
+            A.SOURCE_ADDR,
+            P.INVOICE_PRO_NAME_CN,
+            D.CUSTOMS_NUM,
+            D.ESSENTIAL_FACTOR,
+            D.UNIT,
+            D.ATTRIBUTE,
+            D.CURRENCY
+        ORDER BY NLSSORT(SUBSTR(D.ESSENTIAL_FACTOR, 4, INSTR(D.ESSENTIAL_FACTOR, '|')-4),'NLS_SORT = SCHINESE_PINYIN_M') ASC
+    </select>
+
+    <!--生成国内报关单sheet4数据-->
+    <select id="generateExport4"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsApplyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsApplyExport4ListResult">
+        SELECT
+            P.INVOICE_PRO_NAME_CN || D.CUSTOMS_NUM || D.ESSENTIAL_FACTOR || D.UNIT || D.ATTRIBUTE || D.CURRENCY AS groupStr,
+            SUBSTR(D.ESSENTIAL_FACTOR, 0, INSTR(D.ESSENTIAL_FACTOR, '|')-1) AS goodsName,
+            P.INVOICE_PRO_NAME_CN,
+            D.CUSTOMS_NUM,
+            D.ESSENTIAL_FACTOR,
+            D.UNIT,
+            D.ATTRIBUTE,
+            D.CURRENCY,
+            CASE WHEN A.ARRIVAL_COUNTRY_CODE = 'US' THEN A.ARRIVAL_COUNTRY_CODE
+            WHEN A.ARRIVAL_COUNTRY_CODE = 'GB' THEN 'UK'
+            WHEN A.ARRIVAL_COUNTRY_CODE = 'DE' THEN A.ARRIVAL_COUNTRY_CODE
+            WHEN A.ARRIVAL_COUNTRY_CODE = 'FR' THEN A.ARRIVAL_COUNTRY_CODE
+            WHEN A.ARRIVAL_COUNTRY_CODE = 'CA' THEN A.ARRIVAL_COUNTRY_CODE
+            WHEN A.ARRIVAL_COUNTRY_CODE = 'JP' THEN A.ARRIVAL_COUNTRY_CODE
+            ELSE '*'
+            END AS DIRECT_PORT,
+            SUM(D.QUANTITY) AS totalQuantity,
+            SUM(GROSS_WEIGHT_ORG) AS sumGrossWeightOrg
+        FROM TG_CUSTOMS_APPLY A
+        LEFT JOIN TG_CUSTOMS_APPLY_DETAIL D ON A.ID = D.PID
+        LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MATERIAL_CODE
+        WHERE A.ID = #{param.id}
+        GROUP BY
+            A.ARRIVAL_COUNTRY_CODE,
+            A.SOURCE_ADDR,
+            P.INVOICE_PRO_NAME_CN,
+            D.CUSTOMS_NUM,
+            D.ESSENTIAL_FACTOR,
+            D.UNIT,
+            D.ATTRIBUTE,
+            D.CURRENCY
+        ORDER BY NLSSORT(SUBSTR(D.ESSENTIAL_FACTOR, 4, INSTR(D.ESSENTIAL_FACTOR, '|')-4),'NLS_SORT = SCHINESE_PINYIN_M') ASC
+    </select>
+</mapper>

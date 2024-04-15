@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.FinancialSiteMapper">
+
+
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FinancialSiteResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FinancialSiteParam">
+        select
+            *
+        from CW_FINANCIAL_SITE where 1=1
+        <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+            and PLATFORM_NAME =#{paramCondition.platformName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and site =#{paramCondition.site}
+        </if>
+    </select>
+
+
+
+    <select id="exportFinancialSiteList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FinancialSiteResult"
+      parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FinancialSiteParam">
+        select
+        *
+        from CW_FINANCIAL_SITE where 1=1
+        <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+            and PLATFORM_NAME =#{paramCondition.platformName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and site =#{paramCondition.site}
+        </if>
+    </select>
+
+
+    <select id="findSiteEbms" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.TbAmazonMarketplace">
+        select
+            elePlatformName
+                ,CountryCode
+        from TbAmazonMarketplace
+        where elePlatformName='Amazon'
+    </select>
+
+
+    <update  id="autoAnalysis"  useGeneratedKeys="false" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.TbAmazonMarketplace">
+    MERGE INTO CW_FINANCIAL_SITE T1
+    USING (SELECT #{paramCondition.elePlatformName} as PLATFORM_NAME,  #{paramCondition.countryCode}  as SITE FROM dual) T2
+    ON (T1.PLATFORM_NAME=T2.PLATFORM_NAME and T1.SITE=T2.SITE)
+    WHEN NOT MATCHED THEN
+        INSERT (T1.PLATFORM_NAME, T1.SITE) VALUES (T2.PLATFORM_NAME, T2.SITE)
+    </update>
+
+
+    <select id="getPlatform" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FinancialSiteResult">
+        select
+            PLATFORM_NAME
+        from CW_FINANCIAL_SITE group by PLATFORM_NAME
+
+    </select>
+
+    <select id="getSite" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FinancialSiteResult">
+        select
+            SITE
+        from CW_FINANCIAL_SITE group by SITE
+        order  by SITE
+
+    </select>
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.AmazonOrderDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.platformSettlement.api.finance.entity.AmazonOrderDetail">
+        <id column="ID" property="id" />
+        <result column="AMAZON_ORDER_ID" property="amazonOrderId" />
+        <result column="AMAZON_ORDER_ITEM_CODE" property="amazonOrderItemCode" />
+        <result column="PURCHASE_DATE" property="purchaseDate" />
+        <result column="ASIN" property="asin" />
+        <result column="SKU" property="sku" />
+        <result column="ITEM_STATUS" property="itemStatus" />
+        <result column="QUANTITY" property="quantity" />
+        <result column="PRINCIPAL" property="principal" />
+        <result column="TAX" property="tax" />
+        <result column="CURRENCY" property="currency" />
+        <result column="SHIPPING" property="shipping" />
+        <result column="SHIPPING_TAX" property="shippingTax" />
+        <result column="GIFTWRAP" property="giftwrap" />
+        <result column="GIFTWRAP_TAX" property="giftwrapTax" />
+        <result column="PROMOTION_IDS" property="promotionIds" />
+        <result column="ITEM_PROMOTION_DISCOUNT" property="itemPromotionDiscount" />
+        <result column="SHIP_PROMOTION_DISCOUNT" property="shipPromotionDiscount" />
+        <result column="SYS_SITE" property="sysSite" />
+        <result column="SYS_SHOPS_NAME" property="sysShopsName" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPLOAD_DATE" property="uploadDate" />
+        <result column="PLATFORM" property="platform" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, AMAZON_ORDER_ID, AMAZON_ORDER_ITEM_CODE, PURCHASE_DATE, ASIN, SKU, ITEM_STATUS, QUANTITY, PRINCIPAL, TAX, CURRENCY, SHIPPING, SHIPPING_TAX, GIFTWRAP, GIFTWRAP_TAX, PROMOTION_IDS, ITEM_PROMOTION_DISCOUNT, SHIP_PROMOTION_DISCOUNT, SYS_SITE, SYS_SHOPS_NAME, CREATE_TIME, UPLOAD_DATE, PLATFORM
+    </sql>
+
+</mapper>

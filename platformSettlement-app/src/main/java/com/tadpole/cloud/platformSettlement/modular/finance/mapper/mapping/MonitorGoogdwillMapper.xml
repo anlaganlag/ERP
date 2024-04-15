@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.MonitorGoogdwillMapper">
+
+    <select id="afreshStorageFee">
+        declare
+        --期间日期，默认生成当前的上一个月费用数据，取默认日期，如果需要刷历史数据，修改dur日期到指定月份日期即可
+        dur date :=trunc(sysdate-30, 'mm'); begin
+        --当前月生成的数据先清掉
+        delete monitor_googdwill
+        WHERE posted_date >= dur; insert into monitor_googdwill(account_name, country_code, settlement_id, order_id, sku, posted_date, amount, fiscal_period)
+        SELECT a.sys_shops_name,
+        a.sys_site,
+        max(a.settlement_id),
+        a.order_id,
+        a.sku,
+        max(a.posted_date),
+        sum(a.amount),
+        to_char(max(a.posted_date),
+        'yyyy-MM')
+        FROM cw_settlement_detail a
+        WHERE transaction_type = 'Refund'
+        AND a.amount_description = 'Goodwill'
+        AND posted_date&gt;=dur
+        GROUP BY  a.sys_shops_name, a.sys_site, a.order_id, a.sku;
+        --订单发货数据 退货入库数量
+        merge into monitor_googdwill a
+        USING
+        (SELECT a.account_name,
+        a.country_code,
+        a.order_id,
+        NVL(sum(b.quantity),
+        0) shipnum,
+        NVL(sum(c.quantity),
+        0) storagenum
+        FROM monitor_googdwill a
+        LEFT JOIN warehouse.fba_shipment_sales b
+        ON a.order_id = b.amazon_order_id
+        AND a.sku = b.sku
+        LEFT JOIN warehouse.fba_customer_returns c
+        ON a.order_id = c.order_id
+        AND a.sku = c.sku
+        WHERE a.posted_date &gt;= dur
+        GROUP BY  a.account_name, a.country_code, a.order_id ) b
+        ON (a.account_name = b.account_name
+        AND a.country_code = b.country_code
+        AND a.order_id = b.order_id)
+        WHEN matched THEN
+        UPDATE SET a.ship_num=b.shipnum,
+        a.storage_num=b.storagenum,
+        --若订单发货数量大于退货入库数量，则为“是”，二者相等则为“否”，数量小于退货入库数量，则提示错误
+        a.is_claim=case
+        WHEN b.shipnum - b.storagenum &gt; 0 THEN
+        1
+        WHEN b.shipnum - b.storagenum &lt; 0 THEN
+        -1
+        ELSE 0 end;
+        --审核状态 -- 汇总本表内“账号+站点+会计期”内所有【order-id】+【SKU】的[金额]，与AZ结算对账-收入记录表 中的同条件（账号+站点+会计期，求和多个结算ID）的金额【goodwill】对比，二者相等，则将本表内“账号+站点+会计期”内所有order-id+SKU的状态变更为“已确认”；否则为“未确认”
+        merge into monitor_googdwill a
+        USING
+        (SELECT a.*
+        FROM
+        (SELECT account_name,
+        country_code,
+        fiscal_period,
+        sum(amount) goodwill
+        FROM monitor_googdwill
+        WHERE posted_date &gt;= dur
+        GROUP BY  account_name, country_code, fiscal_period) a
+        JOIN
+        (SELECT shop_name,
+        site,
+        fiscal_period,
+        sum(goodwill) goodwill
+        FROM cw_statement_income
+        WHERE sync_status = 3
+        AND start_time &gt;= dur
+        GROUP BY  shop_name, site, fiscal_period) b
+        ON a.account_name = b.shop_name
+        AND a.country_code = b.site
+        AND a.fiscal_period = b.fiscal_period
+        AND a.goodwill = b.goodwill ) b
+        ON (a.account_name = b.account_name
+        AND a.country_code = b.country_code
+        AND a.fiscal_period = b.fiscal_period)
+        WHEN matched THEN
+        UPDATE SET a.status=1 ; end;
+    </select>
+</mapper>

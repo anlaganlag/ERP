@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.K3TransferMabangItemMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.K3TransferMabangItem">
+        <id column="ID" property="id" />
+        <result column="SUMMARY_ID" property="summaryId" />
+        <result column="BILL_NO" property="billNo" />
+        <result column="SPLIT_NUM" property="splitNum" />
+        <result column="TRANSFER_DIRECTION" property="transferDirection" />
+        <result column="GROUP_ID" property="groupId" />
+        <result column="ALLOCATION_CODE" property="allocationCode" />
+        <result column="PURCHASE_ORDER_ID" property="purchaseOrderId" />
+        <result column="ALLOCATION_WAREHOUSE_ID" property="allocationWarehouseId" />
+        <result column="ANTI_AUDIT" property="antiAudit" />
+        <result column="ANTI_AUDIT_ACTION" property="antiAuditAction" />
+        <result column="REVERSE_ALLOCATION_CODE" property="reverseAllocationCode" />
+        <result column="ENTRY_ID" property="entryId" />
+        <result column="MATERIAL_CODE" property="materialCode" />
+        <result column="MATERIAL_NAME" property="materialName" />
+        <result column="SRCSTOCK_CODE" property="srcstockCode" />
+        <result column="SRCSTOCK_NAME" property="srcstockName" />
+        <result column="DESTSTOCK_CODE" property="deststockCode" />
+        <result column="DESTSTOCK_NAME" property="deststockName" />
+        <result column="QTY" property="qty" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="APPROVE_DATE" property="approveDate" />
+        <result column="CANCEL_STATUS" property="cancelStatus" />
+        <result column="CANCEL_DATE" property="cancelDate" />
+        <result column="IS_DELETE" property="isDelete" />
+        <result column="SYNC_TYPE" property="syncType" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="SYNC_STATUS" property="syncStatus" />
+        <result column="SYNC_SUCCESS_TIMES" property="syncSuccessTimes" />
+        <result column="SYNC_FAIL_TIMES" property="syncFailTimes" />
+        <result column="SYNC_RESULT_MSG" property="syncResultMsg" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, SUMMARY_ID, BILL_NO, SPLIT_NUM, TRANSFER_DIRECTION, GROUP_ID, ALLOCATION_CODE, PURCHASE_ORDER_ID, ALLOCATION_WAREHOUSE_ID, ANTI_AUDIT, ANTI_AUDIT_ACTION, REVERSE_ALLOCATION_CODE, ENTRY_ID, MATERIAL_CODE, MATERIAL_NAME, SRCSTOCK_CODE, SRCSTOCK_NAME, DESTSTOCK_CODE, DESTSTOCK_NAME, QTY, DOCUMENT_STATUS, CREATE_DATE, APPROVE_DATE, CANCEL_STATUS, CANCEL_DATE, IS_DELETE, SYNC_TYPE, SYNC_TIME, SYNC_STATUS, SYNC_SUCCESS_TIMES, SYNC_FAIL_TIMES, SYNC_RESULT_MSG, CREATE_TIME, UPDATE_TIME
+    </sql>
+</mapper>

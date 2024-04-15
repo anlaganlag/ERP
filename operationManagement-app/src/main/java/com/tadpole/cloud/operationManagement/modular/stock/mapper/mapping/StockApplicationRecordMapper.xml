@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.StockApplicationRecordMapper">
+
+    <sql id="Page_Column_List">
+        o.ID,
+        o.PURCHASE_ORDER_TYPE,
+        CASE o.BILL_TYPE WHEN 'JJBH' THEN '紧急备货' WHEN 'XPBH' THEN '新品备货' WHEN 'XMBH' THEN '项目备货'
+            WHEN 'RCBH' THEN '日常备货' ELSE '其他' END BILL_TYPE_Name,
+        dept.VERIF_PERSON_NAME,
+        dept.CREATE_TIME AS VERIF_DATE_DEPT,
+        o.PLATFORM,
+        o.DEPARTMENT,
+        o.TEAM,
+        o.MATERIAL_CODE,
+        o.PRODUCT_TYPE,
+        o.PRODUCT_NAME,
+        o.PURCHASE_APPLY_QTY,
+        o.TURNOVER_DAYS,
+        o.OPER_EXPECTED_DATE,
+        o.STYLE,
+        o.BRAND,
+        o.COMPANY_BRAND,
+        o.MODEL,
+        o.COLOR,
+        o.MATSTYLESECONDLABEL,
+        o.MINPOQTY_NOTES,
+        o.MINPOQTY,
+        o.SPELL_ORDERNUM ,
+        o.SPELL_ORDERNUM_REMARK ,
+        dept.VERIF_REASON AS VERIF_REASON_DEPT,
+        plan.QTY,
+        plan.VERIF_REASON AS VERIF_REASON_PLAN,
+        plan.CREATE_TIME AS VERIF_DATE_PLAN,
+        pmc.VERIF_DATE AS VERIF_DATE_PCM,
+        pmc.VERIF_REASON AS VERIF_REASON_PCM,
+        pmc.CREATE_ORDER_TYPE,
+        pmc.MAT_CONTROL_PERSON,
+        o.PRODUCT_NAME || ',' || o.BRAND|| ',' || o.MODEL|| ',' || o.STYLE|| ',' || o.SIZES|| ',' || o.MAIN_MATERIAL|| ',' || o.PATTERN|| ',' || o.COLOR|| ',' || o.PACKING|| ',' || o.VERSION_DES|| ',' || o.TYPE|| ',' || o.MATSTYLESECONDLABEL propertyMerge ,
+        o.ORDER_STATUS,
+        CASE o.ORDER_STATUS WHEN 0 THEN '待审核' WHEN 1 THEN '不备货' WHEN 2 THEN '待计划部审批' WHEN 3 THEN '计划未通过'
+WHEN 4 THEN '待PMC审批' WHEN 5 THEN 'PMC未通过' WHEN 6 THEN '已通过' ELSE '' END AS ORDER_STATUS_NAME,
+        o.bizdate
+    </sql>
+
+    <sql id="List_Condition">
+        <if test="paramCondition.departments != null and paramCondition.departments.size() > 0">
+            AND o.department IN
+            <foreach collection="paramCondition.departments" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.teams != null and paramCondition.teams.size() > 0">
+            AND o.team IN
+            <foreach collection="paramCondition.teams" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.sVerifDateStart != null">
+            AND dept.VERIF_DATE >= #{paramCondition.sVerifDateStart}
+        </if>
+        <if test="paramCondition.sVerifDateEnd != null">
+            AND dept.VERIF_DATE &lt;=  #{paramCondition.sVerifDateEnd} +1-interval '1' SECOND
+        </if>
+
+        <if test="paramCondition.productTypes != null and paramCondition.productTypes.size() > 0">
+            AND o.PRODUCT_TYPE IN
+            <foreach collection="paramCondition.productTypes" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.materialCodes != null and paramCondition.materialCodes.size() > 0">
+            and o.MATERIAL_CODE IN
+            <foreach collection="paramCondition.materialCodes" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.orderStatus != null and paramCondition.orderStatus.size() > 0">
+            AND o.ORDER_STATUS IN
+            <foreach collection="paramCondition.orderStatus" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.billTypes != null and paramCondition.billTypes.size() > 0">
+            AND o.BILL_TYPE IN
+            <foreach collection="paramCondition.billTypes" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.productName != null and paramCondition.productName !=''">
+            AND o.PRODUCT_NAME = #{paramCondition.productName}
+        </if>
+
+        <if test="paramCondition.brand != null and paramCondition.brand !=''">
+            AND o.BRAND = #{paramCondition.brand}
+        </if>
+        <if test="paramCondition.style != null and paramCondition.style !=''">
+            AND o.STYLE = #{paramCondition.style}
+        </if>
+        <if test="paramCondition.model != null and paramCondition.model !=''">
+            AND o.MODEL = #{paramCondition.model}
+        </if>
+
+        <if test="paramCondition.color != null and paramCondition.color !=''">
+            AND o.COLOR = #{paramCondition.color}
+        </if>
+        <if test="paramCondition.matstylesecondlabel != null and paramCondition.matstylesecondlabel !=''">
+            AND o.MATSTYLESECONDLABEL = #{paramCondition.matstylesecondlabel}
+        </if>
+
+        <if test="paramCondition.turnoverDayStart != null and paramCondition.turnoverDayStart !=''">
+            AND o.TURNOVER_DAYS >= #{paramCondition.turnoverDayStart}
+        </if>
+
+        <if test="paramCondition.turnoverDayEnd != null and paramCondition.turnoverDayEnd !=''">
+            AND #{paramCondition.turnoverDayEnd}>= o.TURNOVER_DAYS
+        </if>
+
+        <if test="paramCondition.verifPersonNoList != null and paramCondition.verifPersonNoList.size() > 0">
+            AND dept.VERIF_PERSON_NO IN
+            <foreach collection="paramCondition.verifPersonNoList" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.verifReasonDept != null and paramCondition.verifReasonDept !=''">
+            AND dept.VERIF_REASON like '%'||#{paramCondition.verifReasonDept}||'%'
+        </if>
+        <if test="paramCondition.verifReasonPlan != null and paramCondition.verifReasonPlan !=''">
+            AND plan.VERIF_REASON like '%'||#{paramCondition.verifReasonPlan}||'%'
+
+        </if>
+
+    </sql>
+
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.StockApplicationRecordParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.StockApplicationRecordResult">
+        SELECT <include refid="Page_Column_List"/>  FROM STOCK_PURCHASE_ORDERS o
+        LEFT JOIN STOCK_VERIF_INFO_RECORD dept ON o.id = dept.PURCHASE_ORDER_ID AND dept.VERIF_BIZ_TYPE = 10
+
+        LEFT JOIN STOCK_VERIF_INFO_RECORD plan ON o.id = plan.PURCHASE_ORDER_ID AND plan.VERIF_BIZ_TYPE = 20
+
+        LEFT JOIN STOCK_PMC_VERIF_INFO pmc ON o.ID  = pmc.PURCHASE_ORDER_ID  AND pmc.VERIF_BIZ_TYPE =30
+        <where>
+            1=1
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY VERIF_DATE_DEPT DESC nulls last ,o.CREATE_TIME DESC,o.ID DESC
+
+    </select>
+
+    <select id="queryAnalysisResultExcel"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.StockApplicationRecordParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.StockApplicationRecordAnalysisResult">
+        SELECT
+            CASE t.BILL_TYPE WHEN 'JJBH' THEN '紧急备货' WHEN 'XPBH' THEN '新品备货' WHEN 'XMBH' THEN '项目备货'
+                WHEN 'RCBH' THEN '日常备货' ELSE '其他' END BILL_TYPE_Name,
+            t.purchase_apply_no,
+            t.verif_person_name,
+            t.create_time,
+            CASE o.ORDER_STATUS WHEN 0 THEN '待审核' WHEN 1 THEN '不备货' WHEN 2 THEN '待计划部审批' WHEN 3 THEN '计划未通过' WHEN 4 THEN '待PMC审批' WHEN 5 THEN 'PMC未通过' WHEN 6 THEN '已通过' ELSE '' END AS ORDER_STATUS_NAME,
+            t.VERIF_DATE AS VERIF_DATE_Approval,
+            t.department,
+            t.team,
+            t.platform,
+            t.material_code,
+            t.product_type,
+            t.product_name,
+            t.style,
+            t.main_material,
+            t.pattern,
+            t.company_brand,
+            t.brand,
+            t.model,
+            t.color,
+            t.sizes,
+            t.packing,
+            t.version_des,
+            t.type,
+            t.matstylesecondlabel,
+            o.purchase_apply_qty,
+            o.turnover_days,
+            dept.VERIF_REASON AS VERIF_REASON_DEPT,
+            plan.QTY AS QTY_APPROVAL_PLAN,
+            PLAN.VERIF_REASON AS VERIF_REASON_PLAN,
+            t.minpoqty,
+            t.extra_days,
+            o.oper_expected_date,
+            t.area,
+            t.create_date,
+            t.minpoqty_notes,
+            t.SPELL_ORDERNUM ,
+            t.SPELL_ORDERNUM_REMARK ,
+            t.spu,
+            t.nbdu,
+            t.festival_label,
+            t.season_label,
+            t.total_back_days,
+            t.supplycle,
+            t.delivery_type,
+            t.total_volume,
+            t.internal_stay_deliver_qty,
+            t.store_ontime_total_qty,
+            t.in_stock_qty,
+            t.amazon_stay_deliver_qty,
+            t.air_qty,
+            t.shipping_qty,
+            t.train_qty,
+            t.car_qty,
+            t.total_inventory_num_oversea,
+            t.inventory_num_oversea,
+            t.delivery_num_oversea,
+            t.OVER_D180_INV_AGE_QTY_RATE,
+            t.canuseqty,
+            t.unpurchase,
+            t.approve_qty,
+            t.first_route_instock_date,
+            t.first_route_delivery_qty,
+            t.CUR_MONTH_MINUS3_QTY,
+            t.CUR_MONTH_MINUS2_QTY,
+            t.CUR_MONTH_MINUS1_QTY,
+            t.cur_month_qty,
+            t.CUR_MONTH_ADD1_QTY,
+            t.CUR_MONTH_ADD2_QTY,
+            t.CUR_MONTH_ADD3_QTY,
+            t.CUR_MONTH_ADD4_QTY,
+            t.CUR_MONTH_ADD5_QTY,
+            t.CUR_MONTH_ADD6_QTY,
+            t.day7qty,
+            t.day14qty,
+            t.day30qty,
+            t.product_sale_level,
+            t.product_sale_level_team,
+            t.dayavgqty,
+            t.recom_delivery_type,
+            t.supplycle,
+            t.safe_saledays,
+            t.order_days,
+            t.delivery_days,
+            t.order_deal_day,
+            t.outer_deal_day,
+            t.inner_deal_day,
+            t.prepare_days,
+            t.recom_back_over_days,
+            t.pre_sale_qty,
+            t.recom_pre_qty,
+            t.oper_cur_month_qty,
+            t.OPER_CUR_MONTH_ADD1_QTY,
+            t.OPER_CUR_MONTH_ADD2_QTY,
+            t.OPER_CUR_MONTH_ADD3_QTY,
+            t.OPER_CUR_MONTH_ADD4_QTY,
+            t.OPER_CUR_MONTH_ADD5_QTY,
+            t.OPER_CUR_MONTH_ADD6_QTY,
+            t.sales_stock_days,
+            t.oper_covers_sales_date,
+            t.extra_days,
+            t.sales_demand,
+            t.stock_qty_area,
+            t.turnover_days_area
+        FROM STOCK_TEAM_VERIF t
+        JOIN STOCK_PURCHASE_ORDERS o ON t.PURCHASE_APPLY_NO = o.ID
+        LEFT JOIN STOCK_VERIF_INFO_RECORD dept ON o.ID = dept.PURCHASE_ORDER_ID AND dept.VERIF_BIZ_TYPE= 10
+        LEFT JOIN STOCK_VERIF_INFO_RECORD plan ON o.ID = plan.PURCHASE_ORDER_ID AND plan.VERIF_BIZ_TYPE = 20
+        LEFT JOIN STOCK_PMC_VERIF_INFO pmc ON o.ID  = pmc.PURCHASE_ORDER_ID  AND pmc.VERIF_BIZ_TYPE = 30
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.OverseasInWarehouseMapper">
+
+    <sql id="List_Condition">
+
+        <choose>
+            <when test ="param.inOrders != null and param.inOrders.size() != 0" >
+                AND T.IN_ORDER IN
+                <foreach collection="param.inOrders" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="param.inOrder != null and param.inOrder != ''">
+                    AND T.IN_ORDER = #{param.inOrder}
+                </if>
+            </otherwise>
+        </choose>
+
+        <if test="param.platforms != null and param.platforms.size() != 0">
+            AND T.PLATFORM IN
+            <foreach collection="param.platforms" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+            AND T.SYS_SHOPS_NAME IN
+            <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND T.SYS_SITE IN
+            <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.operateTypes != null and param.operateTypes.size() != 0">
+            AND T.OPERATE_TYPE IN
+            <foreach collection="param.operateTypes" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+
+        <trim prefix="AND  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.outWarehouseNames != null and param.outWarehouseNames.size() != 0 ">
+                    T.OUT_WAREHOUSE_NAME IN
+                    <foreach collection="param.outWarehouseNames" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="param.outWarehouseName =='空'.toString()">
+                    OR T.OUT_WAREHOUSE_NAME IS NULL
+                </if>
+            </trim>
+        </trim>
+
+        <trim prefix="AND  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.inWarehouseNames != null and param.inWarehouseNames.size() != 0 ">
+                    T.IN_WAREHOUSE_NAME IN
+                    <foreach collection="param.inWarehouseNames" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="param.inWarehouseName =='空'.toString()">
+                    OR T.IN_WAREHOUSE_NAME IS NULL
+                </if>
+            </trim>
+        </trim>
+
+        <if test="param.confirmStatusList != null and param.confirmStatusList.size() != 0">
+            AND T.CONFIRM_STATUS IN
+            <foreach collection="param.confirmStatusList" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+
+        <if test="param.confirmStartDate != null and param.confirmStartDate != ''">
+            AND T.CONFIRM_START_TIME &gt;=to_date(#{param.confirmStartDate},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.confirmEndDate != null and param.confirmEndDate != ''">
+            AND T.CONFIRM_START_TIME &lt;=to_date(#{param.confirmEndDate},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+
+        <if test="param.completeStartTime != null and param.completeStartTime != ''">
+            AND T.CONFIRM_END_TIME &gt;=to_date(#{param.completeStartTime},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.completeEndTime != null and param.completeEndTime != ''">
+            AND T.CONFIRM_END_TIME &lt;=to_date(#{param.completeEndTime},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.checkReason != null and param.checkReason != ''">
+            AND T.REMARK LIKE CONCAT(CONCAT('%', #{param.checkReason}), '%')
+        </if>
+    </sql>
+
+    <!-- 海外仓入库管理分页查询列表 -->
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasInWarehouseParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasInWarehouseResult">
+        SELECT
+            T.ID,
+            T.IN_ORDER,
+            T.PLATFORM,
+            T.SYS_SHOPS_NAME,
+            T.UPDATE_SYS_SHOPS_NAME,
+            T.CONFIRM_UPDATE_STATUS,
+            T.CONFIRM_UPDATE_QUANTITY,
+            T.CONFIRM_UPDATE_TIME,
+            T.NEW_SYS_SHOPS_NAME,
+            T.CONFIRM_NEW_STATUS,
+            T.CONFIRM_NEW_QUANTITY,
+            T.CONFIRM_NEW_TIME,
+            T.SYS_SITE,
+            T.OPERATE_TYPE,
+            T.SHOULD_INVENTORY_QUANTITY,
+            T.ALREADY_INVENTORY_QUANTITY,
+            T.NOT_INVENTORY_QUANTITY,
+            T.SKU_NUM,
+            T.TOTAL_PACKAGE_NUM,
+            T.OUT_WAREHOUSE_NAME,
+            T.IN_WAREHOUSE_NAME,
+            T.CONFIRM_STATUS,
+            T.CONFIRM_START_TIME,
+            T.CONFIRM_END_TIME,
+            T.CONFIRM_USER,
+            T.REMARK,
+            T.CREATE_TIME,
+            T.CREATE_USER,
+            T.UPDATE_TIME,
+            T.UPDATE_USER FROM OVERSEAS_IN_WAREHOUSE T
+        <where>
+            <include refid="List_Condition" />
+
+        </where>
+        ORDER BY T.ID DESC, T.CREATE_TIME DESC
+    </select>
+
+    <!-- 海外仓入库管理查询列表数据汇总 -->
+    <select id="queryPageTotal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasInWarehouseParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasInWarehouseTotalResult">
+        SELECT
+            SUM(NVL(T.SHOULD_INVENTORY_QUANTITY, 0)) AS shouldInventoryTotal,
+            SUM(NVL(T.ALREADY_INVENTORY_QUANTITY, 0)) AS alreadyInventoryTotal,
+            SUM(NVL(T.NOT_INVENTORY_QUANTITY, 0)) AS notInventoryTotal
+        FROM OVERSEAS_IN_WAREHOUSE T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+    </select>
+
+    <!-- 海外仓入库管理是否可以全部签收 -->
+    <select id="allowAllSign" parameterType="java.lang.String" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM OVERSEAS_IN_WAREHOUSE_DETAIL D WHERE D.IN_ORDER = #{inOrder} AND (D.LOGISTICS_STATUS IS NULL OR D.LOGISTICS_STATUS = '已发货')
+    </select>
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasInWarehouseDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasInWarehouseDetailResult">
+        SELECT
+           O.ID,
+           O.IN_ORDER,
+           O.PACKAGE_BAR_CODE,
+           O.PACKAGE_NUM,
+           O.FN_SKU,
+           O.SKU,
+           O.QUANTITY,
+           O.ACTUAL_QUANTITY,
+           O.MATERIAL_CODE,
+           O.DEPARTMENT,
+           O.TEAM,
+           O.NEEDS_USER,
+           O.LOGISTICS_COMPANY,
+           O.SUGGEST_TRANS_TYPE,
+           O.LOGISTICS_NUM,
+           O.CONFIRM_STATUS,
+           O.CONFIRM_TIME,
+           O.CONFIRM_USER,
+           O.CREATE_TIME,
+           O.CREATE_USER,
+           O.UPDATE_TIME,
+           O.UPDATE_USER,
+           O.LOGISTICS_STATUS
+        FROM OVERSEAS_IN_WAREHOUSE_DETAIL O
+           <where>
+               <if test="param.inOrder != null and param.inOrder != ''">
+                   AND O.IN_ORDER = #{param.inOrder}
+               </if>
+            <choose>
+                <when test="param.operateType != null and param.operateType == '1'.toString()">
+                    AND O.CONFIRM_STATUS='待签收'
+                </when>
+                <otherwise></otherwise>
+            </choose>
+               <if test="param.packageBarCode != null and param.packageBarCode != ''">
+                   AND O.PACKAGE_BAR_CODE= #{param.packageBarCode}
+               </if>
+               <if test="param.sku != null and param.sku != ''">
+                   AND O.SKU= #{param.sku}
+               </if>
+               <if test="param.materialCode != null and param.materialCode != ''">
+                   AND O.MATERIAL_CODE= #{param.materialCode}
+               </if>
+               <if test="param.logisticsNum != null and param.logisticsNum != ''">
+                   AND O.LOGISTICS_NUM= #{param.logisticsNum}
+               </if>
+               <if test="param.logisticsStatuss != null and param.logisticsStatuss.size() != 0 ">
+                   AND O.LOGISTICS_STATUS IN
+                   <foreach collection="param.logisticsStatuss" item="item" index="index" separator="," open="(" close=")">
+                       #{item}
+                   </foreach>
+               </if>
+           </where>
+        ORDER BY O.PACKAGE_NUM ASC
+    </select>
+
+    <select id="allList"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasInWarehouseParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasInWarehouseResultVO">
+        SELECT
+            T.IN_ORDER,
+            T.PLATFORM,
+            T.SYS_SHOPS_NAME,
+            T.SYS_SITE,
+            T.OPERATE_TYPE,
+            T.SHOULD_INVENTORY_QUANTITY,
+            T.ALREADY_INVENTORY_QUANTITY,
+            T.NOT_INVENTORY_QUANTITY,
+            T.SKU_NUM,
+            T.TOTAL_PACKAGE_NUM,
+            T.OUT_WAREHOUSE_NAME,
+            T.IN_WAREHOUSE_NAME,
+            T.CONFIRM_STATUS,
+            T.CONFIRM_START_TIME,
+            T.CONFIRM_END_TIME,
+            T.CONFIRM_USER,
+            T.REMARK,
+            T2.PACKAGE_BAR_CODE,
+            T2.PACKAGE_NUM,
+            T2.FN_SKU,
+            T2.SKU,
+            T2.QUANTITY,
+            T2.ACTUAL_QUANTITY,
+            T2.MATERIAL_CODE,
+            T2.DEPARTMENT,
+            T2.TEAM,
+            T2.NEEDS_USER,
+            T2.LOGISTICS_COMPANY,
+            T2.SUGGEST_TRANS_TYPE,
+            T2.LOGISTICS_NUM,
+            T2.CONFIRM_STATUS,
+            T2.CONFIRM_TIME FROM
+            OVERSEAS_IN_WAREHOUSE T
+        LEFT JOIN
+        OVERSEAS_IN_WAREHOUSE_DETAIL T2
+        ON T2.IN_ORDER=T.IN_ORDER
+        <where>
+            <include refid="List_Condition" />
+            <if test="param.packageBarCode != null and param.packageBarCode != ''">
+                AND T2.PACKAGE_BAR_CODE= #{param.packageBarCode}
+            </if>
+            <if test="param.sku != null and param.sku != ''">
+                AND T2.SKU= #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND T2.MATERIAL_CODE= #{param.materialCode}
+            </if>
+        </where>
+        ORDER BY T.ID DESC, T.CREATE_TIME DESC
+    </select>
+
+    <!-- 海外仓报表查询列表 -->
+    <select id="queryReportListPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasReportResult">
+        SELECT A.IN_WAREHOUSE_NAME,
+               B.SHIPMENT_DATE,
+               A.SYS_SHOPS_NAME,
+               A.SYS_SITE,
+               B.FN_SKU,
+               B.MATERIAL_NAME,
+               B.MATERIAL_CODE,
+               B.SKU,
+               B.QUANTITY,
+               B.LOGISTICS_NUM,
+               B.PACKAGE_BAR_CODE,
+               B.PACKAGE_NUM,
+               B.LENGTH,
+               B.WIDTH,
+               B.HEIGHT,
+               B.WEIGHT,
+               B.IN_ORDER,
+               B.CONFIRM_TIME,
+               CASE
+                   WHEN C.PACKAGE_BAR_CODE IS NOT NULL THEN 0
+                   ELSE B.ACTUAL_QUANTITY END AS INVENTORYQUANTITY,
+               CASE
+                   WHEN E.IN_ORDER IS NULL THEN 0
+                   ELSE NVL(B.QUANTITY, 0) - NVL(B.ACTUAL_QUANTITY, 0) END AS COMEQUANTITY,
+               B.SUGGEST_TRANS_TYPE,
+               A.REMARK,
+               B.DEPARTMENT,
+               B.TEAM,
+               B.NEEDS_USER,
+               A.OUT_WAREHOUSE_NAME
+        FROM OVERSEAS_IN_WAREHOUSE A
+        LEFT JOIN OVERSEAS_IN_WAREHOUSE_DETAIL B ON B.IN_ORDER = A.IN_ORDER
+        LEFT JOIN OVERSEAS_OUT_WAREHOUSE_DETAIL C ON C.PACKAGE_BAR_CODE = B.PACKAGE_BAR_CODE AND C.SKU = B.SKU
+        LEFT JOIN (
+            SELECT
+                T.IN_ORDER,
+                T.PACKAGE_BAR_CODE,
+                T.SKU
+            FROM OVERSEAS_IN_WAREHOUSE_DETAIL T
+            WHERE T.CONFIRM_STATUS = '待签收'
+            GROUP BY T.IN_ORDER, T.PACKAGE_BAR_CODE, T.SKU
+        ) E ON E.IN_ORDER = B.IN_ORDER AND E.PACKAGE_BAR_CODE = B.PACKAGE_BAR_CODE AND E.SKU = B.SKU
+        <where>
+            A.OPERATE_TYPE = #{param.operateType}
+            <trim prefix="AND  (" suffix=")" >
+                <trim  suffixOverrides="OR">
+                    <if test="param.inWarehouseNames != null and param.inWarehouseNames.size() != 0 ">
+                        A.IN_WAREHOUSE_NAME IN
+                        <foreach collection="param.inWarehouseNames" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.inWarehouseName =='空'.toString()">
+                        OR A.IN_WAREHOUSE_NAME IS NULL
+                    </if>
+                </trim>
+            </trim>
+            <trim prefix="AND  (" suffix=")" >
+                <trim  suffixOverrides="OR">
+                    <if test="param.outWarehouseNames != null and param.outWarehouseNames.size() != 0 ">
+                        A.OUT_WAREHOUSE_NAME IN
+                        <foreach collection="param.outWarehouseNames" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.outWarehouseName =='空'.toString()">
+                        OR A.OUT_WAREHOUSE_NAME IS NULL
+                    </if>
+                </trim>
+            </trim>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND A.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.fnSku != null and param.fnSku != ''">
+                AND B.FN_SKU  LIKE ('%' ||#{param.fnSku}|| '%')
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND B.MATERIAL_CODE  LIKE ('%' ||#{param.materialCode}|| '%')
+            </if>
+            <if test="param.sku != null and param.sku != ''">
+                AND B.SKU  LIKE ('%' ||#{param.sku}|| '%')
+            </if>
+            <if test="param.logisticsNum != null and param.logisticsNum != ''">
+                AND B.LOGISTICS_NUM  LIKE ('%' ||#{param.logisticsNum}|| '%')
+            </if>
+            <if test="param.inOrder != null and param.inOrder != ''">
+                AND A.IN_ORDER  LIKE ('%' ||#{param.inOrder}|| '%')
+            </if>
+            <if test="param.packageBarCode != null and param.packageBarCode != ''">
+                AND B.PACKAGE_BAR_CODE  LIKE ('%' ||#{param.packageBarCode}|| '%')
+            </if>
+
+            <trim prefix="AND  (" suffix=")" >
+                <trim  suffixOverrides="OR">
+                    <if test="param.transTypeList != null and param.transTypeList.size() != 0 ">
+                        B.SUGGEST_TRANS_TYPE IN
+                        <foreach collection="param.transTypeList" item="code" index="index" separator="," open="(" close=")">
+                            #{code}
+                        </foreach>
+                    </if>
+                    <if test="param.suggestTransType =='空'.toString()">
+                        OR B.SUGGEST_TRANS_TYPE IS NULL
+                    </if>
+                </trim>
+            </trim>
+
+            <if test="param.departmentList != null and param.departmentList.size() != 0">
+                AND B.DEPARTMENT IN
+                <foreach collection="param.departmentList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.teamList != null and param.teamList.size() != 0">
+                AND B.TEAM IN
+                <foreach collection="param.teamList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.userList != null and param.userList.size() != 0">
+                AND B.NEEDS_USER IN
+                <foreach collection="param.userList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+
+            <if test="param.confirmStartTime != null and param.confirmStartTime != ''">
+                and  B.CONFIRM_TIME &gt;=to_date(#{param.confirmStartTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.confirmEndTime != null and param.confirmEndTime != ''">
+                and  B.CONFIRM_TIME &lt;=to_date(#{param.confirmEndTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+
+            <if test="param.shipmentStartTime != null and param.shipmentStartTime != ''">
+                and  B.SHIPMENT_DATE &gt;=to_date(#{param.shipmentStartTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.shipmentEndTime != null and param.shipmentEndTime != ''">
+                and  B.SHIPMENT_DATE &lt;=to_date(#{param.shipmentEndTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+        </where>
+
+    </select>
+
+    <!--获取海外仓入库管理-FBA退海外仓数据-->
+    <select id="getInWareHouseFBA"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OwInFbaSignParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OwInFbaSignParam">
+        SELECT
+            O.ID,
+            O.PARENT_ID AS FBA_ID,
+            O.IN_ORDER,
+            O.PLATFORM,
+            O.SYS_SHOPS_NAME,
+            O.SYS_SITE,
+            O.SHOULD_INVENTORY_QUANTITY,
+            O.ALREADY_INVENTORY_QUANTITY,
+            O.NOT_INVENTORY_QUANTITY,
+            O.IN_WAREHOUSE_NAME,
+            D.ID AS DETAIL_ID,
+            D.FN_SKU AS FULL_FN_SKU,
+            D.SKU,
+            D.MATERIAL_CODE,
+            D.QUANTITY,
+            D.ACTUAL_QUANTITY
+        FROM OVERSEAS_IN_WAREHOUSE O
+        LEFT JOIN OVERSEAS_IN_WAREHOUSE_DETAIL D ON O.IN_ORDER = D.IN_ORDER
+        WHERE
+            O.CONFIRM_STATUS = '待签收'
+            AND O.OPERATE_TYPE = '亚马逊仓发海外仓'
+            AND D.CONFIRM_STATUS = '待签收'
+            AND O.PLATFORM = #{param.platform}
+            AND O.SYS_SHOPS_NAME = #{param.sysShopsName}
+            AND D.FN_SKU LIKE concat('%',#{param.fnSku})
+            AND D.SKU = #{param.sku}
+            AND NVL(O.NEW_SYS_SHOPS_NAME, 0) != 'TS'
+            <choose>
+                <when test ="param.sysSiteTemp != null and param.sysSiteTemp != ''" >
+                    AND O.SYS_SITE = #{param.sysSiteTemp}
+                </when>
+                <when test ="param.sysSite != null and param.sysSite != ''" >
+                    AND O.SYS_SITE = #{param.sysSite}
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        ORDER BY D.CREATE_TIME ASC, D.ID ASC
+    </select>
+
+    <!-- 亚马逊发海外仓报表查询列表、导出 -->
+    <select id="queryFbaReportPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasFbaReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasFbaReportResult">
+        SELECT
+            T.ID,
+            T.PARENT_ID,
+            T.IN_ORDER,
+            T.PLATFORM,
+            T.SYS_SHOPS_NAME,
+            T.SYS_SITE,
+            T.OPERATE_TYPE,
+            T.SHOULD_INVENTORY_QUANTITY,
+            T.ALREADY_INVENTORY_QUANTITY,
+            T.NOT_INVENTORY_QUANTITY,
+            T.SKU_NUM,
+            T.TOTAL_PACKAGE_NUM,
+            T.OUT_WAREHOUSE_NAME,
+            T.IN_WAREHOUSE_NAME,
+            T.REMARK,
+            D.ID AS DETAILID,
+            D.CONFIRM_STATUS,
+            D.CONFIRM_TIME,
+            D.ACTUAL_QUANTITY,
+            D.CONFIRM_USER,
+            D.FN_SKU,
+            D.SKU,
+            D.MATERIAL_CODE,
+            D.DEPARTMENT,
+            D.TEAM,
+            D.NEEDS_USER,
+            D.LOGISTICS_COMPANY,
+            D.LOGISTICS_NUM
+        FROM OVERSEAS_IN_WAREHOUSE T
+        LEFT JOIN OVERSEAS_IN_WAREHOUSE_DETAIL D ON T.IN_ORDER = D.IN_ORDER
+        WHERE
+            T.OPERATE_TYPE = '亚马逊仓发海外仓'
+            <if test="param.inOrder != null and param.inOrder != ''">
+                AND T.IN_ORDER = #{param.inOrder}
+            </if>
+            <if test="param.platforms != null and param.platforms.size() != 0">
+                AND T.PLATFORM IN
+                <foreach collection="param.platforms" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND T.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND T.SYS_SITE IN
+                <foreach collection="param.sysSites" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.operateTypes != null and param.operateTypes.size() != 0">
+                AND T.OPERATE_TYPE IN
+                <foreach collection="param.operateTypes" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.inWarehouseNames != null and param.inWarehouseNames.size() != 0">
+                AND T.IN_WAREHOUSE_NAME IN
+                <foreach collection="param.inWarehouseNames" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.fnSku != null and param.fnSku != ''">
+                AND
+                <foreach collection="param.fnSku.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                    D.FN_SKU  LIKE '%'|| #{item}
+                </foreach>
+            </if>
+            <if test="param.sku != null and param.sku != ''">
+                AND D.SKU = #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND D.MATERIAL_CODE = #{param.materialCode}
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND T.SHIPMENT_DATE &gt;= TO_DATE(#{param.shipmentStartDate},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND T.SHIPMENT_DATE &lt;= TO_DATE(#{param.shipmentEndDate},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.confirmStartDate != null and param.confirmStartDate != ''">
+                AND D.CONFIRM_TIME &gt;= TO_DATE(#{param.confirmStartDate},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.confirmEndDate != null and param.confirmEndDate != ''">
+                AND D.CONFIRM_TIME &lt;= TO_DATE(#{param.confirmEndDate},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+        ORDER BY T.ID DESC, T.CREATE_TIME DESC
+    </select>
+
+    <!-- 亚马逊发海外仓报表查询列表数据汇总 -->
+    <select id="queryFbaReportTotal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasFbaReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasInWarehouseTotalResult">
+        SELECT
+            SUM(NVL(T.SHOULD_INVENTORY_QUANTITY, 0)) AS shouldInventoryTotal,
+            SUM(NVL(T.ALREADY_INVENTORY_QUANTITY, 0)) AS alreadyInventoryTotal,
+            SUM(NVL(T.NOT_INVENTORY_QUANTITY, 0)) AS notInventoryTotal,
+            SUM(NVL(D.ACTUAL_QUANTITY, 0)) AS signTotal
+        FROM OVERSEAS_IN_WAREHOUSE T
+        LEFT JOIN OVERSEAS_IN_WAREHOUSE_DETAIL D ON T.IN_ORDER = D.IN_ORDER
+        WHERE
+        T.OPERATE_TYPE = '亚马逊仓发海外仓'
+        <if test="param.inOrder != null and param.inOrder != ''">
+            AND T.IN_ORDER = #{param.inOrder}
+        </if>
+        <if test="param.platforms != null and param.platforms.size() != 0">
+            AND T.PLATFORM IN
+            <foreach collection="param.platforms" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+            AND T.SYS_SHOPS_NAME IN
+            <foreach collection="param.sysShopsNames" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND T.SYS_SITE IN
+            <foreach collection="param.sysSites" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.operateTypes != null and param.operateTypes.size() != 0">
+            AND T.OPERATE_TYPE IN
+            <foreach collection="param.operateTypes" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.inWarehouseNames != null and param.inWarehouseNames.size() != 0">
+            AND T.IN_WAREHOUSE_NAME IN
+            <foreach collection="param.inWarehouseNames" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.fnSku != null and param.fnSku != ''">
+            AND
+            <foreach collection="param.fnSku.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                D.FN_SKU  LIKE '%'|| #{item}
+            </foreach>
+        </if>
+        <if test="param.sku != null and param.sku != ''">
+            AND D.SKU = #{param.sku}
+        </if>
+        <if test="param.materialCode != null and param.materialCode != ''">
+            AND D.MATERIAL_CODE = #{param.materialCode}
+        </if>
+        <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+            AND T.SHIPMENT_DATE &gt;= TO_DATE(#{param.shipmentStartDate},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+            AND T.SHIPMENT_DATE &lt;= TO_DATE(#{param.shipmentEndDate},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.confirmStartDate != null and param.confirmStartDate != ''">
+            AND D.CONFIRM_TIME &gt;= TO_DATE(#{param.confirmStartDate},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="param.confirmEndDate != null and param.confirmEndDate != ''">
+            AND D.CONFIRM_TIME &lt;= TO_DATE(#{param.confirmEndDate},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        ORDER BY T.ID DESC, T.CREATE_TIME DESC
+    </select>
+
+    <!--根据id更新编辑收货仓的名称-->
+    <update id="updateWareNameById" parameterType="com.tadpole.cloud.supplyChain.api.logistics.entity.OverseasInWarehouse">
+        UPDATE OVERSEAS_IN_WAREHOUSE T SET
+            T.IN_WAREHOUSE_NAME = #{param.inWarehouseName},
+            T.UPDATE_USER = #{param.updateUser},
+            T.UPDATE_TIME = #{param.updateTime},
+            T.UPDATE_SYS_SHOPS_NAME = #{param.updateSysShopsName, jdbcType = VARCHAR},
+            T.NEW_SYS_SHOPS_NAME = #{param.newSysShopsName, jdbcType = VARCHAR}
+        WHERE T.ID = #{param.id}
+    </update>
+
+    <update id="refreshOiwMaterialCode">
+        MERGE INTO (
+            SELECT * FROM LOGISTICS.OVERSEAS_IN_WAREHOUSE_DETAIL D WHERE D.CONFIRM_STATUS = '待签收' AND (D.MATERIAL_CODE IS NULL OR D.DEPARTMENT IS NULL) AND D.IN_ORDER LIKE 'AZYCRK%'
+        ) T1
+        USING (
+            SELECT
+                D.ID,
+                C.SYS_SHOPS_NAME,
+                C.SYS_SITE,
+                R.SKU,
+                B.MATERIAL_CODE,
+                B.DEPARTMENT,
+                B.TEAM
+            FROM LOGISTICS.OVERSEAS_IN_WAREHOUSE C
+            LEFT JOIN LOGISTICS.OVERSEAS_IN_WAREHOUSE_DETAIL D ON C.IN_ORDER = D.IN_ORDER
+            LEFT JOIN WAREHOUSE.REMOVAL_SHIPMENT_DETAIL R ON C.PARENT_ID = R.ID
+            LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY B ON R.SYS_SHOPS_NAME = B.SYS_SHOPS_NAME AND R.SYS_SITE = B.SYS_SITE AND UPPER(R.SKU) = UPPER(B.SKU)
+            LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON B.MATERIAL_CODE = M.MATERIAL_CODE
+            WHERE
+                C.OPERATE_TYPE = '亚马逊仓发海外仓'
+                AND (D.MATERIAL_CODE IS NULL OR D.DEPARTMENT IS NULL)
+                AND R.REMOVAL_ORDER_TYPE = 'Return'
+                AND R.SYS_SITE IS NOT NULL
+                AND R.GENERATE_HWC = '1'
+            ORDER BY R.SHIPMENT_DATE DESC
+        ) T2
+        ON (
+            T1.ID = T2.ID
+        )
+        WHEN MATCHED THEN
+        UPDATE SET T1.MATERIAL_CODE = T2.MATERIAL_CODE, T1.DEPARTMENT = T2.DEPARTMENT, T1.TEAM = T2.TEAM WHERE T1.IN_ORDER LIKE 'AZYCRK%' AND (T1.MATERIAL_CODE IS NULL OR T1.DEPARTMENT IS NULL) AND T1.CONFIRM_STATUS = '待签收'
+    </update>
+</mapper>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.tadpole</groupId>
+        <artifactId>business</artifactId>
+        <version>2.0</version>
+    </parent>
+
+    <!--平台结算app-->
+    <artifactId>platformSettlement-app</artifactId>
+    <packaging>jar</packaging>
+    <version>2.0</version>
+
+    <properties>
+        <activiti.version>5.22.0</activiti.version>
+    </properties>
+
+    <dependencies>
+        <!--guns-cloud通用核心包-->
+        <dependency>
+            <groupId>cn.stylefeng.guns</groupId>
+            <artifactId>common-core</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+        <!--运营管理api-->
+        <dependency>
+            <groupId>com.tadpole</groupId>
+            <artifactId>operationManagement-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+
+        <!--平台结算api-->
+        <dependency>
+            <groupId>com.tadpole</groupId>
+            <artifactId>platformSettlement-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+        <!--供应链服务api-->
+        <dependency>
+            <groupId>com.tadpole</groupId>
+            <artifactId>supplyChain-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+        <!--外部系统api-->
+        <dependency>
+            <groupId>com.tadpole</groupId>
+            <artifactId>externalSystem-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

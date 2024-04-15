@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.ebms.mapper.TbcommaterielMapper">
+
+
+    <select id="getWaitUpdateMatList"
+            resultType="com.tadpole.cloud.externalSystem.modular.ebms.entity.TbComMateriel">
+        select * from TbComMateriel
+        <where>
+            matLastUpdateDate != matCreatDate
+            and matLastUpdateDate > '2022-09-30'
+            <if test="updateTimeStart != null ">
+                AND matLastUpdateDate >= #{updateTimeStart}
+            </if>
+            <if test="updateTimeEnd != null ">
+                AND #{updateTimeEnd}> matLastUpdateDate
+            </if>
+            <if test="matList != null and matList.size() != 0">
+                AND matCode IN
+                <foreach collection="matList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+        </where>
+    </select>
+
+    <select id="listBySpec"
+            resultType="com.tadpole.cloud.externalSystem.modular.ebms.entity.TbComMateriel">
+        select * from TbComMateriel
+        <where>
+            <if test="paramCondition.createTimeStart != null ">
+                AND matCreatDate >= #{paramCondition.createTimeStart}
+            </if>
+            <if test="paramCondition.createTimeEnd != null ">
+                AND matCreatDate &lt;  DATEADD(dd,1,#{paramCondition.createTimeEnd})
+            </if>
+            <if test="paramCondition.matCate != null and paramCondition.matCate != '' ">
+                AND matCate = #{paramCondition.matCate}
+            </if>
+            <if test="paramCondition.matOperateCate != null and paramCondition.matOperateCate != '' ">
+                AND matOperateCate = #{paramCondition.matOperateCate}
+            </if>
+            <if test="paramCondition.matProName != null and paramCondition.matProName != '' ">
+                AND matProName = #{paramCondition.matProName}
+            </if>
+            <if test="paramCondition.matStyle != null and paramCondition.matStyle != '' ">
+                AND matStyle = #{paramCondition.matStyle}
+            </if>
+            <if test="paramCondition.matMainMaterial != null and paramCondition.matMainMaterial != '' ">
+                AND matMainMaterial = #{paramCondition.matMainMaterial}
+            </if>
+            <if test="paramCondition.matPattern != null and paramCondition.matPattern != '' ">
+                AND matPattern = #{paramCondition.matPattern}
+            </if>
+            <if test="paramCondition.matComBrand != null and paramCondition.matComBrand != '' ">
+                AND matComBrand = #{paramCondition.matComBrand}
+            </if>
+            <if test="paramCondition.matBrand != null and paramCondition.matBrand != '' ">
+                AND matBrand = #{paramCondition.matBrand}
+            </if>
+            <if test="paramCondition.matModel != null and paramCondition.matModel != '' ">
+                AND matModel = #{paramCondition.matModel}
+            </if>
+
+            <if test="paramCondition.matColor != null and paramCondition.matColor != '' ">
+                AND matColor = #{paramCondition.matColor}
+            </if>
+            <if test="paramCondition.matSize != null and paramCondition.matSize != '' ">
+                AND matSize = #{paramCondition.matSize}
+            </if>
+            <if test="paramCondition.matPackQty != null and paramCondition.matPackQty != '' ">
+                AND matPackQty = #{paramCondition.matPackQty}
+            </if>
+            <if test="paramCondition.matCode != null and paramCondition.matCode != '' ">
+                AND matCode = #{paramCondition.matCode}
+            </if>
+            <if test="paramCondition.matDeveloper != null and paramCondition.matDeveloper != '' ">
+                AND matDeveloper like CONCAT('%',#{paramCondition.matDeveloper},'%')
+            </if>
+            <if test="paramCondition.matProcurementStaff != null and paramCondition.matProcurementStaff != '' ">
+                AND matProcurementStaff like CONCAT('%',#{paramCondition.matProcurementStaff},'%')
+
+            </if>
+            <if test="paramCondition.matCodes != null and paramCondition.matCodes.size() != 0">
+                AND matCode IN
+                <foreach collection="paramCondition.matCodes" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by matCreatDate desc
+    </select>
+
+</mapper>

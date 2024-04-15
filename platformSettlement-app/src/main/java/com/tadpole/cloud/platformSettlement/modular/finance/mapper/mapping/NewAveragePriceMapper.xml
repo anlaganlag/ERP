@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.NewAveragePriceMapper">
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NewAveragePriceParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.NewAveragePriceResult">
+
+        select t.*,case t.CONFIRM_STATUS when 0 then '未确认'
+                                         when 1 then '已确认' else '' end CONFIRM_STATUS_TXT,
+        B.CATEGORY,
+        B.PRODUCT_TYPE,
+        B.PRODUCT_NAME,
+        B.STYLE,
+        B.MAIN_MATERIAL,
+        B.DESIGN,
+        B.COMPANY_BRAND,
+        B.FIT_BRAND,
+        B.MODEL,
+        B.COLOR,
+        B.SIZES,
+        B.PACKING,
+        B.VERSION,
+        B.TYPE,
+        B.BUYER,
+        B.DEVELOPER,
+        B.FIRST_ORDER_DATE
+        from RP_NEW_AVERAGE_PRICE t
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE=t.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod!=''">
+                t.FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName!=''">
+                AND t.SHOP_NAME =#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site!=''">
+                AND t.SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.materialCode != null and paramCondition.materialCode!=''">
+                AND t.MATERIAL_CODE =#{paramCondition.materialCode}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus!=''">
+                AND t.CONFIRM_STATUS =#{paramCondition.confirmStatus}
+            </if>
+        </where>
+    </select>
+    <select id="queryList"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NewAveragePriceParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.NewAveragePriceResult">
+        select t.*,case t.CONFIRM_STATUS when 0 then '未确认'
+                                         when 1 then '已确认' else '' end CONFIRM_STATUS_TXT,
+        B.CATEGORY,
+        B.PRODUCT_TYPE,
+        B.PRODUCT_NAME,
+        B.STYLE,
+        B.MAIN_MATERIAL,
+        B.DESIGN,
+        B.COMPANY_BRAND,
+        B.FIT_BRAND,
+        B.MODEL,
+        B.COLOR,
+        B.SIZES,
+        B.PACKING,
+        B.VERSION,
+        B.TYPE,
+        B.BUYER,
+        B.DEVELOPER,
+        B.FIRST_ORDER_DATE,
+        B.VOLUME,
+        B.NETWEIGHT,
+        B.GROSSWEIGHT,
+        B.STYLE_SECOND_LABEL
+        from RP_NEW_AVERAGE_PRICE t
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL  B
+        ON B.MATERIAL_CODE=t.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod!=''">
+                t.FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site!=''">
+                AND t.SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName!=''">
+                AND t.SHOP_NAME =#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.materialCode != null and paramCondition.materialCode!=''">
+                AND t.MATERIAL_CODE =#{paramCondition.materialCode}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus!=''">
+                AND t.CONFIRM_STATUS =#{paramCondition.confirmStatus}
+            </if>
+        </where>
+    </select>
+    <select id="confirmAndDeleteBatch" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NewAveragePriceParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NewAveragePriceParam">
+        select id from RP_NEW_AVERAGE_PRICE t
+        <where>
+            t.CONFIRM_STATUS=0 and t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            and t.SHOP_NAME = #{paramCondition.shopName}
+            <if test="paramCondition.sites != null and paramCondition.sites.size()>0">
+                and t.SITE  in
+                <foreach collection="paramCondition.sites" open="(" close=")" separator=","
+                         item="site">
+                    #{site}
+                </foreach>
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName!=''">
+                and t.SHOP_NAME=#{paramCondition.shopName}
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,83 @@
+package com.tadpole.cloud.platformSettlement.api.finance.model.result;
+
+import cn.stylefeng.guns.cloud.model.validator.BaseValidatingParam;
+import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
+import com.alibaba.excel.annotation.ExcelProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+* <p>
+* 设置期初余额
+* </p>
+*
+* @author gal
+* @since 2021-10-25
+*/
+@Data
+@ApiModel
+@ExcelIgnoreUnannotated
+public class InitialBalanceResult implements Serializable, BaseValidatingParam {
+
+    private static final long serialVersionUID = 1L;
+
+    /** id */
+    @ApiModelProperty("ID")
+    private BigDecimal id;
+
+    /** 平台 */
+    @ApiModelProperty("PLATFORM_NAME")
+    @ExcelProperty(value= "平台")
+    private String platformName;
+
+    /** 账号 */
+    @ApiModelProperty("SHOP_NAME")
+    @ExcelProperty(value= "账号")
+    private String shopName;
+
+    /** 站点 */
+    @ApiModelProperty("SITE")
+    @ExcelProperty(value= "站点")
+    private String site;
+
+    /** 会计期间 */
+    @ApiModelProperty("FISCAL_PERIOD")
+    @ExcelProperty(value= "会计期间")
+    private String fiscalPeriod;
+
+    /** 原币 */
+    @ApiModelProperty("ORIGINAL_CURRENCY")
+    @ExcelProperty(value= "原币")
+    private String originalCurrency;
+
+    /** 期初余额 */
+    @ApiModelProperty("INITIAL_BALANCE")
+    @ExcelProperty(value= "期初余额")
+    private BigDecimal initialBalance;
+
+    /** 创建时间 */
+    @ApiModelProperty("CREATE_AT")
+    private LocalDateTime createAt;
+
+    /** 修改时间 */
+    @ApiModelProperty("UPDATE_AT")
+    private LocalDateTime updateAt;
+
+    /** 创建人 */
+    @ApiModelProperty("CREATE_BY")
+    private String createBy;
+
+    /** 修改人 */
+    @ApiModelProperty("UPDATE_BY")
+    private String updateBy;
+
+    @ApiModelProperty("upload_status")
+    @ExcelProperty(value= "上传状态")
+    private String uploadStatus;
+
+
+}

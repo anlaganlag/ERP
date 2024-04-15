@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.PurchaseSupplier.mapper.SupplierInfoMapper">
+
+    <select id="profileList"
+            resultType="com.tadpole.cloud.supplyChain.modular.PurchaseSupplier.model.result.SupplierInfoResult">
+        select SYS_C_DATE, SYS_L_DATE, SYS_DEPT_CODE, SYS_DEPT_NAME, SYS_PER_CODE, SYS_PER_NAME, SYS_VALID_STATUS,
+               SYS_SUP_CODE, SYS_SUP_NAME, SYS_SUP_ABB, SYS_ADMIT_TYPE, SYS_SUP_LEVEL, SYS_PROVINCE,
+               SYS_URBAN_AREA, SYS_MAIL_ADDRESS, SYS_INDUSTRY, SYS_OPERATE_CATE, SYS_MAIN_PRODUCT,
+               SYS_MON_PRODUCT_CAPA, SYS_CREDIT_CODE, SYS_REGIST_ADDRESS, SYS_BUSINESS_LICENSE,TAX_RATE_CONEW,
+               SYS_SUP_COMMIT_LETTER, SYS_FACTORY_PIC, SYS_PATNER_INFO_QUESTE, SYS_SUPPLE_AGREEMENT,
+               SYS_FW_AGREEMENT, SYS_QUALITY_AGREEMENT, SYS_PATENT_CERTFICATE, SYS_TAX_LEVEL, SYS_OTHER_ATTACHMENT,
+               SYS_INVO_COMP_TYPE, SYS_SETTLEMENT_CURRENCY, SYS_SETTLEMENT_METHOD, SYS_PAYMENT_TERMS, SYS_TAX_CLASSIFY,
+               SYS_INVOICE_TYPE, SYS_DEFAULT_TAX_RATE, SYS_INVOICE_INFO, SYS_SUP_CHAIN_COMP, SYS_SUP_GROUP,
+               SYS_PUR_CHARGE_DEPT_NAME, SYS_PUR_CHARGE_DEPT_CODE, SYS_PUR_CHARGE_PER_NAME, SYS_PUR_CHARGE_PER_CODE,
+               SYS_MCS_PER_NAME, SYS_MCS_PER_CODE, SYS_REMARKS, SYS_IS_SUG_BYCOMP_STAF, SYS_SUG_PER_NAME, SYS_RELATE_TO_SUG,
+               SYS_IS_RECOM_INFO, SYS_DATA_ATTACHMENT, SYS_DEPT_EXAM_RESULT, SYS_DEPT_EXAM_INSTRUCTE, SYS_DEPT_EXAM_DATE,
+               SYS_DEPT_EXAM_PER_NAME, SYS_DEPT_EXAM_PER_CODE, SYS_QUAL_EXAM_RESULT, SYS_QUAL_EXAM_INSTRUCTE, SYS_QUAL_EXAM_DATE,
+               SYS_QUAL_EXAM_PER_NAME, SYS_QUAL_EXAM_PER_CODE, SYS_APPR_RESULT, SYS_APPR_REMARKS, SYS_APPR_DATE, SYS_APPR_PER_NAME,
+               SYS_APPR_PER_CODE, ID, SYNC_TIME, SYNC_RESULT_MSG, SUPPLIER_ID, case SYS_AUDIT_STATUS when '已同步' then '通过' else SYS_AUDIT_STATUS end SYS_AUDIT_STATUS,
+        CASE sys_admit_type WHEN '购样' THEN '无需同步' ELSE CASE SYS_AUDIT_STATUS WHEN '通过' THEN '同步失败' WHEN '已同步' THEN '同步成功' ELSE '' END  END SYNC_STATUS
+        from SUPPLIER_INFO
+        where 1=1
+        <if test="paramCondition.sysSupCode != null and paramCondition.sysSupCode != ''">
+            AND sys_sup_code LIKE '%'|| #{paramCondition.sysSupCode} ||'%'
+        </if>
+        <if test="paramCondition.sysSupCodeList != null and paramCondition.sysSupCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysSupCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                sys_sup_code  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSupName != null and paramCondition.sysSupName != ''">
+            AND sys_sup_name LIKE '%'|| #{paramCondition.sysSupName} ||'%'
+        </if>
+        <if test="paramCondition.sysSupNameList != null and paramCondition.sysSupNameList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysSupNameList.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                sys_sup_name  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSupAbb != null and paramCondition.sysSupAbb != ''">
+            AND sys_sup_abb LIKE '%'||  #{paramCondition.sysSupAbb} ||'%'
+        </if>
+        <if test="paramCondition.sysSupAbbList != null and paramCondition.sysSupAbbList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysSupAbbList" item="item" index="index" open="(" separator=" or " close=")">
+                sys_sup_abb  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysAdmitTypeList != null and paramCondition.sysAdmitTypeList.size() > 0">
+            AND sys_admit_type in
+            <foreach collection="paramCondition.sysAdmitTypeList" item="item" index="index" open="(" separator=" or " close=")">
+               #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSupLevelList != null and paramCondition.sysSupLevelList.size() > 0">
+            AND sys_sup_level in
+            <foreach collection="paramCondition.sysSupLevelList" item="item" index="index" open="(" separator=" or " close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysOperateCateList != null and paramCondition.sysOperateCateList.size() > 0">
+            AND sys_operate_cate in
+            <foreach collection="paramCondition.sysOperateCateList" item="item" index="index" open="(" separator=" or " close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY SYS_C_DATE DESC
+    </select>
+    <select id="supplierList"
+            resultType="com.tadpole.cloud.supplyChain.modular.PurchaseSupplier.model.result.SupplierInfoResult">
+        select * from SUPPLIER_INFO where 1=1
+        <if test="paramCondition.sysAuditStatus != null and paramCondition.sysAuditStatus !=''">
+          and  sys_audit_status = #{paramCondition.sysAuditStatus}
+        </if>
+        <if test="paramCondition.sysSupCode != null and paramCondition.sysSupCode != ''">
+            AND sys_sup_code = #{paramCondition.sysSupCode}
+        </if>
+        <if test="paramCondition.sysAdmitType == '同步erp'">
+            AND sys_admit_type != '购样'
+        </if>
+        ORDER BY SYS_C_DATE DESC
+    </select>
+</mapper>

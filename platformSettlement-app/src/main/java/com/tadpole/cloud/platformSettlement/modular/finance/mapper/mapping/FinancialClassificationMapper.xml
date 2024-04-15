@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.FinancialClassificationMapper">
+
+
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FinancialClassificationResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FinancialClassificationParam">
+        select
+        COST_CODE,
+        COST_NAME,
+        COST_NAME_CN,
+        TRADE_TYPE,
+        AMOUNT_TYPE,
+        COST_DESCRIPTION,
+        SITE,
+        FINANCIAL_CLASSIFICATION,
+        SUBJECT_CODE,
+        SUBJECT_NAME,
+        SUBJECT_CLASSIFICATION_ONE,
+        SUBJECT_CLASSIFICATION_TWO,
+        case STATUS when  0 then '禁用'
+        when  1 then '启用' end STATUS,
+        CREATE_AT,
+        UPDATE_AT,
+        CREATE_BY,
+        UPDATE_BY,
+        CLASSIFICATION_TYPE,
+        ID,
+        case VERIFY_STATUS when  0 then '未审核'
+                           when  1 then '审核通过'
+                           when  2 then '未通过' end VERIFY_STATUS,
+        case EDIT_STATUS when  0 then '未编辑'
+        when  1 then '已编辑' end EDIT_STATUS,
+        CHANGE_FORBID_BY,
+        CHANGE_FORBID_AT,
+        VERIFY_BY,
+        VERIFY_AT,
+        EDIT_BY,
+        EDIT_AT,
+        WATER_CODE
+        from CW_FINANCIAL_CLASSIFICATION where 1=1
+        <if test="paramCondition.classificationType != null and paramCondition.classificationType != ''">
+            and CLASSIFICATION_TYPE =#{paramCondition.classificationType}
+        </if>
+        <if test="paramCondition.editStatus != null and paramCondition.editStatus != ''  or paramCondition.editStatus==0">
+            and EDIT_STATUS =#{paramCondition.editStatus}
+        </if>
+        <if test="paramCondition.verifyStatus != null and paramCondition.verifyStatus != '' or paramCondition.verifyStatus==0">
+            and VERIFY_STATUS =#{paramCondition.verifyStatus}
+        </if>
+        <if test="paramCondition.status != null and paramCondition.status != '' or paramCondition.status==0">
+            and STATUS =#{paramCondition.status}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and SITE =#{paramCondition.site}
+        </if>
+        <if test="paramCondition.financialClassification != null and paramCondition.financialClassification != ''">
+            and FINANCIAL_CLASSIFICATION =#{paramCondition.financialClassification}
+        </if>
+        <if test="paramCondition.costCode != null and paramCondition.costCode != ''">
+            and COST_CODE =#{paramCondition.costCode}
+        </if>
+        <if test="paramCondition.costName != null and paramCondition.costName != ''">
+            and COST_NAME =#{paramCondition.costName}
+        </if>
+        <if test="paramCondition.costNameCn != null and paramCondition.costNameCn != ''">
+            and COST_NAME_CN =#{paramCondition.costNameCn}
+        </if>
+        <if test="paramCondition.tradeType != null and paramCondition.tradeType != ''">
+            and TRADE_TYPE =#{paramCondition.tradeType}
+        </if>
+        <if test="paramCondition.amountType != null and paramCondition.amountType != ''">
+            and AMOUNT_TYPE =#{paramCondition.amountType}
+        </if>
+        <if test="paramCondition.costDescription != null and paramCondition.costDescription != ''">
+            and COST_DESCRIPTION =#{paramCondition.costDescription}
+        </if>
+        <if test="paramCondition.subjectCode != null and paramCondition.subjectCode != ''">
+            and SUBJECT_CODE =#{paramCondition.subjectCode}
+        </if>
+        <if test="paramCondition.subjectName != null and paramCondition.subjectName != ''">
+            and SUBJECT_NAME =#{paramCondition.subjectName}
+        </if>
+        <if test="paramCondition.subjectClassificationOne != null and paramCondition.subjectClassificationOne != ''">
+            and SUBJECT_CLASSIFICATION_ONE =#{paramCondition.subjectClassificationOne}
+        </if>
+        <if test="paramCondition.subjectClassificationTwo != null and paramCondition.subjectClassificationTwo != ''">
+            and SUBJECT_CLASSIFICATION_TWO =#{paramCondition.subjectClassificationTwo}
+        </if>
+        order by FINANCIAL_CLASSIFICATION desc
+    </select>
+
+
+    <select id="exportFinancialClassificationList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FinancialClassificationResult"
+      parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FinancialClassificationParam">
+        select
+        COST_CODE,
+        COST_NAME,
+        COST_NAME_CN,
+        TRADE_TYPE,
+        AMOUNT_TYPE,
+        COST_DESCRIPTION,
+        SITE,
+        FINANCIAL_CLASSIFICATION,
+        SUBJECT_CODE,
+        SUBJECT_NAME,
+        SUBJECT_CLASSIFICATION_ONE,
+        SUBJECT_CLASSIFICATION_TWO,
+        case STATUS when  0 then '禁用'
+        when  1 then '启用' end STATUS,
+        CREATE_AT,
+        UPDATE_AT,
+        CREATE_BY,
+        UPDATE_BY,
+        CLASSIFICATION_TYPE,
+        ID,
+        case VERIFY_STATUS when  0 then '未审核'
+        when  1 then '审核通过'
+        when  2 then '未通过' end VERIFY_STATUS,
+        case EDIT_STATUS when  0 then '未编辑'
+        when  1 then '已编辑' end EDIT_STATUS,
+        CHANGE_FORBID_BY,
+        CHANGE_FORBID_AT,
+        VERIFY_BY,
+        VERIFY_AT,
+        EDIT_BY,
+        EDIT_AT,
+        WATER_CODE
+        from CW_FINANCIAL_CLASSIFICATION where 1=1
+        <if test="paramCondition.classificationType != null and paramCondition.classificationType != ''">
+            and CLASSIFICATION_TYPE =#{paramCondition.classificationType}
+        </if>
+        <if test="paramCondition.editStatus != null and paramCondition.editStatus != ''  or paramCondition.editStatus==0">
+            and EDIT_STATUS =#{paramCondition.editStatus}
+        </if>
+        <if test="paramCondition.verifyStatus != null and paramCondition.verifyStatus != '' or paramCondition.verifyStatus==0">
+            and VERIFY_STATUS =#{paramCondition.verifyStatus}
+        </if>
+        <if test="paramCondition.status != null and paramCondition.status != '' or paramCondition.status==0">
+            and STATUS =#{paramCondition.status}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and SITE =#{paramCondition.site}
+        </if>
+        <if test="paramCondition.financialClassification != null and paramCondition.financialClassification != ''">
+            and FINANCIAL_CLASSIFICATION =#{paramCondition.financialClassification}
+        </if>
+        <if test="paramCondition.costCode != null and paramCondition.costCode != ''">
+            and COST_CODE =#{paramCondition.costCode}
+        </if>
+        <if test="paramCondition.costName != null and paramCondition.costName != ''">
+            and COST_NAME =#{paramCondition.costName}
+        </if>
+        <if test="paramCondition.costNameCn != null and paramCondition.costNameCn != ''">
+            and COST_NAME_CN =#{paramCondition.costNameCn}
+        </if>
+        <if test="paramCondition.tradeType != null and paramCondition.tradeType != ''">
+            and TRADE_TYPE =#{paramCondition.tradeType}
+        </if>
+        <if test="paramCondition.amountType != null and paramCondition.amountType != ''">
+            and AMOUNT_TYPE =#{paramCondition.amountType}
+        </if>
+        <if test="paramCondition.costDescription != null and paramCondition.costDescription != ''">
+            and COST_DESCRIPTION =#{paramCondition.costDescription}
+        </if>
+        <if test="paramCondition.subjectCode != null and paramCondition.subjectCode != ''">
+            and SUBJECT_CODE =#{paramCondition.subjectCode}
+        </if>
+        <if test="paramCondition.subjectName != null and paramCondition.subjectName != ''">
+            and SUBJECT_NAME =#{paramCondition.subjectName}
+        </if>
+        <if test="paramCondition.subjectClassificationOne != null and paramCondition.subjectClassificationOne != ''">
+            and SUBJECT_CLASSIFICATION_ONE =#{paramCondition.subjectClassificationOne}
+        </if>
+        <if test="paramCondition.subjectClassificationTwo != null and paramCondition.subjectClassificationTwo != ''">
+            and SUBJECT_CLASSIFICATION_TWO =#{paramCondition.subjectClassificationTwo}
+        </if>
+    </select>
+
+
+    <select id="queryAccount" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.Account">
+        select
+            *
+        from Account_Mcms_View
+        where 1=1
+        <if test="paramCondition.accountId == null or paramCondition.accountId == ''">
+         and   Account_Parent_Id=0
+        </if>
+        <if test="paramCondition.accountId != null and paramCondition.accountId != ''">
+         and    Account_Parent_Id =#{paramCondition.accountId}
+        </if>
+    </select>
+
+    <select id="queryAccountList" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.Account">
+        select
+        *
+        from Account_Mcms_View
+        where 1=1
+    </select>
+
+    <update id="changeStatus" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FinancialClassificationParam">
+        update  CW_FINANCIAL_CLASSIFICATION a SET a.STATUS=0
+        WHERE a.COST_NAME=( SELECT b.COST_NAME FROM CW_FINANCIAL_CLASSIFICATION b WHERE b.ID=#{paramCondition.id})
+              and a.CLASSIFICATION_TYPE=( SELECT c.CLASSIFICATION_TYPE FROM CW_FINANCIAL_CLASSIFICATION c WHERE c.ID=#{paramCondition.id})
+              and a.SITE=( SELECT d.SITE FROM CW_FINANCIAL_CLASSIFICATION d WHERE d.ID=#{paramCondition.id})
+
+    </update>
+
+    <select id="getMaxWaterCode"  resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FinancialClassificationResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FinancialClassificationParam">
+        select case  when max(WATER_CODE) >0   then   max(WATER_CODE) else 0 end WATER_CODE from CW_FINANCIAL_CLASSIFICATION
+        where  CLASSIFICATION_TYPE =#{paramCondition.classificationType} and COST_CODE like '%' || #{paramCondition.costCode}|| '%'
+    </select>
+</mapper>

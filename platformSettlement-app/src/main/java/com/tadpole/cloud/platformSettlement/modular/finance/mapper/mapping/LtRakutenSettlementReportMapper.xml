@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LtRakutenSettlementReportMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtRakutenSettlementReportResult">
+        select <include refid="DETAIL_COL_NOT_MAT"/>,
+               <include refid="MAT_PROP"/>
+         from LT_RAKUTEN_SETTLEMENT_REPORT A
+                          LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+                                    ON B.MATERIAL_CODE = A.MAT_CODE
+    </select>
+
+
+    <select id="exportByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtRakutenSettlementReport">
+        select * from LT_RAKUTEN_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+    <select id="downloadExport" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtRakutenSettlementReportExport">
+        select * from LT_RAKUTEN_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+
+    <sql id="RAKUTEN_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <sql id ="MAT_PROP">
+         decode(B.MATERIAL_CODE,null,'0',B.CATEGORY) CATEGORY,
+         decode(B.MATERIAL_CODE,null,'0',B.product_type) product_type,
+         decode(B.MATERIAL_CODE,null,'0',B.PRODUCT_NAME) PRODUCT_NAME,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE) STYLE,
+         decode(B.MATERIAL_CODE,null,'0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+         decode(B.MATERIAL_CODE,null,'0',B.DESIGN) DESIGN,
+         decode(B.MATERIAL_CODE,null,'0',B.COMPANY_BRAND) COMPANY_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.FIT_BRAND) FIT_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.MODEL) MODEL,
+         decode(B.MATERIAL_CODE,null,'0',B.COLOR) COLOR,
+         decode(B.MATERIAL_CODE,null,'0',B.SIZES) SIZES,
+         decode(B.MATERIAL_CODE,null,'0',B.PACKING) PACKING,
+         decode(B.MATERIAL_CODE,null,'0',B.VERSION) VERSION,
+         decode(B.MATERIAL_CODE,null,'0',B.TYPE) TYPE,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL,
+         PROPERTY_MERGE,
+         SALES_BRAND
+    </sql>
+
+    <sql id="DETAIL_COL_NOT_MAT">
+        A.ID,
+        A.PLATFORM ,
+        A.SKU,
+        A.MAT_CODE,
+        A.QTY,
+        A.VOLUME_BILL_QUANTITY,
+        A.FREIGHT,
+        A.TAX_FREE_SALE,
+        A.TAX,
+        A.ORDER_FEE_IN_TAX,
+        A.REFUND,
+        A.RATENKU_FEE,
+        A.CREDIT_FEE,
+        A.FBA_FEE,
+        A.ADVERTISING,
+        A.BRUSHING_VALUE,
+        A.BRUSHING_SERVICE_CHARGE,
+        A.COST_ORI,
+        A.COST_ADD,
+        A.LOGISTICS,
+        A.OVERSEA_WARE_DELI_FEE,
+        A.STORAGE_FEE,
+        A.DISPOSE_FEE,
+        A.DISPOSE_PURCHASE_FEE,
+        A.DISPOSE_LOGISTICS_FEE,
+        A.DOMESTIC_UNSALABLE_INVENTORY,
+        A.PROFIT,
+        A.INCENTIVE_FUND,
+        A.PERIOD,
+        A.SHOP_NAME,
+        A.BUYER,
+        A.DEVELOPER,
+        A.FIRST_ORDER_DATE,
+        A.DEPARTMENT,
+        A.TEAM,
+        A.IS_NEW,
+        A.REMARK,
+        A.UPDATE_TIME,
+        A.UPDATE_BY,
+        A.CREATE_TIME,
+        A.CREATE_BY,
+        A.REVENUE_RATION,
+        A.PEOPLE_NUM,
+        A.PEOPLE_COST
+    </sql>
+
+
+
+    <sql id="detail_col">
+        detail.ID,
+        detail.SKU,
+        detail.MAT_CODE,
+        detail.CATEGORY,
+        detail.PRODUCT_TYPE,
+        detail.PRODUCT_NAME,
+        detail.STYLE,
+        detail.MAIN_MATERIAL,
+        detail.DESIGN,
+        detail.COMPANY_BRAND,
+        detail.FIT_BRAND,
+        detail.MODEL,
+        detail.COLOR,
+        detail.SIZES,
+        detail.PACKING,
+        detail.VERSION,
+        detail.TYPE,
+        detail.STYLE_SECOND_LABEL,
+        detail.PROPERTY_MERGE,
+        detail.SALES_BRAND,
+        detail.QTY,
+        detail.VOLUME_BILL_QUANTITY,
+        detail.FREIGHT,
+        detail.TAX_FREE_SALE,
+        detail.TAX,
+        detail.ORDER_FEE_IN_TAX,
+        detail.REFUND,
+        detail.RATENKU_FEE,
+        detail.CREDIT_FEE,
+        detail.FBA_FEE,
+        detail.ADVERTISING,
+        detail.BRUSHING_VALUE,
+        detail.BRUSHING_SERVICE_CHARGE,
+        detail.COST_ORI,
+        detail.COST_ADD,
+        detail.LOGISTICS,
+        detail.OVERSEA_WARE_DELI_FEE,
+        detail.STORAGE_FEE,
+        detail.DISPOSE_FEE,
+        detail.DISPOSE_PURCHASE_FEE,
+        detail.DISPOSE_LOGISTICS_FEE,
+        detail.DOMESTIC_UNSALABLE_INVENTORY,
+        detail.PROFIT,
+        detail.INCENTIVE_FUND,
+        detail.PERIOD,
+        detail.SHOP_NAME,
+        detail.BUYER,
+        detail.DEVELOPER,
+        detail.FIRST_ORDER_DATE,
+        detail.DEPARTMENT,
+        detail.TEAM,
+        detail.IS_NEW,
+        detail.REMARK,
+        detail.UPDATE_TIME,
+        detail.UPDATE_BY,
+        detail.CREATE_TIME,
+        detail.CREATE_BY,
+        detail.REVENUE_RATION,
+        detail.PEOPLE_NUM,
+        detail.PEOPLE_COST
+    </sql>
+
+    <select id="mergeRakutenSettleNallocStruct"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtRakutenSettlementReportParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtRakutenSettlementReportResult">
+        SELECT <include refid="detail_col"/> ,
+        CASE WHEN detail.qty &lt; 0 THEN 0 ELSE detail.qty END detailSalesVol,
+        SUM(CASE WHEN detail.qty &lt; 0 THEN 0 ELSE detail.qty END) OVER(PARTITION BY detail.period,detail.department,detail.team) AS teamsalesVol,
+               struct.id struct_id,
+               struct.period,
+               struct.dept3,
+               struct.dept4,
+               struct.rakuten_alloc amazon_alloc
+          FROM
+        (select * from lt_rakuten_settlement_report
+        <where>
+            <include refid="RAKUTEN_CONDITION"/>
+        </where>) detail
+          LEFT JOIN (SELECT t.* FROM alloc_structure t
+        <where>
+        <include refid="ALLOC_STRUCTURE_CONDITION"/>
+        and rakuten_alloc > 0
+        and status =1
+    </where>) struct
+            ON struct.period = detail.Period
+           AND struct.dept3 = detail.department
+           AND struct.dept4 = detail.team
+    </select>
+
+
+                <update id="updatePeopleCostZero"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtRakutenSettlementReportParam">
+                MERGE INTO lt_rakuten_settlement_report det
+                    USING (
+                        SELECT
+                            *
+                        FROM
+                            alloc_structure as2
+                        WHERE
+                            status = 1
+                            AND is_labor_cost = '否'
+                        <include refid="ALLOC_STRUCTURE_CONDITION"/>) src
+                              ON (src.period = det.Period
+                              AND src.dept3 = det.department
+                              AND src.dept4 = det.team)
+                        WHEN MATCHED THEN
+                    UPDATE
+                    SET
+                        det.PEOPLE_COST = 0
+            </update>
+
+
+    <update id="insertStructure"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtRakutenSettlementReportParam">
+        <!--        删除避免重复插入 -->
+        BEGIN
+        DELETE FROM LT_RAKUTEN_SETTLEMENT_REPORT
+        <where>
+            CONFIRM_STATUS = '1'
+            <include refid="RAKUTEN_CONDITION"/>
+        </where>;
+        <!--                插入架构数据-->
+        INSERT INTO
+        LT_RAKUTEN_SETTLEMENT_REPORT (PERIOD ,
+        DEPARTMENT ,
+        team,
+        REVENUE_RATION ,
+        PEOPLE_NUM,
+        PEOPLE_COST,
+        CREATE_TIME ,
+        CREATE_BY)
+        SELECT
+        PERIOD ,
+        DEPT3 ,
+        dept4,
+        0 REVENUE_RATION ,
+        rakuten_alloc,
+        round(rakuten_alloc * -7000 * #{param.directRate},12),
+        SYSDATE ,
+        #{param.createBy}
+        FROM
+        ALLOC_STRUCTURE
+        <where>
+            STATUS = '1'
+            and rakuten_alloc >0
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+        </where>;
+
+        END;
+
+
+    </update>
+
+    <select id="getProductType" parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.DepartTeamProductTypeParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.DepartTeamProductTypeParam">
+
+        SELECT
+        department,
+        team,
+        LISTAGG( PRODUCT_TYPE, ', ') WITHIN GROUP (
+        ORDER BY
+        department,
+        team) PRODUCT_TYPE
+        FROM
+        (
+        SELECT
+        DISTINCT PRODUCT_TYPE ,
+        department,
+        team
+        FROM
+        PRODUCT_LINE2
+        <where>
+            <if test="param.department != null and param.department != ''">
+                AND department  = #{param.department}
+            </if>
+            <if test="param.team != null and param.team != ''">
+                AND team  = #{param.team}
+            </if>
+        </where>)subquery
+        GROUP BY
+        department,
+        team
+        UNION ALL
+        SELECT
+        '0' department ,
+        '0' team,
+        LISTAGG( PRODUCT_TYPE, ', ') WITHIN GROUP (
+        ORDER BY
+        PRODUCT_TYPE) PRODUCT_TYPE
+        FROM
+        (
+        SELECT
+        DISTINCT PRODUCT_TYPE
+        FROM
+        PRODUCT_LINE2)
+
+
+    </select>
+
+</mapper>

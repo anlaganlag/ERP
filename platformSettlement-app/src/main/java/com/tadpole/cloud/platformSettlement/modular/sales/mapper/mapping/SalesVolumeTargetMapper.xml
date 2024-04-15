@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.sales.mapper.SalesVolumeTargetMapper">
+
+    <sql id="Page_Column_List">
+        ID,
+        PLATFORM,
+        DEPARTMENT,
+        TEAM,
+        PRODUCT_TYPE,
+        COMPANY_BRAND,
+        (SEASON_ONE+SEASON_TWO+SEASON_THREE+SEASON_FOUR) AS YEAR_TARGET,
+        SEASON_ONE,
+        SEASON_TWO,
+        SEASON_THREE,
+        SEASON_FOUR,
+        US,
+        CA,
+        MX,
+        UK,
+        DE,
+        FR,
+        IT,
+        ES,
+        NL,
+        SE,
+        JP,
+        AU,
+        AE,
+        SG,
+        SA,
+        IND,
+        PL,
+        TR,
+        BE,
+        EU,
+        YEAR,
+        VERSION,
+        CURRENCY,
+        CASE CONFIRM_STATUS WHEN 1 THEN '已确认' WHEN 0 THEN '未确认' ELSE '其他' END CONFIRM_STATUS,
+        CREATE_AT,
+        CREATE_BY,
+        CONFIRM_DATE,
+        UPDATE_AT,
+        UPDATE_BY,
+        shop_name,
+        retract_line,
+        newold_product
+    </sql>
+
+    <sql id="List_Sum">
+        SUM(SEASON_ONE+SEASON_TWO+SEASON_THREE+SEASON_FOUR) YEAR_TARGET,
+        SUM(SEASON_ONE) SEASON_ONE,
+        SUM(SEASON_TWO) SEASON_TWO,
+        SUM(SEASON_THREE) SEASON_THREE,
+        SUM(SEASON_FOUR) SEASON_FOUR,
+        SUM(US) US,
+        SUM(CA) CA,
+        SUM(MX) MX,
+        SUM(UK) UK,
+        SUM(DE) DE,
+        SUM(FR) FR,
+        SUM(IT) IT,
+        SUM(ES) ES,
+        SUM(NL) NL,
+        SUM(SE) SE,
+        SUM(JP) JP,
+        SUM(AU) AU,
+        SUM(AE) AE,
+        SUM(SG) SG,
+        SUM(SA) SA,
+        SUM(IND) IND,
+        SUM(PL) PL,
+        SUM(TR) TR,
+        SUM(BE) BE,
+        SUM(EU) EU
+    </sql>
+
+    <sql id="List_Condition">
+
+        <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+            AND platform IN
+            <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+                     item="platform">
+                #{platform}
+            </foreach>
+        </if>
+        <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+            AND department IN
+            <foreach collection="paramCondition.departments" open="(" close=")" separator=","
+                     item="department">
+                #{department}
+            </foreach>
+        </if>
+        <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+            AND team IN
+            <foreach collection="paramCondition.teams" open="(" close=")" separator=","
+                     item="team">
+                #{team}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.productTypes != null and paramCondition.productTypes.size>0">
+            AND product_type IN
+            <foreach collection="paramCondition.productTypes" open="(" close=")" separator=","
+                     item="productType">
+                #{productType}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.companyBrands != null and paramCondition.companyBrands.size>0">
+            AND company_brand IN
+            <foreach collection="paramCondition.companyBrands" open="(" close=")" separator=","
+                     item="companyBrand">
+                #{companyBrand}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.year != null and paramCondition.year != ''">
+            AND year =#{paramCondition.year}
+        </if>
+
+        <if test="paramCondition.version != null and paramCondition.version != ''">
+            AND version =#{paramCondition.version}
+        </if>
+
+        <if test="paramCondition.retractLines != null and paramCondition.retractLines.size>0">
+            AND RETRACT_LINE IN
+            <foreach collection="paramCondition.retractLines" open="(" close=")" separator=","
+                     item="retractLine">
+                #{retractLine}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.newoldProducts != null and paramCondition.newoldProducts.size>0">
+            AND newold_product IN
+            <foreach collection="paramCondition.newoldProducts" open="(" close=")" separator=","
+                     item="newoldProduct">
+                #{newoldProduct}
+            </foreach>
+        </if>
+
+
+
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND SHOP_NAME like '%'||#{paramCondition.shopName}||'%'
+        </if>
+
+
+    </sql>
+
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.SalesVolumeTargetParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.SalesVolumeTargetResult">
+        select      <include refid="Page_Column_List"/>     from SALES_VOLUME_TARGET T
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY ID
+
+    </select>
+
+    <select id="getQuantity"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.SalesVolumeTargetParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.SalesVolumeTargetResult">
+        SELECT <include refid="List_Sum"/>  FROM SALES_VOLUME_TARGET t
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+    </select>
+
+</mapper>

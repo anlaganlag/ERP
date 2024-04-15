@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.RemovalDestroyApplyMapper">
+
+    <!--库存销毁申请列表接口-->
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalDestroyApplyParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemovalDestroyApplyResult">
+        SELECT * FROM (
+            SELECT
+                b.APPLY_CODE,
+                b.APPLY_TITLE,
+                b.APPLY_NAME,
+                b.APPLY_USER_NAME,
+                b.APPLY_USER_ACCOUNT,
+                b.APPLY_DEPARTMENT,
+                b.APPLY_DATE,
+                a.ORDER_ID,
+                b.SHARE_NUM,
+                CASE b.AUDIT_STATUS WHEN '1' THEN '提出申请发起'
+                WHEN '2' THEN '中心最高负责人审批'
+                WHEN '3' THEN '财务审批'
+                WHEN '4' THEN '总经理审批'
+                WHEN '5' THEN '归档'
+                ELSE '' END AUDIT_STATUS,
+                ROW_NUMBER()over(PARTITION BY b.APPLY_CODE ORDER BY b.ID ASC) AS ro
+            FROM REMOVAL_DESTROY_APPLY a
+            LEFT JOIN REMOVAL_DESTROY_BASE_APPLY b
+            ON b.apply_code=a.apply_code
+            <where>
+                <if test="paramCondition.applyCode != null and paramCondition.applyCode !=''">
+                    AND b.APPLY_CODE=#{paramCondition.applyCode}
+                </if>
+                <if test="paramCondition.applyTitle != null and paramCondition.applyTitle !=''">
+                    AND b.APPLY_TITLE=#{paramCondition.applyTitle}
+                </if>
+                <if test="paramCondition.applyUserName != null and paramCondition.applyUserName.size >0">
+                    AND b.APPLY_USER_ACCOUNT  IN
+                    <foreach collection="paramCondition.applyUserName" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="paramCondition.applyDepartment != null and paramCondition.applyDepartment !=''">
+                    AND b.apply_department=#{paramCondition.applyDepartment}
+                </if>
+                <if test="paramCondition.applyDate != null and paramCondition.applyDate !=''">
+                    AND to_char(b.apply_date,'yyyy-MM-dd')=#{paramCondition.applyDate}
+                </if>
+                <if test="paramCondition.orderId != null and paramCondition.orderId !=''">
+                    AND a.order_id=#{paramCondition.orderId}
+                </if>
+                <if test="paramCondition.category != null and paramCondition.category !=''">
+                    AND substr(b.APPLY_CODE,1,4)=
+                    CASE #{paramCondition.category}
+                    WHEN '库存移除至服务商申请' THEN 'KCYC'
+                    WHEN '库存销毁申请' THEN 'KCXH'
+                    ELSE '' END
+                </if>
+                <if test="paramCondition.shareNum != null">
+                    AND b.SHARE_NUM=#{paramCondition.shareNum}
+                </if>
+                <if test="paramCondition.auditStatus != null and paramCondition.auditStatus!=''">
+                    AND b.AUDIT_STATUS=#{paramCondition.auditStatus}
+                </if>
+            </where>
+            ORDER BY b.ID DESC, a.ID ASC
+        ) t
+        WHERE t.ro=1
+    </select>
+
+    <!--库存销毁申请导出接口-->
+    <select id="getApplyDetail"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalDestroyApplyParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemovalDestroyApplyResult">
+        SELECT
+            a.id,a.apply_code,a.sys_shops_name,a.sys_site,a.merchant_sku,a.department,
+            a.team,a.product_type,a.order_id,a.apply_quantity,a.unit_price,a.total_price,a.remark,
+            b.*
+        FROM REMOVAL_DESTROY_APPLY a
+        LEFT JOIN REMOVAL_DESTROY_BASE_APPLY b
+        ON b.apply_code=a.apply_code
+        <where>
+            <if test="paramCondition.applyCode != null and paramCondition.applyCode!=''">
+                AND b.APPLY_CODE=#{paramCondition.applyCode}
+            </if>
+        </where>
+        ORDER BY b.ID DESC, a.ID ASC
+    </select>
+
+    <select id="getQuantity"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalDestroyApplyParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemovalDestroyApplyResult">
+        SELECT SUM(APPLY_QUANTITY) applyQuantity,SUM(TOTAL_PRICE) totalPrice  FROM REMOVAL_DESTROY_APPLY t
+        <where>
+            <if test="paramCondition.applyCode != null and paramCondition.applyCode!=''">
+                and APPLY_CODE=#{paramCondition.applyCode}
+            </if>
+        </where>
+    </select>
+
+
+    <update id="updateDetailList">
+        MERGE INTO (
+            SELECT * FROM REMOVAL_DESTROY_APPLY WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR PRODUCT_TYPE IS NULL)
+        ) D
+        USING (
+            SELECT A.*,B.PRODUCT_TYPE AS PRODUCT_TYPE_M
+            FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY A
+          LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B ON B.MATERIAL_CODE = A.MATERIAL_CODE
+        ) G
+        ON (UPPER(D.MERCHANT_SKU) = UPPER(G.SKU) AND D.SYS_SITE = G.SYS_SITE AND D.SYS_SHOPS_NAME = G.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+            UPDATE SET D.DEPARTMENT = G.DEPARTMENT, D.TEAM = G.TEAM, D.PRODUCT_TYPE = G.PRODUCT_TYPE_M
+    </update>
+
+    <update id="updateFileDetailList">
+        MERGE INTO (
+            SELECT * FROM REMOVAL_DESTROY_APPLY WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR PRODUCT_TYPE IS NULL )
+        ) D
+        USING (
+            SELECT
+                SKU,
+                SYS_SITE,
+                SYS_SHOPS_NAME,
+                t.MATERIAL_CODE,
+                d.PRODUCT_TYPE,
+                DEPARTMENT,
+                TEAM,
+                LAST_UPDATE_DATE
+            FROM (
+                SELECT
+                    SKU,
+                    SYS_SITE,
+                    SYS_SHOPS_NAME,
+                    MATERIAL_CODE,
+                    DEPARTMENT,
+                    TEAM,
+                    LAST_UPDATE_DATE,
+                    ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+                FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE
+            ) t
+            LEFT JOIN mcms_base_data.rp_material d ON d.material_code=t.material_code
+            WHERE t.rn = 1
+        ) G
+        ON (upper(D.MERCHANT_SKU) = upper(G.sku) AND D.SYS_SITE = G.SYS_SITE AND D.SYS_SHOPS_NAME = G.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+            UPDATE
+                SET D.DEPARTMENT    = G.DEPARTMENT,
+                D.TEAM          = G.TEAM,
+                D.PRODUCT_TYPE = G.PRODUCT_TYPE
+    </update>
+
+</mapper>

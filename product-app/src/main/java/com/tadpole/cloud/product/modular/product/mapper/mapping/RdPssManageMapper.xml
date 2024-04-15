@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.product.mapper.RdPssManageMapper">
+    <select id="listPage" resultType="com.tadpole.cloud.product.modular.product.model.result.RdPssManageResult">
+        select * from RD_PSS_MANAGE
+        where 1=1
+        <if test="paramCondition.sysPlCode != null and paramCondition.sysPlCode != ''">
+            AND SYS_PL_CODE=#{paramCondition.sysPlCode}
+        </if>
+        <if test="paramCondition.sysStatus != null and paramCondition.sysStatus != ''">
+            AND SYS_STATUS = #{paramCondition.sysStatus}
+        </if>
+        <if test="paramCondition.sysCLoseDateList !=null and paramCondition.sysCLoseDateList.size()>0">
+            and SYS_CLOSE_DATE  >= to_date(#{paramCondition.sysCLoseDateList[0]},'yyyy-mm-dd')
+            and SYS_CLOSE_DATE  &lt; to_date(#{paramCondition.sysCLoseDateList[1]},'yyyy-mm-dd') +1
+        </if>
+        <if test="paramCondition.sysCDateList !=null and paramCondition.sysCDateList.size()>0">
+            and SYS_C_DATE  >= to_date(#{paramCondition.sysCDateList[0]},'yyyy-mm-dd')
+            and SYS_C_DATE  &lt; to_date(#{paramCondition.sysCDateList[1]},'yyyy-mm-dd') +1
+        </if>
+        <if test="paramCondition.sysSpu != null and paramCondition.sysSpu != ''">
+            AND SYS_SPU LIKE '%'|| #{paramCondition.sysSpu} ||'%'
+        </if>
+        <if test="paramCondition.sysSpuList != null and paramCondition.sysSpuList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysSpuList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_SPU  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysProName != null and paramCondition.sysProName != ''">
+            AND SYS_PRO_NAME LIKE '%'|| #{paramCondition.sysProName} ||'%'
+        </if>
+        <if test="paramCondition.sysProNameList != null and paramCondition.sysProNameList.size() > 0">
+            AND SYS_PRO_NAME in
+            <foreach collection="paramCondition.sysProNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysStyle != null and paramCondition.sysStyle != ''">
+            AND SYS_STYLE LIKE '%'|| #{paramCondition.sysStyle} ||'%'
+        </if>
+        <if test="paramCondition.sysStyleList != null and paramCondition.sysStyleList.size() > 0">
+            AND SYS_STYLE in
+            <foreach collection="paramCondition.sysStyleList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysMainMaterial != null and paramCondition.sysMainMaterial != ''">
+            AND SYS_MAIN_MATERIAL LIKE '%'|| #{paramCondition.sysMainMaterial} ||'%'
+        </if>
+        <if test="paramCondition.sysMainMaterialList != null and paramCondition.sysMainMaterialList.size() > 0">
+            AND SYS_MAIN_MATERIAL in
+            <foreach collection="paramCondition.sysMainMaterialList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysBrand != null and paramCondition.sysBrand != ''">
+            AND SYS_BRAND LIKE '%'|| #{paramCondition.sysBrand} ||'%'
+        </if>
+        <if test="paramCondition.sysBrandList != null and paramCondition.sysBrandList.size() > 0">
+            AND SYS_BRAND in
+            <foreach collection="paramCondition.sysBrandList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysModel != null and paramCondition.sysModel != ''">
+            AND SYS_MODEL LIKE '%'|| #{paramCondition.sysBrand} ||'%'
+        </if>
+        <if test="paramCondition.sysModelList != null and paramCondition.sysModelList.size() > 0">
+            AND SYS_MODEL in
+            <foreach collection="paramCondition.sysModelList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+</mapper>

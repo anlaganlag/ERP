@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.RemoveMainMapper">
+
+  <sql id="Page_Column_List">
+    n
+    .
+    YEAR
+    ,
+    n.MONTH,
+    m.PLATFORM,
+    m.SHOP_NAME,
+    m.SITE,
+    m.DEPARTMENT,
+    m.TEAM,
+    m.ASIN,
+    m.FNSKU,
+    m.SKU,
+    m.MATERIAL_CODE,
+    m.ORDER_APPLY_DATE,
+    m.ORDER_ID,
+    m.ORDER_TYPE,
+    m.ORDER_STATUS,
+    n.ID,
+    n.MAIN_ID,
+    n.INVENTORY_STATUS,
+    n.APPLY_AMOUNT,
+    n.DISPOSE_AMOUNT,
+    n.REMOVE_AMOUNT,
+    n.VERIFY_BY,
+    n.VERIFY_AT,
+    n.VERIFY_STATUS,
+    n.GENERATE_STATUS
+
+  </sql>
+
+  <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemoveMainResult"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemoveMainParam">
+    select
+    <include refid="Page_Column_List"/>,
+    case n.VERIFY_STATUS when 0 then '未审核' when 1 then '已审核' when 2 then '已作废' end verifyStatusCN,
+    case n.GENERATE_STATUS when 0 then '未生成' when 1 then '已生成' end generateStatusCN
+    from REMOVE_MAIN m left join REMOVE_MAIN_DETIAL n on m.ID = n.MAIN_ID
+    <where>
+    n.DISPOSE_AMOUNT is not null
+      <if test="paramCondition.year != null and paramCondition.year != ''">
+        and n.year =#{paramCondition.year}
+      </if>
+
+      <if test="paramCondition.month != null and paramCondition.month != ''">
+        and n.month =#{paramCondition.month}
+      </if>
+    <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+      AND m.SHOP_NAME IN
+      <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+        item="ShopsName">
+        #{ShopsName}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+      AND m.site IN
+      <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+        #{site}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+      AND m.sku IN
+      <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+        #{sku}
+      </foreach>
+    </if>
+
+
+    <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+      AND n.VERIFY_STATUS IN
+      <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator=","
+        item="verifyStatus">
+        #{verifyStatus}
+      </foreach>
+    </if>
+
+
+    <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+      AND n.GENERATE_STATUS IN
+      <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator=","
+        item="generateStatus">
+        #{generateStatus}
+      </foreach>
+    </if>
+    <if
+      test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+      and m.ORDER_APPLY_DATE BETWEEN
+      to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+      to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+    </if>
+      <if
+        test="paramCondition.amazonOrderId != null and paramCondition.amazonOrderId != ''">
+        AND m.ORDER_ID =#{paramCondition.amazonOrderId}
+      </if>
+    </where>
+  </select>
+
+  <!--  and to_date(n.year||n.month,'YYYYMM') BETWEEN-->
+  <select id="getQuantity"
+    resultType="java.lang.String"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemoveMainParam">
+    SELECT SUM(APPLY_AMOUNT)||','||SUM(DISPOSE_AMOUNT)||','||sum(REMOVE_AMOUNT)
+    from REMOVE_MAIN m left join REMOVE_MAIN_DETIAL n on m.ID = n.MAIN_ID
+    <where>
+      n.DISPOSE_AMOUNT is not null
+      <if test="paramCondition.year != null and paramCondition.year != ''">
+        and n.year =#{paramCondition.year}
+      </if>
+
+      <if test="paramCondition.month != null and paramCondition.month != ''">
+        and n.month =#{paramCondition.month}
+      </if>
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND m.SHOP_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+          item="ShopsName">
+          #{ShopsName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+        AND m.site IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+
+      <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+        AND n.VERIFY_STATUS IN
+        <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator=","
+          item="verifyStatus">
+          #{verifyStatus}
+        </foreach>
+      </if>
+
+
+      <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+        AND n.GENERATE_STATUS IN
+        <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator=","
+          item="generateStatus">
+          #{generateStatus}
+        </foreach>
+      </if>
+      <if
+        test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        and m.ORDER_APPLY_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+      </if>
+      <if
+        test="paramCondition.amazonOrderId != null and paramCondition.amazonOrderId != ''">
+        AND m.ORDER_ID =#{paramCondition.amazonOrderId}
+      </if>
+    </where>
+
+
+</select>
+
+
+  <select id="getMaterial"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemoveMainParam"
+    resultType="java.lang.String">
+    SELECT a.material_code
+    FROM mcms_base_data.inv_product_gallery a
+    where a.sku = #{paramCondition.sku}
+      AND a.sys_site = #{paramCondition.sysSite}
+      AND a.sys_shops_name = #{paramCondition.sysShopsName }
+
+  </select>
+
+
+  <select id="getListHeader"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemoveMainParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemoveMainResult"
+
+  >
+
+
+    SELECT n.year,
+           n.month,
+           sysdate  UPDATE_AT,
+           'Amazon' PLATFORM,
+           t.SHOP_NAME,
+           t.SITE,
+           t.ORG,
+           t.INVENTORY_ORGANIZATION_CODE,
+           t.WAREHOUSE_NAME,
+           t.WAREHOUSE_CODE
+    FROM REMOVE_MAIN t
+           left join REMOVE_MAIN_DETIAL n ON t.ID = n.MAIN_ID
+    WHERE n.year = to_char(to_date(#{paramCondition.orderApplyDate}, 'YYYYMM'), 'YYYY')
+      AND n.month = to_char(to_date(#{paramCondition.orderApplyDate}, 'YYYYMM'), 'MM')
+      and t.INVENTORY_ORGANIZATION_CODE is not null
+      and n.GENERATE_STATUS = 0
+      and n.VERIFY_STATUS = 1
+    GROUP BY n.year,
+             n.month,
+             t.SHOP_NAME,
+             t.SITE,
+             t.org,
+             t.INVENTORY_ORGANIZATION_CODE,
+             t.WAREHOUSE_NAME,
+             t.WAREHOUSE_CODE
+
+
+  </select>
+
+  <select id="getDetailList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemoveMainResult"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.DisposeRemoveDetail">
+
+    SELECT m.SKU,
+           m.DEPARTMENT,
+           m.TEAM,
+           m.MATERIAL_CODE,
+           m.SHOP_NAME,
+           m.SITE,
+           SUM(DISPOSE_AMOUNT)        DISPOSE_AMOUNT,
+           SUM(REMOVE_AMOUNT)         REMOVE_AMOUNT,
+           0                          IS_CANCEL,
+           0                          SYNC_STATUS,
+           sysDate                    UPDATE_AT,
+           n.INVENTORY_STATUS
+    FROM REMOVE_MAIN m
+           left join REMOVE_MAIN_DETIAL n on m.ID = n.MAIN_ID
+    WHERE n.year = #{paramCondition.year}
+      AND n.month = #{paramCondition.month}
+      AND m.SHOP_NAME = #{paramCondition.shopName}
+      AND m.SITE = #{paramCondition.site}
+      AND m.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+
+      AND n.generate_status = 0
+      AND n.verify_status = 1
+    GROUP BY m.SKU,
+             m.DEPARTMENT,
+             m.TEAM,
+             m.MATERIAL_CODE,n.INVENTORY_STATUS, m.SHOP_NAME, m.SITE
+  </select>
+
+  <!--刷listings-->
+  <update id="updateDetailList">
+    MERGE INTO (SELECT * FROM dispose_remove_detail WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL ) ) d
+      USING mcms_base_data.inv_product_gallery g
+      ON (upper(d.sku) = upper(g.sku) AND d.site = g.SYS_SITE AND d.shop_name = g.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+    UPDATE
+      SET d.department = g.department,
+      d.team = g.team,
+      d.material_code = g.material_code
+  </update>
+
+
+  <update id="updateFileDetailList">
+    MERGE INTO (SELECT * FROM DISPOSE_REMOVE_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) D
+      USING (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE
+      FROM (SELECT SKU,
+      SYS_SITE,
+      SYS_SHOPS_NAME,
+      MATERIAL_CODE,
+      DEPARTMENT,
+      TEAM,
+      LAST_UPDATE_DATE,
+      ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+      FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE) t
+      WHERE t.rn = 1) G
+      ON (upper(D.sku) = upper(G.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+      WHEN MATCHED THEN
+    UPDATE
+      SET D.DEPARTMENT    = G.DEPARTMENT,
+      D.TEAM          = G.TEAM,
+      D.MATERIAL_CODE = G.MATERIAL_CODE
+  </update>
+
+
+  <select id="updateSrcDetailList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemoveMainResult"
+  >
+
+
+    UPDATE REMOVE_MAIN_DETIAL
+    SET bill_code       = #{paramCondition.billCode},
+        generate_status = 1,
+        update_time     = SYSDATE,
+        update_by       = #{paramCondition.updateBy}
+    WHERE generate_status = 0
+            AND verify_status = 1
+            AND year = #{paramCondition.year}
+            AND month = #{paramCondition.month}
+      AND SHOP_NAME = #{paramCondition.shopName}
+      AND SITE = #{paramCondition.site}
+
+      AND bill_code is null
+
+
+  </select>
+
+  <update id="orgBatch" parameterType="java.util.List">
+    UPDATE
+    remove_main    a
+    <set>
+      <trim prefix = "a.org = CASE" suffix = "END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN  #{item.inventoryOrganization}
+        </foreach>
+      </trim>
+
+      <trim prefix = "a.INVENTORY_ORGANIZATION_CODE = CASE" suffix = "END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN  #{item.inventoryOrganizationCode}
+        </foreach>
+      </trim>
+
+      <trim prefix = "a.WAREHOUSE_NAME = CASE" suffix = "END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN  #{item.warehouseName}
+        </foreach>
+      </trim>
+
+      <trim prefix = "a.WAREHOUSE_CODE = CASE" suffix = "END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN  #{item.warehouseCode}
+        </foreach>
+      </trim>
+    </set>
+    WHERE        a.id IN
+    <foreach collection="verifyList" item="item" index="index" separator="," open="(" close=")">
+      #{item.id}
+    </foreach>
+
+  </update>
+
+
+  <select id="orgList"     resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemoveMainParam" >
+    select
+      m.*
+    from remove_main   m
+    where m.INVENTORY_ORGANIZATION_CODE is null
+
+  </select>
+
+  <update id="rejectBatch" parameterType="java.util.List">
+    UPDATE
+    REMOVE_MAIN_DETIAL a
+    SET
+    a.VERIFY_AT = SYSDATE,
+    a.UPDATE_TIME = SYSDATE,
+    <if test="paramCondition.verifyBy != null and paramCondition.verifyBy != ''">
+      a.VERIFY_BY = #{paramCondition.verifyBy},
+    </if>
+    <if test="paramCondition.updateBy != null and paramCondition.updateBy != ''">
+      a.UPDATE_BY = #{paramCondition.updateBy},
+    </if>
+    a.VERIFY_STATUS = 2
+    <where>
+      <if test="paramCondition.idList != null and paramCondition.idList.size>0">
+        and a.id IN
+        <foreach collection="paramCondition.idList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+      and a.verify_status = 0
+      and a.generate_status = 0
+    </where>
+  </update>
+
+
+  <update id="verifyUpdateBatch" parameterType="java.util.List">
+
+    MERGE INTO remove_main_detial a
+    USING (SELECT m.*,d.id idf
+    FROM remove_main m
+    JOIN remove_main_detial d ON m.id = d.main_id
+    ) h
+    ON (a.id = h.idf)
+    WHEN MATCHED THEN
+    UPDATE SET a.VERIFY_AT     = SYSDATE,
+    a.UPDATE_TIME   = SYSDATE,
+    a.VERIFY_BY     = #{paramCondition.verifyBy},
+    a.UPDATE_BY     = #{paramCondition.updateBy},
+    a.VERIFY_STATUS = 1
+    <where>
+      a.DISPOSE_AMOUNT is not null
+      AND a.VERIFY_STATUS = 0
+      AND a.GENERATE_STATUS = 0
+      AND a.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+      AND a.WAREHOUSE_CODE IS NOT NULL
+      AND a.BILL_CODE IS NULL
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND h.SHOP_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+          item="ShopsName">
+          #{ShopsName}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+        AND h.site IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND h.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+
+
+      <if
+        test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        and h.ORDER_APPLY_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+      </if>
+    </where>
+
+
+
+
+  </update>
+
+
+
+</mapper>

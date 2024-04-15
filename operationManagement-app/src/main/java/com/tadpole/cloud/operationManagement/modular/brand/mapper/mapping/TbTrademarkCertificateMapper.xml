@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.brand.mapper.TbTrademarkCertificateMapper">
+
+    <select id="queryByBrand"
+            resultType="com.tadpole.cloud.operationManagement.api.brand.entity.TbTrademarkCertificate">
+        SELECT t.trade_name,p.register_number,r.register_country, r.trademark_sub_class,r.trademark_category,
+        p.trademark_validity_term_start,p.trademark_validity_term_end
+        FROM tb_brand_trademark t
+        LEFT JOIN tb_brand_trademark_regis r ON r.bt_id = t.id
+        LEFT JOIN tb_brand_trademark_regis_progress p ON p.regis_id = r.id WHERE t.trade_name=#{brandName}
+    </select>
+</mapper>

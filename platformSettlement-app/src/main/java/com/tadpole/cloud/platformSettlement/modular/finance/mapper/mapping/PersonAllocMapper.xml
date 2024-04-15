@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.PersonAllocMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.modular.finance.model.result.PersonAllocResult">
+        select * from PERSON_ALLOC ${ew.customSqlSegment}
+    </select>
+
+
+    <select id="getCurrent" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.PersonAlloc">
+        SELECT to_char(SYSDATE, 'yyyy-mm') period,
+               u.name,
+               dept4.dept_name dept1,
+               dept3.dept_name dept2,
+               dept2.dept_name dept3,
+               dept1.dept_name dept4,
+               u.user_code PERSON_CODE,
+               u.name PERSON_NAME,
+               duty.duty_name position,
+               u.status,
+               '' platform,
+               '' DEPT3_ALLOC,
+               0 confirm,
+               SYSDATE CREATE_TIME,
+               '系统生成' CREATE_BY
+        FROM  (SELECT *
+        FROM guns_ent_user t
+        WHERE (status = 1
+           OR (status = 2 AND
+            trunc(dismiss_date, 'mm') = trunc(SYSDATE, 'mm')))
+          AND name != '梁铭瑜'
+          AND user_code IS NOT NULL)  U
+                 LEFT JOIN guns_ent_user_dept ud
+                           ON ud.user_id = u.oa_id
+                 LEFT JOIN guns_ent_dept dept1
+                           ON dept1.dept_id = ud.dept_id
+                 LEFT JOIN guns_ent_dept dept2
+                           ON dept1.parent_id = dept2.dept_id
+                 LEFT JOIN guns_ent_dept dept3
+                           ON dept2.parent_id = dept3.dept_id
+                 LEFT JOIN guns_ent_dept dept4
+                           ON dept3.parent_id = dept4.dept_id
+                 LEFT JOIN guns_ent_duty duty
+                           ON duty.duty_id = ud.duty_id
+        where INSTR(dept1.dept_name||dept2.dept_name||dept3.dept_name||dept4.dept_name,'运营本部') > 0
+
+    </select>
+
+
+    <select id="getPlatform" resultType="java.util.Map">
+
+        SELECT
+            distinct  DEPARTMENT||team, PLATFORM
+        FROM SALES_TARGET
+    </select>
+
+
+    <select id="getDepart" resultType="String">
+        SELECT
+            distinct  DEPT3
+        FROM PERSON_ALLOC
+        WHERE dept1 IS NOT NULL AND  dept2 IS NOT null
+        ORDER BY DEPT3
+    </select>
+
+
+    <select id="getTeam" resultType="String">
+        SELECT             distinct  DEPT4         FROM PERSON_ALLOC                UNION ALL  select '0' FROM dual ORDER BY dept4
+
+
+    </select>
+
+     <update id="updatePlatDept3">
+        MERGE INTO (SELECT t.*, t.rowid
+                      FROM PERSON_ALLOC t
+                     WHERE t.confirm = 0
+                       AND t.period = to_char(#{dur}, 'yyyy-mm')) a
+        USING (SELECT t.*, t.rowid
+                 FROM PERSON_ALLOC t
+                WHERE t.confirm = 1
+                  AND t.period = to_char(add_months(#{dur}, -1), 'yyyy-mm')) b
+        ON (a.person_code = b.person_code)
+        WHEN MATCHED THEN
+          UPDATE SET  a.platform = b.platform,
+                      a.dept3_alloc = b.dept3_alloc,
+                      a.dept4 = b.dept4
+    </update>
+</mapper>

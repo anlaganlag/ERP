@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.TotalDestroyFeeMapper">
+
+    <select id="queryListPage"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.TotalDestroyFeeResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.TotalDestroyFeeParam">
+        SELECT row_number() over (partition by SETTLEMENT_ID,ORDER_ID order by TYPE) lev,a.*FROM total_destroy_fee a
+        where 1=1
+
+        <if test="param.sysShopsNames!= null and param.sysShopsNames.size()>0">
+            and SYS_SHOPS_NAME in
+            <foreach item="item" index="index" collection="param.sysShopsNames" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.sysSites!= null and param.sysSites.size()>0">
+            and SYS_SITE in
+            <foreach item="item" index="index" collection="param.sysSites" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.orderId!= null and param.orderId != ''">
+            and ORDER_ID =#{param.orderId}
+        </if>
+        <if test="param.status!= null ">
+            and status =#{param.status}
+        </if>
+        <if test="param.startDur != null and param.endDur != null and param.startDur != '' and param.endDur !='' ">
+            AND duration &lt; add_months(to_date(#{param.endDur},'yyyy/mm'),1)
+            AND duration >=to_date(#{param.startDur},'yyyy-mm')
+        </if>
+    </select>
+    <select id="afreshCount">
+        --销毁移除费用统计
+        declare
+        --期间日期，默认生成当前的上一个月费用数据，取默认日期，如果需要刷历史数据，修改dur日期到指定月份日期即可
+        dur date;
+        begin
+        dur := to_date( #{date},'yyyy-MM-dd');
+        --使用临时表存储结算数据
+        delete temp_total_destroy_fee where 1 = 1;
+        --当前月生成的上一个月期间数据先清掉未确认的
+        delete total_destroy_fee where status = 1 and duration = add_months(trunc(dur, 'mm'), -1);
+        --收入记录表汇总行
+        insert into temp_total_destroy_fee(settlement_id, sys_shops_name, sys_site, order_id, currency, disposal_fee,
+        return_fee,
+        duration, type)
+        with destroyfee as (
+        SELECT b.settlement_id,
+        b.sys_shops_name,
+        b.sys_site,
+        b.order_id,
+        a.currency,
+        trunc(b.posted_date, 'mm')                               duration,
+        decode(b.finance_type, 'DISPOSAL FEE', sum(b.amount), 0) disposal,
+        decode(b.finance_type, 'REMOVAL FEE', sum(b.amount), 0)  removal
+        FROM cw_settlement a
+        join cw_settlement_detail b on a.settlement_id = b.settlement_id and b.type in ('Destroy')
+        where a.settlement_id in (SELECT cw_statement_income.settlement_id
+        FROM cw_statement_income
+        where income_type in ('确认', '预估')
+        and report_type = 'Settlement')
+        --期间
+        and b.posted_date >= add_months(trunc(dur, 'mm'), -1)
+        and b.posted_date &lt;
+            trunc(dur, 'mm')
+        group by b.settlement_id, b.sys_site, b.sys_shops_name, a.currency, b.order_id, b.finance_type,
+        trunc(b.posted_date, 'mm')
+        order by b.settlement_id
+        )
+        SELECT a.settlement_id,
+        a.sys_shops_name,
+        a.sys_site,
+        a.order_id,
+        a.currency,
+        sum(disposal) disposal,
+        sum(removal)  removal,
+        a.duration    duration,
+        1             type
+        FROM destroyfee a
+        group by a.settlement_id, a.sys_site, a.sys_shops_name, a.currency, a.order_id, a.duration;
+
+        --移除报告明细数据
+        insert into temp_total_destroy_fee(settlement_id, sys_shops_name, sys_site, order_id, fnsku, sku, currency,
+        disposal_fee,
+        return_fee, department, team, material_code, category, product_type, duration,
+        type)
+        with destroyorder as (
+        SELECT b.settlement_id,
+        b.sys_site,
+        b.sys_shops_name,
+        a.currency,
+        trunc(b.posted_date, 'mm') duration,
+        b.order_id
+        FROM cw_settlement a
+        join cw_settlement_detail b on a.settlement_id = b.settlement_id and b.type in ('Destroy')
+        where a.settlement_id in (SELECT settlement_id
+        FROM cw_statement_income
+        where income_type in ('确认', '预估')
+        and report_type = 'Settlement')
+        and b.posted_date >= add_months(trunc(dur, 'mm'), -1)
+        and b.posted_date &lt;
+            trunc(dur, 'mm')
+        group by b.settlement_id, b.sys_site, b.sys_shops_name, a.currency, b.order_id, trunc(b.posted_date, 'mm')
+        ),
+        destroydetail as (SELECT sys_shops_name,
+        sys_site,
+        order_id,
+        fnsku,
+        sku,
+        currency,
+        sum(disposalfee) disposalfee,
+        sum(returnfee)   returnfee
+        FROM (
+        SELECT sys_shops_name
+        , sys_site
+        , order_id
+        , fnsku
+        , sku
+        , currency
+        , decode(ro.order_type, 'Disposal', removal_fee, 0) disposalfee
+        , decode(ro.order_type, 'Return', removal_fee, 0)   returnfee
+        FROM warehouse.removal_order_detail ro
+        where ro.order_status = 'Completed'
+        and ro.last_updated_date >= add_months(trunc(dur, 'mm'), -2)
+        and ro.last_updated_date &lt; trunc(dur, 'mm')
+        and ro.removal_fee is not null
+        )
+        group by sys_shops_name, sys_site, order_id, fnsku, sku, currency)
+
+        SELECT a.settlement_id,
+        ro.*,
+        pg.department,
+        pg.team,
+        pg.material_code,
+        ma.category,
+        ma.product_type,
+        a.duration duration,
+        2          type
+        FROM destroyorder a
+        join destroydetail ro
+        on a.order_id = ro.order_id and a.sys_shops_name = ro.sys_shops_name and a.sys_site = ro.sys_site
+        left join mcms_base_data.inv_product_gallery pg
+        on ro.sys_shops_name = pg.sys_shops_name and ro.sys_site = pg.sys_site and ro.sku = pg.sku
+        left join mcms_base_data.rp_material ma on pg.material_code = ma.material_code;
+
+        --移除报告明细数据 获取 移除明细和结算汇总对应不上站点的订单
+        insert into temp_total_destroy_fee(settlement_id, sys_shops_name, sys_site, order_id, fnsku, sku, currency,
+        disposal_fee,
+        return_fee, department, team, material_code, category, product_type, duration,
+        type)
+        with destroyorder as (
+        SELECT b.settlement_id,
+        b.sys_site,
+        b.sys_shops_name,
+        a.currency,
+        trunc(b.posted_date, 'mm') duration,
+        b.order_id
+        FROM cw_settlement a
+        join cw_settlement_detail b on a.settlement_id = b.settlement_id and b.type in ('Destroy')
+        where a.settlement_id in (SELECT settlement_id
+        FROM cw_statement_income
+        where income_type in ('确认', '预估')
+        and report_type = 'Settlement')
+        and b.posted_date >= add_months(trunc(dur, 'mm'), -1)
+        and b.posted_date &lt;
+            trunc(dur, 'mm')
+        group by b.settlement_id, b.sys_site, b.sys_shops_name, a.currency, b.order_id, trunc(b.posted_date, 'mm')
+        ),
+        destroydetail as (SELECT sys_shops_name,
+        sys_site,
+        order_id,
+        fnsku,
+        sku,
+        currency,
+        sum(disposalfee) disposalfee,
+        sum(returnfee)   returnfee
+        FROM (
+        SELECT sys_shops_name
+        , sys_site
+        , order_id
+        , fnsku
+        , sku
+        , currency
+        , decode(ro.order_type, 'Disposal', removal_fee, 0) disposalfee
+        , decode(ro.order_type, 'Return', removal_fee, 0)   returnfee
+        FROM warehouse.removal_order_detail ro
+        where ro.order_status = 'Completed'
+        and ro.last_updated_date >= add_months(trunc(dur, 'mm'), -2)
+        and ro.last_updated_date &lt; trunc(dur, 'mm')
+        and ro.removal_fee is not null
+        )
+        group by sys_shops_name, sys_site, order_id, fnsku, sku, currency),
+        --获取 移除明细和结算汇总对应不上站点的订单
+        destroydetail2 as (
+        SELECT *
+        FROM destroydetail ro
+        where not exists(SELECT 1
+        FROM destroyorder a
+        where a.order_id = ro.order_id
+        and a.sys_shops_name = ro.sys_shops_name
+        and a.sys_site = ro.sys_site)
+        ),
+        --接上一步获取 结算汇总有多个账号 站点 OrderID 且结算货币 一样的 其中一条
+        destroyorder2 as (select *
+        from (SELECT row_number() over (partition by a.sys_shops_name,a.order_id order by a.sys_site) lev,
+        a.sys_shops_name,
+        a.sys_site,
+        a.order_id
+        FROM destroyorder a
+        join destroydetail2 ro
+        on a.order_id = ro.order_id and
+        a.sys_shops_name = ro.sys_shops_name and
+        a.currency = ro.currency)
+        where lev = 1
+        ),
+        destroydetail3 as (SELECT ro.sys_shops_name
+        , a.sys_site sys_site2
+        , ro.sys_site
+        , ro.order_id
+        , fnsku
+        , sku
+        , currency
+        , disposalfee
+        , returnfee
+        FROM destroyorder2 a
+        join destroydetail2 ro
+        on a.order_id = ro.order_id and a.sys_shops_name = ro.sys_shops_name)
+        SELECT a.settlement_id,
+        ro.sys_shops_name,
+        ro.sys_site,
+        ro.order_id,
+        ro.fnsku,
+        ro.sku,
+        ro.currency,
+        ro.disposalfee,
+        ro.returnfee,
+        pg.department,
+        pg.team,
+        pg.material_code,
+        ma.category,
+        ma.product_type,
+        a.duration duration,
+        2          type
+        FROM destroyorder a
+        join destroydetail3 ro
+        on a.order_id = ro.order_id and a.sys_shops_name = ro.sys_shops_name and a.sys_site = ro.sys_site2
+        left join mcms_base_data.inv_product_gallery pg
+        on ro.sys_shops_name = pg.sys_shops_name and ro.sys_site = pg.sys_site and ro.sku = pg.sku
+        left join mcms_base_data.rp_material ma on pg.material_code = ma.material_code;
+
+        --自动确认脚本 按结算ID OrderId维度刷一次
+        merge into temp_total_destroy_fee a
+        using (
+        SELECT distinct a.id
+        FROM temp_total_destroy_fee a
+        join (SELECT a.settlement_id, a.order_id
+        FROM temp_total_destroy_fee a
+        join (
+        --计算出明细行汇总费用
+        SELECT settlement_id,
+        order_id,
+        sum(disposal_fee) disposal_fee,
+        sum(return_fee)   return_fee
+        FROM temp_total_destroy_fee
+        where type = 2
+        and status = 1
+        and create_time > trunc(dur, 'mm')
+        group by settlement_id, order_id
+        ) b on a.settlement_id = b.settlement_id and a.order_id = b.order_id
+        where a.status = 1
+        and a.type = 1
+        and a.create_time > trunc(dur, 'mm')
+        --汇总行费用 和明细行费用比较
+        and a.disposal_fee + b.disposal_fee = 0
+        and a.return_fee + b.return_fee = 0) b
+        on a.settlement_id = b.settlement_id and a.order_id = b.order_id
+        and a.create_time > trunc(dur, 'mm')
+        ) b
+        on (a.id = b.id)
+        when matched then
+        update set a.status = 3, update_time = sysdate, update_user = '自动调度修改', remark = '自动确认';
+
+        --按账号 OrderId维度再刷一次
+        merge into temp_total_destroy_fee a
+        using (
+        with totals as (
+        SELECT sys_shops_name, order_id, sum(disposal_fee) disposal_fee, sum(return_fee) return_fee
+        FROM temp_total_destroy_fee
+        where type = 1
+        and status = 1
+        and create_time > trunc(dur, 'mm')
+        group by sys_shops_name, order_id
+        ),
+        details as (
+        SELECT sys_shops_name, order_id, sum(disposal_fee) disposal_fee, sum(return_fee) return_fee
+        FROM temp_total_destroy_fee
+        where type = 2
+        and status = 1
+        and create_time > trunc(dur, 'mm')
+        group by sys_shops_name, order_id
+        )
+        SELECT a.*
+        FROM totals a
+        join details b on a.sys_shops_name = b.sys_shops_name and a.order_id = b.order_id
+        and a.disposal_fee + b.disposal_fee + a.return_fee + b.return_fee = 0
+        ) b
+        on (a.sys_shops_name = b.sys_shops_name and a.order_id = b.order_id and a.create_time > trunc(dur, 'mm'))
+        when matched then
+        update set a.status = 3, update_time = sysdate, update_user = '自动调度修改', remark = '自动确认';
+        --判断新数据和历史延期数据新增
+        insert into total_destroy_fee(settlement_id, sys_shops_name, sys_site, order_id, sku, currency, disposal_fee,
+        return_fee, department, team, material_code, category, product_type, duration, status,
+        source, type, create_time, update_time, update_user, remark, create_user, fnsku,
+        settle_period)
+        SELECT settlement_id,
+        sys_shops_name,
+        sys_site,
+        order_id,
+        sku,
+        currency,
+        disposal_fee,
+        return_fee,
+        department,
+        team,
+        material_code,
+        category,
+        product_type,
+        duration,
+        status,
+        source,
+        type,
+        create_time,
+        update_time,
+        update_user,
+        '补充延期明细数据',
+        create_user,
+        fnsku,
+        settle_period
+        FROM temp_total_destroy_fee a
+        where not exists(SELECT 1
+        FROM total_destroy_fee b
+        where duration in (add_months(trunc(dur, 'mm'), -1))
+        and a.sys_shops_name = b.sys_shops_name
+        and a.sys_site = b.sys_site
+        and a.order_id = b.order_id
+        )
+        and duration in (add_months(trunc(dur, 'mm'), -1));
+        commit;
+        end;
+    </select>
+    <select id="getProductBySku"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.TotalDestroyFeeResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.TotalDestroyFeeParam">
+        SELECT pg.FNSKU, DEPARTMENT, TEAM, pg.MATERIAL_CODE MATERIALCODE, SKU, CATEGORY, pg.PRODUCT_TYPE PRODUCTTYPE
+        FROM mcms_base_data.inv_product_gallery pg
+                 join mcms_base_data.RP_MATERIAL ma on pg.MATERIAL_CODE = ma.MATERIAL_CODE
+        where SKU = #{param.sku}
+          and SYS_SHOPS_NAME = #{param.sysShopsName}
+          and SYS_SITE = #{param.sysSite}
+
+    </select>
+
+
+    <select id="emailList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.TotalDestroyFeeResult">
+        select * from total_destroy_fee t where (NVL(t.material_code,'0') = '0' or NVL(t.department,'0') = '0') and t.sku!='0'
+                                               and status in (2,3) and ROWNUM &lt; 100000
+        order by DURATION desc
+    </select>
+
+
+    <update id="freshDisposeReturnFee"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.TotalDestroyFeeParam"    >
+
+        MERGE INTO (SELECT t.*, t.rowid
+            FROM rp_station_manual_allocation t
+            WHERE t.ALLOC_ID IS NULL
+            AND t.CONFIRM_STATUS = 0
+            OR t.CONFIRM_STATUS = 2) A
+            USING (SELECT to_char(t.duration, 'yyyy-mm') duration,
+            t.sys_shops_name,
+            t.sys_site,
+            SUM(t.disposal_fee) dispose_fee,
+            SUM(t.return_fee) Removal_Deal
+            FROM TOTAL_DESTROY_FEE t
+            WHERE to_char(t.duration, 'yyyy-mm') = '2023-10'
+            GROUP BY t.duration, t.sys_shops_name, t.sys_site) B
+            ON (A.FISCAL_PERIOD = B.duration AND A.shop_name = B.sys_shops_name AND A.site = B.sys_site)
+            WHEN MATCHED THEN
+        UPDATE SET A.dispose_fee = B.dispose_fee, A.removal_deal = B.Removal_Deal
+
+    </update>
+
+    <select id="getFifferenceFee"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.TotalDestroyFeeResult">
+        --计算结算ID 汇总行和明细行 费用差异
+        SELECT ABS(sum(t1d + t2d)) disposalFee, abs(sum(t1r + t2r)) returnFee
+        FROM (
+                 SELECT decode(TYPE, 1, sum(DISPOSAL_FEE), 0) t1d,
+                        decode(TYPE, 1, sum(RETURN_FEE), 0)   t1r,
+                        decode(TYPE, 2, sum(DISPOSAL_FEE), 0) t2d,
+                        decode(TYPE, 2, sum(RETURN_FEE), 0)   t2r
+                 FROM TOTAL_DESTROY_FEE
+                 where SETTLEMENT_ID = #{settlementId}
+                   and order_id = #{orderId}
+                 group by TYPE
+             )
+    </select>
+
+</mapper>

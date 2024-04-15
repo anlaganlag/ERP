@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LtWalmartSettlementReportMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtWalmartSettlementReportResult">
+        select <include refid="DETAIL_COL_NOT_MAT"/>,
+               <include refid="MAT_PROP"/>
+        from LT_WALMART_SETTLEMENT_REPORT A
+         LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+         ON B.MATERIAL_CODE = A.MAT_CODE
+    </select>
+
+    <select id="exportByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtWalmartSettlementReport">
+        select * from LT_WALMART_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+
+    <select id="downloadExport" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtWalmartSettlementReportExport">
+        select * from LT_WALMART_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+    <sql id="WALMART_CONDITION">
+        <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+            AND fiscal_Period  = #{param.fiscalPeriod}
+        </if>
+    </sql>
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+            AND period  = #{param.fiscalPeriod}
+        </if>
+    </sql>
+
+
+    <sql id ="MAT_PROP">
+         decode(B.MATERIAL_CODE,null,'0',B.CATEGORY) CATEGORY,
+         A.product_type,
+         decode(B.MATERIAL_CODE,null,'0',B.PRODUCT_NAME) PRODUCT_NAME,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE) STYLE,
+         decode(B.MATERIAL_CODE,null,'0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+         decode(B.MATERIAL_CODE,null,'0',B.DESIGN) DESIGN,
+         decode(B.MATERIAL_CODE,null,'0',B.COMPANY_BRAND) COMPANY_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.FIT_BRAND) FIT_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.MODEL) MODEL,
+         decode(B.MATERIAL_CODE,null,'0',B.COLOR) COLOR,
+         decode(B.MATERIAL_CODE,null,'0',B.SIZES) SIZES,
+         decode(B.MATERIAL_CODE,null,'0',B.PACKING) PACKING,
+         decode(B.MATERIAL_CODE,null,'0',B.VERSION) VERSION,
+         decode(B.MATERIAL_CODE,null,'0',B.TYPE) TYPE,
+         SALES_BRAND
+    </sql>
+
+
+    <sql id="DETAIL_COL_NOT_MAT" >
+        A.ID,
+        A.PLATFORM ,
+        A.FISCAL_PERIOD,
+        A.SHOP_NAME,
+        A.SITE,
+        A.DEPARTMENT,
+        A.TEAM,
+        A.SHOP,
+        A.DELIVERY_MODE,
+        A.ORDER_NUM,
+        A.ACCOUNTING_CURRENCY,
+        A.MAT_CODE,
+        A.COST_AUXILIARY_DESCRIPTION,
+        A.QTY,
+        A.VOLUME_BILL_QUANTITY,
+        A.PRODUCT_PRICE,
+        A.PRODUCT_COMMISSION,
+        A.PRODUCT_TAX,
+        A.PRODUCT_TAX_WITHHELD,
+        A.REFUND,
+        A.REFUND_COMMISSION,
+        A.REFUND_TAX,
+        A.REFUND_TAX_WITHHELD,
+        A.WFS_FULFILLMENT_FEE,
+        A.STORAGE_FEE,
+        A.INVENTORY_DISPOSAL_FEE,
+        A.INBOUND_FEE,
+        A.REMOVAL_DEAL,
+        A.SALES_SHIPPING,
+        A.SALES_SHIPPING_REVERSAL,
+        A.OTHER_TAX,
+        A.OTHER,
+        A.COLLECTION,
+        A.ADVERTISING,
+        A.COLLECTION_PERIOD,
+        A.STATION_OUT_LOG,
+        A.STATION_OUT_AD,
+        A.STATION_OUT_STORAGE,
+        A.DOMESTIC_UNSALABLE_INVENTORY,
+        A.BRUSHING_VALUE,
+        A.BRUSHING_SERVICE_CHARGE,
+        A.INCENTIVE_FUND,
+        A.COST_ACCOUNTING_FEE,
+        A.ADDITIONAL_COST_AMOUNT,
+        A.FIRST_TRIP_FEE,
+        A.PROFIT,
+        A.UNIT_COST_CNY,
+        A.TAX_PRICE_CNY,
+        A.LOG_PRICE_CNY,
+        A.UPDATE_TIME,
+        A.UPDATE_BY,
+        A.CREATE_TIME,
+        A.CREATE_BY,
+        A.REVENUE_RATION,
+        A.PEOPLE_NUM,
+        A.PEOPLE_COST,
+        A.CONFIRM_STATUS
+    </sql>
+
+
+    <sql id="detail_col" >
+        detail.ID,
+        detail.FISCAL_PERIOD,
+        detail.SHOP_NAME,
+        detail.SITE,
+        detail.DEPARTMENT,
+        detail.TEAM,
+        detail.SHOP,
+        detail.DELIVERY_MODE,
+        detail.ORDER_NUM,
+        detail.ACCOUNTING_CURRENCY,
+        detail.MAT_CODE,
+        detail.CATEGORY,
+        detail.PRODUCT_TYPE,
+        detail.PRODUCT_NAME,
+        detail.STYLE,
+        detail.MAIN_MATERIAL,
+        detail.DESIGN,
+        detail.COMPANY_BRAND,
+        detail.FIT_BRAND,
+        detail.MODEL,
+        detail.COLOR,
+        detail.SIZES,
+        detail.PACKING,
+        detail.VERSION,
+        detail.TYPE,
+        detail.SALES_BRAND,
+        detail.COST_AUXILIARY_DESCRIPTION,
+        detail.QTY,
+        detail.VOLUME_BILL_QUANTITY,
+        detail.PRODUCT_PRICE,
+        detail.PRODUCT_COMMISSION,
+        detail.PRODUCT_TAX,
+        detail.PRODUCT_TAX_WITHHELD,
+        detail.REFUND,
+        detail.REFUND_COMMISSION,
+        detail.REFUND_TAX,
+        detail.REFUND_TAX_WITHHELD,
+        detail.WFS_FULFILLMENT_FEE,
+        detail.STORAGE_FEE,
+        detail.INVENTORY_DISPOSAL_FEE,
+        detail.INBOUND_FEE,
+        detail.REMOVAL_DEAL,
+        detail.SALES_SHIPPING,
+        detail.SALES_SHIPPING_REVERSAL,
+        detail.OTHER_TAX,
+        detail.OTHER,
+        detail.COLLECTION,
+        detail.ADVERTISING,
+        detail.COLLECTION_PERIOD,
+        detail.STATION_OUT_LOG,
+        detail.STATION_OUT_AD,
+        detail.STATION_OUT_STORAGE,
+        detail.DOMESTIC_UNSALABLE_INVENTORY,
+        detail.BRUSHING_VALUE,
+        detail.BRUSHING_SERVICE_CHARGE,
+        detail.INCENTIVE_FUND,
+        detail.COST_ACCOUNTING_FEE,
+        detail.ADDITIONAL_COST_AMOUNT,
+        detail.FIRST_TRIP_FEE,
+        detail.PROFIT,
+        detail.UNIT_COST_CNY,
+        detail.TAX_PRICE_CNY,
+        detail.LOG_PRICE_CNY,
+        detail.UPDATE_TIME,
+        detail.UPDATE_BY,
+        detail.CREATE_TIME,
+        detail.CREATE_BY,
+        detail.REVENUE_RATION,
+        detail.PEOPLE_NUM,
+        detail.PEOPLE_COST,
+        detail.CONFIRM_STATUS
+    </sql>
+
+
+    <select id="mergeWalmartSettleNallocStruct"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtWalmartSettlementReportParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtWalmartSettlementReportResult">
+        SELECT <include refid="detail_col"/> ,
+            case when detail.qty &lt; 0 then 0 else   detail.qty END detailSalesVol,
+            SUM(case when detail.qty &lt; 0 then 0 else   detail.qty END) OVER(PARTITION BY detail.FISCAL_PERIOD, detail.department, detail.team ) AS teamsalesVol,
+               struct.id struct_id,
+               struct.period,
+               struct.dept3,
+               struct.dept4,
+               struct.walmart_alloc amazon_alloc
+          FROM (select * from lt_walmart_settlement_report
+                <where>
+                    <include refid="WALMART_CONDITION"/>
+                </where>) detail
+          LEFT JOIN (SELECT t.* FROM alloc_structure t
+        <where>
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+            and walmart_alloc > 0
+            and status =1
+        </where>) struct
+<!--            ON struct.period = to_char(detail.FISCAL_PERIOD,'yyyy-mm')-->
+            ON struct.period = detail.FISCAL_PERIOD
+           AND struct.dept3 = detail.department
+           AND struct.dept4 = detail.team
+    </select>
+
+    <update id="insertStructure"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtWalmartSettlementReportParam">
+        <!--        删除避免重复插入 -->
+        BEGIN
+        DELETE FROM lt_walmart_settlement_report
+        <where>
+            CONFIRM_STATUS = '1'
+            <include refid="WALMART_CONDITION"/>
+        </where>;
+        <!--                插入架构数据-->
+        INSERT INTO
+        lt_walmart_settlement_report (FISCAL_PERIOD ,
+        DEPARTMENT ,
+        team,
+        REVENUE_RATION ,
+        PEOPLE_NUM,
+        PEOPLE_COST,
+        CREATE_TIME ,
+        CREATE_BY)
+        SELECT
+        PERIOD ,
+        DEPT3 ,
+        dept4,
+        0 REVENUE_RATION ,
+        walmart_alloc,
+        round(walmart_alloc * -7000 * #{param.directRate},12),
+        SYSDATE ,
+        #{param.createBy}
+        FROM
+        ALLOC_STRUCTURE
+        <where>
+            STATUS = '1'
+            and walmart_alloc >0
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+        </where>;
+
+        END;
+
+
+    </update>
+
+            <update id="updatePeopleCostZero"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtWalmartSettlementReportParam">
+                MERGE INTO lt_walmart_settlement_report det
+                    USING (
+                        SELECT
+                            *
+                        FROM
+                            alloc_structure as2
+                        WHERE
+                            status = 1
+                            AND is_labor_cost = '否'
+                        <include refid="ALLOC_STRUCTURE_CONDITION"/>) src
+                              ON (src.period = det.fiscal_period
+                              AND src.dept3 = det.department
+                              AND src.dept4 = det.team)
+                        WHEN MATCHED THEN
+                    UPDATE
+                    SET
+                        det.PEOPLE_COST = 0
+            </update>
+
+</mapper>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.AllocStructureMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.AllocStructureResult">
+        select * from ALLOC_STRUCTURE ${ew.customSqlSegment}
+            order by dept3,id,dept4
+    </select>
+
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+
+    <sql id="ALLOC_STRUCTURE_LAST_MON_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = to_char(add_months(to_date(#{param.period}, 'yyyy-mm'), -1),'yyyy-mm')
+        </if>
+    </sql>
+
+
+<select id="fillLastMonAllocRation">
+    MERGE INTO (SELECT * FROM alloc_structure
+    <where>
+        AND status = 0
+        <include refid="ALLOC_STRUCTURE_CONDITION"/>
+    </where>) a
+        USING (SELECT *
+        FROM alloc_structure t
+    <where>
+        AND t.status = 1
+        <include refid="ALLOC_STRUCTURE_LAST_MON_CONDITION"/>
+    </where>) b
+        ON (NVL(a.dept3, '0') = NVL(b.dept3, '0') AND NVL(a.dept4, '0') = NVL(b.dept4, '0'))
+        WHEN MATCHED THEN
+    UPDATE
+        SET a.AMAZON_RATIO  = case when INSTR(UPPER(a.platforms),'AMAZON') >0 then b.AMAZON_RATIO else 0 end,
+            a.RAKUTEN_RATIO = case when INSTR(UPPER(a.platforms),'RAKUTEN') >0 then b.RAKUTEN_RATIO else 0 end,
+            a.WALMART_RATIO = case when INSTR(UPPER(a.platforms),'WALMART') >0 then b.WALMART_RATIO else 0 end,
+            a.LAZADA_RATIO  = case when INSTR(UPPER(a.platforms),'LAZADA') >0 then b.LAZADA_RATIO else 0 end,
+            a.SHOPEE_RATIO  = case when INSTR(UPPER(a.platforms),'SHOPEE') >0 then b.SHOPEE_RATIO else 0 end,
+            a.SMT_RATIO     = case when INSTR(UPPER(a.platforms),'ALIEXPRESS') >0 then b.SMT_RATIO else 0 end,
+            a.SHOPIFY_RATIO = case when INSTR(UPPER(a.platforms),'SHOPIFY') >0 then b.SHOPIFY_RATIO else 0 end,
+            a.B2B_RATIO     = case when INSTR(UPPER(a.platforms),'B2B') >0 then b.B2B_RATIO when INSTR(UPPER(a.platforms),'BTB') >0 then b.B2B_RATIO else 0 end,
+            a.ALIBABA_RATIO = case when INSTR(UPPER(a.platforms),'ALIBABA') >0 then b.ALIBABA_RATIO else 0 end
+
+</select>
+
+</mapper>
+

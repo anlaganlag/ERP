@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.AmazonOrdersMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.platformSettlement.api.finance.entity.AmazonOrders">
+        <id column="ID" property="id" />
+        <result column="AMAZON_ORDER_ID" property="amazonOrderId" />
+        <result column="MERCHANT_ORDER_ID" property="merchantOrderId" />
+        <result column="PURCHASE_DATE" property="purchaseDate" />
+        <result column="LAST_UPDATED_DATE" property="lastUpdatedDate" />
+        <result column="ORDER_STATUS" property="orderStatus" />
+        <result column="SALES_CHANNEL" property="salesChannel" />
+        <result column="FULFILLMENT_CHANNEL" property="fulfillmentChannel" />
+        <result column="SHIP_SERVICE_LEVEL" property="shipServiceLevel" />
+        <result column="CITY" property="city" />
+        <result column="STATE" property="state" />
+        <result column="POSTAL_CODE" property="postalCode" />
+        <result column="COUNTRY" property="country" />
+        <result column="IS_BUSINESS_ORDER" property="isBusinessOrder" />
+        <result column="IS_REPLACEMENT_ORDER" property="isReplacementOrder" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPLOAD_DATE" property="uploadDate" />
+        <result column="PLATFORM" property="platform" />
+        <result column="TYPE" property="type" />
+        <result column="SYS_SITE" property="sysSite" />
+        <result column="SYS_SHOPS_NAME" property="sysShopsName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, AMAZON_ORDER_ID, MERCHANT_ORDER_ID, PURCHASE_DATE, LAST_UPDATED_DATE, ORDER_STATUS, SALES_CHANNEL, FULFILLMENT_CHANNEL, SHIP_SERVICE_LEVEL, CITY, STATE, POSTAL_CODE, COUNTRY, IS_BUSINESS_ORDER, IS_REPLACEMENT_ORDER, CREATE_TIME, UPLOAD_DATE, PLATFORM, TYPE, SYS_SITE, SYS_SHOPS_NAME
+    </sql>
+
+
+    <!-- 销售订单源报告数据监控列表 -->
+    <select id="queryOrderDataSourceMonitorPage"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OrderDataSourceMonitorParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OrderDataSourceMonitorResult">
+        SELECT
+            T.sysShopsName,
+            T.sysSite,
+            T.purchaseDate,
+            ROUND(T2.timeSaleDailyQuantity / TRUNC(TO_DATE(#{param.purchaseDateEnd}, 'yyyy-mm-dd hh24:mi:ss') - TO_DATE(#{param.purchaseDateStart}, 'yyyy-mm-dd hh24:mi:ss') + 1), 0) AS saleDailyAvgQuantity,
+            T.saleDailyQuantity + NVL(T3.DESTROY_QUANTITY, 0) AS saleDailyQuantity,
+            -- 其他订单：日销售数量-正常订单-测试订单-小包订单-补发订单-非常规订单-小平台订单-取消订单
+            T.saleDailyQuantity - T.normalOrderQuantity - T.testOrderQuantity - T.smallOrderQuantity - T.reissueOrderQuantity - T.abnormalOrderQuantity - T.smallPlatformOrderQuantity - T.cancelOrderQuantity AS otherOrderQuantity,
+            TO_CHAR(
+                CASE WHEN NVL(T.saleDailyQuantity, 0) + NVL(T3.DESTROY_QUANTITY, 0) - NVL(T1.saleDailyQuantity, 0) - NVL(T4.DESTROY_QUANTITY, 0) = 0 THEN 0
+                WHEN NVL(T1.saleDailyQuantity, 0) + NVL(T4.DESTROY_QUANTITY, 0) = 0 THEN 0
+                ELSE (NVL(T.saleDailyQuantity, 0) + NVL(T3.DESTROY_QUANTITY, 0) - NVL(T1.saleDailyQuantity, 0) - NVL(T4.DESTROY_QUANTITY, 0)) / (NVL(T1.saleDailyQuantity, 0) + NVL(T4.DESTROY_QUANTITY, 0)) * 100 END, 'FM9990.00'
+            ) || '%' AS saleDailyQuantityMOM,
+            T.saleDailyAmount,
+            TO_CHAR(
+                CASE WHEN NVL(T.saleDailyAmount, 0) - NVL(T1.saleDailyAmount, 0) = 0 THEN 0
+                WHEN NVL(T1.saleDailyAmount, 0)  = 0 THEN 0
+                ELSE (NVL(T.saleDailyAmount, 0) - NVL(T1.saleDailyAmount, 0)) / NVL(T1.saleDailyAmount, 0) * 100 END, 'FM9990.00'
+            ) || '%'  AS saleDailyAmountMOM,
+            T.normalOrderQuantity,
+            T.testOrderQuantity,
+            T.smallOrderQuantity,
+            T.reissueOrderQuantity,
+            NVL(T3.DESTROY_QUANTITY, 0) AS destroyOrderQuantity,
+            T.abnormalOrderQuantity,
+            T.smallPlatformOrderQuantity,
+            T.cancelOrderQuantity
+        FROM
+        (
+            SELECT
+            OD.SYS_SHOPS_NAME AS sysShopsName,
+            OD.SYS_SITE AS sysSite,
+            TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd') AS purchaseDate,
+            TO_CHAR(OD.PURCHASE_DATE - 1,'yyyy-mm-dd') AS yesPurchaseDate,
+            -- 日销售数量：去掉移除/销毁订单（移除/销毁订单另外统计）
+            SUM(
+                CASE WHEN O.PLATFORM = 'Amazon' AND OD.AMAZON_ORDER_ITEM_CODE = 'Removal_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN 0
+                WHEN O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled' AND O.TYPE = 'Normal' THEN 0
+                ELSE OD.QUANTITY END
+            ) AS saleDailyQuantity,
+            -- 日销售金额：售价+买家支付的运费+包装费等（移除/销毁订单金额没有费用）
+            SUM(NVL(OD.PRINCIPAL, 0) + NVL(OD.TAX, 0) + NVL(OD.SHIPPING, 0) + NVL(OD.SHIPPING_TAX, 0) + NVL(OD.GIFTWRAP, 0) + NVL(OD.GIFTWRAP_TAX, 0)) AS saleDailyAmount,
+            -- 正常订单
+            SUM(
+                CASE WHEN O.PLATFORM = 'Amazon' AND (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN 0
+                WHEN O.PLATFORM = 'Amazon' AND O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled' AND O.TYPE = 'Normal' THEN 0
+                WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID IS NULL THEN OD.QUANTITY
+                WHEN O.PLATFORM = 'Amazon' AND REGEXP_LIKE(O.MERCHANT_ORDER_ID,'\d{3}-\d{7}-\d{7}') THEN OD.QUANTITY
+                ELSE 0 END
+            ) AS normalOrderQuantity,
+            -- 测试订单
+            SUM(CASE WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'CP%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY ELSE 0 END) AS testOrderQuantity,
+            -- 小包订单
+            SUM(CASE WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'M%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY ELSE 0 END) AS smallOrderQuantity,
+            -- 补发订单
+            SUM(
+                CASE WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'R%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY
+                WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'B%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY
+                WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'CONSUMER%' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY
+                ELSE 0 END
+            ) AS reissueOrderQuantity,
+            -- 非常规订单
+            SUM(CASE WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'TP%' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY ELSE 0 END) AS abnormalOrderQuantity,
+            -- 小平台订单
+            SUM(CASE WHEN O.PLATFORM != 'Amazon' THEN OD.QUANTITY ELSE 0 END) AS smallPlatformOrderQuantity,
+            -- 取消订单
+            SUM(CASE WHEN O.PLATFORM = 'Amazon' AND O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled' THEN OD.QUANTITY ELSE 0 END) AS cancelOrderQuantity
+            FROM AMAZON_ORDERS O
+            LEFT JOIN AMAZON_ORDER_DETAIL OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID
+            WHERE
+                -- 过滤多站点
+                NOT REGEXP_LIKE(OD.SYS_SITE, ',')
+                AND OD.PURCHASE_DATE &gt;= to_date(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                AND OD.PURCHASE_DATE &lt;= to_date(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND OD.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND OD.SYS_SITE = #{param.sysSite}
+                </if>
+            GROUP BY OD.SYS_SHOPS_NAME, OD.SYS_SITE, to_char(OD.PURCHASE_DATE,'yyyy-mm-dd'), TO_CHAR(OD.PURCHASE_DATE - 1,'yyyy-mm-dd')
+        ) T
+        LEFT JOIN
+        (
+            -- 统计日销售数量、统计日销售金额，根据昨天的日期关联计算环比
+            SELECT
+            OD.SYS_SHOPS_NAME AS sysShopsName,
+            OD.SYS_SITE AS sysSite,
+            TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd') AS purchaseDate,
+            -- 日销售数量：去掉移除/销毁订单（移除/销毁订单另外统计）
+            SUM(
+                CASE WHEN OD.AMAZON_ORDER_ITEM_CODE = 'Removal_CODE' AND (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN 0
+                WHEN O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled' AND O.TYPE = 'Normal' THEN 0
+                ELSE OD.QUANTITY END
+            ) AS saleDailyQuantity,
+            -- 日销售金额：售价+买家支付的运费+包装费等（移除/销毁订单金额没有费用）
+            SUM(NVL(OD.PRINCIPAL, 0) + NVL(OD.TAX, 0) + NVL(OD.SHIPPING, 0) + NVL(OD.SHIPPING_TAX, 0) + NVL(OD.GIFTWRAP, 0) + NVL(OD.GIFTWRAP_TAX, 0)) AS saleDailyAmount
+            FROM AMAZON_ORDERS O
+            LEFT JOIN AMAZON_ORDER_DETAIL OD
+            ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID
+            WHERE
+                -- 过滤多站点
+                NOT REGEXP_LIKE(OD.SYS_SITE, ',')
+                AND OD.PURCHASE_DATE &gt;= to_date(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                AND OD.PURCHASE_DATE &lt;= to_date(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND OD.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND OD.SYS_SITE = #{param.sysSite}
+                </if>
+            GROUP BY OD.SYS_SHOPS_NAME, OD.SYS_SITE, TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd')
+        ) T1 ON T.sysShopsName = T1.sysShopsName AND T.sysSite = T1.sysSite AND T.yesPurchaseDate = T1.purchaseDate
+        LEFT JOIN
+        (
+            -- 按照账号、站点维度统计日销售量，主要是为了计算账号、站点的日均销售量，统计值：正常订单+小包订单+补发订单
+            SELECT
+            OD.SYS_SHOPS_NAME AS sysShopsName,
+            OD.SYS_SITE AS sysSite,
+            SUM(
+                CASE WHEN O.PLATFORM = 'Amazon' AND (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN 0
+                WHEN O.PLATFORM = 'Amazon' AND O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled' AND O.TYPE = 'Normal' THEN 0
+                WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID IS NULL THEN OD.QUANTITY
+                WHEN O.PLATFORM = 'Amazon' AND REGEXP_LIKE(O.MERCHANT_ORDER_ID,'\d{3}-\d{7}-\d{7}') THEN OD.QUANTITY
+                ELSE 0 END
+                +
+                CASE WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'M%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY ELSE 0 END
+                +
+                CASE WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'R%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY
+                WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'B%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY
+                WHEN O.PLATFORM = 'Amazon' AND O.MERCHANT_ORDER_ID LIKE 'CONSUMER%' AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled') THEN OD.QUANTITY
+                ELSE 0 END
+            ) AS timeSaleDailyQuantity
+            FROM AMAZON_ORDERS O
+            LEFT JOIN
+            AMAZON_ORDER_DETAIL OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID
+            WHERE
+                -- 过滤多站点
+                NOT REGEXP_LIKE(OD.SYS_SITE, ',')
+                AND OD.PURCHASE_DATE &gt;= to_date(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                AND OD.PURCHASE_DATE &lt;= to_date(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND OD.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND OD.SYS_SITE = #{param.sysSite}
+                </if>
+            GROUP BY OD.SYS_SHOPS_NAME, OD.SYS_SITE
+        ) T2 ON T.sysShopsName = T2.sysShopsName AND T.sysSite = T2.sysSite
+        LEFT JOIN
+        (
+            SELECT
+                OD.SYS_SHOPS_NAME AS DESTROY_SYS_SHOPS_NAME,
+                CASE WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,MX,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'MX,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,SE,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,TR,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND REGEXP_LIKE('CA,MX,US', OD.SYS_SITE) THEN 'US' -- 北美归类到美国
+                WHEN SC.SITE IS NULL AND REGEXP_LIKE('DE,ES,FR,IT,NL,PL,SE,TR,UK', OD.SYS_SITE) THEN 'DE' -- 欧洲归类到德国
+                ELSE SC.SITE END AS DESTROY_SYS_SITE_STR,
+                TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd') AS DESTROY_PURCHASE_DATE,
+                SUM(OD.QUANTITY) AS DESTROY_QUANTITY
+            FROM AMAZON_ORDERS O
+            LEFT JOIN AMAZON_ORDER_DETAIL OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID
+            LEFT JOIN
+            (
+                SELECT
+                    D.SYS_SHOPS_NAME,
+                    D.ORDER_ID,
+                    D.SKU,
+                    D.CURRENCY
+                FROM ${param.fbaRemovalOrderDetail} D
+                WHERE
+                    D.CURRENCY IS NOT NULL AND D.CURRENCY NOT IN ('EUR')
+                GROUP BY
+                    D.SYS_SHOPS_NAME,
+                    D.ORDER_ID,
+                    D.SKU,
+                    D.CURRENCY
+            ) ROD ON OD.SYS_SHOPS_NAME = ROD.SYS_SHOPS_NAME AND O.MERCHANT_ORDER_ID = ROD.ORDER_ID AND OD.SKU = ROD.SKU
+            LEFT JOIN CW_SHOP_CURRENCY SC ON ROD.CURRENCY = SC.ORIGINAL_CURRENCY AND OD.SYS_SHOPS_NAME = SC.SHOP_NAME
+            WHERE
+                O.PLATFORM = 'Amazon'
+                AND OD.AMAZON_ORDER_ITEM_CODE = 'Removal_CODE'
+                AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled')
+                AND OD.PURCHASE_DATE &gt;= to_date(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                AND OD.PURCHASE_DATE &lt;= to_date(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND OD.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                GROUP BY OD.SYS_SHOPS_NAME,
+                    CASE WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,MX,US' THEN 'US'
+                    WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,US' THEN 'US'
+                    WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'MX,US' THEN 'US'
+                    WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,UK' THEN 'DE'
+                    WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,SE,UK' THEN 'DE'
+                    WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,UK' THEN 'DE'
+                    WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,TR,UK' THEN 'DE'
+                    WHEN SC.SITE IS NULL AND REGEXP_LIKE('CA,MX,US', OD.SYS_SITE) THEN 'US' -- 北美归类到美国
+                    WHEN SC.SITE IS NULL AND REGEXP_LIKE('DE,ES,FR,IT,NL,PL,SE,TR,UK', OD.SYS_SITE) THEN 'DE' -- 欧洲归类到德国
+                    ELSE SC.SITE END,
+                    TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd')
+        ) T3 ON T.sysShopsName = T3.DESTROY_SYS_SHOPS_NAME AND T.sysSite = T3.DESTROY_SYS_SITE_STR AND T.purchaseDate = T3.DESTROY_PURCHASE_DATE
+        LEFT JOIN
+        (
+            SELECT
+                OD.SYS_SHOPS_NAME AS DESTROY_SYS_SHOPS_NAME,
+                CASE WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,MX,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'MX,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,SE,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,TR,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND REGEXP_LIKE('CA,MX,US', OD.SYS_SITE) THEN 'US' -- 北美归类到美国
+                WHEN SC.SITE IS NULL AND REGEXP_LIKE('DE,ES,FR,IT,NL,PL,SE,TR,UK', OD.SYS_SITE) THEN 'DE' -- 欧洲归类到德国
+                ELSE SC.SITE END AS DESTROY_SYS_SITE_STR,
+                TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd') AS DESTROY_PURCHASE_DATE,
+                SUM(OD.QUANTITY) AS DESTROY_QUANTITY
+            FROM AMAZON_ORDERS O
+            LEFT JOIN AMAZON_ORDER_DETAIL OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID
+            LEFT JOIN
+            (
+                SELECT
+                    D.SYS_SHOPS_NAME,
+                    D.ORDER_ID,
+                    D.SKU,
+                    D.CURRENCY
+                FROM ${param.fbaRemovalOrderDetail} D
+                WHERE
+                    D.CURRENCY IS NOT NULL AND D.CURRENCY NOT IN ('EUR')
+                GROUP BY
+                    D.SYS_SHOPS_NAME,
+                    D.ORDER_ID,
+                    D.SKU,
+                    D.CURRENCY
+            ) ROD ON OD.SYS_SHOPS_NAME = ROD.SYS_SHOPS_NAME AND O.MERCHANT_ORDER_ID = ROD.ORDER_ID AND OD.SKU = ROD.SKU
+            LEFT JOIN CW_SHOP_CURRENCY SC ON ROD.CURRENCY = SC.ORIGINAL_CURRENCY AND OD.SYS_SHOPS_NAME = SC.SHOP_NAME
+            WHERE
+            O.PLATFORM = 'Amazon'
+            AND OD.AMAZON_ORDER_ITEM_CODE = 'Removal_CODE'
+            AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled')
+            AND OD.PURCHASE_DATE &gt;= to_date(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+            AND OD.PURCHASE_DATE &lt;= to_date(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+            <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                AND OD.SYS_SHOPS_NAME = #{param.sysShopsName}
+            </if>
+            GROUP BY OD.SYS_SHOPS_NAME,
+                CASE WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,MX,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'CA,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'MX,US' THEN 'US'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,SE,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND OD.SYS_SITE = 'DE,ES,FR,IT,NL,PL,SE,TR,UK' THEN 'DE'
+                WHEN SC.SITE IS NULL AND REGEXP_LIKE('CA,MX,US', OD.SYS_SITE) THEN 'US' -- 北美归类到美国
+                WHEN SC.SITE IS NULL AND REGEXP_LIKE('DE,ES,FR,IT,NL,PL,SE,TR,UK', OD.SYS_SITE) THEN 'DE' -- 欧洲归类到德国
+                ELSE SC.SITE END,
+                TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd')
+        ) T4 ON T.sysShopsName = T4.DESTROY_SYS_SHOPS_NAME AND T.sysSite = T4.DESTROY_SYS_SITE_STR AND T.yesPurchaseDate = T4.DESTROY_PURCHASE_DATE
+        ORDER BY purchaseDate DESC, sysShopsName
+    </select>
+
+    <!-- 订单异常情况汇总列表 -->
+    <select id="queryOrderAbnormalPage"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OrderAbnormalParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OrderAbnormalResult">
+        SELECT
+            T1.PURCHASEDATE,
+            T1.SHIPPEDDATE,
+            T1.SYS_SHOPS_NAME,
+            T1.SYS_SITE,
+            T1.AMAZON_ORDER_ID AS settlementId,
+            T1.saleQuantity,
+            T1.shippedQuantity,
+            T2.returnDate,
+            NVL(T2.saleReturnQuantity, 0) AS saleReturnQuantity,
+            NVL(T3.fbaShippedQuantity, 0) AS fbaShippedQuantity,
+            CASE WHEN NVL(T1.shippedQuantity, 0) != NVL(T3.fbaShippedQuantity, 0) THEN '异常' ELSE '正常' END AS isShippedError,
+            CASE WHEN NVL(T2.saleReturnQuantity, 0) > NVL(T3.fbaShippedQuantity, 0) THEN '异常' ELSE '正常' END AS isReturnError,
+            T4.settlementDate,
+            CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0) ELSE NVL(T5.settlementQuantity, 0) END AS saleSettlementQuantity,
+            CASE WHEN NVL(T3.fbaShippedQuantity, 0) - NVL(T2.saleReturnQuantity, 0) != (CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0)
+            ELSE NVL(T5.settlementQuantity, 0) END - NVL(T2.saleReturnQuantity, 0)) THEN '异常' ELSE '正常' END AS isSettlementError
+        FROM
+        (
+            SELECT
+                TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd') AS purchaseDate,
+                CASE WHEN O.ORDER_STATUS IN ('Shipping', 'Shipped') THEN TO_CHAR(O.LAST_UPDATED_DATE,'yyyy-mm-dd') ELSE NULL END AS shippedDate,
+                OD.SYS_SHOPS_NAME,
+                OD.SYS_SITE,
+                OD.AMAZON_ORDER_ID,
+                SUM(NVL(OD.QUANTITY, 0)) AS saleQuantity,
+                SUM(CASE WHEN OD.ITEM_STATUS = 'Shipped' THEN NVL(OD.QUANTITY, 0) ELSE 0 END) AS shippedQuantity
+            FROM AMAZON_ORDERS O
+            LEFT JOIN AMAZON_ORDER_DETAIL OD ON OD.AMAZON_ORDER_ID = O.AMAZON_ORDER_ID
+            WHERE
+                O.PLATFORM = 'Amazon'
+                AND (O.MERCHANT_ORDER_ID IS NULL OR REGEXP_LIKE(O.MERCHANT_ORDER_ID,'\d{3}-\d{7}-\d{7}'))
+                AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled')
+                AND NOT (O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled' AND O.TYPE = 'Normal')
+                <if test="param.shippedDateStart != null and param.shippedDateStart != '' and param.shippedDateEnd != null and param.shippedDateEnd != ''">
+                    AND O.LAST_UPDATED_DATE &gt;= to_date(#{param.shippedDateStart},'yyyy-mm-dd hh24:mi:ss')
+                    AND O.LAST_UPDATED_DATE &lt;= to_date(#{param.shippedDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                    AND O.ORDER_STATUS IN ('Shipping', 'Shipped')
+                </if>
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND OD.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND OD.SYS_SITE = #{param.sysSite}
+                </if>
+                <if test="param.settlementId != null and param.settlementId != ''">
+                    AND OD.AMAZON_ORDER_ID = #{param.settlementId}
+                </if>
+            GROUP BY
+                TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd'),
+                CASE WHEN O.ORDER_STATUS IN ('Shipping', 'Shipped') THEN TO_CHAR(O.LAST_UPDATED_DATE,'yyyy-mm-dd') ELSE NULL END,
+                OD.SYS_SHOPS_NAME,
+                OD.SYS_SITE,
+                OD.AMAZON_ORDER_ID
+        ) T1
+        LEFT JOIN
+        (
+            SELECT
+                FCR.SYS_SHOPS_NAME,
+                FCR.SYS_SITE,
+                FCR.ORDER_ID AS AMAZON_ORDER_ID,
+                TO_CHAR(FCR.RETURN_DATE,'yyyy-mm-dd') AS returnDate,
+                SUM(NVL(FCR.QUANTITY, 0)) AS saleReturnQuantity
+            FROM
+                ${param.fbaCustomerReturns} FCR
+            WHERE
+                FCR.VERIFY_STATUS = 1
+                <if test="param.returnDateStart != null and param.returnDateStart != ''">
+                    AND FCR.RETURN_DATE &gt;= to_date(#{param.returnDateStart},'yyyy-mm-dd hh24:mi:ss')
+                </if>
+                <if test="param.returnDateEnd != null and param.returnDateEnd != ''">
+                    AND FCR.RETURN_DATE &lt;= to_date(#{param.returnDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                </if>
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND FCR.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND FCR.SYS_SITE = #{param.sysSite}
+                </if>
+                <if test="param.settlementId != null and param.settlementId != ''">
+                    AND FCR.ORDER_ID = #{param.settlementId}
+                </if>
+            GROUP BY
+                FCR.SYS_SHOPS_NAME,
+                FCR.SYS_SITE,
+                FCR.ORDER_ID,
+                TO_CHAR(FCR.RETURN_DATE,'yyyy-mm-dd')
+        ) T2 ON T1.SYS_SHOPS_NAME = T2.SYS_SHOPS_NAME AND T1.SYS_SITE = T2.SYS_SITE AND T1.AMAZON_ORDER_ID = T2.AMAZON_ORDER_ID
+        LEFT JOIN
+        (
+            SELECT
+                FSS.SYS_SHOPS_NAME,
+                FSS.SYS_SITE,
+                FSS.AMAZON_ORDER_ID,
+                SUM(NVL(FSS.QUANTITY, 0)) AS fbaShippedQuantity
+            FROM
+                ${param.fbaShipmentSales} FSS
+            WHERE
+                FSS.VERIFY_STATUS != 2
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND FSS.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND FSS.SYS_SITE = #{param.sysSite}
+                </if>
+                <if test="param.settlementId != null and param.settlementId != ''">
+                    AND FSS.AMAZON_ORDER_ID = #{param.settlementId}
+                </if>
+            GROUP BY
+                FSS.SYS_SHOPS_NAME,
+                FSS.SYS_SITE,
+                FSS.AMAZON_ORDER_ID
+        ) T3 ON T1.SYS_SHOPS_NAME = T3.SYS_SHOPS_NAME AND T1.SYS_SITE = T3.SYS_SITE AND T1.AMAZON_ORDER_ID = T3.AMAZON_ORDER_ID
+        LEFT JOIN(
+            SELECT
+                LD.SHOP_NAME AS SYS_SHOPS_NAME,
+                LD.SITE AS SYS_SITE,
+                LD.ORDER_ID AS AMAZON_ORDER_ID,
+                TO_CHAR(MAX(LD.DATE_TIME),'yyyy-mm-dd') AS settlementDate
+            FROM
+                CW_LINGXING_DATARANGE LD
+            <where>
+                <if test="param.settlementDateStart != null and param.settlementDateStart != ''">
+                    AND LD.DATE_TIME &gt;= to_date(#{param.settlementDateStart},'yyyy-mm-dd hh24:mi:ss')
+                </if>
+                <if test="param.settlementDateEnd != null and param.settlementDateEnd != ''">
+                    AND LD.DATE_TIME &lt;= to_date(#{param.settlementDateEnd},'yyyy-mm-dd hh24:mi:ss')
+                </if>
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND LD.SHOP_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND LD.SITE = #{param.sysSite}
+                </if>
+                <if test="param.settlementId != null and param.settlementId != ''">
+                    AND LD.ORDER_ID = #{param.settlementId}
+                </if>
+            </where>
+            GROUP BY
+                LD.SHOP_NAME,
+                LD.SITE,
+                LD.ORDER_ID
+        ) T4 ON T1.SYS_SHOPS_NAME = T4.SYS_SHOPS_NAME AND T1.SYS_SITE = T4.SYS_SITE AND T1.AMAZON_ORDER_ID = T4.AMAZON_ORDER_ID
+        LEFT JOIN
+        (
+            SELECT
+                SD.SYS_SHOPS_NAME,
+                SD.SYS_SITE,
+                SD.ORDER_ID AS AMAZON_ORDER_ID,
+                SUM(SD.QUANTITY_PURCHASED) AS settlementQuantity
+            FROM
+                CW_SETTLEMENT S
+            LEFT JOIN CW_SETTLEMENT_DETAIL SD ON S.SETTLEMENT_ID = SD.SETTLEMENT_ID
+            WHERE
+                S.SETTLEMENT_START_DATE >= ADD_MONTHS(SYSDATE, -3)
+                AND SD.AMOUNT_TYPE = 'ItemPrice'
+                AND SD.AMOUNT_DESCRIPTION = 'Principal'
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND SD.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND SD.SYS_SITE = #{param.sysSite}
+                </if>
+                <if test="param.settlementId != null and param.settlementId != ''">
+                    AND SD.ORDER_ID = #{param.settlementId}
+                </if>
+            GROUP BY
+                SD.SYS_SHOPS_NAME,
+                SD.SYS_SITE,
+                SD.ORDER_ID
+        ) T5 ON T1.SYS_SHOPS_NAME = T5.SYS_SHOPS_NAME AND T1.SYS_SITE = T5.SYS_SITE AND T1.AMAZON_ORDER_ID = T5.AMAZON_ORDER_ID
+        LEFT JOIN
+        (
+            SELECT
+                DD.SYS_SHOPS_NAME,
+                DD.SYS_SITE,
+                DD.ORDER_ID AS AMAZON_ORDER_ID,
+                SUM(DD.QUANTITY) AS settlementQuantity
+            FROM
+                CW_DATARANGE D
+            LEFT JOIN CW_DATARANGE_DTAIL DD ON D.SETTLEMENT_ID = DD.SETTLEMENT_ID
+            WHERE
+                D.SETTLEMENT_START_DATE >= ADD_MONTHS(SYSDATE, -3)
+                <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                    AND DD.SYS_SHOPS_NAME = #{param.sysShopsName}
+                </if>
+                <if test="param.sysSite != null and param.sysSite != ''">
+                    AND DD.SYS_SITE = #{param.sysSite}
+                </if>
+                <if test="param.settlementId != null and param.settlementId != ''">
+                    AND DD.ORDER_ID = #{param.settlementId}
+                </if>
+            GROUP BY
+                DD.SYS_SHOPS_NAME,
+                DD.SYS_SITE,
+                DD.ORDER_ID
+        ) T6 ON T1.SYS_SHOPS_NAME = T6.SYS_SHOPS_NAME AND T1.SYS_SITE = T6.SYS_SITE AND T1.AMAZON_ORDER_ID = T6.AMAZON_ORDER_ID
+        WHERE
+            T1.SYS_SHOPS_NAME IS NOT NULL
+            AND (
+                NVL(T1.shippedQuantity, 0) != NVL(T3.fbaShippedQuantity, 0)
+                OR NVL(T2.saleReturnQuantity, 0) > NVL(T3.fbaShippedQuantity, 0)
+                OR NVL(T3.fbaShippedQuantity, 0) - NVL(T2.saleReturnQuantity, 0) !=
+                (CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0)ELSE NVL(T5.settlementQuantity,0) END - NVL(T2.saleReturnQuantity, 0))
+            )
+        ORDER BY
+        T1.PURCHASEDATE DESC,
+        T1.SHIPPEDDATE DESC,
+        T1.SYS_SHOPS_NAME,
+        T1.SYS_SITE
+    </select>
+
+    <!--Amazon订单去重-->
+    <delete id="dealAmazonOrderRepeat">
+        DELETE AMAZON_ORDERS
+        WHERE ID IN(
+            SELECT
+				ID
+            FROM (
+				SELECT
+					ROW_NUMBER() OVER(PARTITION BY A.AMAZON_ORDER_ID ORDER BY A.CREATE_TIME DESC) N,
+                    A.ID
+                FROM AMAZON_ORDERS A
+                WHERE A.LAST_UPDATED_DATE > TRUNC(SYSDATE - 15)
+			)
+            WHERE N > 1
+		)
+    </delete>
+
+    <!--Amazon订单明细去重-->
+    <delete id="dealAmazonOrderDetailRepeat">
+        DELETE AMAZON_ORDER_DETAIL
+        WHERE ID IN(
+            SELECT
+                ID
+            FROM (
+                SELECT
+                    ROW_NUMBER() OVER(PARTITION BY A.AMAZON_ORDER_ID,A.AMAZON_ORDER_ITEM_CODE,A.SKU ORDER BY A.CREATE_TIME DESC) N,
+                    A.ID
+                FROM AMAZON_ORDER_DETAIL A
+                JOIN AMAZON_ORDERS B on A.AMAZON_ORDER_ID = B.AMAZON_ORDER_ID AND A.SYS_SITE = B.SYS_SITE
+                WHERE B.LAST_UPDATED_DATE > TRUNC(SYSDATE - #{days})
+            )
+            WHERE N > 1
+        )
+    </delete>
+</mapper>
+

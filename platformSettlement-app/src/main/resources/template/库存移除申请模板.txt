@@ -1,0 +1,30 @@
+MerchantRemovalOrderID	FBSC05A001				
+RemovalDisposition	RETURN				
+AddressName	BSCRT				
+AddressFieldOne	屲崄惣5-17-2				
+AddressFieldTwo	憅屔915				
+AddressFieldThree					
+AddressCity	徏屗巗				
+AddressCountryCode	JP				
+AddressStateOrRegion	愮梩導				
+AddressPostalCode	270-2218				
+ContactPhoneNumber	03-6684-0814				
+ShippingNotes					
+				
+MerchantSKU	SellableQuantity	UnsellableQuantity	UNIT_PRICE	TOTAL_PRICE
+AT-iPro11-20-3ZBT-Xfbl-CKK-0519F-rd-fA	20	0	5	100	
+AT-iPr11-21-RBKQBB-210202F-blu-fA	20	0	6	120			
+AT-CampLantern-DGNXG-210415F-bk-fA	80	0	1	80	
+AT-CampLantern-DGNXG-210415F-gry-fA	80	0	0		
+RAT-RollerSkatingset-HYG-200821F-blu-fA	76	0	0		
+RAT-FaceBandana-GE-3-201010F-lgry-fA	30	0	0.1	10	
+AT-FaceBandana-2p-210609F-PrlGrn-fA	30	0	2	60	
+AT-FaceBandana-2p-210609F-DgryLgry-fA	30	1	30		
+atic-PCZJ-Triangle-AL-181106F-slr-fA	40	0	1	40	
+RAT-ZJ-ZDSdesk-phtab-201029F-wht-fA	10	0	1	10	
+RAT-ZJ-ZDSdesk-phtab-201029F-bk-fA	20	0	1	20	
+ST-Core-GF-LJG-TPU-171116F-Agrn-fA	40	0	1	40	
+AT-HWwatch3-CXGJ-210727F-bk-fA	20	0	1	20	
+AT-HW-WatchFit-GJBand-210611F-bk-fA	40	0	1	40	
+RAT-Forerunner245-SSGJ-0828F-minbl-fA	31	0	1	31	
+RAT-MiBand43-DKGJ-0828F-mdbluwht-fA	35	1	35	1260	

@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsBtbPackOrderMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        A.ID,A.ORDER_NO,A.ORDER_STATUS,A.ORDER_DATE,A.PLATFORM,A.SYS_SHOPS_NAME,A.SYS_SITE,A.COMPANY_STREET,A.RECEIVE_COUNTRY_NAME_CN,A.RECEIVE_COUNTRY_NAME_EN,
+        A.RECEIVE_COUNTRY_CODE,A.BUYER_NAME,A.PHONE1,A.CITY,A.PROVINCE,A.STREET1,A.STREET2,A.POST_CODE,A.MATERIAL_CODE,A.TOTAL_WEIGHT,
+        A.TOTAL_VOLUME,A.TOTAL_QUANTITY,A.LOGISTICS_STATUS,A.SHIPMENT_TYPE,A.CREATE_TIME,A.CREATE_USER,A.UPDATE_TIME,A.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsBtbPackOrderParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsBtbPackOrderResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM LS_BTB_PACK_ORDER A
+        <where>
+            <if test="param.orderNoList != null and param.orderNoList.size() != 0">
+                AND A.ORDER_NO IN
+                <foreach collection="param.orderNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.platformList != null and param.platformList.size() != 0">
+                AND A.PLATFORM IN
+                <foreach collection="param.platformList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNameList != null and param.sysShopsNameList.size() != 0">
+                AND A.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                AND
+                <foreach collection="param.materialCodeList" item="code" index="index" separator="or" open="(" close=")">
+                    A.MATERIAL_CODE LIKE '%' || #{code} || '%'
+                </foreach>
+            </if>
+            <if test="param.logisticsStatusList != null and param.logisticsStatusList.size() != 0">
+                AND A.LOGISTICS_STATUS IN
+                <foreach collection="param.logisticsStatusList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.orderStatusList != null and param.orderStatusList.size() != 0">
+                AND A.ORDER_STATUS IN
+                <foreach collection="param.orderStatusList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentType != null and param.shipmentType != ''">
+                AND A.SHIPMENT_TYPE = #{param.shipmentType}
+            </if>
+            <if test="param.orderStartDate != null and param.orderStartDate != ''">
+                AND A.ORDER_DATE &gt;= TO_DATE(#{param.orderStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.orderEndDate != null and param.orderEndDate != ''">
+                AND A.ORDER_DATE &lt;= TO_DATE(#{param.orderEndDate},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+        </where>
+        ORDER BY A.ORDER_DATE DESC, A.ORDER_NO
+    </select>
+
+    <!-- 分页查询列表 -->
+    <select id="queryDetail"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsBtbPackOrderDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsBtbPackOrderDetailResult">
+        SELECT
+            A.*
+        FROM LS_BTB_PACK_ORDER_DETAIL A
+        WHERE A.ORDER_NO = #{param.orderNo}
+        ORDER BY A.ORDER_NO DESC, A.ORDER_DETAIL_ID ASC
+    </select>
+
+    <!--根据物料编码获取K3物料信息-->
+    <select id="getK3MaterialInfo"
+            parameterType="java.util.HashSet"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsBtbPackBoxDetailResult">
+        SELECT
+            T1.*
+        FROM
+        (
+            SELECT
+                M.FMATERIALID AS fMaterialId,
+                M.FNUMBER AS MATERIAL_CODE,
+                ROW_NUMBER() OVER(PARTITION BY M.FNUMBER ORDER BY M.FMATERIALID DESC) RN,
+                BAL1.FDATAVALUE AS COMPANY_BRAND,
+                M.F_PAEZ_TEXT AS INVOICE_PRO_NAME_CN,
+                B.FNumber AS STYLE,
+                M.F_PAEZ_TYPE AS type,
+                U.FNUMBER AS unit,
+                A.FNUMBER AS attribute
+            FROM T_BD_MATERIAL M
+            LEFT JOIN T_BD_MATERIAL_L ML ON M.FMATERIALID = ML.FMATERIALID
+            LEFT JOIN T_BD_MATERIALBASE MB ON M.FMATERIALID = MB.FMATERIALID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL1 ON M.F_BSC_BRAND = BAL1.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL2 ON M.F_CHARGED = BAL2.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL3 ON M.F_BSC_PRONAME = BAL3.FENTRYID
+            LEFT JOIN T_BD_UNIT_L UL ON MB.FWEIGHTUNITID = UL.FUNITID
+            LEFT JOIN T_BD_UNIT U ON MB.FBaseUnitId = U.FUNITID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY A ON M.F_BSC_Set = A.FMASTERID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY B ON M.F_BSC_Style = B.FMASTERID
+            WHERE M.FNUMBER IN
+            <foreach collection="materialCodeSet" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        ) T1
+        WHERE T1.RN = 1
+    </select>
+
+    <!-- 定时同步马帮BTB订单信息 -->
+    <update id="syncBtbOrderInfo">
+        MERGE INTO LOGISTICS.LS_BTB_PACK_ORDER A
+            USING (
+                SELECT
+                    O.PLATFORM_ORDER_ID AS ORDER_NO,
+                    CASE O.ORDER_STATUS WHEN '2' THEN '配货中' WHEN '3' THEN '已发货' WHEN '4' THEN '已完成' WHEN '5' THEN '已作废' END AS ORDER_STATUS,
+                    O.PAID_TIME AS ORDER_DATE,
+                    DECODE(INSTR(O.SHOP_NAME, '_'), 0, O.SHOP_NAME, SUBSTR(O.SHOP_NAME, 0, INSTR(O.SHOP_NAME, '_')-1)) AS PLATFORM,
+                    DECODE(INSTR(O.SHOP_NAME, '_'), 0, NULL, DECODE(INSTR(O.SHOP_NAME, '_', 1, 2), 0, SUBSTR(O.SHOP_NAME, INSTR(O.SHOP_NAME, '_')+1), SUBSTR(O.SHOP_NAME, INSTR(O.SHOP_NAME, '_')+1, INSTR(O.SHOP_NAME, '_', 1, 2) - INSTR(O.SHOP_NAME, '_')-1))) AS SYS_SHOPS_NAME,
+                    DECODE(INSTR(O.SHOP_NAME, '_', 1, 2), 0, NULL, SUBSTR(O.SHOP_NAME, INSTR(O.SHOP_NAME, '_', 1, 2)+1)) AS SYS_SITE,
+                    O.SHOP_NAME,
+                    O.COMPANY_STREET,
+                    O.COUNTRY_NAME_CN AS RECEIVE_COUNTRY_NAME_CN,
+                    O.COUNTRY_NAME_EN AS RECEIVE_COUNTRY_NAME_EN,
+                    O.COUNTRY_CODE AS RECEIVE_COUNTRY_CODE,
+                    LISTAGG(OI.STOCK_SKU, ',')  WITHIN GROUP(ORDER BY O.PLATFORM_ORDER_ID) AS MATERIAL_CODE,
+                    SUM(OI.PLATFORM_QUANTITY) AS TOTAL_QUANTITY,
+                    O.BUYER_NAME,
+                    O.PHONE1,
+                    O.CITY,
+                    O.PROVINCE,
+                    O.STREET1,
+                    O.STREET2,
+                    O.POST_CODE
+                FROM EXTERNAL.B2B_MABANG_ORDERS O
+                LEFT JOIN EXTERNAL.B2B_MABANG_ORDER_ITEM OI ON O.ID = OI.ORIGIN_ORDER_ID AND OI.STOCK_SKU NOT IN('SHIPPING', 'DUTY', 'INSURANCE')
+                GROUP BY
+                    O.PLATFORM_ORDER_ID,
+                    O.ORDER_STATUS,
+                    O.PAID_TIME,
+                    O.SHOP_NAME,
+                    O.COMPANY_STREET,
+                    O.COUNTRY_NAME_CN,
+                    O.COUNTRY_NAME_EN,
+                    O.COUNTRY_CODE,
+                    O.BUYER_NAME,
+                    O.PHONE1,
+                    O.CITY,
+                    O.PROVINCE,
+                    O.STREET1,
+                    O.STREET2,
+                    O.POST_CODE
+            ) B
+            ON (
+                A.ORDER_NO = B.ORDER_NO
+            )
+            WHEN MATCHED THEN
+                UPDATE SET
+                    A.ORDER_STATUS = B.ORDER_STATUS,
+                    A.ORDER_DATE = B.ORDER_DATE,
+                    A.PLATFORM = B.PLATFORM,
+                    A.SYS_SHOPS_NAME = B.SYS_SHOPS_NAME,
+                    A.SYS_SITE = B.SYS_SITE,
+                    A.COMPANY_STREET = B.COMPANY_STREET,
+                    A.RECEIVE_COUNTRY_NAME_CN = B.RECEIVE_COUNTRY_NAME_CN,
+                    A.RECEIVE_COUNTRY_NAME_EN = B.RECEIVE_COUNTRY_NAME_EN,
+                    A.RECEIVE_COUNTRY_CODE = B.RECEIVE_COUNTRY_CODE,
+                    A.MATERIAL_CODE = B.MATERIAL_CODE,
+                    A.TOTAL_QUANTITY = B.TOTAL_QUANTITY,
+                    A.UPDATE_TIME = SYSDATE,
+                    A.BUYER_NAME = B.BUYER_NAME,
+                    A.PHONE1 = B.PHONE1,
+                    A.CITY = B.CITY,
+                    A.PROVINCE = B.PROVINCE,
+                    A.STREET1 = B.STREET1,
+                    A.STREET2 = B.STREET2,
+                    A.POST_CODE = B.POST_CODE
+                    WHERE A.LOGISTICS_STATUS = '未发货'
+            WHEN NOT MATCHED THEN
+                INSERT
+                (
+                    A.ORDER_NO,
+                    A.ORDER_STATUS,
+                    A.ORDER_DATE,
+                    A.PLATFORM,
+                    A.SYS_SHOPS_NAME,
+                    A.SYS_SITE,
+                    A.COMPANY_STREET,
+                    A.RECEIVE_COUNTRY_NAME_CN,
+                    A.RECEIVE_COUNTRY_NAME_EN,
+                    A.RECEIVE_COUNTRY_CODE,
+                    A.MATERIAL_CODE,
+                    A.TOTAL_QUANTITY,
+                    A.LOGISTICS_STATUS,
+                    A.BUYER_NAME,
+                    A.PHONE1,
+                    A.CITY,
+                    A.PROVINCE,
+                    A.STREET1,
+                    A.STREET2,
+                    A.POST_CODE
+                )
+                VALUES
+                (
+                    B.ORDER_NO,
+                    B.ORDER_STATUS,
+                    B.ORDER_DATE,
+                    B.PLATFORM,
+                    B.SYS_SHOPS_NAME,
+                    B.SYS_SITE,
+                    B.COMPANY_STREET,
+                    B.RECEIVE_COUNTRY_NAME_CN,
+                    B.RECEIVE_COUNTRY_NAME_EN,
+                    B.RECEIVE_COUNTRY_CODE,
+                    B.MATERIAL_CODE,
+                    B.TOTAL_QUANTITY,
+                    '未发货',
+                    B.BUYER_NAME,
+                    B.PHONE1,
+                    B.CITY,
+                    B.PROVINCE,
+                    B.STREET1,
+                    B.STREET2,
+                    B.POST_CODE
+                )
+    </update>
+
+    <!-- 获取马帮BTB订单明细信息 -->
+    <select id="getBtbOrderDetailInfo" resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.LsBtbPackOrderDetail">
+        SELECT
+            O.PLATFORM_ORDER_ID AS ORDER_NO,
+            OI.ID AS ORDER_DETAIL_ID,
+            OI.STOCK_SKU AS SKU,
+            OI.STOCK_SKU AS MATERIAL_CODE,
+            OI.TITLE AS PRODUCT_INFO,
+            OI.QUANTITY AS QUANTITY
+        FROM EXTERNAL.B2B_MABANG_ORDERS O
+        LEFT JOIN EXTERNAL.B2B_MABANG_ORDER_ITEM OI ON O.ID = OI.ORIGIN_ORDER_ID AND OI.STOCK_SKU NOT IN('SHIPPING', 'DUTY', 'INSURANCE')
+    </select>
+
+    <!-- 物流账号下拉 -->
+    <select id="logisticsAccountSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticAccountResult">
+        SELECT P.lpCode,P.lpName,P.lpSimpleName,A.lcCode
+        FROM TbLogisticsProvider P
+        LEFT JOIN TbLogisticsAccount A ON P.lpCode = A.lpCode
+        WHERE A.lpCode IS NOT NULL AND A.lcState = '正常'
+    </select>
+
+    <!-- 国家分区下拉 -->
+    <select id="lCountryPartitionSelect"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticAccountResult"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticAccountResult">
+        SELECT P.lpCode, P.countryCode, P.lspNum FROM TbLogisticsCountryPartition P WHERE P.lpCode = #{param.lpCode}
+    </select>
+
+    <!-- 收货分区下拉 -->
+    <select id="lCountryPartitionAreaSelect"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticAccountResult"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticAccountResult">
+        SELECT P.lpCode, P.countryCode, P.lspNum, P.CountryAreaName  FROM TbLogisticsCountryAreaPartition P WHERE P.lpCode = #{param.lpCode} AND P.lspNum = #{param.lspNum}
+    </select>
+
+    <!--获取EBMS货运方式1下拉-->
+    <select id="freightCompanySelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            w.logTraMode1 AS code,
+            w.logTraMode1 AS name
+        FROM TbLogisticsLink w
+    </select>
+
+    <!--获取EBMS运输方式下拉-->
+    <select id="transportTypeSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            w.dicValueCode AS code,
+            w.dicValueName AS name
+        FROM TbSysDictionary w
+        WHERE w.dicClassCode = 'p30'
+    </select>
+
+    <!--获取EBMS物流渠道下拉-->
+    <select id="logisticsChannelSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            w.dicValueCode AS code,
+            w.dicValueName AS name
+        FROM TbSysDictionary w
+        WHERE w.dicClassCode = 'p31'
+    </select>
+
+    <!--货物特性下拉-->
+    <select id="goodsPropertySelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            w.dicValueCode AS code,
+            w.dicValueName AS name
+        FROM TbSysDictionary w
+        WHERE w.dicClassCode = 'p33'
+    </select>
+
+    <!--BTB平台下拉-->
+    <select id="btbPlatformSelect" resultType="java.lang.String">
+        SELECT DISTINCT A.PLATFORM AS name FROM LS_BTB_PACK_ORDER A WHERE A.PLATFORM IS NOT NULL
+    </select>
+
+    <!--物流实际结算平台下拉-->
+    <select id="btbShopNameSelect" resultType="java.lang.String">
+        SELECT DISTINCT A.SYS_SHOPS_NAME AS name FROM LS_BTB_PACK_ORDER A WHERE A.SYS_SHOPS_NAME IS NOT NULL
+    </select>
+
+    <!--物流实际结算站点下拉-->
+    <select id="btbSiteSelect" resultType="java.lang.String">
+        SELECT DISTINCT A.SYS_SITE AS name FROM LS_BTB_PACK_ORDER A WHERE A.SYS_SITE IS NOT NULL
+    </select>
+
+    <!--获取物流商价格-->
+    <select id="getLpPrice"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.entity.LsBtbLogisticsNo"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsPriceResult">
+        SELECT
+            P.busLogpChargCurrency,
+            D.busLogpDetUnitPrice,
+            D.busLogpDetCustDlearanceFee,
+            D.busLogpDetCustClearanceFee,
+            D.busLogpDetBusySeasonAddFee,
+            D.busLogpDetFuelFee,
+            D.busLogpDetAddAndSundryFee,
+            D.busLogpDetWeightGreater,
+            D.busLogpDetWeightLess,
+            D.busLogpDetVolumeGreater,
+            D.busLogpDetVolumeLess,
+            D.busLogpDetAppStartDate,
+            D.busLogpDetAppEndDate
+        FROM TbLogisticsNewPrice P
+        LEFT JOIN TbLogisticsNewPriceDet D ON P.pkLogpID = D.pkLogpID
+        WHERE
+            D.busLogpDetStatus = '1'
+            AND D.busLogpDetUseStatus = '已启用'
+            <if test="param.lcCode != null and param.lcCode != ''">
+                AND P.busLcCode = #{param.lcCode}
+            </if>
+            <if test="param.sysSite != null and param.sysSite != ''">
+                AND P.busLpCountryCode = #{param.sysSite}
+            </if>
+            <if test="param.lspNum != null and param.lspNum != ''">
+                AND P.busLspNum = #{param.lspNum}
+            </if>
+            <if test="param.freightCompany != null and param.freightCompany != ''">
+                AND P.busLogTraMode1 = #{param.freightCompany}
+            </if>
+            <if test="param.transportType != null and param.transportType != ''">
+                AND P.busLogTraMode2 = #{param.transportType}
+            </if>
+            <if test="param.logisticsChannel != null and param.logisticsChannel != ''">
+                AND P.busLogSeaTraRoute = #{param.logisticsChannel}
+            </if>
+            <if test="param.orderType != null and param.orderType != ''">
+                AND P.busLogRedOrBlueList = #{param.orderType}
+            </if>
+            <if test="param.goodsProperty != null and param.goodsProperty != ''">
+                AND P.busLogGoodCharacter = #{param.goodsProperty}
+            </if>
+            <if test="param.hasTax != null and param.hasTax != ''">
+                AND P.busLogpIsIncTax = CASE #{param.hasTax} WHEN '是' THEN 1 WHEN '否' THEN 0 END
+            </if>
+            <if test="param.logisticsCurrency != null and param.logisticsCurrency != ''">
+                AND P.busLogpChargCurrency = #{param.logisticsCurrency}
+            </if>
+            <if test="param.confirmFeeType != null and param.confirmFeeType != ''">
+                AND P.busLogpChargType = #{param.confirmFeeType}
+            </if>
+            <choose>
+                <when test="param.confirmFeeType != null and param.confirmFeeType != '' and param.predictFeeType == '重量'.toString()">
+                    AND D.busLogpDetWeightGreater &lt;= #{param.predictCountFee}
+                    AND D.busLogpDetWeightLess >= #{param.predictCountFee}
+                </when>
+                <when test="param.confirmFeeType != null and param.confirmFeeType != '' and param.predictFeeType == '体积'.toString()">
+                    AND D.busLogpDetVolumeGreater &lt;= #{param.predictCountFee}
+                    AND D.busLogpDetVolumeLess >= #{param.predictCountFee}
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+            AND DATEDIFF(DAY, D.busLogpDetAppStartDate, #{param.shipmentDate}) >= 0
+            AND DATEDIFF(DAY, #{param.shipmentDate}, ISNULL(D.busLogpDetAppEndDate,'9999-12-31')) >= 0
+    </select>
+
+</mapper>

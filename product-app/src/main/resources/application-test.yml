@@ -1,0 +1,91 @@
+server:
+  port: 8003
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource # 当前数据源操作类型
+    driver-class-name: oracle.jdbc.OracleDriver # Oracle数据库驱动包
+    url: jdbc:oracle:thin:@test.jcintergl.com:1521/ORCLPDB1
+    username: basecloud
+    password: Bsc_Test001
+  redis:
+    host: dev.jcintergl.com
+    port: 6379
+    password: Jin@Dev001
+    database: 12
+  cloud:
+    nacos:
+      discovery:
+        server-addr: dev.jcintergl.com:8848
+        enabled: true
+        register-enabled: true
+        watch-delay: 1000
+        namespace: test
+        username: test
+        password: test
+
+ribbon:
+  eager-load:
+    enabled: true
+    # 多个服务用逗号隔开
+    clients: roses-account
+
+feign:
+  sentinel:
+    # 为feign整合sentinel
+    enabled: true
+  client:
+    config:
+      # 全局配置
+      default:
+        # NONE不记录任何日志--BASIC仅请求方法URL,状态码执行时间等--HEADERS在BASIC基础上记录header等--FULL记录所有
+        loggerLevel: full
+        connectTimeout: 30000  #毫秒时间，建立连接的超时时间，一般只在发现服务时用到
+        readTimeout: 180000    #毫秒时间 ，接口请求的超时时间
+        errorDecoder: cn.stylefeng.guns.cloud.libs.cloud.feign.GunsFeignErrorDecoder
+        requestInterceptors:
+          - cn.stylefeng.guns.cloud.libs.cloud.feign.GunsFeignHeaderProcessInterceptor
+  httpclient:
+    # 让feign使用apache httpclient做请求；而不是默认的urlconnection
+    enabled: true
+    # feign的最大连接数
+    max-connections: 200
+    # feign单个路径的最大连接数
+    max-connections-per-route: 50
+
+mybatis-plus:
+  mapper-locations:
+    - classpath*:com/tadpole/cloud/product/modular/**/mapping/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+      table-underline: true
+
+roses:
+  scanner:
+    app-code: bsc-cloud-product
+    app-name: 产品管理
+    open: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+objectLogger:
+  serverAddress: http://127.0.0.1:12301
+  businessAppName: bsc-cloud-supplyChain
+  autoLogAttributes: true
+

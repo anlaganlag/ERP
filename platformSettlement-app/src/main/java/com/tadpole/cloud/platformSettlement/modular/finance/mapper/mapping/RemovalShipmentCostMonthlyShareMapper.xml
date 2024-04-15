@@ -1,0 +1,658 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.RemovalShipmentCostMonthlyShareMapper">
+
+    <!-- 销毁移除成本月分摊表列表 -->
+    <select id="queryShipmentCostMonthlyShare"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.RemovalShipmentCostMonthlyShareParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.RemovalShipmentCostMonthlyShareResult">
+        SELECT
+            S.ORDER_ID,
+            S.ID,
+            S.REQUEST_DATE,
+            TO_CHAR(S.START_DATE,'yyyy-mm') AS startDateFormat,
+            TO_CHAR(S.END_DATE,'yyyy-mm') AS endDateFormat,
+            S.ORDER_TYPE,
+            S.SYS_SHOPS_NAME,
+            S.SYS_SITE,
+            S.SKU,
+            S.DEPARTMENT,
+            S.TEAM,
+            S.MATERIAL_CODE,
+            S.CURRENCY,
+            S.SHARE_NUM,
+            S.SHIPPED_QUANTITY,
+            S.PURCHASE_UNIT_PRICE,
+            S.LOGISTICS_UNIT_PRICE,
+            S.DIRECT_RATE,
+            S.ALL_SHARE_PURCHASE_COST,
+            S.ALL_SHARE_LOGISTICS_COST,
+            S.MONTHLY_SHARE_PURCHASE_COST,
+            S.MONTHLY_SHARE_LOGISTICS_COST,
+            <choose>
+                <when test="param.fiscalPeriod != null and param.fiscalPeriod!=''">
+                    CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.MONTHLY_SHARE_PURCHASE_COST * (S.SHARE_NUM - 1)
+                    ELSE (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_PURCHASE_COST END AS ALREADY_SHARE_PURCHASE_COST,
+                    CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.MONTHLY_SHARE_LOGISTICS_COST * (S.SHARE_NUM - 1)
+                    ELSE (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_LOGISTICS_COST END AS ALREADY_SHARE_LOGISTICS_COST,
+                    CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_PURCHASE_COST - S.MONTHLY_SHARE_PURCHASE_COST * (S.SHARE_NUM - 1)
+                    ELSE S.ALL_SHARE_PURCHASE_COST - (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_PURCHASE_COST END AS NOT_SHARE_PURCHASE_COST,
+                    CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_LOGISTICS_COST - S.MONTHLY_SHARE_LOGISTICS_COST * (S.SHARE_NUM - 1)
+                    ELSE S.ALL_SHARE_LOGISTICS_COST - (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_LOGISTICS_COST END AS NOT_SHARE_LOGISTICS_COST,
+                    CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_PURCHASE_COST - S.MONTHLY_SHARE_PURCHASE_COST * (S.SHARE_NUM - 1)
+                    ELSE S.MONTHLY_SHARE_PURCHASE_COST END AS NOW_SHARE_PURCHASE_COST,
+                    CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_LOGISTICS_COST - S.MONTHLY_SHARE_LOGISTICS_COST * (S.SHARE_NUM - 1)
+                    ELSE S.MONTHLY_SHARE_LOGISTICS_COST END AS NOW_SHARE_LOGISTICS_COST,
+                </when>
+                <otherwise>
+                    NULL AS ALREADY_SHARE_PURCHASE_COST,
+                    NULL AS ALREADY_SHARE_LOGISTICS_COST,
+                    NULL AS NOT_SHARE_PURCHASE_COST,
+                    NULL AS NOT_SHARE_LOGISTICS_COST,
+                    NULL AS NOW_SHARE_PURCHASE_COST,
+                    NULL AS NOW_SHARE_LOGISTICS_COST,
+                </otherwise>
+            </choose>
+            S.SALES_BRAND,
+            CASE S.CONFIRM_STATUS WHEN '0' THEN '未确认' WHEN '1' THEN '已确认' WHEN '2' THEN '已作废' ELSE '' END AS CONFIRM_STATUS,
+            S.CONFIRM_USER,
+            S.CONFIRM_TIME,
+            S.CREATE_TIME,
+            S.CREATE_BY,
+            S.UPDATE_TIME,
+            S.UPDATE_BY,
+            S.PRODUCT_TYPE,
+            M.CATEGORY,
+            M.PRODUCT_NAME,
+            M.STYLE,
+            M.MAIN_MATERIAL,
+            M.DESIGN,
+            M.COMPANY_BRAND,
+            M.FIT_BRAND,
+            M.MODEL,
+            M.COLOR,
+            M.SIZES,
+            M.PACKING,
+            M.VERSION,
+            M.TYPE,
+            M.STYLE_SECOND_LABEL,
+            CASE WHEN S.LAST_SHARE_DATE IS NOT NULL THEN TO_CHAR(S.LAST_SHARE_DATE,'yyyy-mm') ELSE NULL END AS lastShareDateFormat
+        FROM
+            REMOVAL_SHIPMENT_COST_MONTHLY_SHARE S
+            LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON S.MATERIAL_CODE = M.MATERIAL_CODE
+        <where>
+            <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+                AND S.START_DATE &lt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+                AND S.END_DATE &gt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+            </if>
+            <if test="param.sysShopsName != null and param.sysShopsName.size() != 0">
+                AND S.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsName" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSite != null and param.sysSite.size() != 0">
+                AND S.SYS_SITE IN
+                <foreach collection="param.sysSite" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.department != null and param.department.size() != 0">
+                AND S.DEPARTMENT IN
+                <foreach collection="param.department" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.team != null and param.team.size() != 0">
+                AND S.TEAM IN
+                <foreach collection="param.team" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productType != null and param.productType.size() != 0">
+                AND S.PRODUCT_TYPE IN
+                <foreach collection="param.productType" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.styleSecondLabel != null and param.styleSecondLabel.size() != 0">
+                AND M.STYLE_SECOND_LABEL IN
+                <foreach collection="param.styleSecondLabel" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.confirmStatus != null and param.confirmStatus.size() != 0">
+                AND S.CONFIRM_STATUS IN
+                <foreach collection="param.confirmStatus" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.orderType != null and param.orderType.size() != 0">
+                AND S.ORDER_TYPE IN
+                <foreach collection="param.orderType" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shareNum != null and param.shareNum != ''">
+                AND S.SHARE_NUM = #{param.shareNum}
+            </if>
+            <if test="param.orderId != null and param.orderId != ''">
+                AND S.ORDER_ID LIKE '%' || #{param.orderId} || '%'
+            </if>
+            <if test="param.startDateFormat != null and param.startDateFormat != ''">
+                AND S.START_DATE = TO_DATE(#{param.startDateFormat},'yyyy-mm')
+            </if>
+            <if test="param.endDateFormat != null and param.endDateFormat != ''">
+                AND S.END_DATE = TO_DATE(#{param.endDateFormat},'yyyy-mm')
+            </if>
+            <if test="param.isListingError != null and param.isListingError == '1'.toString()">
+                AND (S.DEPARTMENT IS NULL OR S.TEAM IS NULL OR S.PRODUCT_TYPE IS NULL)
+            </if>
+            <if test="param.refreshUnitPrice != null and param.refreshUnitPrice == '1'.toString()">
+                AND (S.ALL_SHARE_PURCHASE_COST = 0 OR S.ALL_SHARE_LOGISTICS_COST = 0)
+            </if>
+            <if test="param.skus != null and param.skus.size() != 0">
+                AND S.SKU IN
+                <foreach collection="param.skus" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY S.ID DESC, S.START_DATE DESC, S.END_DATE DESC, S.SYS_SHOPS_NAME, S.SYS_SITE
+    </select>
+
+    <!-- 销毁移除成本月分摊汇总统计 -->
+    <select id="totalCost"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.RemovalShipmentCostMonthlyShareParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.RemovalShipmentTotalCost">
+        SELECT
+            NVL(SUM(S.ALL_SHARE_PURCHASE_COST), 0) AS ALL_SHARE_PURCHASE_COST,
+            NVL(SUM(S.ALL_SHARE_LOGISTICS_COST), 0) AS ALL_SHARE_LOGISTICS_COST,
+            NVL(SUM(S.MONTHLY_SHARE_PURCHASE_COST), 0) AS MONTHLY_SHARE_PURCHASE_COST,
+            NVL(SUM(S.MONTHLY_SHARE_LOGISTICS_COST), 0) AS MONTHLY_SHARE_LOGISTICS_COST,
+            NVL(SUM(S.SHIPPED_QUANTITY), 0) AS SHIPPED_QUANTITY,
+            <choose>
+                <when test="param.fiscalPeriod != null and param.fiscalPeriod!=''">
+                    NVL(SUM(CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.MONTHLY_SHARE_PURCHASE_COST * (S.SHARE_NUM - 1)
+                    ELSE (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_PURCHASE_COST END), 0) AS ALREADY_SHARE_PURCHASE_COST,
+                    NVL(SUM(CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.MONTHLY_SHARE_LOGISTICS_COST * (S.SHARE_NUM - 1)
+                    ELSE (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_LOGISTICS_COST END), 0) AS ALREADY_SHARE_LOGISTICS_COST,
+                    NVL(SUM(CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_PURCHASE_COST - S.MONTHLY_SHARE_PURCHASE_COST * (S.SHARE_NUM - 1)
+                    ELSE S.ALL_SHARE_PURCHASE_COST - (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_PURCHASE_COST END), 0) AS NOT_SHARE_PURCHASE_COST,
+                    NVL(SUM(CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_LOGISTICS_COST - S.MONTHLY_SHARE_LOGISTICS_COST * (S.SHARE_NUM - 1)
+                    ELSE S.ALL_SHARE_LOGISTICS_COST - (MONTHS_BETWEEN(S.END_DATE, TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm')) + 1) * S.MONTHLY_SHARE_LOGISTICS_COST END), 0) AS NOT_SHARE_LOGISTICS_COST,
+                    NVL(SUM(CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_PURCHASE_COST - S.MONTHLY_SHARE_PURCHASE_COST * (S.SHARE_NUM - 1)
+                    ELSE S.MONTHLY_SHARE_PURCHASE_COST END), 0) AS NOW_SHARE_PURCHASE_COST,
+                    NVL(SUM(CASE WHEN S.END_DATE = TO_DATE(#{param.fiscalPeriod} , 'yyyy-mm') THEN S.ALL_SHARE_LOGISTICS_COST - S.MONTHLY_SHARE_LOGISTICS_COST * (S.SHARE_NUM - 1)
+                    ELSE S.MONTHLY_SHARE_LOGISTICS_COST END), 0) AS NOW_SHARE_LOGISTICS_COST
+                </when>
+                <otherwise>
+                    0 AS ALREADY_SHARE_PURCHASE_COST,
+                    0 AS ALREADY_SHARE_LOGISTICS_COST,
+                    0 AS NOT_SHARE_PURCHASE_COST,
+                    0 AS NOT_SHARE_LOGISTICS_COST,
+                    0 AS NOW_SHARE_PURCHASE_COST,
+                    0 AS NOW_SHARE_LOGISTICS_COST
+                </otherwise>
+            </choose>
+        FROM
+        REMOVAL_SHIPMENT_COST_MONTHLY_SHARE S
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON S.MATERIAL_CODE = M.MATERIAL_CODE
+        <where>
+            <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+                AND S.START_DATE &lt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+                AND S.END_DATE &gt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+            </if>
+            <if test="param.sysShopsName != null and param.sysShopsName.size() != 0">
+                AND S.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsName" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSite != null and param.sysSite.size() != 0">
+                AND S.SYS_SITE IN
+                <foreach collection="param.sysSite" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.department != null and param.department.size() != 0">
+                AND S.DEPARTMENT IN
+                <foreach collection="param.department" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.team != null and param.team.size() != 0">
+                AND S.TEAM IN
+                <foreach collection="param.team" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productType != null and param.productType.size() != 0">
+                AND S.PRODUCT_TYPE IN
+                <foreach collection="param.productType" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.styleSecondLabel != null and param.styleSecondLabel.size() != 0">
+                AND M.STYLE_SECOND_LABEL IN
+                <foreach collection="param.styleSecondLabel" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.confirmStatus != null and param.confirmStatus.size() != 0">
+                AND S.CONFIRM_STATUS IN
+                <foreach collection="param.confirmStatus" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.orderType != null and param.orderType.size() != 0">
+                AND S.ORDER_TYPE IN
+                <foreach collection="param.orderType" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shareNum != null and param.shareNum != ''">
+                AND S.SHARE_NUM = #{param.shareNum}
+            </if>
+            <if test="param.orderId != null and param.orderId != ''">
+                AND S.ORDER_ID LIKE '%' || #{param.orderId} || '%'
+            </if>
+            <if test="param.startDateFormat != null and param.startDateFormat != ''">
+                AND S.START_DATE = to_date(#{param.startDateFormat},'yyyy-mm')
+            </if>
+            <if test="param.endDateFormat != null and param.endDateFormat != ''">
+                AND S.END_DATE = to_date(#{param.endDateFormat},'yyyy-mm')
+            </if>
+            <if test="param.isListingError != null and param.isListingError == '1'.toString()">
+                AND (S.DEPARTMENT IS NULL OR S.TEAM IS NULL OR S.PRODUCT_TYPE IS NULL)
+            </if>
+            <if test="param.refreshUnitPrice != null and param.refreshUnitPrice == '1'.toString()">
+                AND (S.ALL_SHARE_PURCHASE_COST = 0 OR S.ALL_SHARE_LOGISTICS_COST = 0)
+            </if>
+            <if test="param.sku != null and param.sku != ''">
+                AND S.SKU = #{param.sku}
+            </if>
+        </where>
+    </select>
+
+    <!-- 销毁移除批量确认 -->
+    <update id="batchConfirm" parameterType="java.util.List">
+        UPDATE REMOVAL_SHIPMENT_COST_MONTHLY_SHARE
+        SET
+            CONFIRM_STATUS = '1',
+            CONFIRM_USER = #{userName},
+            CONFIRM_TIME = SYSDATE
+        WHERE
+            CONFIRM_STATUS = '0'
+            AND DEPARTMENT IS NOT NULL
+            AND TEAM IS NOT NULL
+            AND PRODUCT_TYPE IS NOT NULL
+            AND ALL_SHARE_PURCHASE_COST != 0
+            AND ALL_SHARE_LOGISTICS_COST != 0
+            AND SHARE_NUM IS NOT NULL
+            AND ID IN
+            <foreach collection="param" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+    </update>
+
+    <!-- 销毁移除批量销毁 -->
+    <update id="batchDestroy" parameterType="java.util.List">
+        UPDATE REMOVAL_SHIPMENT_COST_MONTHLY_SHARE
+        SET
+        CONFIRM_STATUS = '2',
+        UPDATE_BY = #{userName},
+        UPDATE_TIME = SYSDATE
+        WHERE
+        CONFIRM_STATUS = '0'
+        AND ID IN
+        <foreach collection="param" item="code" index="index" separator="," open="(" close=")">
+            #{code}
+        </foreach>
+    </update>
+
+    <!-- 生成站外费用分摊汇总销毁成本 -->
+    <update id="generateRemovalShipment" parameterType = "java.lang.String">
+        MERGE INTO (SELECT * FROM RP_OUT_STATION_ALLOCATION WHERE CONFIRM_STATUS = 0) B
+        USING (
+            SELECT
+                #{fiscalPeriod} AS FISCAL_PERIOD,
+                R.SYS_SHOPS_NAME,
+                R.SYS_SITE,
+                R.SKU,
+                R.DEPARTMENT,
+                R.TEAM,
+                R.PRODUCT_TYPE,
+                R.MATERIAL_CODE,
+                R.SALES_BRAND,
+                -- 最后一期月分摊 = 总分摊金额 - 累计分摊金额
+                SUM(CASE WHEN TO_CHAR(R.END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN R.ALL_SHARE_PURCHASE_COST - R.ALREADY_SHARE_PURCHASE_COST ELSE R.MONTHLY_SHARE_PURCHASE_COST END) AS MONTHLY_SHARE_PURCHASE_COST,
+                SUM(CASE WHEN TO_CHAR(R.END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN R.ALL_SHARE_LOGISTICS_COST - R.ALREADY_SHARE_LOGISTICS_COST ELSE R.MONTHLY_SHARE_LOGISTICS_COST END) AS MONTHLY_SHARE_LOGISTICS_COST
+            FROM REMOVAL_SHIPMENT_COST_MONTHLY_SHARE R
+            WHERE
+                R.CONFIRM_STATUS = '1'
+                AND R.START_DATE &lt;= TO_DATE(#{fiscalPeriod}, 'yyyy-mm')
+                AND R.END_DATE &gt;= TO_DATE(#{fiscalPeriod}, 'yyyy-mm')
+                AND TO_DATE(#{fiscalPeriod}, 'yyyy-mm') > NVL(R.LAST_SHARE_DATE, TO_DATE('2020-01', 'yyyy-mm'))
+                AND (R.LAST_SHARE_DATE IS NULL OR R.LAST_SHARE_DATE &lt; R.END_DATE)
+            GROUP BY R.SYS_SHOPS_NAME, R.SYS_SITE, R.SKU, R.DEPARTMENT, R.TEAM, R.PRODUCT_TYPE, R.MATERIAL_CODE, R.SALES_BRAND
+        ) C ON (
+            #{fiscalPeriod} = B.FISCAL_PERIOD
+            AND C.SYS_SHOPS_NAME = B.SHOP_NAME
+            AND C.SYS_SITE = B.SITE
+            AND C.SKU = B.SKU
+            AND C.DEPARTMENT = B.DEPARTMENT
+            AND C.TEAM = B.TEAM
+            AND C.PRODUCT_TYPE = B.PRODUCT_TYPE
+            AND C.MATERIAL_CODE = B.MATERIAL_CODE
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+            B.UPDATE_USER = #{userName},
+            B.UPDATE_TIME = SYSDATE,
+            B.SALES_BRAND = C.SALES_BRAND,
+            B.DISPOSE_PURCHASE_FEE = B.DISPOSE_PURCHASE_FEE + C.MONTHLY_SHARE_PURCHASE_COST,
+            B.DISPOSE_LOGISTICS_FEE = B.DISPOSE_LOGISTICS_FEE + C.MONTHLY_SHARE_LOGISTICS_COST
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                B.FISCAL_PERIOD,
+                B.SHOP_NAME,
+                B.SITE,
+                B.SKU,
+                B.DEPARTMENT,
+                B.TEAM,
+                B.PRODUCT_TYPE,
+                B.MATERIAL_CODE,
+                B.SALES_BRAND,
+                B.DISPOSE_PURCHASE_FEE,
+                B.DISPOSE_LOGISTICS_FEE,
+                B.CREATE_BY,
+                B.CREATE_AT,
+                B.DATA_SOURCE
+            )
+            VALUES(
+                C.FISCAL_PERIOD,
+                C.SYS_SHOPS_NAME,
+                C.SYS_SITE,
+                C.SKU,
+                C.DEPARTMENT,
+                C.TEAM,
+                C.PRODUCT_TYPE,
+                C.MATERIAL_CODE,
+                C.SALES_BRAND,
+                C.MONTHLY_SHARE_PURCHASE_COST,
+                C.MONTHLY_SHARE_LOGISTICS_COST,
+                #{userName},
+                SYSDATE,
+                0
+            )
+    </update>
+
+    <!-- 执行更新销毁移除成本月份摊 -->
+    <update id="batchUpdateRemovalShipment" parameterType = "java.lang.String">
+        UPDATE REMOVAL_SHIPMENT_COST_MONTHLY_SHARE
+        SET LAST_SHARE_DATE = TO_DATE(#{fiscalPeriod}, 'yyyy-mm'),
+            -- 采购成本累计分摊 = 上期累计分摊 + 本期分摊
+            ALREADY_SHARE_PURCHASE_COST =
+            CASE WHEN TO_CHAR(END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN ALL_SHARE_PURCHASE_COST
+            ELSE ALREADY_SHARE_PURCHASE_COST + NOW_SHARE_PURCHASE_COST END,
+            -- 头程物流成本累计分摊 = 上期累计分摊 + 本期分摊
+            ALREADY_SHARE_LOGISTICS_COST =
+            CASE WHEN TO_CHAR(END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN ALL_SHARE_LOGISTICS_COST
+            ELSE ALREADY_SHARE_LOGISTICS_COST + NOW_SHARE_LOGISTICS_COST END,
+            -- 采购成本剩余分摊 = 总分摊 - 上期累计分摊 - 本期分摊
+            NOT_SHARE_PURCHASE_COST =
+            CASE WHEN TO_CHAR(END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN 0
+            ELSE ALL_SHARE_PURCHASE_COST - ALREADY_SHARE_PURCHASE_COST - NOW_SHARE_PURCHASE_COST END,
+            -- 头程物流成本剩余分摊 = 总分摊 - 上期累计分摊 - 本期分摊
+            NOT_SHARE_LOGISTICS_COST =
+            CASE WHEN TO_CHAR(END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN 0
+            ELSE ALL_SHARE_LOGISTICS_COST - ALREADY_SHARE_LOGISTICS_COST - NOW_SHARE_LOGISTICS_COST END,
+            -- 采购成本本期分摊 = 月分摊 （最后一期分摊完成更新为0，倒数1期分摊为：总分摊 - 累计分摊）
+            NOW_SHARE_PURCHASE_COST =
+            CASE WHEN TO_CHAR(END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN 0
+            WHEN TO_CHAR(ADD_MONTHS(END_DATE, -1), 'yyyy-mm') = #{fiscalPeriod} AND ADD_MONTHS(END_DATE, -1) >= START_DATE THEN ALL_SHARE_PURCHASE_COST - ALREADY_SHARE_PURCHASE_COST
+            ELSE MONTHLY_SHARE_PURCHASE_COST END,
+            -- 头程物流成本本期分摊 = 月分摊 （最后一期分摊完成更新为0，倒数1期分摊为：总分摊 - 累计分摊）
+            NOW_SHARE_LOGISTICS_COST =
+            CASE WHEN TO_CHAR(END_DATE, 'yyyy-mm') = #{fiscalPeriod} THEN 0
+            WHEN TO_CHAR(ADD_MONTHS(END_DATE, -1), 'yyyy-mm') = #{fiscalPeriod} AND ADD_MONTHS(END_DATE, -1) >= START_DATE THEN ALL_SHARE_LOGISTICS_COST - ALREADY_SHARE_LOGISTICS_COST
+            ELSE MONTHLY_SHARE_LOGISTICS_COST END,
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{userName}
+        WHERE
+            CONFIRM_STATUS = '1'
+            AND START_DATE &lt;= TO_DATE(#{fiscalPeriod}, 'yyyy-mm')
+            AND END_DATE &gt;= TO_DATE(#{fiscalPeriod}, 'yyyy-mm')
+            AND TO_DATE(#{fiscalPeriod}, 'yyyy-mm') > NVL(LAST_SHARE_DATE, TO_DATE('2020-01', 'yyyy-mm'))
+            AND (LAST_SHARE_DATE IS NULL OR LAST_SHARE_DATE &lt; END_DATE)
+    </update>
+
+    <!-- 销毁移除成本月分摊刷Listing -->
+    <select id="refreshListing" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.RemovalShipmentCostMonthlyShareParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.RemovalShipmentCostMonthlyShare">
+        SELECT
+            S.ID,
+            #{param.operator} AS updateBy,
+            SYSDATE AS updateTime,
+            B.MATERIAL_CODE AS materialCode,
+            B.SALES_BRAND AS salesBrand,
+            B.DEPARTMENT,
+            B.TEAM,
+            M.PRODUCT_TYPE AS productType
+        FROM REMOVAL_SHIPMENT_COST_MONTHLY_SHARE S
+        LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY B ON S.SYS_SHOPS_NAME = B.SYS_SHOPS_NAME AND S.SYS_SITE = B.SYS_SITE AND S.SKU = B.SKU
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON B.MATERIAL_CODE = M.MATERIAL_CODE
+        WHERE
+            S.CONFIRM_STATUS = '0'
+            AND (S.DEPARTMENT IS NULL OR S.TEAM IS NULL OR S.PRODUCT_TYPE IS NULL)
+            <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+                AND S.START_DATE &lt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+                AND S.END_DATE &gt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+            </if>
+            <if test="param.sysShopsName != null and param.sysShopsName.size() != 0">
+                AND S.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsName" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSite != null and param.sysSite.size() != 0">
+                AND S.SYS_SITE IN
+                <foreach collection="param.sysSite" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.department != null and param.department.size() != 0">
+                AND S.DEPARTMENT IN
+                <foreach collection="param.department" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.team != null and param.team.size() != 0">
+                AND S.TEAM IN
+                <foreach collection="param.team" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productType != null and param.productType.size() != 0">
+                AND S.PRODUCT_TYPE IN
+                <foreach collection="param.productType" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.styleSecondLabel != null and param.styleSecondLabel.size() != 0">
+                AND M.STYLE_SECOND_LABEL IN
+                <foreach collection="param.styleSecondLabel" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.confirmStatus != null and param.confirmStatus.size() != 0">
+                AND S.CONFIRM_STATUS IN
+                <foreach collection="param.confirmStatus" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.orderType != null and param.orderType.size() != 0">
+                AND S.ORDER_TYPE IN
+                <foreach collection="param.orderType" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shareNum != null and param.shareNum != ''">
+                AND S.SHARE_NUM = #{param.shareNum}
+            </if>
+            <if test="param.orderId != null and param.orderId != ''">
+                AND S.ORDER_ID LIKE '%' || #{param.orderId} || '%'
+            </if>
+            <if test="param.startDateFormat != null and param.startDateFormat != ''">
+                AND S.START_DATE = TO_DATE(#{param.startDateFormat},'yyyy-mm')
+            </if>
+            <if test="param.endDateFormat != null and param.endDateFormat != ''">
+                AND S.END_DATE = TO_DATE(#{param.endDateFormat},'yyyy-mm')
+            </if>
+            <if test="param.isListingError != null and param.isListingError == '1'.toString()">
+                AND (S.DEPARTMENT IS NULL OR S.TEAM IS NULL OR S.PRODUCT_TYPE IS NULL)
+            </if>
+    </select>
+
+    <!-- 销毁移除成本月分摊刷单位成本 -->
+    <select id="refreshUnitPrice" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.RemovalShipmentCostMonthlyShareParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.RemovalShipmentCostMonthlyShare">
+        SELECT
+            S.ID,
+            #{param.operator} AS updateBy,
+            SYSDATE AS updateTime,
+            P.PURCHASE_UNIT_PRICE,
+            P.LOGISTICS_UNIT_PRICE,
+            NVL(S.SHIPPED_QUANTITY * P.PURCHASE_UNIT_PRICE * RE.DIRECT_RATE, 0) AS allSharePurchaseCost,
+            NVL(S.SHIPPED_QUANTITY * P.LOGISTICS_UNIT_PRICE * RE.DIRECT_RATE, 0) AS allShareLogisticsCost,
+            NVL(S.SHIPPED_QUANTITY * P.PURCHASE_UNIT_PRICE * RE.DIRECT_RATE, 0) AS notSharePurchaseCost,
+            NVL(S.SHIPPED_QUANTITY * P.LOGISTICS_UNIT_PRICE * RE.DIRECT_RATE, 0) AS notShareLogisticsCost,
+            CASE WHEN S.SHARE_NUM IS NOT NULL THEN NVL(S.SHIPPED_QUANTITY * P.PURCHASE_UNIT_PRICE * RE.DIRECT_RATE, 0) / S.SHARE_NUM ELSE NULL END AS MONTHLY_SHARE_PURCHASE_COST,
+            CASE WHEN S.SHARE_NUM IS NOT NULL THEN NVL(S.SHIPPED_QUANTITY * P.LOGISTICS_UNIT_PRICE * RE.DIRECT_RATE, 0) / S.SHARE_NUM ELSE NULL END AS MONTHLY_SHARE_LOGISTICS_COST
+        FROM REMOVAL_SHIPMENT_COST_MONTHLY_SHARE S
+        LEFT JOIN RP_NEW_AVERAGE_PRICE P ON S.SYS_SHOPS_NAME = P.SHOP_NAME AND S.SYS_SITE = P.SITE AND S.MATERIAL_CODE = P.MATERIAL_CODE AND TO_CHAR(S.START_DATE, 'yyyy-mm') = P.FISCAL_PERIOD AND P.CONFIRM_STATUS = 1
+        LEFT JOIN RP_SPOT_EXCHANGE_RATE RE ON S.START_DATE &gt;= RE.EFFECT_DATE AND S.START_DATE &lt;= RE.INEFFECTIVE_DATE AND RE.ORIGINAL_CURRENCY = 'CNY' AND RE.TARGET_CURRENCY = 'USD' AND RE.DATA_STATUS = '已审核' AND RE.FORBIDDEN_STATUS = '否'
+        WHERE
+        S.CONFIRM_STATUS = '0'
+        AND (S.ALL_SHARE_PURCHASE_COST = 0 OR S.ALL_SHARE_LOGISTICS_COST = 0)
+        <if test="param.fiscalPeriod != null and param.fiscalPeriod != ''">
+            AND S.START_DATE &lt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+            AND S.END_DATE &gt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+        </if>
+        <if test="param.sysShopsName != null and param.sysShopsName.size() != 0">
+            AND S.SYS_SHOPS_NAME IN
+            <foreach collection="param.sysShopsName" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysSite != null and param.sysSite.size() != 0">
+            AND S.SYS_SITE IN
+            <foreach collection="param.sysSite" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.department != null and param.department.size() != 0">
+            AND S.DEPARTMENT IN
+            <foreach collection="param.department" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.team != null and param.team.size() != 0">
+            AND S.TEAM IN
+            <foreach collection="param.team" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.productType != null and param.productType.size() != 0">
+            AND S.PRODUCT_TYPE IN
+            <foreach collection="param.productType" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.styleSecondLabel != null and param.styleSecondLabel.size() != 0">
+            AND M.STYLE_SECOND_LABEL IN
+            <foreach collection="param.styleSecondLabel" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.confirmStatus != null and param.confirmStatus.size() != 0">
+            AND S.CONFIRM_STATUS IN
+            <foreach collection="param.confirmStatus" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.orderType != null and param.orderType.size() != 0">
+            AND S.ORDER_TYPE IN
+            <foreach collection="param.orderType" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.shareNum != null and param.shareNum != ''">
+            AND S.SHARE_NUM = #{param.shareNum}
+        </if>
+        <if test="param.orderId != null and param.orderId != ''">
+            AND S.ORDER_ID LIKE '%' || #{param.orderId} || '%'
+        </if>
+        <if test="param.startDateFormat != null and param.startDateFormat != ''">
+            AND S.START_DATE = TO_DATE(#{param.startDateFormat},'yyyy-mm')
+        </if>
+        <if test="param.endDateFormat != null and param.endDateFormat != ''">
+            AND S.END_DATE = TO_DATE(#{param.endDateFormat},'yyyy-mm')
+        </if>
+        <if test="param.isListingError != null and param.isListingError == '1'.toString()">
+            AND (S.DEPARTMENT IS NULL OR S.TEAM IS NULL OR S.PRODUCT_TYPE IS NULL)
+        </if>
+    </select>
+
+    <!-- 是否存在相同维度销毁移除月分摊未确认的数据 -->
+    <select id="hasNotConfirm"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.RemovalShipmentCostMonthlyShareParam"
+            resultType="java.lang.String">
+        SELECT
+            S.ORDER_ID
+        FROM
+            REMOVAL_SHIPMENT_COST_MONTHLY_SHARE S
+        WHERE
+            S.CONFIRM_STATUS = '0'
+            AND S.START_DATE &lt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+            AND S.END_DATE &gt;= to_date(#{param.fiscalPeriod},'yyyy-mm')
+            AND TO_DATE(#{param.fiscalPeriod}, 'yyyy-mm') > NVL(S.LAST_SHARE_DATE, TO_DATE('2020-01', 'yyyy-mm'))
+            AND (S.LAST_SHARE_DATE IS NULL OR S.LAST_SHARE_DATE &lt; S.END_DATE)
+            AND S.SYS_SHOPS_NAME IN
+            <foreach collection="param.sysShopsName" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND S.MATERIAL_CODE = #{param.materialCode}
+            </if>
+            <if test="param.sku != null and param.sku != ''">
+                AND S.SKU = #{param.sku}
+            </if>
+            <if test="param.sysSite != null and param.sysSite.size() != 0">
+                AND S.SYS_SITE IN
+                <foreach collection="param.sysSite" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.department != null and param.department.size() != 0">
+                AND S.DEPARTMENT IN
+                <foreach collection="param.department" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.team != null and param.team.size() != 0">
+                AND S.TEAM IN
+                <foreach collection="param.team" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productType != null and param.productType.size() != 0">
+                AND S.PRODUCT_TYPE IN
+                <foreach collection="param.productType" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+    </select>
+</mapper>

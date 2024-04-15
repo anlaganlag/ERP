@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.OverseasWarehouseAgeMapper">
+
+    <!-- 海外仓库龄报表分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseAgeParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseAgeResult">
+        SELECT
+            O.ID,
+            O.PLATFORM,
+            O.SYS_SHOPS_NAME,
+            O.SYS_SITE,
+            O.WAREHOUSE_NAME,
+            O.FN_SKU,
+            O.SKU,
+            O.MATERIAL_CODE,
+            B.PRODUCT_TYPE,
+            B.PRODUCT_NAME,
+            O.SIGN_QUANTITY,
+            O.INVENTORY_QUANTITY,
+            O.SIGN_DATE,
+            O.CREATE_TIME,
+            O.CREATE_USER,
+            O.UPDATE_TIME,
+            O.UPDATE_USER,
+            O.DATA_SOURCE,
+            O.DATA_STATUS,
+            O.REMARK,
+            G.DEPARTMENT,
+            G.TEAM,
+            CEIL(TRUNC(SYSDATE,'DD') - TRUNC(O.SIGN_DATE,'DD')) + 1 AS warehouseAge,
+            CASE WHEN M.MAT_TRANPORT_WEIGHT_ORG IS NULL THEN NULL ELSE M.MAT_TRANPORT_WEIGHT_ORG / 1000 END AS MAT_TRANPORT_WEIGHT_ORG,
+            CASE WHEN M.MAT_BOX_VOLUME_ORG IS NULL THEN NULL ELSE M.MAT_BOX_VOLUME_ORG / 1000000 END AS MAT_BOX_VOLUME_ORG,
+            CASE WHEN M.MAT_TRANPORT_WEIGHT_ORG IS NULL THEN NULL ELSE NVL(M.MAT_TRANPORT_WEIGHT_ORG, 0) * O.INVENTORY_QUANTITY / 1000 END AS totalMatTranportWeightOrg,
+            CASE WHEN M.MAT_BOX_VOLUME_ORG IS NULL THEN NULL ELSE NVL(M.MAT_BOX_VOLUME_ORG, 0) * O.INVENTORY_QUANTITY  / 1000000 END AS totalMatBoxVolumeOrg
+        FROM OVERSEAS_WAREHOUSE_AGE O
+        LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY G
+        ON (O.SYS_SHOPS_NAME = G.SYS_SHOPS_NAME AND O.SYS_SITE = G.SYS_SITE AND UPPER(O.SKU) = UPPER(G.SKU))
+        LEFT JOIN EBMS_MATERIAL M ON O.MATERIAL_CODE = M.MATERIAL_CODE
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B ON O.MATERIAL_CODE = B.MATERIAL_CODE
+        WHERE O.DATA_STATUS = '1'
+            <if test="param.sku != null and param.sku != ''">
+                AND O.SKU = #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND O.MATERIAL_CODE = #{param.materialCode}
+            </if>
+            <if test="param.platforms != null and param.platforms.size() != 0">
+                AND O.PLATFORM IN
+                <foreach collection="param.platforms" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND O.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND O.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.warehouseNames != null and param.warehouseNames.size() != 0">
+                AND O.WAREHOUSE_NAME IN
+                <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sixCode != null and param.sixCode != ''">
+                AND
+                <foreach collection="param.sixCode.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                    O.FN_SKU  LIKE '%'|| #{item}
+                </foreach>
+            </if>
+            <if test="param.signStartTime != null and param.signStartTime != ''">
+                AND O.SIGN_DATE &gt;= to_date(#{param.signStartTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.signEndTime != null and param.signEndTime != ''">
+                AND O.SIGN_DATE &lt;= to_date(#{param.signEndTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.minWarehouseAge != null and param.minWarehouseAge != '' and param.maxWarehouseAge != null and param.maxWarehouseAge != ''">
+               AND CEIL(TRUNC(SYSDATE,'DD') - TRUNC(O.SIGN_DATE,'DD')) + 1 BETWEEN #{param.minWarehouseAge} AND #{param.maxWarehouseAge}
+            </if>
+        ORDER BY O.CREATE_TIME DESC
+    </select>
+</mapper>

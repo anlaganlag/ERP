@@ -1,0 +1,1194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgCustomsClearanceMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        C.ID,C.INVOICE_NO,C.POST_COMPANY_NAME_EN,C.POST_CONTACT_INFO,C.POST_CONTACT_USER,C.POST_ADDR_EN,C.ARRIVAL_COUNTRY_CODE,C.RECEIVE_COMPANY_NAME_CN,
+        R.ADDR_CN AS RECEIVE_ADDR_CN,C.IMPORT_COMPANY_NAME_EN,C.IMPORT_ADDR_EN,C.IMPORT_TAX_NUM,C.IMPORT_CUSTOMS_NUM,
+        C.ARRIVAL_COUNTRY_NAME,C.IMPORT_INCLUDE_TAX,C.IMPORT_CONTACT_INFO,C.POST_DATE,C.COUNTRY_OF_EXPORT,C.DELIVERY_TERM,C.PAYMENT_METHORD,
+        C.TRANSPORT_COST,C.INSURE_COST,C.CURRENCY,C.DATA_TYPE,C.CREATE_TIME,C.CREATE_USER,C.UPDATE_TIME,C.UPDATE_USER,C.SHIPMENT_ID,C.PRICE_TYPE,C.CUSTOMS_COEFF
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_CLEARANCE C
+        LEFT JOIN TG_RECEIVE_COMPANY R
+        ON C.RECEIVE_COMPANY_NAME_CN = R.COMPANY_NAME_CN
+        <where>
+            <if test="param.invoiceNoList != null and param.invoiceNoList.size() != 0">
+                C.INVOICE_NO IN
+                <foreach collection="param.invoiceNoList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.postCompanyNameEnList != null and param.postCompanyNameEnList.size() != 0">
+                AND C.POST_COMPANY_NAME_EN IN
+                <foreach collection="param.postCompanyNameEnList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.receiveCompanyNameCnList != null and param.receiveCompanyNameCnList.size() != 0">
+                AND C.RECEIVE_COMPANY_NAME_CN IN
+                <foreach collection="param.receiveCompanyNameCnList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.importCompanyNameEnList != null and param.importCompanyNameEnList.size() != 0">
+                AND C.IMPORT_COMPANY_NAME_EN IN
+                <foreach collection="param.importCompanyNameEnList" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="param.postDateStart != null and param.postDateStart != ''">
+                AND C.POST_DATE &gt;= TO_DATE(#{param.postDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.postDateEnd != null and param.postDateEnd != ''">
+                AND C.POST_DATE &lt;= TO_DATE(#{param.postDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="(param.clearNameCnList != null and param.clearNameCnList.size() != 0) or (param.skuList != null and param.skuList.size() != 0) or (param.materialCodeList != null and param.materialCodeList.size() != 0)">
+                AND C.ID IN (
+                    SELECT D.PID FROM TG_CUSTOMS_CLEARANCE_DETAIL D
+                    <where>
+                        <if test="param.clearNameCnList != null and param.clearNameCnList.size() != 0">
+                            D.CLEAR_NAME_CN IN
+                            <foreach collection="param.clearNameCnList" item="item" index="index" separator="," open="(" close=")">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="param.skuList != null and param.skuList.size() != 0">
+                            AND D.SKU IN
+                            <foreach collection="param.skuList" item="item" index="index" separator="," open="(" close=")">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                            AND D.MATERIAL_CODE IN
+                            <foreach collection="param.materialCodeList" item="item" index="index" separator="," open="(" close=")">
+                                #{item}
+                            </foreach>
+                        </if>
+                    </where>
+                )
+            </if>
+        </where>
+        ORDER BY C.CREATE_TIME DESC, C.ID DESC
+    </select>
+
+    <!-- 获取EBMS出货订单明细数据 -->
+    <select id="selectLogisticsPackingDetail" parameterType="java.lang.String"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.TgCustomsClearanceDetail">
+        SELECT
+            'USD' AS currency,
+            '否' AS isDeal,
+            D1.packCode,
+            D1.packDetBoxNum AS boxNo,
+            D1.packDetBoxType AS boxType,
+            D1.packDetBoxNumUpload AS boxNoName,
+            D1.packDetBoxLength AS goodsLong,
+            D1.packDetBoxWidth AS wide,
+            D1.packDetBoxHeight AS high,
+            D1.packDetBoxWeight AS weight,
+            D1.packDetBoxWeigUnit,
+            D1.packDetBoxVolume,
+            D1.packDetBoxVoluUnit,
+            D2.SKU,
+            D2.Quantity,
+            CASE WHEN D2.mateCode IS NOT NULL THEN D2.mateCode ELSE '0' END AS materialCode,
+            D2.PackDirectCode AS packDirectCode,
+            M.matQtyUnit AS unit,
+            M.matModeSpec AS type,
+            M.matInvoiceNorm AS style,
+            M.matComBrand AS companyBrand,
+            M.matSetAttributes AS attribute,
+            M.matInvoiceProName AS invoiceProNameCn
+        FROM TbLogisticsPackingListDet1 D1
+        LEFT JOIN TbLogisticsPackingListDet2 D2 ON D1.packCode = D2.packCode AND D1.packDetBoxNum = D2.packDetBoxNum
+        LEFT JOIN TbComMateriel M ON D2.MateCode = M.matCode
+        WHERE D1.packCode = #{packCode}
+        ORDER BY D1.packDetBoxNum ASC
+    </select>
+
+    <!--获取最新的发票号-->
+    <select id="getNowQgdOrder" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT MAX(C.INVOICE_NO) AS nowOrder FROM TG_CUSTOMS_CLEARANCE C WHERE C.INVOICE_NO LIKE #{orderPre} || '%'
+    </select>
+
+    <!-- 清关发票关联清关产品合并信息，根据清关产品合并信息确定时候合并，已合并的取合并的，未合并的取未合并的；有分单号的则增加分单号维度 -->
+    <sql id="base_clearance">
+        SELECT
+            TA.*,
+            A9.AGAIN_COEFF,
+            A10.MIN_CUSTOMS_PRICE,
+            ROUND(
+                CASE WHEN TA.TOP_PRICE_TYPE IS NOT NULL AND TA.TOP_CUSTOMS_COEFF IS NOT NULL THEN TA.customsUnitPriceTemp
+                WHEN TA.customsUnitPriceTemp IS NULL THEN NULL
+                WHEN TA.customsUnitPriceTemp IS NOT NULL AND A9.AGAIN_COEFF IS NOT NULL AND A10.MIN_CUSTOMS_PRICE IS NOT NULL THEN DECODE(SIGN((TA.customsUnitPriceTemp * A9.AGAIN_COEFF) - A10.MIN_CUSTOMS_PRICE), -1, A10.MIN_CUSTOMS_PRICE, TA.customsUnitPriceTemp * A9.AGAIN_COEFF)
+                WHEN TA.customsUnitPriceTemp IS NOT NULL AND A9.AGAIN_COEFF IS NOT NULL AND A10.MIN_CUSTOMS_PRICE IS NULL THEN TA.customsUnitPriceTemp * A9.AGAIN_COEFF
+                WHEN TA.customsUnitPriceTemp IS NOT NULL AND A9.AGAIN_COEFF IS NULL AND A10.MIN_CUSTOMS_PRICE IS NOT NULL THEN DECODE(SIGN(TA.customsUnitPriceTemp - A10.MIN_CUSTOMS_PRICE), -1, A10.MIN_CUSTOMS_PRICE, TA.customsUnitPriceTemp)
+                WHEN TA.customsUnitPriceTemp IS NOT NULL AND A9.AGAIN_COEFF IS NULL AND A10.MIN_CUSTOMS_PRICE IS NULL THEN TA.customsUnitPriceTemp
+                ELSE NULL END
+            , 2) AS CUSTOMS_UNIT_PRICE
+        FROM
+        (
+            SELECT
+                TT.*,
+                ROUND(
+                    CASE WHEN TT.TOP_PRICE_TYPE IS NOT NULL AND TT.TOP_CUSTOMS_COEFF IS NOT NULL THEN DECODE(TT.TOP_PRICE_TYPE, '采购价', DECODE(TT.UNIT_PRICE, NULL, NULL, TT.UNIT_PRICE * TT.TOP_CUSTOMS_COEFF), DECODE(TT.AMAZON_SALE_PRICE, NULL, NULL, TT.AMAZON_SALE_PRICE * TT.TOP_CUSTOMS_COEFF))
+                    WHEN TT.PRICE_TYPE IS NULL THEN NULL
+                    WHEN TT.PRICE_TYPE = '采购价' THEN DECODE(TT.UNIT_PRICE, NULL, NULL, TT.UNIT_PRICE * TT.CUSTOMS_COEFF)
+                    WHEN TT.PRICE_TYPE = '销售价' THEN DECODE(TT.AMAZON_SALE_PRICE, NULL, NULL, TT.AMAZON_SALE_PRICE * TT.CUSTOMS_COEFF)
+                    ELSE NULL END
+                , 2) AS customsUnitPriceTemp
+            FROM
+            (
+                SELECT
+                    T.*,
+                    DECODE(T.amazonSalePriceTemp, NULL, DECODE(T.EDIT_STATUS, '人工编辑', T.AMAZON_SALE_PRICE_HAND, NULL), T.amazonSalePriceTemp) AS AMAZON_SALE_PRICE,
+                    A7.PRICE_TYPE AS F_PRICE_TYPE,
+                    A7.CUSTOMS_COEFF AS F_CUSTOMS_COEFF,
+                    A8.PRICE_TYPE AS S_PRICE_TYPE,
+                    A8.CUSTOMS_COEFF AS S_CUSTOMS_COEFF,
+                    DECODE(A7.PRICE_TYPE, NULL, A8.PRICE_TYPE, A7.PRICE_TYPE) AS PRICE_TYPE,
+                    DECODE(A7.CUSTOMS_COEFF, NULL, A8.CUSTOMS_COEFF, A7.CUSTOMS_COEFF) AS CUSTOMS_COEFF
+                FROM (
+                    SELECT
+                        D.ID,D.PID,D.PACK_CODE,D.BOX_NO,D.PACK_DIRECT_CODE,D.MATERIAL_CODE,D.SKU,C.ARRIVAL_COUNTRY_CODE,C.ARRIVAL_COUNTRY_NAME,C.CURRENCY,C.IMPORT_TAX_NUM,
+                        DECODE(A6.INDIRECT_RATE, NULL, AT6.INDIRECT_RATE,A6.INDIRECT_RATE) AS INDIRECT_RATE,
+                        T2.K3_PRICE,
+                        ROUND(DECODE(T2.K3_PRICE, NULL, NULL, T2.K3_PRICE * DECODE(A6.INDIRECT_RATE, NULL, AT6.INDIRECT_RATE,A6.INDIRECT_RATE)), 2) AS UNIT_PRICE,
+                        C.PRICE_TYPE AS TOP_PRICE_TYPE,C.CUSTOMS_COEFF AS TOP_CUSTOMS_COEFF,
+--                         DECODE(A5.LISTING_PRICE, NULL, A5.PRICE, A5.LISTING_PRICE) AS amazonSalePriceTemp,
+--                         DECODE(A5.ASIN, NULL, NULL, A4.AMAZON_URL || 'dp/' || A5.ASIN) AS AMAZON_SALE_LINK,
+--                         A5.SMALL_IMAGE_URL AS AMAZON_PICTURE_LINK,
+                        DECODE(A5.LISTING_PRICE, NULL, A5.STANDARD_PRICE, A5.LISTING_PRICE) AS amazonSalePriceTemp,
+                        DECODE(A5.ASIN, NULL, NULL, A4.AMAZON_URL || 'dp/' || A5.ASIN) AS AMAZON_SALE_LINK,
+                        A5.MAIN_IMAGE AS AMAZON_PICTURE_LINK,
+                        D.QUANTITY,D.UNIT,D.ATTRIBUTE,D.SPLIT_ORDER,D.BOX_NO_NAME,D.BOX_TYPE,D.WEIGHT,D.GOODS_LONG,D.WIDE,D.HIGH,D.CREATE_TIME,D.CREATE_USER,D.UPDATE_TIME,D.UPDATE_USER,D.EDIT_STATUS,
+                        D.AMAZON_SALE_PRICE AS AMAZON_SALE_PRICE_HAND,D.SPECIAL_MERGE_SIGN,D.SPECIAL_MATERIAL_CODE,D.SPECIAL_MATERIAL_ID,
+                        DECODE(T1.INVOICE_PRO_NAME_CN, NULL, T2.INVOICE_PRO_NAME_CN, T1.INVOICE_PRO_NAME_CN) AS CLEAR_NAME_CN,
+                        DECODE(T1.INVOICE_PRO_NAME_CN, NULL, T2.INVOICE_PRO_NAME_CN, T1.INVOICE_PRO_NAME_CN) AS INVOICE_PRO_NAME_CN,
+                        DECODE(T1.INVOICE_PRO_NAME_EN, NULL, T2.INVOICE_PRO_NAME_EN, T1.INVOICE_PRO_NAME_EN) AS INVOICE_PRO_NAME_EN,
+                        DECODE(T1.HSCODE, NULL, T2.HSCODE, T1.HSCODE) AS HSCODE,
+                        DECODE(DECODE(T1.IS_CHARGED, NULL, T2.IS_CHARGED, T1.IS_CHARGED), '0', '否', '1', '是', NULL) AS IS_CHARGED,
+                        DECODE(DECODE(T1.IS_MAGNET, NULL, T2.IS_MAGNET, T1.IS_MAGNET), '0', '否', '1', '是', NULL) AS IS_MAGNET,
+                        DECODE(T1.CLEAR_MATERIAL_EN, NULL, T2.CLEAR_MATERIAL_EN, T1.CLEAR_MATERIAL_EN) AS CLEAR_MATERIAL_EN,
+                        DECODE(T1.FIT_BRAND, NULL, T2.FIT_BRAND, T1.FIT_BRAND) AS FIT_BRAND,
+                        DECODE(T1.FIT_BRAND, NULL, T2.FIT_BRAND, T1.FIT_BRAND) AS TYPE,
+                        DECODE(T1.STYLE, NULL, T2.STYLE, T1.STYLE) AS STYLE,
+                        DECODE(T1.CHANGE_TAX_RATE, NULL, T2.CHANGE_TAX_RATE, T1.CHANGE_TAX_RATE) AS CHANGE_TAX_RATE,
+                        DECODE(T1.TAX_RATE, NULL, T2.TAX_RATE, T1.TAX_RATE) AS TAX_RATE,
+                        DECODE(T1.ADD_TAX_RATE, NULL, T2.ADD_TAX_RATE, T1.ADD_TAX_RATE) AS ADD_TAX_RATE,
+                        DECODE(T1.COMPANY_BRAND, NULL, T2.COMPANY_BRAND, T1.COMPANY_BRAND) AS COMPANY_BRAND,
+                        DECODE(D.SPECIAL_MERGE_SIGN, NULL, DECODE(T1.ID, NULL, D.MATERIAL_CODE, T1.MAIN_MATERIAL_CODE), DECODE(D.SPECIAL_MATERIAL_CODE, NULL, D.MATERIAL_CODE, D.SPECIAL_MATERIAL_CODE)) AS MAIN_MATERIAL_CODE,
+                        DECODE(D.SPECIAL_MERGE_SIGN, NULL, DECODE(T1.ID, NULL, '系统未合并', '系统已合并'), DECODE(D.SPECIAL_MATERIAL_CODE, NULL, '人工未合并', '人工已合并')) AS CLEAR_MERGE_STATUS,
+                        DECODE(D.SPECIAL_MERGE_SIGN, NULL, T1.ID, DECODE(D.SPECIAL_MATERIAL_CODE, NULL, NULL, D.SPECIAL_MATERIAL_ID)) AS MERGE_ID
+                    FROM TG_CUSTOMS_CLEARANCE C
+                    LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+                    LEFT JOIN
+                    (
+                        SELECT
+                            P.*,
+                            D.COUNTRY_CODE,
+                            D.HSCODE,
+                            R.CHANGE_TAX_RATE,
+                            R.TAX_RATE,
+                            R.ADD_TAX_RATE
+                        FROM TG_BASE_PRODUCT P
+                        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+                        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+                        WHERE P.DATA_TYPE = '1'
+                    ) T1 ON T1.MATERIAL_CODE LIKE '%' || D.MATERIAL_CODE || '%' AND T1.COUNTRY_CODE = C.ARRIVAL_COUNTRY_CODE AND D.SPECIAL_MERGE_SIGN IS NULL
+                    LEFT JOIN
+                    (
+                        SELECT
+                            P.*,
+                            D.COUNTRY_CODE,
+                            D.HSCODE,
+                            R.CHANGE_TAX_RATE,
+                            R.TAX_RATE,
+                            R.ADD_TAX_RATE
+                        FROM TG_BASE_PRODUCT P
+                        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+                        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+                        WHERE P.DATA_TYPE = '0'
+                    ) T2 ON T2.MATERIAL_CODE = DECODE(D.SPECIAL_MERGE_SIGN, NULL, D.MATERIAL_CODE, DECODE(D.SPECIAL_MATERIAL_CODE, NULL, D.MATERIAL_CODE, D.SPECIAL_MATERIAL_CODE)) AND T2.COUNTRY_CODE = C.ARRIVAL_COUNTRY_CODE
+                    LEFT JOIN TG_COUNTRY_INFO A4 ON C.ARRIVAL_COUNTRY_CODE = A4.COUNTRY_CODE
+--                     LEFT JOIN TG_LX_LISTING_INFO A5 ON A4.SITE = A5.SITE AND D.SKU = A5.SELLER_SKU AND A5.IS_DELETE = '0'
+                    LEFT JOIN TG_SAIHU_PRODUCT A5 ON A4.SITE = A5.SITE AND D.SKU = A5.SKU AND A5.DXM_PUBLISH_STATE IS NULL
+                    LEFT JOIN FINANCE.CW_FIXED_EXCHANGE_RATE A6 ON A6.TARGET_CURRENCY = 'CNY' AND A6.ORIGINAL_CURRENCY = C.CURRENCY AND A6.INEFFECTIVE_DATE >= TO_DATE(TO_CHAR(C.POST_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD') AND A6.EFFECT_DATE &lt;= TO_DATE(TO_CHAR(C.POST_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+                    LEFT JOIN FINANCE.CW_FIXED_EXCHANGE_RATE AT6 ON AT6.TARGET_CURRENCY = 'CNY' AND AT6.ORIGINAL_CURRENCY = C.CURRENCY AND AT6.INEFFECTIVE_DATE >= TO_DATE(TO_CHAR(C.POST_DATE - 15, 'YYYY-MM-DD'), 'YYYY-MM-DD') AND AT6.EFFECT_DATE &lt;= TO_DATE(TO_CHAR(C.POST_DATE -15, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+                    WHERE D.PID = #{param.id}
+                        <if test="param.splitOrder != null and param.splitOrder != ''">
+                            AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+                        </if>
+                    ORDER BY D.PACK_CODE ASC, TO_NUMBER(D.BOX_NO) ASC, D.ID ASC
+                ) T
+                LEFT JOIN TG_CUSTOMS_PRICE_COEFF_RULE A7
+                ON (
+                    A7.COUNTRY_CODE = T.ARRIVAL_COUNTRY_CODE
+                    AND A7.HSCODE = T.HSCODE
+                    AND (
+                        CASE WHEN A7.MIN_CUSTOMS_RATE IS NOT NULL AND A7.MAX_CUSTOMS_RATE IS NOT NULL AND A7.MIN_EQ = '0' AND A7.MAX_EQ = '0' AND A7.MIN_CUSTOMS_RATE &lt; T.TAX_RATE AND A7.MAX_CUSTOMS_RATE > T.TAX_RATE THEN '1'
+                        WHEN A7.MIN_CUSTOMS_RATE IS NOT NULL AND A7.MAX_CUSTOMS_RATE IS NOT NULL AND A7.MIN_EQ = '1' AND A7.MAX_EQ = '0' AND A7.MIN_CUSTOMS_RATE &lt;= T.TAX_RATE AND A7.MAX_CUSTOMS_RATE > T.TAX_RATE THEN '1'
+                        WHEN A7.MIN_CUSTOMS_RATE IS NOT NULL AND A7.MAX_CUSTOMS_RATE IS NOT NULL AND A7.MIN_EQ = '0' AND A7.MAX_EQ = '1' AND A7.MIN_CUSTOMS_RATE &lt; T.TAX_RATE AND A7.MAX_CUSTOMS_RATE >= T.TAX_RATE THEN '1'
+                        WHEN A7.MIN_CUSTOMS_RATE IS NOT NULL AND A7.MAX_CUSTOMS_RATE IS NOT NULL AND A7.MIN_EQ = '1' AND A7.MAX_EQ = '1' AND A7.MIN_CUSTOMS_RATE &lt;= T.TAX_RATE AND A7.MAX_CUSTOMS_RATE >= T.TAX_RATE THEN '1'
+                        WHEN A7.MIN_CUSTOMS_RATE IS NOT NULL AND A7.MAX_CUSTOMS_RATE IS NULL AND A7.MIN_EQ = '0' AND A7.MAX_EQ IS NULL AND A7.MIN_CUSTOMS_RATE &lt; T.TAX_RATE THEN '1'
+                        WHEN A7.MIN_CUSTOMS_RATE IS NOT NULL AND A7.MAX_CUSTOMS_RATE IS NULL AND A7.MIN_EQ = '1' AND A7.MAX_EQ IS NULL AND A7.MIN_CUSTOMS_RATE &lt;= T.TAX_RATE THEN '1'
+                        WHEN A7.MIN_CUSTOMS_RATE IS NULL AND A7.MAX_CUSTOMS_RATE IS NOT NULL AND A7.MIN_EQ IS NULL AND A7.MAX_EQ = '0' AND A7.MAX_CUSTOMS_RATE > T.TAX_RATE THEN '1'
+                        WHEN A7.MIN_CUSTOMS_RATE IS NULL AND A7.MAX_CUSTOMS_RATE IS NOT NULL AND A7.MIN_EQ IS NULL AND A7.MAX_EQ = '1' AND A7.MAX_CUSTOMS_RATE >= T.TAX_RATE THEN '1'
+                        ELSE '0'
+                        END
+                    ) = '1'
+                )
+                LEFT JOIN TG_CUSTOMS_PRICE_COEFF_RULE A8
+                ON (
+                    A8.COUNTRY_CODE = T.ARRIVAL_COUNTRY_CODE
+                    AND A8.HSCODE IS NULL
+                    AND (
+                        CASE WHEN A8.MIN_CUSTOMS_RATE IS NOT NULL AND A8.MAX_CUSTOMS_RATE IS NOT NULL AND A8.MIN_EQ = '0' AND A8.MAX_EQ = '0' AND A8.MIN_CUSTOMS_RATE &lt; T.TAX_RATE AND A8.MAX_CUSTOMS_RATE > T.TAX_RATE THEN '1'
+                        WHEN A8.MIN_CUSTOMS_RATE IS NOT NULL AND A8.MAX_CUSTOMS_RATE IS NOT NULL AND A8.MIN_EQ = '1' AND A8.MAX_EQ = '0' AND A8.MIN_CUSTOMS_RATE &lt;= T.TAX_RATE AND A8.MAX_CUSTOMS_RATE > T.TAX_RATE THEN '1'
+                        WHEN A8.MIN_CUSTOMS_RATE IS NOT NULL AND A8.MAX_CUSTOMS_RATE IS NOT NULL AND A8.MIN_EQ = '0' AND A8.MAX_EQ = '1' AND A8.MIN_CUSTOMS_RATE &lt; T.TAX_RATE AND A8.MAX_CUSTOMS_RATE >= T.TAX_RATE THEN '1'
+                        WHEN A8.MIN_CUSTOMS_RATE IS NOT NULL AND A8.MAX_CUSTOMS_RATE IS NOT NULL AND A8.MIN_EQ = '1' AND A8.MAX_EQ = '1' AND A8.MIN_CUSTOMS_RATE &lt;= T.TAX_RATE AND A8.MAX_CUSTOMS_RATE >= T.TAX_RATE THEN '1'
+                        WHEN A8.MIN_CUSTOMS_RATE IS NOT NULL AND A8.MAX_CUSTOMS_RATE IS NULL AND A8.MIN_EQ = '0' AND A8.MAX_EQ IS NULL AND A8.MIN_CUSTOMS_RATE &lt; T.TAX_RATE THEN '1'
+                        WHEN A8.MIN_CUSTOMS_RATE IS NOT NULL AND A8.MAX_CUSTOMS_RATE IS NULL AND A8.MIN_EQ = '1' AND A8.MAX_EQ IS NULL AND A8.MIN_CUSTOMS_RATE &lt;= T.TAX_RATE THEN '1'
+                        WHEN A8.MIN_CUSTOMS_RATE IS NULL AND A8.MAX_CUSTOMS_RATE IS NOT NULL AND A8.MIN_EQ IS NULL AND A8.MAX_EQ = '0' AND A8.MAX_CUSTOMS_RATE > T.TAX_RATE THEN '1'
+                        WHEN A8.MIN_CUSTOMS_RATE IS NULL AND A8.MAX_CUSTOMS_RATE IS NOT NULL AND A8.MIN_EQ IS NULL AND A8.MAX_EQ = '1' AND A8.MAX_CUSTOMS_RATE >= T.TAX_RATE THEN '1'
+                        ELSE '0'
+                        END
+                    ) = '1'
+                )
+            ) TT
+        ) TA LEFT JOIN TG_CUSTOMS_AGAIN_COEFF_RULE A9
+        ON (
+            A9.COUNTRY_CODE = TA.ARRIVAL_COUNTRY_CODE
+            AND A9.CUSTOMS_CURRENCY = TA.CURRENCY
+            AND (
+                CASE WHEN A9.MIN_CUSTOMS_PRICE IS NOT NULL AND A9.MAX_CUSTOMS_PRICE IS NOT NULL AND A9.MIN_EQ = '0' AND A9.MAX_EQ = '0' AND A9.MIN_CUSTOMS_PRICE &lt; TA.customsUnitPriceTemp AND A9.MAX_CUSTOMS_PRICE > TA.customsUnitPriceTemp THEN '1'
+                WHEN A9.MIN_CUSTOMS_PRICE IS NOT NULL AND A9.MAX_CUSTOMS_PRICE IS NOT NULL AND A9.MIN_EQ = '1' AND A9.MAX_EQ = '0' AND A9.MIN_CUSTOMS_PRICE &lt;= TA.customsUnitPriceTemp AND A9.MAX_CUSTOMS_PRICE > TA.customsUnitPriceTemp THEN '1'
+                WHEN A9.MIN_CUSTOMS_PRICE IS NOT NULL AND A9.MAX_CUSTOMS_PRICE IS NOT NULL AND A9.MIN_EQ = '0' AND A9.MAX_EQ = '1' AND A9.MIN_CUSTOMS_PRICE &lt; TA.customsUnitPriceTemp AND A9.MAX_CUSTOMS_PRICE >= TA.customsUnitPriceTemp THEN '1'
+                WHEN A9.MIN_CUSTOMS_PRICE IS NOT NULL AND A9.MAX_CUSTOMS_PRICE IS NOT NULL AND A9.MIN_EQ = '1' AND A9.MAX_EQ = '1' AND A9.MIN_CUSTOMS_PRICE &lt;= TA.customsUnitPriceTemp AND A9.MAX_CUSTOMS_PRICE >= TA.customsUnitPriceTemp THEN '1'
+                WHEN A9.MIN_CUSTOMS_PRICE IS NOT NULL AND A9.MAX_CUSTOMS_PRICE IS NULL AND A9.MIN_EQ = '0' AND A9.MAX_EQ IS NULL AND A9.MIN_CUSTOMS_PRICE &lt; TA.customsUnitPriceTemp THEN '1'
+                WHEN A9.MIN_CUSTOMS_PRICE IS NOT NULL AND A9.MAX_CUSTOMS_PRICE IS NULL AND A9.MIN_EQ = '1' AND A9.MAX_EQ IS NULL AND A9.MIN_CUSTOMS_PRICE &lt;= TA.customsUnitPriceTemp THEN '1'
+                WHEN A9.MIN_CUSTOMS_PRICE IS NULL AND A9.MAX_CUSTOMS_PRICE IS NOT NULL AND A9.MIN_EQ IS NULL AND A9.MAX_EQ = '0' AND A9.MAX_CUSTOMS_PRICE > TA.customsUnitPriceTemp THEN '1'
+                WHEN A9.MIN_CUSTOMS_PRICE IS NULL AND A9.MAX_CUSTOMS_PRICE IS NOT NULL AND A9.MIN_EQ IS NULL AND A9.MAX_EQ = '1' AND A9.MAX_CUSTOMS_PRICE >= TA.customsUnitPriceTemp THEN '1'
+                ELSE '0'
+                END
+            ) = '1'
+        ) LEFT JOIN TG_CUSTOMS_PRICE_MIN_RULE A10
+        ON(
+            A10.COUNTRY_CODE = TA.ARRIVAL_COUNTRY_CODE
+            AND A10.CUSTOMS_CURRENCY = TA.CURRENCY
+        )
+    </sql>
+
+    <!--获取清关发票sheet0箱子列表-->
+    <select id="generateExportBox0"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport0ListResult">
+        SELECT
+            D.PACK_CODE,
+            D.BOX_NO,
+            D.WEIGHT,
+            D.GOODS_LONG,
+            D.WIDE,
+            D.HIGH,
+            ROUND((D.GOODS_LONG * D.WIDE * D.HIGH) / 1000000, 2) AS totalVolume
+        FROM TG_CUSTOMS_CLEARANCE C
+        LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+        WHERE C.ID = #{param.id}
+        <if test="param.splitOrder != null and param.splitOrder != ''">
+            AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+        </if>
+        GROUP BY
+            D.PACK_CODE,
+            D.BOX_NO,
+            D.WEIGHT,
+            D.GOODS_LONG,
+            D.WIDE,
+            D.HIGH
+        ORDER BY D.PACK_CODE ASC, TO_NUMBER(D.BOX_NO) ASC
+    </select>
+
+    <!--获取清关发票基本信息-->
+    <select id="getClearanceInfo"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport0ListResult">
+        <include refid="base_clearance"></include>
+    </select>
+
+    <!--获取人工合并单个品名毛重-->
+    <select id="getHandAvgWeight"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport0ListResult">
+        SELECT
+            SUM(BB.totalWeight) / SUM(BB.QUANTITY) AS avgWeight
+        FROM (
+            SELECT
+                D.SPECIAL_MATERIAL_ID,
+                D.MATERIAL_CODE,
+                D.QUANTITY,
+                D.QUANTITY * P.GROSS_WEIGHT_ORG AS totalWeight
+            FROM TG_CUSTOMS_CLEARANCE_DETAIL D
+            LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MAIN_MATERIAL_CODE
+            WHERE D.PID = #{param.id} AND D.SPECIAL_MATERIAL_ID = #{param.mergeId}
+        ) BB
+        GROUP BY BB.SPECIAL_MATERIAL_ID
+    </select>
+
+    <!--获取系统合并单个品名毛重-->
+    <select id="getSysAvgWeight"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport0ListResult">
+            SELECT
+                SUM(GG.totalWeight) / SUM(GG.QUANTITY) AS avgWeight
+            FROM (
+                SELECT
+                    D.MATERIAL_CODE,
+                    D.QUANTITY,
+                    PP.MERGE_ID,
+                    D.QUANTITY * PP.GROSS_WEIGHT_ORG AS totalWeight
+                FROM TG_CUSTOMS_CLEARANCE_DETAIL D
+                LEFT JOIN
+                (
+                    SELECT
+                        P.ID AS MERGE_ID,
+                        FF.*
+                    FROM TG_BASE_PRODUCT P
+                    LEFT JOIN TG_BASE_PRODUCT_DETAIL PD ON P.ID = PD.PID
+                    LEFT JOIN
+                    (
+                        SELECT
+                            P.*,PD.MERGE_ID AS PD_MERGE_ID
+                        FROM TG_BASE_PRODUCT P
+                        LEFT JOIN TG_BASE_PRODUCT_DETAIL PD ON P.ID = PD.PID
+                        WHERE P.DATA_TYPE = '0' AND PD.MERGE_STATUS = '1' AND PD.MERGE_ID IS NOT NULL
+                    ) FF ON PD.ID = FF.PD_MERGE_ID
+                    WHERE P.ID = #{param.mergeId} AND P.DATA_TYPE = '1'
+                ) PP ON D.MATERIAL_CODE = PP.MAIN_MATERIAL_CODE
+                WHERE D.PID = #{param.id} AND D.SPECIAL_MERGE_SIGN IS NULL AND PP.MERGE_ID IS NOT NULL
+            ) GG
+            GROUP BY GG.MERGE_ID
+    </select>
+
+    <!--生成清关发票sheet0列表-->
+    <select id="generateExport0"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport0ListResult">
+        SELECT
+            ROW_NUMBER() OVER(PARTITION BY T1.PACK_CODE, T1.BOX_NO ORDER BY T1.BOX_NO ASC) RN,
+            T3.GROUP_COUNT,
+            DECODE(T3.GROUP_COUNT - ROW_NUMBER() OVER(PARTITION BY T1.PACK_CODE,T1.BOX_NO ORDER BY T1.BOX_NO ASC), 0, 0, 1) || '' AS isMergeUpCell,
+            T1.BOX_NO,
+            T1.WEIGHT,
+            T1.GOODS_LONG,
+            T1.WIDE,
+            T1.HIGH,
+            T1.totalVolume,
+            T2.CLEAR_NAME_CN,
+            T2.INVOICE_PRO_NAME_EN,
+            T2.HSCODE,
+            T2.AMAZON_PICTURE_LINK,
+            T2.IS_CHARGED,
+            T2.IS_MAGNET,
+            T2.CLEAR_MATERIAL_EN,
+            T2.FIT_BRAND,
+            T2.COMPANY_BRAND,
+            T2.STYLE,
+            T2.AMAZON_SALE_LINK,
+            T2.totalQuantity,
+            T2.unitPriceAvg,
+            T2.unitPriceMin,
+            T2.GROUP_STR,
+            T2.DETAIL_IDS,
+            T2.clearMergeStatus,
+            T2.avgWeight,
+            T2.TAX_RATE
+        FROM
+        (
+		    SELECT
+				D.PACK_CODE,
+				D.BOX_NO,
+				D.WEIGHT,
+				D.GOODS_LONG,
+				D.WIDE,
+				D.HIGH,
+				ROUND((D.GOODS_LONG * D.WIDE * D.HIGH) / 1000000, 2) AS totalVolume
+            FROM TG_CUSTOMS_CLEARANCE C
+            LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+            WHERE C.ID = #{param.id}
+                <if test="param.splitOrder != null and param.splitOrder != ''">
+                    AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+                </if>
+            GROUP BY
+				D.PACK_CODE,
+				D.BOX_NO,
+				D.WEIGHT,
+				D.GOODS_LONG,
+				D.WIDE,
+				D.HIGH
+        ) T1
+        LEFT JOIN
+        (
+		    SELECT
+				A1.PACK_CODE,
+				A1.BOX_NO,
+				A1.CLEAR_NAME_CN,
+				A1.INVOICE_PRO_NAME_EN,
+				A1.HSCODE,
+				A1.IS_CHARGED,
+				A1.IS_MAGNET,
+				A1.CLEAR_MATERIAL_EN,
+				A1.FIT_BRAND,
+				A1.COMPANY_BRAND,
+				A1.STYLE,
+				A1.totalQuantity,
+                A1.avgWeight,
+				A2.unitPriceAvg,
+				A2.unitPriceMin,
+--              DECODE(A5.ASIN, NULL, NULL, A4.AMAZON_URL || 'dp/' || A5.ASIN) AS AMAZON_SALE_LINK,
+-- 				A5.SMALL_IMAGE_URL AS AMAZON_PICTURE_LINK,
+                DECODE(A5.ASIN, NULL, NULL, A4.AMAZON_URL || 'dp/' || A5.ASIN) AS AMAZON_SALE_LINK,
+                A5.MAIN_IMAGE AS AMAZON_PICTURE_LINK,
+				A1.GROUP_STR,
+				A1.DETAIL_IDS,
+				A1.clearMergeStatus,
+                A6.TAX_RATE
+		    FROM (
+				SELECT
+				    TT.ARRIVAL_COUNTRY_CODE,
+					TT.PACK_CODE,
+					TT.BOX_NO,
+					TT.CLEAR_NAME_CN,
+					TT.INVOICE_PRO_NAME_EN,
+					TT.HSCODE,
+					TT.IS_CHARGED,
+					TT.IS_MAGNET,
+					TT.CLEAR_MATERIAL_EN,
+					TT.FIT_BRAND,
+					TT.COMPANY_BRAND,
+					TT.STYLE,
+					SUM(TT.QUANTITY) AS totalQuantity,
+					AVG(TT.CUSTOMS_UNIT_PRICE) AS unitPriceAvg,
+					MIN(TT.CUSTOMS_UNIT_PRICE) AS unitPriceMin,
+					TT.MAIN_MATERIAL_CODE,
+					DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) AS GROUP_STR,
+					LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID) AS DETAIL_IDS,
+					DECODE(INSTR(LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID), ','), 0, '未合并', '已合并') AS clearMergeStatus,
+                    MIN(TT.avgWeight) AS avgWeight
+                FROM
+                (
+                    SELECT
+                        AA.*,
+                        DECODE(CC.avgWeight, NULL, DECODE(EE.avgWeight, NULL, DD.GROSS_WEIGHT_ORG, EE.avgWeight), CC.avgWeight) AS avgWeight
+                    FROM (
+                        <include refid="base_clearance"></include>
+                    ) AA
+                    LEFT JOIN
+                    (
+                        SELECT
+                            BB.SPECIAL_MATERIAL_ID,
+                            SUM(BB.totalWeight) / SUM(BB.QUANTITY) AS avgWeight
+                        FROM (
+                            SELECT
+                                D.SPECIAL_MATERIAL_ID,
+                                D.MATERIAL_CODE,
+                                D.QUANTITY,
+                                D.QUANTITY * P.GROSS_WEIGHT_ORG AS totalWeight
+                            FROM TG_CUSTOMS_CLEARANCE_DETAIL D
+                            LEFT JOIN TG_BASE_PRODUCT P ON D.MATERIAL_CODE = P.MAIN_MATERIAL_CODE
+                            WHERE D.PID = #{param.id} AND D.SPECIAL_MATERIAL_ID IS NOT NULL
+                        ) BB
+                        GROUP BY BB.SPECIAL_MATERIAL_ID
+                    ) CC ON AA.CLEAR_MERGE_STATUS = '人工已合并' AND AA.MERGE_ID = CC.SPECIAL_MATERIAL_ID
+                    LEFT JOIN TG_BASE_PRODUCT DD ON AA.CLEAR_MERGE_STATUS IN('系统未合并','人工未合并') AND AA.MAIN_MATERIAL_CODE = DD.MAIN_MATERIAL_CODE
+                    LEFT JOIN
+                    (
+                        SELECT
+                            GG.MERGE_ID,
+                            SUM(GG.totalWeight) / SUM(GG.QUANTITY) AS avgWeight
+                        FROM (
+                            SELECT
+                                D.MATERIAL_CODE,
+                                D.QUANTITY,
+                                PP.MERGE_ID,
+                                D.QUANTITY * PP.GROSS_WEIGHT_ORG AS totalWeight
+                            FROM TG_CUSTOMS_CLEARANCE_DETAIL D
+                            LEFT JOIN
+                            (
+                                SELECT
+                                    P.ID AS MERGE_ID,
+                                    FF.*
+                                FROM TG_BASE_PRODUCT P
+                                LEFT JOIN TG_BASE_PRODUCT_DETAIL PD ON P.ID = PD.PID
+                                LEFT JOIN
+                                (
+                                    SELECT
+                                        P.*,PD.MERGE_ID AS PD_MERGE_ID
+                                    FROM TG_BASE_PRODUCT P
+                                    LEFT JOIN TG_BASE_PRODUCT_DETAIL PD ON P.ID = PD.PID
+                                    WHERE P.DATA_TYPE = '0' AND PD.MERGE_STATUS = '1' AND PD.MERGE_ID IS NOT NULL
+                                ) FF ON PD.ID = FF.PD_MERGE_ID
+                                WHERE P.DATA_TYPE = '1'
+                            ) PP ON D.MATERIAL_CODE = PP.MAIN_MATERIAL_CODE
+                            WHERE D.PID = #{param.id} AND D.SPECIAL_MERGE_SIGN IS NULL AND PP.MERGE_ID IS NOT NULL
+                        ) GG
+                        GROUP BY GG.MERGE_ID
+                    ) EE ON AA.CLEAR_MERGE_STATUS = '系统已合并' AND AA.MERGE_ID = EE.MERGE_ID
+                ) TT
+                GROUP BY
+                    TT.ARRIVAL_COUNTRY_CODE,
+					TT.PACK_CODE,
+					TT.BOX_NO,
+					TT.CLEAR_NAME_CN,
+					TT.INVOICE_PRO_NAME_EN,
+					TT.HSCODE,
+					TT.IS_CHARGED,
+					TT.IS_MAGNET,
+					TT.CLEAR_MATERIAL_EN,
+					TT.FIT_BRAND,
+					TT.COMPANY_BRAND,
+					TT.STYLE,
+					TT.MAIN_MATERIAL_CODE,
+					DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+            ) A1
+            LEFT JOIN
+            (
+                SELECT
+                    TT.CLEAR_NAME_CN,
+                    AVG(TT.CUSTOMS_UNIT_PRICE) AS unitPriceAvg,
+                    MIN(TT.CUSTOMS_UNIT_PRICE) AS unitPriceMin,
+                    TT.MAIN_MATERIAL_CODE,
+                    DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) AS GROUP_STR,
+                    LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID) AS DETAIL_IDS,
+                    DECODE(INSTR(LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID), ','), 0, '未合并', '已合并') AS clearMergeStatus
+                FROM
+                (
+                    <include refid="base_clearance"></include>
+                ) TT
+                GROUP BY
+                    TT.CLEAR_NAME_CN,
+                    TT.INVOICE_PRO_NAME_EN,
+                    TT.HSCODE,
+                    TT.IS_CHARGED,
+                    TT.IS_MAGNET,
+                    TT.CLEAR_MATERIAL_EN,
+                    TT.FIT_BRAND,
+                    TT.COMPANY_BRAND,
+                    TT.STYLE,
+                    TT.MAIN_MATERIAL_CODE,
+                    DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+            ) A2 ON A1.CLEAR_NAME_CN = A2.CLEAR_NAME_CN AND A1.GROUP_STR = A2.GROUP_STR
+            LEFT JOIN
+            (
+                SELECT * FROM (
+                    SELECT
+                        ROW_NUMBER() OVER(PARTITION BY DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) ORDER BY TT.CUSTOMS_UNIT_PRICE ASC) RN,
+                        TT.CLEAR_NAME_CN,
+                        TT.ARRIVAL_COUNTRY_CODE,
+                        TT.CUSTOMS_UNIT_PRICE,
+                        TT.SKU,
+                        DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) AS GROUP_STR,
+                        LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID) AS DETAIL_IDS
+                    FROM
+                    (
+                        <include refid="base_clearance"></include>
+                    ) TT
+                    GROUP BY
+                        TT.CLEAR_NAME_CN,
+                        TT.INVOICE_PRO_NAME_EN,
+                        TT.HSCODE,
+                        TT.IS_CHARGED,
+                        TT.IS_MAGNET,
+                        TT.CLEAR_MATERIAL_EN,
+                        TT.FIT_BRAND,
+                        TT.COMPANY_BRAND,
+                        TT.STYLE,
+                        TT.ARRIVAL_COUNTRY_CODE,
+                        TT.CUSTOMS_UNIT_PRICE,
+                        TT.SKU,
+                        TT.MAIN_MATERIAL_CODE,
+                        DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+                ) WHERE RN = 1
+            ) A3 ON A2.CLEAR_NAME_CN = A3.CLEAR_NAME_CN AND A2.GROUP_STR = A3.GROUP_STR AND A2.unitPriceMin = A3.CUSTOMS_UNIT_PRICE
+            LEFT JOIN TG_COUNTRY_INFO A4 ON A3.ARRIVAL_COUNTRY_CODE = A4.COUNTRY_CODE
+--             LEFT JOIN TG_LX_LISTING_INFO A5 ON A4.SITE = A5.SITE AND A3.SKU = A5.SELLER_SKU AND A5.IS_DELETE = '0'
+            LEFT JOIN TG_SAIHU_PRODUCT A5 ON A4.SITE = A5.SITE AND D.SKU = A5.SKU AND A5.DXM_PUBLISH_STATE IS NULL
+            LEFT JOIN TG_CUSTOMS_TAX_RATE A6 ON A1.ARRIVAL_COUNTRY_CODE = A6.COUNTRY_CODE AND A1.HSCODE = A6.HSCODE
+        ) T2 ON T1.PACK_CODE = T2.PACK_CODE AND T1.BOX_NO = T2.BOX_NO
+        LEFT JOIN
+        (
+		    SELECT
+				G1.PACK_CODE,
+				G1.BOX_NO,
+				COUNT(G2.BOX_NO) AS GROUP_COUNT
+            FROM
+            (
+				SELECT
+                    D.PACK_CODE,
+                    D.BOX_NO
+				FROM TG_CUSTOMS_CLEARANCE C
+				LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+				WHERE C.ID = #{param.id}
+                    <if test="param.splitOrder != null and param.splitOrder != ''">
+                        AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+                    </if>
+				GROUP BY
+                    D.PACK_CODE,
+                    D.BOX_NO,
+                    D.WEIGHT,
+                    D.GOODS_LONG,
+                    D.WIDE,
+                    D.HIGH
+            ) G1
+            LEFT JOIN
+            (
+                SELECT
+                    TT.PACK_CODE,
+                    TT.BOX_NO
+				FROM
+				(
+                    <include refid="base_clearance"></include>
+				) TT
+				GROUP BY
+                    TT.PACK_CODE,
+                    TT.BOX_NO,
+                    TT.CLEAR_NAME_CN,
+                    TT.INVOICE_PRO_NAME_EN,
+                    TT.HSCODE,
+                    TT.IS_CHARGED,
+                    TT.IS_MAGNET,
+                    TT.CLEAR_MATERIAL_EN,
+                    TT.FIT_BRAND,
+                    TT.COMPANY_BRAND,
+                    TT.STYLE,
+                    TT.MAIN_MATERIAL_CODE,
+                    DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+            ) G2 ON G1.PACK_CODE = G2.PACK_CODE AND G1.BOX_NO = G2.BOX_NO
+            GROUP BY G1.PACK_CODE, G1.BOX_NO
+        ) T3 ON T1.PACK_CODE = T3.PACK_CODE AND T1.BOX_NO = T3.BOX_NO
+        ORDER BY T1.PACK_CODE, CAST(T1.BOX_NO AS INTEGER), ROW_NUMBER() OVER(PARTITION BY T1.BOX_NO ORDER BY T1.BOX_NO ASC)
+    </select>
+
+    <!--生成清关发票快递sheet0列表-->
+    <select id="generateExportKD0"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport0ListResult">
+        SELECT
+            G2.*,
+            G3.TAX_RATE
+        FROM
+        (
+            SELECT
+                ROW_NUMBER() OVER( ORDER BY G1.INVOICE_PRO_NAME_EN ASC) AS NO,
+                '1' AS isMergeUpCell,
+                G1.ARRIVAL_COUNTRY_CODE,
+                G1.INVOICE_PRO_NAME_EN,
+                G1.CLEAR_MATERIAL_EN,
+                G1.HSCODE,
+                SUM(G1.totalQuantity) AS totalQuantity,
+                MAX(G1.UNIT) AS UNIT,
+                DECODE(#{param.orderType} , '0', MIN(G1.unitPriceMin), SUM(G1.unitPriceSum) / SUM(G1.totalCount)) AS UNIT_PRICE,
+                SUM(G1.totalQuantity) * DECODE(#{param.orderType} , '0', MIN(G1.unitPriceMin), SUM(G1.unitPriceSum) / SUM(G1.totalCount)) AS totalAmount,
+                G1.INVOICE_PRO_NAME_EN || G1.CLEAR_MATERIAL_EN || G1.HSCODE AS sortCondition,
+                COUNT(G1.BOX) AS BOX_NUM
+            FROM (
+                SELECT
+                    G.ARRIVAL_COUNTRY_CODE,
+                    G.INVOICE_PRO_NAME_EN,
+                    G.CLEAR_MATERIAL_EN,
+                    G.HSCODE,
+                    SUM(G.totalQuantity) AS totalQuantity,
+                    MAX(G.UNIT) AS UNIT,
+                    MIN(G.unitPriceMin) AS unitPriceMin,
+                    SUM(G.unitPriceSum) AS unitPriceSum,
+                    SUM(G.totalCount) AS totalCount,
+                    G.BOX
+                FROM (
+                    SELECT
+                        TT.ARRIVAL_COUNTRY_CODE,
+                        TT.PACK_CODE || '_' || TT.BOX_NO AS BOX,
+                        TT.CLEAR_NAME_CN,
+                        TT.INVOICE_PRO_NAME_EN,
+                        TT.CLEAR_MATERIAL_EN,
+                        TT.HSCODE,
+                        SUM(TT.QUANTITY) AS totalQuantity,
+                        COUNT(1) AS totalCount,
+                        SUM(TT.CUSTOMS_UNIT_PRICE) AS unitPriceSum,
+                        MIN(TT.CUSTOMS_UNIT_PRICE) AS unitPriceMin,
+                        TT.CURRENCY,
+                        TT.IMPORT_TAX_NUM,
+                        TT.CLEAR_NAME_CN || TT.INVOICE_PRO_NAME_EN || TT.CLEAR_MATERIAL_EN AS sortCondition,
+                        MAX(TT.UNIT) AS UNIT,
+                        TT.MAIN_MATERIAL_CODE,
+                        DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) AS GROUP_STR,
+                        LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID) AS DETAIL_IDS,
+                        DECODE(INSTR(LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID), ','), 0, '未合并', '已合并') AS clearMergeStatus
+                    FROM
+                    (
+                        <include refid="base_clearance"></include>
+                    ) TT
+                    GROUP BY
+                        TT.ARRIVAL_COUNTRY_CODE,
+                        TT.PACK_CODE,
+                        TT.BOX_NO,
+                        TT.CLEAR_NAME_CN,
+                        TT.INVOICE_PRO_NAME_EN,
+                        TT.HSCODE,
+                        TT.IS_CHARGED,
+                        TT.IS_MAGNET,
+                        TT.CLEAR_MATERIAL_EN,
+                        TT.FIT_BRAND,
+                        TT.COMPANY_BRAND,
+                        TT.STYLE,
+                        TT.CURRENCY,
+                        TT.IMPORT_TAX_NUM,
+                        TT.MAIN_MATERIAL_CODE,
+                        DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+                ) G
+                GROUP BY
+                    G.ARRIVAL_COUNTRY_CODE,
+                    G.INVOICE_PRO_NAME_EN,
+                    G.CLEAR_MATERIAL_EN,
+                    G.HSCODE,
+                    G.BOX
+            ) G1
+            GROUP BY
+                G1.ARRIVAL_COUNTRY_CODE,
+                G1.INVOICE_PRO_NAME_EN,
+                G1.CLEAR_MATERIAL_EN,
+                G1.HSCODE
+        ) G2
+        LEFT JOIN TG_CUSTOMS_TAX_RATE G3
+        ON G2.ARRIVAL_COUNTRY_CODE = G3.COUNTRY_CODE AND G2.HSCODE = G3.HSCODE
+        ORDER BY G2.NO ASC
+    </select>
+
+    <!--判断是否存在1个箱子有多个重量的情况-->
+    <select id="haveMoreWeight"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM (
+            SELECT
+                D.PACK_CODE, D.BOX_NO,D.WEIGHT
+            FROM TG_CUSTOMS_CLEARANCE C
+            LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+            WHERE D.PID = #{param.id}
+            <if test="param.splitOrder != null and param.splitOrder != ''">
+                AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+            </if>
+            GROUP BY D.PACK_CODE, D.BOX_NO, D.WEIGHT
+        ) T GROUP BY T.PACK_CODE,T.BOX_NO HAVING COUNT(1) > 1
+    </select>
+
+    <!--根据单号和分单号获取清关发票总重量-->
+    <select id="getClearanceSumWeight"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport0Result">
+        SELECT SUM(NVL(T.WEIGHT, 0)) AS sumWeight, COUNT(1) AS totalBoxNum FROM (
+            SELECT
+                D.PACK_CODE, D.BOX_NO,D.WEIGHT
+            FROM TG_CUSTOMS_CLEARANCE C
+            LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+            WHERE D.PID = #{param.id}
+                <if test="param.splitOrder != null and param.splitOrder != ''">
+                    AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+                </if>
+            GROUP BY D.PACK_CODE, D.BOX_NO, D.WEIGHT
+        ) T
+    </select>
+
+    <!--根据清关品名获取清关产品信息重量-->
+    <select id="getMergeProductWeight" parameterType="java.lang.String" resultType="java.math.BigDecimal">
+        SELECT MP.GROSS_WEIGHT_ORG
+        FROM TG_BASE_PRODUCT MP
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL MD ON MP.ID = MD.PID
+        WHERE MD.MERGE_ID =
+        (
+            SELECT D.ID
+            FROM TG_BASE_PRODUCT P
+            LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+            WHERE
+                P.DATA_TYPE = '1'
+                AND D.MERGE_STATUS = '1'
+                AND P.INVOICE_PRO_NAME_CN = #{invoiceProNameCn}
+        )
+    </select>
+
+    <!--根据清关品名获取产品基本信息重量-->
+    <select id="getProductWeight" parameterType="java.lang.String" resultType="java.math.BigDecimal">
+        SELECT P.GROSS_WEIGHT_ORG
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        WHERE
+            P.DATA_TYPE = '0'
+            AND D.MERGE_STATUS = '0'
+            AND P.INVOICE_PRO_NAME_CN = #{invoiceProNameCn}
+    </select>
+
+    <!--生成清关发票sheet1-->
+    <select id="generateExport1"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport1Result">
+        SELECT
+            DECODE(C4.RN, 1, 0, 1) || '' AS isMergeUpCell,
+            C4.*
+        FROM (
+            SELECT
+                ROW_NUMBER() OVER(PARTITION BY C2.GROUP_STR ORDER BY C2.CLEAR_NAME_CN ASC) AS RN,
+                C2.*,
+                C3.k3Code,
+                C3.amazonSaleLink,
+                C3.amazonPictureLink,
+                C3.amazonSalePrice,
+                C3.totalClearanceQuantity,
+                C3.clearanceUnitPrice,
+                C3.totalClearanceAmount,
+                C3.CHANGE_TAX_RATE,
+                C3.TAX_RATE,
+                C3.ADD_TAX_RATE
+            FROM
+            (
+                SELECT
+                    DECODE(ROW_NUMBER() OVER(PARTITION BY C1.GROUP_STR ORDER BY C1.CLEAR_NAME_CN ASC), 1, 0, 1) || '' AS isMergeUpCell,
+                    REGEXP_SUBSTR(C1.DETAIL_IDS, '[^,]+', 1, LEVEL) AS DETAIL_ID,
+                    C1.*
+                FROM
+                (
+                    SELECT
+                        TT.CLEAR_NAME_CN,
+                        TT.INVOICE_PRO_NAME_EN,
+                        TT.CLEAR_MATERIAL_EN,
+                        SUM(TT.QUANTITY) AS totalQuantity,
+                        DECODE(#{param.orderType}, '0', MIN(TT.CUSTOMS_UNIT_PRICE), AVG(TT.CUSTOMS_UNIT_PRICE)) AS UNIT_PRICE,
+                        SUM(TT.QUANTITY) * DECODE(#{param.orderType}, '0', MIN(TT.CUSTOMS_UNIT_PRICE), AVG(TT.CUSTOMS_UNIT_PRICE)) AS totalAmount,
+                        AVG(TT.CUSTOMS_UNIT_PRICE) AS unitPriceAvg,
+                        MIN(TT.CUSTOMS_UNIT_PRICE) AS unitPriceMin,
+                        TT.CURRENCY,
+                        TT.IMPORT_TAX_NUM,
+                        TT.CLEAR_NAME_CN || TT.INVOICE_PRO_NAME_EN || TT.CLEAR_MATERIAL_EN AS sortCondition,
+                        TT.MAIN_MATERIAL_CODE,
+                        DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) AS GROUP_STR,
+                        LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID) AS DETAIL_IDS,
+                        DECODE(INSTR(LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID), ','), 0, '未合并', '已合并') AS clearMergeStatus
+                    FROM
+                    (
+                        <include refid="base_clearance"></include>
+                    ) TT
+                    GROUP BY
+                        TT.CLEAR_NAME_CN,
+                        TT.INVOICE_PRO_NAME_EN,
+                        TT.HSCODE,
+                        TT.IS_CHARGED,
+                        TT.IS_MAGNET,
+                        TT.CLEAR_MATERIAL_EN,
+                        TT.FIT_BRAND,
+                        TT.COMPANY_BRAND,
+                        TT.STYLE,
+                        TT.CURRENCY,
+                        TT.IMPORT_TAX_NUM,
+                        TT.MAIN_MATERIAL_CODE,
+                        DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+                ) C1
+                CONNECT BY C1.GROUP_STR = PRIOR C1.GROUP_STR
+                AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL
+                AND LEVEL &lt;= REGEXP_COUNT(C1.DETAIL_IDS, '[^,]+')
+            ) C2
+            INNER JOIN
+            (
+                SELECT
+                    D.ID AS DETAIL_ID,
+                    D.SKU AS k3Code,
+--                     DECODE(T7.ASIN, NULL, NULL, T6.AMAZON_URL || 'dp/' || T7.ASIN) AS amazonSaleLink,
+--                     T7.SMALL_IMAGE_URL AS amazonPictureLink,
+--                     DECODE(DECODE(T7.LISTING_PRICE, NULL, T7.PRICE, T7.LISTING_PRICE), NULL, DECODE(D.EDIT_STATUS, '人工编辑', D.AMAZON_SALE_PRICE, NULL), DECODE(T7.LISTING_PRICE, NULL, T7.PRICE, T7.LISTING_PRICE)) AS amazonSalePrice,
+                    DECODE(T7.ASIN, NULL, NULL, T6.AMAZON_URL || 'dp/' || T7.ASIN) AS amazonSaleLink,
+                    T7.MAIN_IMAGE AS amazonPictureLink,
+                    DECODE(DECODE(T7.LISTING_PRICE, NULL, T7.STANDARD_PRICE, T7.LISTING_PRICE), NULL, DECODE(D.EDIT_STATUS, '人工编辑', D.AMAZON_SALE_PRICE, NULL), DECODE(T7.LISTING_PRICE, NULL, T7.STANDARD_PRICE, T7.LISTING_PRICE)) AS amazonSalePrice,
+                    D.QUANTITY AS totalClearanceQuantity,
+                    D.CUSTOMS_UNIT_PRICE AS clearanceUnitPrice,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE AS totalClearanceAmount,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE * NVL(T5.CHANGE_TAX_RATE, 0) AS CHANGE_TAX_RATE,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE * NVL(T5.TAX_RATE, 0) AS TAX_RATE,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE * NVL(T5.ADD_TAX_RATE, 0) AS ADD_TAX_RATE
+                FROM TG_CUSTOMS_CLEARANCE C
+                LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+                LEFT JOIN
+                (
+                    SELECT
+                        BP.INVOICE_PRO_NAME_CN,
+                        BP.MATERIAL_CODE,
+                        BPD.COUNTRY_CODE,
+                        BPD.CHANGE_TAX_RATE,
+                        BPD.TAX_RATE,
+                        BPD.ADD_TAX_RATE
+                    FROM TG_BASE_PRODUCT BP
+                    LEFT JOIN TG_BASE_PRODUCT_DETAIL BPD ON BP.ID = BPD.PID
+                    WHERE BP.DATA_TYPE = '0'
+                ) T5 ON C.ARRIVAL_COUNTRY_CODE = T5.COUNTRY_CODE AND D.MATERIAL_CODE = T5.MATERIAL_CODE
+                LEFT JOIN TG_COUNTRY_INFO T6 ON C.ARRIVAL_COUNTRY_CODE = T6.COUNTRY_CODE
+--                 LEFT JOIN TG_LX_LISTING_INFO T7 ON T6.SITE = T7.SITE AND D.SKU = T7.SELLER_SKU AND T7.IS_DELETE = '0'
+                LEFT JOIN TG_SAIHU_PRODUCT T7 ON T6.SITE = T7.SITE AND D.SKU = T7.SKU AND T7.DXM_PUBLISH_STATE IS NULL
+                WHERE D.PID = #{param.id}
+                    <if test="param.splitOrder != null and param.splitOrder != ''">
+                        AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+                    </if>
+            ) C3 ON C2.DETAIL_ID = C3.DETAIL_ID
+        ) C4 ORDER BY C4.GROUP_STR,C4.RN DESC
+    </select>
+
+    <!--生成清关发票快递sheet1-->
+    <select id="generateExportKD1"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceExport1Result">
+        SELECT
+            DECODE(C4.RN, 1, 0, 1) || '' AS isMergeUpCell,
+            C4.*
+        FROM (
+            SELECT
+                ROW_NUMBER() OVER(PARTITION BY C2.sortCondition ORDER BY C2.CLEAR_NAME_CN ASC) AS RN,
+                C2.*,
+                C3.k3Code,
+                C3.amazonSaleLink,
+                C3.amazonPictureLink,
+                C3.amazonSalePrice,
+                C3.totalClearanceQuantity,
+                C3.clearanceUnitPrice,
+                C3.totalClearanceAmount,
+                C3.CHANGE_TAX_RATE,
+                C3.TAX_RATE,
+                C3.ADD_TAX_RATE
+            FROM
+            (
+                SELECT
+                    REGEXP_SUBSTR(C1.DETAIL_IDS, '[^,]+', 1, LEVEL) AS DETAIL_ID,
+                    C1.*
+                FROM
+                (
+                    SELECT
+                        G.CLEAR_NAME_CN,
+                        G.INVOICE_PRO_NAME_EN,
+                        G.CLEAR_MATERIAL_EN,
+                        SUM(G.totalQuantity) AS totalQuantity,
+                        DECODE(#{param.orderType} , '0', MIN(G.unitPriceMin), SUM(G.unitPriceSum) / SUM(G.totalCount)) AS UNIT_PRICE,
+                        SUM(G.totalQuantity) * DECODE(#{param.orderType} , '0', MIN(G.unitPriceMin), SUM(G.unitPriceSum) / SUM(G.totalCount)) AS totalAmount,
+                        G.CURRENCY,
+                        G.IMPORT_TAX_NUM,
+                        G.CLEAR_NAME_CN || G.INVOICE_PRO_NAME_EN || G.CLEAR_MATERIAL_EN AS sortCondition,
+                        G.CLEAR_NAME_CN || G.INVOICE_PRO_NAME_EN || G.CLEAR_MATERIAL_EN || G.HSCODE AS GROUP_BY,
+                        LISTAGG(G.DETAIL_IDS, ',')  WITHIN GROUP(ORDER BY G.CLEAR_NAME_CN) AS DETAIL_IDS
+                    FROM (
+                        SELECT
+                            TT.CLEAR_NAME_CN,
+                            TT.INVOICE_PRO_NAME_EN,
+                            TT.CLEAR_MATERIAL_EN,
+                            TT.HSCODE,
+                            SUM(TT.QUANTITY) AS totalQuantity,
+                            COUNT(1) AS totalCount,
+                            SUM(TT.CUSTOMS_UNIT_PRICE) AS unitPriceSum,
+                            MIN(TT.CUSTOMS_UNIT_PRICE) AS unitPriceMin,
+                            TT.CURRENCY,
+                            TT.IMPORT_TAX_NUM,
+                            TT.CLEAR_NAME_CN || TT.INVOICE_PRO_NAME_EN || TT.CLEAR_MATERIAL_EN AS sortCondition,
+                            TT.MAIN_MATERIAL_CODE,
+                            DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) AS GROUP_STR,
+                            LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID) AS DETAIL_IDS,
+                            DECODE(INSTR(LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID), ','), 0, '未合并', '已合并') AS clearMergeStatus
+                        FROM
+                        (
+                            <include refid="base_clearance"></include>
+                        ) TT
+                        GROUP BY
+                            TT.CLEAR_NAME_CN,
+                            TT.INVOICE_PRO_NAME_EN,
+                            TT.HSCODE,
+                            TT.IS_CHARGED,
+                            TT.IS_MAGNET,
+                            TT.CLEAR_MATERIAL_EN,
+                            TT.FIT_BRAND,
+                            TT.COMPANY_BRAND,
+                            TT.STYLE,
+                            TT.CURRENCY,
+                            TT.IMPORT_TAX_NUM,
+                            TT.MAIN_MATERIAL_CODE,
+                            DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+                    ) G
+                    GROUP BY
+                        G.CLEAR_NAME_CN,
+                        G.INVOICE_PRO_NAME_EN,
+                        G.CLEAR_MATERIAL_EN,
+                        G.HSCODE,
+                        G.CURRENCY,
+                        G.IMPORT_TAX_NUM
+                ) C1
+                CONNECT BY C1.GROUP_BY = PRIOR C1.GROUP_BY
+                AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL
+                AND LEVEL &lt;= REGEXP_COUNT(C1.DETAIL_IDS, '[^,]+')
+            ) C2
+            INNER JOIN
+            (
+                SELECT
+                    D.ID AS DETAIL_ID,
+                    D.SKU AS k3Code,
+--                     DECODE(T7.ASIN, NULL, NULL, T6.AMAZON_URL || 'dp/' || T7.ASIN) AS amazonSaleLink,
+--                     T7.SMALL_IMAGE_URL AS amazonPictureLink,
+--                     DECODE(DECODE(T7.LISTING_PRICE, NULL, T7.PRICE, T7.LISTING_PRICE), NULL, DECODE(D.EDIT_STATUS, '人工编辑', D.AMAZON_SALE_PRICE, NULL), DECODE(T7.LISTING_PRICE, NULL, T7.PRICE, T7.LISTING_PRICE)) AS amazonSalePrice,
+                    DECODE(T7.ASIN, NULL, NULL, T6.AMAZON_URL || 'dp/' || T7.ASIN) AS amazonSaleLink,
+                    T7.MAIN_IMAGE AS amazonPictureLink,
+                    DECODE(DECODE(T7.LISTING_PRICE, NULL, T7.STANDARD_PRICE, T7.LISTING_PRICE), NULL, DECODE(D.EDIT_STATUS, '人工编辑', D.AMAZON_SALE_PRICE, NULL), DECODE(T7.LISTING_PRICE, NULL, T7.STANDARD_PRICE, T7.LISTING_PRICE)) AS amazonSalePrice,
+                    D.QUANTITY AS totalClearanceQuantity,
+                    D.CUSTOMS_UNIT_PRICE AS clearanceUnitPrice,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE AS totalClearanceAmount,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE * NVL(T5.CHANGE_TAX_RATE, 0) AS CHANGE_TAX_RATE,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE * NVL(T5.TAX_RATE, 0) AS TAX_RATE,
+                    D.QUANTITY * D.CUSTOMS_UNIT_PRICE * NVL(T5.ADD_TAX_RATE, 0) AS ADD_TAX_RATE
+                FROM TG_CUSTOMS_CLEARANCE C
+                LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+                LEFT JOIN
+                (
+                    SELECT
+                        BP.INVOICE_PRO_NAME_CN,
+                        BP.MATERIAL_CODE,
+                        BPD.COUNTRY_CODE,
+                        BPD.CHANGE_TAX_RATE,
+                        BPD.TAX_RATE,
+                        BPD.ADD_TAX_RATE
+                    FROM TG_BASE_PRODUCT BP
+                    LEFT JOIN TG_BASE_PRODUCT_DETAIL BPD ON BP.ID = BPD.PID
+                    WHERE BP.DATA_TYPE = '0'
+                ) T5 ON C.ARRIVAL_COUNTRY_CODE = T5.COUNTRY_CODE AND D.MATERIAL_CODE = T5.MATERIAL_CODE
+                LEFT JOIN TG_COUNTRY_INFO T6 ON C.ARRIVAL_COUNTRY_CODE = T6.COUNTRY_CODE
+--                 LEFT JOIN TG_LX_LISTING_INFO T7 ON T6.SITE = T7.SITE AND D.SKU = T7.SELLER_SKU AND T7.IS_DELETE = '0'
+                LEFT JOIN TG_SAIHU_PRODUCT T7 ON T6.SITE = T7.SITE AND D.SKU = T7.SKU AND T7.DXM_PUBLISH_STATE IS NULL
+                WHERE D.PID = #{param.id}
+                    <if test="param.splitOrder != null and param.splitOrder != ''">
+                        AND NVL(D.SPLIT_ORDER, '-1') = #{param.splitOrder}
+                    </if>
+            ) C3 ON C2.DETAIL_ID = C3.DETAIL_ID
+        ) C4 ORDER BY C4.sortCondition,C4.RN DESC
+    </select>
+
+    <!-- 清关合并预览 -->
+    <select id="clearMergePreview"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceDetailResult">
+        	SELECT
+        	    TT.PID,
+				TT.CLEAR_NAME_CN,
+				TT.INVOICE_PRO_NAME_CN,
+				TT.INVOICE_PRO_NAME_EN,
+				TT.CLEAR_MATERIAL_EN,
+				TT.ARRIVAL_COUNTRY_NAME,
+				TT.HSCODE,
+				TT.MAIN_MATERIAL_CODE,
+				DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS) AS GROUP_STR,
+				LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID) AS DETAIL_IDS,
+				DECODE(INSTR(LISTAGG(TT.ID, ',')  WITHIN GROUP(ORDER BY TT.ID), ','), 0, '未合并', '已合并') AS clearMergeStatus
+		    FROM
+		    (
+				SELECT
+					C.ARRIVAL_COUNTRY_CODE,C.ARRIVAL_COUNTRY_NAME,
+                    D.ID,D.PID,D.PACK_CODE,D.BOX_NO,D.PACK_DIRECT_CODE,D.MATERIAL_CODE,D.UNIT_PRICE,D.AMAZON_SALE_PRICE,D.CUSTOMS_UNIT_PRICE,D.AMAZON_SALE_LINK,D.AMAZON_PICTURE_LINK,D.SKU,
+                    D.QUANTITY,D.UNIT,D.ATTRIBUTE,D.SPLIT_ORDER,D.BOX_NO_NAME,D.BOX_TYPE,D.WEIGHT,D.GOODS_LONG,D.WIDE,D.HIGH,D.CREATE_TIME,D.CREATE_USER,D.UPDATE_TIME,D.UPDATE_USER,D.EDIT_STATUS,
+                    D.SPECIAL_MERGE_SIGN,D.SPECIAL_MATERIAL_CODE,D.SPECIAL_MATERIAL_ID,
+                    DECODE(T1.INVOICE_PRO_NAME_CN, NULL, T2.INVOICE_PRO_NAME_CN, T1.INVOICE_PRO_NAME_CN) AS CLEAR_NAME_CN,
+                    DECODE(T1.INVOICE_PRO_NAME_CN, NULL, T2.INVOICE_PRO_NAME_CN, T1.INVOICE_PRO_NAME_CN) AS INVOICE_PRO_NAME_CN,
+                    DECODE(T1.INVOICE_PRO_NAME_EN, NULL, T2.INVOICE_PRO_NAME_EN, T1.INVOICE_PRO_NAME_EN) AS INVOICE_PRO_NAME_EN,
+                    DECODE(T1.HSCODE, NULL, T2.HSCODE, T1.HSCODE) AS HSCODE,
+                    DECODE(DECODE(T1.IS_CHARGED, NULL, T2.IS_CHARGED, T1.IS_CHARGED), '0', '否', '1', '是', NULL) AS IS_CHARGED,
+                    DECODE(DECODE(T1.IS_MAGNET, NULL, T2.IS_MAGNET, T1.IS_MAGNET), '0', '否', '1', '是', NULL) AS IS_MAGNET,
+                    DECODE(T1.CLEAR_MATERIAL_EN, NULL, T2.CLEAR_MATERIAL_EN, T1.CLEAR_MATERIAL_EN) AS CLEAR_MATERIAL_EN,
+                    DECODE(T1.FIT_BRAND, NULL, T2.FIT_BRAND, T1.FIT_BRAND) AS FIT_BRAND,
+                    DECODE(T1.FIT_BRAND, NULL, T2.FIT_BRAND, T1.FIT_BRAND) AS TYPE,
+                    DECODE(T1.STYLE, NULL, T2.STYLE, T1.STYLE) AS STYLE,
+                    DECODE(T1.COMPANY_BRAND, NULL, T2.COMPANY_BRAND, T1.COMPANY_BRAND) AS COMPANY_BRAND,
+                    DECODE(D.SPECIAL_MERGE_SIGN, NULL, DECODE(T1.ID, NULL, D.MATERIAL_CODE, T1.MAIN_MATERIAL_CODE), DECODE(D.SPECIAL_MATERIAL_CODE, NULL, D.MATERIAL_CODE, D.SPECIAL_MATERIAL_CODE)) AS MAIN_MATERIAL_CODE,
+                    DECODE(D.SPECIAL_MERGE_SIGN, NULL, DECODE(T1.ID, NULL, '系统未合并', '系统已合并'), DECODE(D.SPECIAL_MATERIAL_CODE, NULL, '人工未合并', '人工已合并')) AS CLEAR_MERGE_STATUS,
+                    DECODE(D.SPECIAL_MERGE_SIGN, NULL, T1.ID, DECODE(D.SPECIAL_MATERIAL_CODE, NULL, NULL, D.SPECIAL_MATERIAL_ID)) AS MERGE_ID
+                FROM TG_CUSTOMS_CLEARANCE C
+				LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+				LEFT JOIN
+				(
+					SELECT
+						P.*,
+						D.COUNTRY_CODE,
+						D.HSCODE
+					FROM TG_BASE_PRODUCT P
+					LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+					WHERE P.DATA_TYPE = '1'
+				) T1 ON T1.MATERIAL_CODE LIKE '%' || D.MATERIAL_CODE || '%' AND T1.COUNTRY_CODE = C.ARRIVAL_COUNTRY_CODE AND D.SPECIAL_MERGE_SIGN IS NULL
+				LEFT JOIN
+				(
+					SELECT
+						P.*,
+						D.COUNTRY_CODE,
+						D.HSCODE
+					FROM TG_BASE_PRODUCT P
+					LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+					WHERE P.DATA_TYPE = '0'
+				) T2 ON T2.MATERIAL_CODE = DECODE(D.SPECIAL_MERGE_SIGN, NULL, D.MATERIAL_CODE, DECODE(D.SPECIAL_MATERIAL_CODE, NULL, D.MATERIAL_CODE, D.SPECIAL_MATERIAL_CODE)) AND T2.COUNTRY_CODE = C.ARRIVAL_COUNTRY_CODE
+                WHERE D.PID = #{param.pid}
+                ORDER BY D.PACK_CODE ASC, TO_NUMBER(D.BOX_NO) ASC, D.CREATE_TIME DESC
+		    ) TT
+		    GROUP BY
+		        TT.PID,
+				TT.CLEAR_NAME_CN,
+				TT.INVOICE_PRO_NAME_CN,
+				TT.INVOICE_PRO_NAME_EN,
+				TT.CLEAR_MATERIAL_EN,
+				TT.ARRIVAL_COUNTRY_NAME,
+				TT.HSCODE,
+				TT.MAIN_MATERIAL_CODE,
+				DECODE(TT.MERGE_ID, NULL, TT.ID || '_', TT.MERGE_ID || '_' || TT.CLEAR_MERGE_STATUS)
+    </select>
+
+    <!-- 查看已合并清关产品 -->
+    <select id="selectClearMerge"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsClearanceDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsClearanceDetailResult">
+        SELECT
+            C.ARRIVAL_COUNTRY_CODE,C.ARRIVAL_COUNTRY_NAME,
+            D.ID,D.PID,D.PACK_CODE,D.BOX_NO,D.PACK_DIRECT_CODE,D.MATERIAL_CODE,D.UNIT_PRICE,D.AMAZON_SALE_PRICE,D.CUSTOMS_UNIT_PRICE,D.AMAZON_SALE_LINK,D.AMAZON_PICTURE_LINK,D.SKU,
+            D.QUANTITY,D.UNIT,D.ATTRIBUTE,D.SPLIT_ORDER,D.BOX_NO_NAME,D.BOX_TYPE,D.WEIGHT,D.GOODS_LONG,D.WIDE,D.HIGH,D.CREATE_TIME,D.CREATE_USER,D.UPDATE_TIME,D.UPDATE_USER,D.EDIT_STATUS,
+            D.SPECIAL_MERGE_SIGN,D.SPECIAL_MATERIAL_CODE,D.SPECIAL_MATERIAL_ID,
+            T2.INVOICE_PRO_NAME_CN AS CLEAR_NAME_CN,
+            T2.INVOICE_PRO_NAME_CN AS INVOICE_PRO_NAME_CN,
+            T2.INVOICE_PRO_NAME_EN AS INVOICE_PRO_NAME_EN,
+            T2.HSCODE AS HSCODE,
+            DECODE(T2.IS_CHARGED, '0', '否', '1', '是', NULL) AS IS_CHARGED,
+            DECODE(T2.IS_MAGNET, '0', '否', '1', '是', NULL) AS IS_MAGNET,
+            T2.CLEAR_MATERIAL_EN AS CLEAR_MATERIAL_EN,
+            T2.FIT_BRAND AS FIT_BRAND,
+            T2.FIT_BRAND AS TYPE,
+            T2.STYLE AS STYLE,
+            T2.COMPANY_BRAND AS COMPANY_BRAND
+        FROM TG_CUSTOMS_CLEARANCE C
+        LEFT JOIN TG_CUSTOMS_CLEARANCE_DETAIL D ON C.ID = D.PID
+        LEFT JOIN
+        (
+            SELECT
+                P.*,
+                D.COUNTRY_CODE,
+                D.HSCODE
+            FROM TG_BASE_PRODUCT P
+            LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+            WHERE P.DATA_TYPE = '0'
+        ) T2 ON T2.MATERIAL_CODE = D.MATERIAL_CODE AND T2.COUNTRY_CODE = C.ARRIVAL_COUNTRY_CODE
+        WHERE
+            D.PID = #{param.pid}
+            AND D.ID IN
+            <foreach collection="param.detailIdList" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        ORDER BY D.PACK_CODE ASC, TO_NUMBER(D.BOX_NO) ASC, D.CREATE_TIME DESC
+    </select>
+
+    <!--获取赛狐店铺-->
+    <select id="getSaihuShop" resultType="com.tadpole.cloud.externalSystem.api.saihu.entity.SaihuShop">
+        SELECT C.* FROM SAIHU_SHOP C
+    </select>
+</mapper>

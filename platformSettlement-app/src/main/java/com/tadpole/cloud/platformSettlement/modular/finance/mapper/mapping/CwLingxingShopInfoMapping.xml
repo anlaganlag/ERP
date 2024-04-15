@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.CwLingxingShopInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.platformSettlement.api.finance.entity.CwLingxingShopInfo">
+        <id column="ID" property="id" />
+        <result column="SHOP_NAME" property="shopName" />
+        <result column="SITE" property="site" />
+        <result column="SID" property="sid" />
+        <result column="MID" property="mid" />
+        <result column="NAME" property="name" />
+        <result column="SELLER_ID" property="sellerId" />
+        <result column="ACCOUNT_NAME" property="accountName" />
+        <result column="SELLER_ACCOUNT_ID" property="sellerAccountId" />
+        <result column="REGION" property="region" />
+        <result column="COUNTRY" property="country" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="UPDATE_DATE" property="updateDate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, SHOP_NAME, SITE, SID, MID, NAME, SELLER_ID, ACCOUNT_NAME, SELLER_ACCOUNT_ID, REGION, COUNTRY, CREATE_DATE, UPDATE_DATE
+    </sql>
+
+    <!-- 根据同步信息类型获取位同步的店铺信息 -->
+    <select id="getLxShopInfoBySynType"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.LxShopSynRecord"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.CwLingxingShopInfo">
+        SELECT
+            SI.SHOP_NAME,
+            SI.SITE,
+            SI.SID
+        FROM CW_LINGXING_SHOP_INFO SI
+        LEFT JOIN LX_SHOP_SYN_RECORD SR ON SI.SID = SR.SID
+        WHERE
+            SR.SYN_STATUS IN ('0', '-1', '2')
+            AND SR.SYN_DATE = #{param.synDate}
+            AND SR.SYN_TYPE = #{param.synType}
+            <if test="param.sid != null and param.sid != ''">
+                AND  SR.SID = #{param.sid}
+            </if>
+    </select>
+</mapper>

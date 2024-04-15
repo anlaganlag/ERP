@@ -1,0 +1,802 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.AmazonInventoryListMapper">
+
+    <select id="afreshCount">
+        declare
+        --期间日期，默认生成当前的上一个月费用数据，取默认日期，如果需要刷历史数据，修改dur日期到指定月份日期即可
+        dur          date := sysdate;
+        currentYear  varchar2(10);
+        currentMonth varchar2(10);
+        begin
+        currentYear := extract(year from add_months(trunc(dur, 'mm'), -1));
+        currentMonth := extract(month from add_months(trunc(dur, 'mm'), -1));
+
+        --当前月生成的上一个月期间数据先清掉
+        delete amazon_inventory_list where YEAR = currentYear and MONTH = currentMonth;
+        --基表数据来源
+        insert into amazon_inventory_list(YEAR, MONTH, SHOP_NAME, SITE, PLATFORM, WAREHOUSE_NAME, INVENTORY_STATUS, SKU,
+        MATERIAL_CODE, DEPARTMENT, TEAM)
+        --1.“期初数量”和“期末数量
+        SELECT a.YEAR,
+        currentMonth,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM
+        FROM ENDING_INVENTORY a
+        JOIN ENDING_INVENTORY_DETAIL b ON a.ID = b.OUT_ID and b.IS_CANCEL = 0
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and a.PLATFORM = 'Amazon'
+        union
+        SELECT a.YEAR,
+        currentMonth,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM
+        FROM ENDING_INVENTORY a
+        JOIN ENDING_INVENTORY_DETAIL b ON a.ID = b.OUT_ID and b.IS_CANCEL = 0
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth - 1
+        and a.PLATFORM = 'Amazon'
+        union
+        ----销售出库
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM
+
+        FROM SALES_STOCK_OUT a
+        JOIN SALES_STOCK_OUT_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        and a.PLATFORM = 'Amazon'
+        union
+        --退货数量
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM
+
+        FROM SALES_RETURN a
+        JOIN SALES_RETURN_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        and a.PLATFORM = 'Amazon'
+        union
+        ----销毁移除
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM
+        FROM DISPOSE_REMOVE a
+        JOIN DISPOSE_REMOVE_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and a.PLATFORM = 'Amazon'
+        and b.SYNC_STATUS = 1
+        union
+        --ERP 国内发FBA
+        SELECT currentYear,
+        currentMonth,
+        a.SHOP_NAME,
+        a.SITE,
+        'Amazon',
+        a.WAREHOUSE_NAME,
+        'SELLABLE',
+        a.SKU,
+        a.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM
+        FROM AMAZON_INVENTORY_K3_TRANSFER a
+        join mcms_base_data.inv_product_gallery b
+        on a.shop_name = b.SYS_SHOPS_NAME and a.site = b.SYS_SITE and a.sku = b.SKU
+        union
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE
+        ,
+        b.DEPARTMENT,
+        b.TEAM
+        FROM INVENTORY_ADJUST_ADD a
+        JOIN INVENTORY_ADJUST_ADD_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        union
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE
+        ,
+        b.DEPARTMENT,
+        b.TEAM
+        FROM INVENTORY_ADJUST_REDUCE a
+        join INVENTORY_ADJUST_REDUCE_DETAIL b on a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1;
+        delete AMAZON_INVENTORY_LIST a
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and a.WAREHOUSE_NAME not like 'Amazon%';
+        --期初数量
+        merge into AMAZON_INVENTORY_LIST a
+        using (SELECT a.YEAR,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM,
+
+        --在途数量 物流待发数量 在库数 期初数量合计
+        sum(b.TRANSIT_NUM)                                 TRANSIT_NUM,
+        sum(b.LOGISTICS_NUM)                               LOGISTICS_NUM,
+        sum(b.STOCK_NUM)                                   STOCK_NUM,
+        sum(b.TRANSIT_NUM + b.LOGISTICS_NUM + b.STOCK_NUM) OPENING_TOTAL
+        FROM ENDING_INVENTORY a
+        JOIN ENDING_INVENTORY_DETAIL b ON a.ID = b.OUT_ID and b.IS_CANCEL = 0
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth - 1
+        group by a.YEAR, a.MONTH, a.SHOP_NAME, a.SITE, a.PLATFORM, a.WAREHOUSE_NAME, b.INVENTORY_STATUS, b.SKU,
+        b.MATERIAL_CODE, b.DEPARTMENT, b.TEAM
+        ) b
+        on (
+        a.YEAR = b.YEAR and a.MONTH = currentMonth and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.PLATFORM = b.PLATFORM and a.WAREHOUSE_NAME = b.WAREHOUSE_NAME
+        and a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU and a.MATERIAL_CODE = b.MATERIAL_CODE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM)
+        when matched then
+        update
+        set a.OPENING_TOTAL=b.OPENING_TOTAL,
+        a.OPENING_IN_STOCK=b.STOCK_NUM,
+        a.OPENING_IN_TRANSIT=b.TRANSIT_NUM,
+        a.OPENING_LOGISTICS=b.LOGISTICS_NUM;
+
+        --【入库数量】- 国内发FBA
+        merge into AMAZON_INVENTORY_LIST a
+        using (
+        SELECT a.id, b.QTY
+        FROM AMAZON_INVENTORY_LIST a
+        join AMAZON_INVENTORY_K3_TRANSFER b
+        on a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and a.MATERIAL_CODE = b.MATERIAL_CODE and
+        a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and a.SKU = b.SKU and
+        a.INVENTORY_STATUS = 'SELLABLE'
+        and a.YEAR = currentYear and a.MONTH = currentMonth
+        join mcms_base_data.inv_product_gallery c
+        on b.shop_name = c.SYS_SHOPS_NAME and b.site = c.SYS_SITE and b.sku = c.SKU and
+        b.MATERIAL_CODE = c.MATERIAL_CODE
+        and a.DEPARTMENT = c.DEPARTMENT and a.TEAM = c.TEAM
+        ) b
+        on (a.id = b.ID)
+        when matched then
+        update set a.INBOUND_DOMESTIC_FBA=b.QTY;
+        --【入库数量】-EU調撥單
+        merge into AMAZON_INVENTORY_LIST a
+        using (
+        SELECT a.id, b.QTY
+        FROM AMAZON_INVENTORY_LIST a
+        join AMAZON_INVENTORY_EU_TRANSFER b
+        on a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and a.SKU = b.sku and a.INVENTORY_STATUS = 'SELLABLE'
+        and a.YEAR = currentYear and a.MONTH = currentMonth
+        ) b
+        on (a.id = b.ID)
+        when matched then
+        update set a.INBOUND_EU_TRANSFER=b.QTY;
+
+        --【入库数量】-海外仓发FBA
+        merge into AMAZON_INVENTORY_LIST a
+        using (
+        SELECT a.id, b.qty
+        FROM AMAZON_INVENTORY_LIST a
+        join (
+        SELECT PLATFORM || '_' || SYS_SHOPS_NAME || '_' || SYS_SITE || '_仓库' WAREHOUSE_NAME,
+        a.SYS_SHOPS_NAME,a.SYS_SITE,b.DEPARTMENT,b.TEAM,b.MATERIAL_CODE,b.SKU,
+        sum(b.QUANTITY)                                       qty
+        FROM logistics.OVERSEAS_OUT_WAREHOUSE a
+        join logistics.OVERSEAS_OUT_WAREHOUSE_DETAIL b on a.OUT_ORDER = b.OUT_ORDER
+        where a.CREATE_TIME > add_months(trunc(dur, 'mm'), -1)
+        and a.CREATE_TIME &lt; trunc(dur, 'mm')
+        and a.OPERATE_TYPE = '海外仓发亚马逊仓'
+        and a.SYNC_ERP_STATUS=1
+        group by a.PLATFORM, a.SYS_SHOPS_NAME, a.SYS_SITE, b.SKU,b.DEPARTMENT,b.TEAM,b.MATERIAL_CODE
+        ) b on   a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and
+        a.SKU = b.SKU and a.SHOP_NAME=b.SYS_SHOPS_NAME and a.SITE=b.SYS_SITE and  a.DEPARTMENT=b.DEPARTMENT and a.TEAM=b.TEAM
+        and a.MATERIAL_CODE=b.MATERIAL_CODE and a.INVENTORY_STATUS='SELLABLE'
+        and a.YEAR = currentYear and a.MONTH = currentMonth
+        ) b
+        on (a.ID = b.ID)
+        when matched then
+        update set a.INBOUND_OW_TO_FBA=b.QTY;
+
+        --【出库数量】-当月销售数量
+        merge into AMAZON_INVENTORY_LIST a
+        using (SELECT a.YEAR,
+        a.MONTH,
+        a.WAREHOUSE_NAME,
+        a.SHOP_NAME,
+        a.SITE,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.DEPARTMENT,
+        b.TEAM,
+        sum(b.SALES_STOCKOUT_AMOUNT) qty
+        FROM SALES_STOCK_OUT a
+        JOIN SALES_STOCK_OUT_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.WAREHOUSE_NAME, a.SHOP_NAME, a.SITE, b.INVENTORY_STATUS, b.SKU, b.DEPARTMENT,
+        b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_MONTHLY_SALES=b.qty;
+        --【出库数量】-当月退货数量
+        merge into AMAZON_INVENTORY_LIST a
+        using (SELECT a.YEAR,
+        a.MONTH,
+        a.WAREHOUSE_NAME,
+        a.SHOP_NAME,
+        a.SITE,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.DEPARTMENT,
+        b.TEAM,
+        sum(b.SALES_RETURN_AMOUNT) qty
+        FROM SALES_RETURN a
+        JOIN SALES_RETURN_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.WAREHOUSE_NAME, a.SHOP_NAME, a.SITE, b.INVENTORY_STATUS, b.SKU, b.DEPARTMENT,
+        b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_MONTHLY_RETURNED= -b.qty;
+        --【出库数量】-当月销毁移除数量
+        merge into AMAZON_INVENTORY_LIST a
+        using (SELECT a.YEAR,
+        a.MONTH,
+        a.WAREHOUSE_NAME,
+        a.SHOP_NAME,
+        a.SITE,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.DEPARTMENT,
+        b.TEAM,
+        sum(b.REMOVE_AMOUNT)  REMOVE_AMOUNT,
+        sum(b.DISPOSE_AMOUNT) DISPOSE_AMOUNT
+        FROM DISPOSE_REMOVE a
+        JOIN DISPOSE_REMOVE_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.WAREHOUSE_NAME, a.SHOP_NAME, a.SITE, b.INVENTORY_STATUS, b.SKU, b.DEPARTMENT,
+        b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_MONTHLY_REMOVAL=b.REMOVE_AMOUNT, a.OUTGOING_MONTHLY_DESTORYED=DISPOSE_AMOUNT;
+
+        --【出库数量】-Amazon库存调增
+        merge into AMAZON_INVENTORY_LIST a
+        using (
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        INVENTORY_STATUS,
+        B.SKU,
+        b.DEPARTMENT,
+        b.TEAM,
+        sum(ADJUST_NUM) QTY
+        FROM INVENTORY_ADJUST_ADD a
+        JOIN INVENTORY_ADJUST_ADD_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.SHOP_NAME, a.SITE, INVENTORY_STATUS, B.SKU, b.DEPARTMENT, b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_INVENTORY_INCREASE= -b.QTY;
+
+        --【出库数量】-Amazon库存调减
+        merge into AMAZON_INVENTORY_LIST a
+        using (
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        b.DEPARTMENT,
+        b.TEAM,
+        INVENTORY_STATUS,
+        B.SKU,
+        sum(ADJUST_NUM) QTY
+        FROM INVENTORY_ADJUST_REDUCE a
+        join INVENTORY_ADJUST_REDUCE_DETAIL b on a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.SHOP_NAME, a.SITE, INVENTORY_STATUS, B.SKU, b.DEPARTMENT, b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_INVENTORY_REDUCTION=b.QTY;
+
+        --【期末数量】-店铺库存数
+        merge into AMAZON_INVENTORY_LIST a
+        using (
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.WAREHOUSE_NAME,
+        b.SKU,
+        b.INVENTORY_STATUS,
+        b.DEPARTMENT,
+        b.TEAM,
+        --在途数量 物流待发数量 在库数 期末数量合计
+        sum(b.TRANSIT_NUM)                                 TRANSIT_NUM,
+        sum(b.LOGISTICS_NUM)                               LOGISTICS_NUM,
+        sum(b.STOCK_NUM)                                   STOCK_NUM,
+        sum(b.TRANSIT_NUM + b.LOGISTICS_NUM + b.STOCK_NUM) CLOSING_STORE_TOTAL
+        FROM ENDING_INVENTORY a
+        JOIN ENDING_INVENTORY_DETAIL b ON a.ID = b.OUT_ID and b.IS_CANCEL = 0
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        group by a.YEAR, a.MONTH, a.SHOP_NAME, a.SITE, a.WAREHOUSE_NAME, b.SKU, b.INVENTORY_STATUS, b.DEPARTMENT, b.TEAM
+        ) b
+        on (
+        a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE
+        and a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU and a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM)
+        when matched then
+        update
+        set a.CLOSING_STORE_INVENTORY_IN_TRANSIT=b.TRANSIT_NUM,
+        a.CLOSING_STORE_INVENTORY_IN_STOCK=b.STOCK_NUM,
+        a.CLOSING_STORE_INVENTORY_LOGISTICS=b.LOGISTICS_NUM,
+        a.CLOSING_STORE_INVENTORY_TOTAL=b.CLOSING_STORE_TOTAL;
+
+        --合计
+        update AMAZON_INVENTORY_LIST a
+        set
+        --【入库数量】
+        a.INBOUND_TOTAL=a.INBOUND_DOMESTIC_FBA + a.INBOUND_OW_TO_FBA + a.INBOUND_EU_TRANSFER,
+        --【出库数量】 【当月销售数量】+【当月退货数量】+【当月销毁数量】+【当月移除数量】+【Amazon库存调增】+【Amazon库存调减】
+        a.OUTGOING_TOTAL=a.OUTGOING_MONTHLY_SALES + a.OUTGOING_MONTHLY_RETURNED + a.OUTGOING_MONTHLY_DESTORYED +
+        a.OUTGOING_MONTHLY_REMOVAL + a.OUTGOING_INVENTORY_INCREASE + a.OUTGOING_INVENTORY_REDUCTION
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth;
+        --【期末数量账面数】
+        update AMAZON_INVENTORY_LIST a
+        set
+        --期初数量合计+入库数量合计-出库数量合计
+        a.CLOSING_QUANTITY_BOOK=a.OPENING_TOTAL + a.INBOUND_TOTAL - a.OUTGOING_TOTAL
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth;
+
+        --【盘盈盘亏数量】
+        update AMAZON_INVENTORY_LIST a
+        set
+        -- 当差小于等于0，取0
+        INVENTORY_SURPLUS= decode(sign(CLOSING_STORE_INVENTORY_TOTAL - CLOSING_QUANTITY_BOOK), -1, 0,
+        CLOSING_STORE_INVENTORY_TOTAL - CLOSING_QUANTITY_BOOK),
+        --当差小于0，取差绝对值
+        INVENTORY_LOSS=decode(sign(CLOSING_STORE_INVENTORY_TOTAL - CLOSING_QUANTITY_BOOK), -1,
+        abs(CLOSING_STORE_INVENTORY_TOTAL - CLOSING_QUANTITY_BOOK), 0)
+        WHERE a.YEAR = currentYear
+        and a.MONTH = currentMonth;
+
+        --刷新物料属性
+        merge into AMAZON_INVENTORY_LIST a
+        using (
+        SELECT a.id,
+        ma.CATEGORY,
+        ma.PRODUCT_TYPE,
+        ma.PRODUCT_NAME,
+        ma.STYLE,
+        ma.MAIN_MATERIAL,
+        ma.DESIGN,
+        ma.COMPANY_BRAND,
+        ma.FIT_BRAND,
+        ma.MODEL,
+        ma.COLOR,
+        ma.SIZES,
+        ma.PACKING,
+        ma.VERSION,
+        ma.TYPE,
+        ma.FIT_BRAND || ' ' || ma.MODEL || ' ' || ma.STYLE || ' ' || ma.DESIGN || ' ' || ma.COLOR || ' ' ||
+        ma.MAIN_MATERIAL || ' ' || ma.PACKING || ' ' || ma.VERSION SpecModel --组合属性
+        ,
+        ma.FIRST_ORDER_DATE
+        FROM AMAZON_INVENTORY_LIST a
+        join mcms_base_data.RP_MATERIAL ma on a.MATERIAL_CODE = ma.MATERIAL_CODE
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        ) b
+        on (a.id = b.ID)
+        when matched then
+        update
+        set a.CATEGORY=b.CATEGORY,
+        a.PRODUCT_TYPE=b.PRODUCT_TYPE,
+        a.PRODUCT_NAME=b.PRODUCT_NAME,
+        a.STYLE=b.STYLE,
+        a.MAIN_MATERIAL=b.MAIN_MATERIAL,
+        a.DESIGN=b.DESIGN,
+        a.COMPANY_BRAND=b.COMPANY_BRAND,
+        a.FIT_BRAND=b.FIT_BRAND,
+        a.MODEL=b.MODEL,
+        a.COLOR=b.COLOR,
+        a.SIZES=b.SIZES,
+        a.PACKING=b.PACKING,
+        a.VERSION=b.VERSION,
+        a.TYPE=b.TYPE,
+        a.SPECMODEL=b.SPECMODEL,
+        a.FIRST_ORDER_DATE=b.FIRST_ORDER_DATE;
+
+
+        --销售组织明细
+        --当前月生成的上一个月期间数据先清掉
+        delete AMAZON_INVENTORY_LIST_ORG where YEAR = currentYear and MONTH = currentMonth;
+        --基表数据来源
+        insert into AMAZON_INVENTORY_LIST_ORG(YEAR, MONTH, SHOP_NAME, SITE, PLATFORM, WAREHOUSE_NAME, INVENTORY_STATUS, SKU,
+        MATERIAL_CODE, DEPARTMENT, TEAM, SALES_ORG)
+        --期初期末
+        SELECT a.YEAR,
+        currentMonth,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM,
+        a.ORG salesOrg
+        FROM ENDING_INVENTORY a
+        JOIN ENDING_INVENTORY_DETAIL b ON a.ID = b.OUT_ID and b.IS_CANCEL = 0
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and a.PLATFORM = 'Amazon'
+        union
+        SELECT a.YEAR,
+        currentMonth,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM,
+        a.ORG salesOrg
+        FROM ENDING_INVENTORY a
+        JOIN ENDING_INVENTORY_DETAIL b ON a.ID = b.OUT_ID and b.IS_CANCEL = 0
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth - 1
+        and a.PLATFORM = 'Amazon'
+        union
+        ----销售出库
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM,
+        a.SALES_ORGANIZATION salesOrg
+        FROM SALES_STOCK_OUT a
+        JOIN SALES_STOCK_OUT_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        and a.PLATFORM = 'Amazon'
+        union
+        --退货数量
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM,
+        a.SALES_ORGANIZATION salesOrg
+        FROM SALES_RETURN a
+        JOIN SALES_RETURN_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        and a.PLATFORM = 'Amazon'
+        union
+        ----销毁移除
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM,
+        a.ORG salesOrg
+        FROM DISPOSE_REMOVE a
+        JOIN DISPOSE_REMOVE_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and a.PLATFORM = 'Amazon'
+        and b.SYNC_STATUS = 1
+        union
+        --ERP 国内发FBA
+        SELECT currentYear,
+        currentMonth,
+        a.SHOP_NAME,
+        a.SITE,
+        'Amazon',
+        a.WAREHOUSE_NAME,
+        'SELLABLE',
+        a.SKU,
+        a.MATERIAL_CODE,
+        b.DEPARTMENT,
+        b.TEAM,
+        'Amazon_' || a.SHOP_NAME || '_' || a.SITE
+        FROM AMAZON_INVENTORY_K3_TRANSFER a
+        join mcms_base_data.inv_product_gallery b
+        on a.shop_name = b.SYS_SHOPS_NAME and a.site = b.SYS_SITE and a.sku = b.SKU
+
+        union
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE
+        ,
+        b.DEPARTMENT,
+        b.TEAM,
+        'Amazon_' || a.SHOP_NAME || '_' || a.SITE
+        FROM INVENTORY_ADJUST_ADD a
+        JOIN INVENTORY_ADJUST_ADD_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        union
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        a.PLATFORM,
+        a.WAREHOUSE_NAME,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        b.MATERIAL_CODE
+        ,
+        b.DEPARTMENT,
+        b.TEAM,
+        'Amazon_' || a.SHOP_NAME || '_' || a.SITE
+        FROM INVENTORY_ADJUST_REDUCE a
+        join INVENTORY_ADJUST_REDUCE_DETAIL b on a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1;
+        delete AMAZON_INVENTORY_LIST_ORG a
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and a.WAREHOUSE_NAME not like 'Amazon%';
+
+
+        --【出库数量】-当月销售数量
+        merge into AMAZON_INVENTORY_LIST_ORG a
+        using (SELECT a.YEAR,
+        a.MONTH,
+        a.WAREHOUSE_NAME,
+        a.SHOP_NAME,
+        a.SITE,
+        b.DEPARTMENT,
+        b.TEAM,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        a.SALES_ORGANIZATION    SALES_ORG,
+        b.SALES_STOCKOUT_AMOUNT qty
+        FROM SALES_STOCK_OUT a
+        JOIN SALES_STOCK_OUT_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and a.SALES_ORG = b.SALES_ORG and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_MONTHLY_SALES=b.qty;
+        --【出库数量】-当月退货数量
+        merge into AMAZON_INVENTORY_LIST_ORG a
+        using (SELECT a.YEAR,
+        a.MONTH,
+        a.WAREHOUSE_NAME,
+        a.SHOP_NAME,
+        a.SITE,
+        b.DEPARTMENT,
+        b.TEAM,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        a.SALES_ORGANIZATION       SALES_ORG,
+        sum(b.SALES_RETURN_AMOUNT) qty
+        FROM SALES_RETURN a
+        JOIN SALES_RETURN_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.WAREHOUSE_NAME, a.SHOP_NAME, a.SITE, b.INVENTORY_STATUS, b.SKU, b.DEPARTMENT,
+        b.TEAM,
+        a.SALES_ORGANIZATION
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and a.SALES_ORG = b.SALES_ORG and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_MONTHLY_RETURNED= -b.qty;
+        --【出库数量】-当月销毁移除数量
+        merge into AMAZON_INVENTORY_LIST_ORG a
+        using (SELECT a.YEAR,
+        a.MONTH,
+        a.WAREHOUSE_NAME,
+        a.SHOP_NAME,
+        a.SITE,
+        b.DEPARTMENT,
+        b.TEAM,
+        b.INVENTORY_STATUS,
+        b.SKU,
+        a.ORG                 SALES_ORG,
+        sum(b.REMOVE_AMOUNT)  REMOVE_AMOUNT,
+        sum(b.DISPOSE_AMOUNT) DISPOSE_AMOUNT
+        FROM DISPOSE_REMOVE a
+        JOIN DISPOSE_REMOVE_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.WAREHOUSE_NAME, a.SHOP_NAME, a.SITE, b.INVENTORY_STATUS, b.SKU, a.ORG,
+        b.DEPARTMENT, b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.WAREHOUSE_NAME = b.WAREHOUSE_NAME and a.SALES_ORG = b.SALES_ORG and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_MONTHLY_REMOVAL=b.REMOVE_AMOUNT, a.OUTGOING_MONTHLY_DESTORYED=DISPOSE_AMOUNT;
+
+        --【出库数量】-Amazon库存调增
+        merge into AMAZON_INVENTORY_LIST_ORG a
+        using (
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        b.DEPARTMENT,
+        b.TEAM,
+        INVENTORY_STATUS,
+        B.SKU,
+        sum(ADJUST_NUM) QTY
+        FROM INVENTORY_ADJUST_ADD a
+        JOIN INVENTORY_ADJUST_ADD_DETAIL b ON a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.SHOP_NAME, a.SITE, INVENTORY_STATUS, B.SKU, b.DEPARTMENT, b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_INVENTORY_INCREASE= -b.QTY;
+
+        --【出库数量】-Amazon库存调减
+        merge into AMAZON_INVENTORY_LIST_ORG a
+        using (
+        SELECT a.YEAR,
+        a.MONTH,
+        a.SHOP_NAME,
+        a.SITE,
+        b.DEPARTMENT,
+        b.TEAM,
+        INVENTORY_STATUS,
+        B.SKU,
+        sum(ADJUST_NUM) QTY
+        FROM INVENTORY_ADJUST_REDUCE a
+        join INVENTORY_ADJUST_REDUCE_DETAIL b on a.ID = b.OUT_ID
+        where a.YEAR = currentYear
+        and a.MONTH = currentMonth
+        and b.SYNC_STATUS = 1
+        group by a.YEAR, a.MONTH, a.SHOP_NAME, a.SITE, INVENTORY_STATUS, B.SKU, b.DEPARTMENT, b.TEAM
+        ) b
+        on (a.YEAR = b.YEAR and a.MONTH = b.MONTH and a.SHOP_NAME = b.SHOP_NAME and a.SITE = b.SITE and
+        a.DEPARTMENT = b.DEPARTMENT and a.TEAM = b.TEAM and
+        a.INVENTORY_STATUS = b.INVENTORY_STATUS and a.SKU = b.SKU)
+        when matched then
+        update set a.OUTGOING_INVENTORY_REDUCTION=b.QTY;
+
+        end;
+    </select>
+</mapper>

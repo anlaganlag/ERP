@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.SettlementDetailMapper">
+
+    <select id="getSettlementList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementParam">
+            SELECT * FROM CW_SETTLEMENT WHERE STATUS=1
+    </select>
+
+    <!--根据settlementId获取settlement明细数据-->
+    <select id="getSettlementDetailList" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail">
+        SELECT * FROM CW_SETTLEMENT_DETAIL
+        WHERE SETTLEMENT_ID = #{settlementId} AND (FINANCE_TYPE IS NULL OR FINANCE_TYPE = '')
+    </select>
+
+    <!--根据时间和settlementId汇总金额-->
+    <select id="getSettlementMoney" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail">
+        SELECT
+            D.SETTLEMENT_ID,
+            SUM(D.SALES_PROMOTION) SALES_PROMOTION,
+            SUM(D.COMMISSION) COMMISSION ,
+            SUM(D.PREVIOUS_RESERVE_AMOUNT) PREVIOUS_RESERVE_AMOUNT ,
+            SUM(D.REFUND_COMMISSION) REFUND_COMMISSION ,
+            SUM(D.DISPOSAL_FEE) DISPOSAL_FEE ,
+            SUM(D.LONG_TERM_STORAGE_FEE) LONG_TERM_STORAGE_FEE ,
+            SUM(D.GOOD_WILL) GOOD_WILL ,
+            SUM(D.REFUND_PROMOTION) REFUND_PROMOTION ,
+            SUM(D.ADVERTISING) ADVERTISING ,
+            SUM(D.ADVERTISING_REFUND) ADVERTISING_REFUND ,
+            SUM(D.AMAZON_FEE) AMAZON_FEE ,
+            SUM(D.SALES_TAX) SALES_TAX ,
+            SUM(D.SALES_OTHER) SALES_OTHER ,
+            SUM(D.REIMBURSEMENT) REIMBURSEMENT ,
+            SUM(D.OTHER) OTHER ,
+            SUM(D.OTHER_FBA_ITF) OTHER_FBA_ITF,
+            SUM(D.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING ,
+            SUM(D.STORAGE_FEE) STORAGE_FEE ,
+            SUM(D.REFUND) REFUND ,
+            SUM(D.WITHHELD_TAX) WITHHELD_TAX ,
+            SUM(D.CURRENT_RESERVE_AMOUNT) CURRENT_RESERVE_AMOUNT,
+            SUM(D.UNSUCCESSFUL_TRANSFER) UNSUCCESSFUL_TRANSFER ,
+            SUM(D.REMOVAL_FEE) REMOVAL_FEE ,
+            SUM(D.SALES_PRINCIPAL) SALES_PRINCIPAL,
+            SUM(D.LIGHTNING_DEAL_FEE) LIGHTNING_DEAL_FEE,
+            SUM(D.SUCCESSFUL_CHARGE) SUCCESSFUL_CHARGE,
+            SUM(D.PAYABLE_TO_AMAZON) PAYABLE_TO_AMAZON,
+            SUM(D.AMOUNT) AMOUNT
+        FROM CW_SETTLEMENT_DETAIL D
+        LEFT JOIN CW_SETTLEMENT S ON S.SETTLEMENT_ID=D.SETTLEMENT_ID
+        WHERE
+            D.SETTLEMENT_ID=#{paramCondition.settlementId}
+            AND D.POSTED_DATE_TIME >=#{paramCondition.postedDate}
+            AND D.POSTED_DATE_TIME&lt;=#{paramCondition.createTime}
+            AND S.STATUS=2
+        GROUP BY D.SETTLEMENT_ID
+    </select>
+
+    <!--非Amazon平台费-->
+    <select id="getNotAmazonFee"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail">
+        SELECT
+            SETTLEMENT_ID,
+            SUM(AMAZON_FEE) AMAZON_FEE
+        FROM CW_SETTLEMENT_DETAIL
+        WHERE
+            SETTLEMENT_ID=#{paramCondition.settlementId}
+            AND POSTED_DATE_TIME >=#{paramCondition.postedDate}
+            AND POSTED_DATE_TIME &lt;=#{paramCondition.createTime}
+            AND PLATFORM !='Amazon'
+        GROUP BY SETTLEMENT_ID
+    </select>
+
+    <select id="getPlatformAmazonFee"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetail">
+
+        select SETTLEMENT_ID,PLATFORM,
+               sum(AMAZON_FEE) AMAZON_FEE
+        from CW_SETTLEMENT_DETAIL WHERE SETTLEMENT_ID=#{paramCondition.settlementId}
+                                    and POSTED_DATE_TIME >=#{paramCondition.postedDate}
+                                    and POSTED_DATE_TIME &lt;=#{paramCondition.createTime}
+                                    and PLATFORM !='Amazon'
+        group by SETTLEMENT_ID,PLATFORM
+
+    </select>
+    <select id="refreshFailure" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StatementIncomeParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.DetailResult">
+        select D.*,C.FINANCIAL_CLASSIFICATION,C.ID CLASSIFICATION_ID,
+               case C.VERIFY_STATUS when  0 then '未审核'
+                                    when  1 then '审核通过'
+                                    when  2 then '未通过' end VERIFY_STATUS,
+               case C.EDIT_STATUS when  0 then '未编辑'
+                                  when  1 then '已编辑' end EDIT_STATUS,
+               case STATUS when  0 then '禁用'
+                           when  1 then '启用' end STATUS,C.COST_NAME,C.CLASSIFICATION_TYPE,C.COST_NAME,C.COST_NAME_CN,
+               C.SITE,C.FINANCIAL_CLASSIFICATION,C.SUBJECT_NAME,C.SUBJECT_CLASSIFICATION_ONE,C.SUBJECT_CLASSIFICATION_TWO
+        from CW_SETTLEMENT_DETAIL D LEFT JOIN CW_FINANCIAL_CLASSIFICATION C ON C.COST_NAME=D.TRANSACTION_TYPE||D.AMOUNT_TYPE||D.AMOUNT_DESCRIPTION
+            AND C.CLASSIFICATION_TYPE='Settlement' and C.EDIT_STATUS=0
+        WHERE D.SETTLEMENT_ID=#{paramCondition.settlementId}
+        and D.FINANCE_TYPE is null
+    </select>
+
+    <!--根据settlementId刷新财务分类-->
+    <update id="refreshFinancialClass"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailParam">
+              UPDATE CW_SETTLEMENT_DETAIL T
+              SET
+                  T.SALES_PROMOTION=CASE WHEN T.FINANCE_TYPE='SALES PROMOTION' THEN T.AMOUNT ELSE 0 END,
+                  T.COMMISSION=CASE WHEN T.FINANCE_TYPE='COMMISSION' THEN T.AMOUNT ELSE 0 END,
+                  T.PREVIOUS_RESERVE_AMOUNT=CASE WHEN T.FINANCE_TYPE='PREVIOUS RESERVE AMOUNT' THEN T.AMOUNT ELSE 0 END,
+                  T.REFUND_COMMISSION=CASE WHEN T.FINANCE_TYPE='REFUND COMMISSION' THEN T.AMOUNT ELSE 0 END,
+                  T.DISPOSAL_FEE=CASE WHEN T.FINANCE_TYPE='DISPOSAL FEE' THEN T.AMOUNT ELSE 0 END,
+                  T.LONG_TERM_STORAGE_FEE=CASE WHEN T.FINANCE_TYPE='LONG-TERM STORAGE FEE' THEN T.AMOUNT ELSE 0 END,
+                  T.GOOD_WILL=CASE WHEN T.FINANCE_TYPE='GOODWILL' THEN T.AMOUNT ELSE 0 END,
+                  T.REFUND_PROMOTION=CASE WHEN T.FINANCE_TYPE='REFUND PROMOTION' THEN T.AMOUNT ELSE 0 END,
+                  T.ADVERTISING=CASE WHEN T.FINANCE_TYPE='ADVERTISING' AND NOT (T.TRANSACTION_TYPE = 'ServiceFee' AND T.AMOUNT_TYPE = 'Refund for Advertiser' AND T.AMOUNT_DESCRIPTION = 'TransactionTotalAmount') THEN T.AMOUNT ELSE 0 END,
+                  T.ADVERTISING_REFUND=CASE WHEN T.FINANCE_TYPE='ADVERTISING' AND T.TRANSACTION_TYPE = 'ServiceFee' AND T.AMOUNT_TYPE = 'Refund for Advertiser' AND T.AMOUNT_DESCRIPTION = 'TransactionTotalAmount' THEN T.AMOUNT ELSE 0 END,
+                  T.AMAZON_FEE=CASE WHEN T.FINANCE_TYPE='AMAZON FEE' THEN T.AMOUNT ELSE 0 END,
+                  T.SALES_TAX=CASE WHEN T.FINANCE_TYPE='SALES-TAX' THEN T.AMOUNT ELSE 0 END,
+                  T.SALES_OTHER=CASE WHEN T.FINANCE_TYPE='SALES-OTHER' THEN T.AMOUNT ELSE 0 END,
+                  T.REIMBURSEMENT=CASE WHEN T.FINANCE_TYPE='REIMBURSEMENT' THEN T.AMOUNT ELSE 0 END,
+                  T.OTHER=CASE WHEN T.FINANCE_TYPE='OTHER' AND NOT (T.SYS_SITE = 'US' AND T.AMOUNT_DESCRIPTION IN('FBAInboundTransportationProgramFee', 'FBAInboundTransportationFee')) THEN T.AMOUNT ELSE 0 END,
+                  T.OTHER_FBA_ITF=CASE WHEN T.FINANCE_TYPE='OTHER' AND T.SYS_SITE = 'US' AND T.AMOUNT_DESCRIPTION IN('FBAInboundTransportationProgramFee', 'FBAInboundTransportationFee') THEN T.AMOUNT ELSE 0 END,
+                  T.GIFTWARP_SHIPPING=CASE WHEN T.FINANCE_TYPE='GIFTWARP'||CHR(38)||'SHIPPING' THEN T.AMOUNT ELSE 0 END,
+                  T.CURRENT_RESERVE_AMOUNT=CASE WHEN T.FINANCE_TYPE='CURRENT RESERVE AMOUNT' THEN T.AMOUNT ELSE 0 END,
+                  T.STORAGE_FEE=CASE WHEN T.FINANCE_TYPE='STORAGE FEE' THEN T.AMOUNT ELSE 0 END,
+                  T.REFUND=CASE WHEN T.FINANCE_TYPE='REFUND' THEN T.AMOUNT ELSE 0 END,
+                  T.WITHHELD_TAX=CASE WHEN T.FINANCE_TYPE='WITHHELD_TAX' THEN T.AMOUNT ELSE 0 END,
+                  T.UNSUCCESSFUL_TRANSFER=CASE WHEN T.FINANCE_TYPE='UNSUCCESSFUL TRANSFER' THEN T.AMOUNT ELSE 0 END,
+                  T.REMOVAL_FEE=CASE WHEN T.FINANCE_TYPE='REMOVAL FEE' THEN T.AMOUNT ELSE 0 END,
+                  T.SALES_PRINCIPAL=CASE WHEN T.FINANCE_TYPE='SALES-PRINCIPAL' THEN T.AMOUNT ELSE 0 END,
+                  T.LIGHTNING_DEAL_FEE=CASE WHEN T.FINANCE_TYPE='LIGHTNING DEAL FEE' THEN T.AMOUNT ELSE 0 END,
+                  T.SUCCESSFUL_CHARGE=CASE WHEN T.FINANCE_TYPE='SUCCESSFUL CHARGE' THEN T.AMOUNT ELSE 0 END,
+                  T.PAYABLE_TO_AMAZON=CASE WHEN T.FINANCE_TYPE='PAYABLE TO AMAZON' THEN T.AMOUNT ELSE 0 END
+             WHERE T.SETTLEMENT_ID = #{paramCondition.settlementId}
+    </update>
+
+    <!--根据settlementId更新settlement主表状态为2：已刷财务分类-->
+    <update id="updateStatus" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailParam">
+        UPDATE CW_SETTLEMENT SET STATUS=2  WHERE STATUS=1 AND SETTLEMENT_ID= #{paramCondition.settlementId}
+    </update>
+
+    <!--未刷成功的财务分类写入财务分类表-->
+    <insert id="InsertFinancialClass" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailParam">
+        INSERT INTO CW_FINANCIAL_CLASSIFICATION
+        (
+            COST_NAME,
+            TRADE_TYPE,
+            AMOUNT_TYPE,
+            COST_DESCRIPTION,
+            CLASSIFICATION_TYPE
+        )
+        SELECT
+            DISTINCT A.TRANSACTION_TYPE || A.AMOUNT_TYPE || A.AMOUNT_DESCRIPTION COST_NAME,
+            A.TRANSACTION_TYPE TRADE_TYPE,
+            A.AMOUNT_TYPE AMOUNT_TYPE,
+            A.AMOUNT_DESCRIPTION COST_DESCRIPTION,
+            'Settlement' CLASSIFICATION_TYPE
+        FROM CW_SETTLEMENT_DETAIL A
+        LEFT JOIN CW_FINANCIAL_CLASSIFICATION B
+            ON B.TRADE_TYPE = A.TRANSACTION_TYPE
+            AND B.AMOUNT_TYPE = A.AMOUNT_TYPE
+            AND B.COST_DESCRIPTION = A.AMOUNT_DESCRIPTION
+            AND B.CLASSIFICATION_TYPE = 'Settlement'
+        WHERE
+            (A.FINANCE_TYPE IS NULL AND B.AMOUNT_TYPE IS NULL)
+        AND (
+            (A.TRANSACTION_TYPE != 'CouponRedemptionFee' AND A.AMOUNT_TYPE != 'CouponRedemptionFee')
+            OR
+            (
+                A.TRANSACTION_TYPE != 'other-transaction' AND
+                A.AMOUNT_TYPE != 'other-transaction' AND
+                A.AMOUNT_DESCRIPTION NOT LIKE 'Transfer of funds unsuccessful:%'
+            )
+            OR
+            (
+                A.TRANSACTION_TYPE != 'Tax'
+                AND A.AMOUNT_TYPE != 'Tax Withheld'
+                AND A.AMOUNT_DESCRIPTION NOT LIKE 'TDS - Section 194-O%'
+            )
+        )
+    </insert>
+
+    <!--重新刷新增的财务分类到结算明细-->
+    <update id="FillFinancialClass"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailParam">
+            MERGE INTO
+            (
+                SELECT * FROM CW_SETTLEMENT_DETAIL WHERE POSTED_DATE > TRUNC(SYSDATE - 60)
+            ) T
+            USING (
+                SELECT
+                    Y.TRADE_TYPE,
+                    Y.AMOUNT_TYPE,
+                    Y.COST_DESCRIPTION,
+                    Y.FINANCIAL_CLASSIFICATION
+                FROM CW_FINANCIAL_CLASSIFICATION Y
+                WHERE
+                    CLASSIFICATION_TYPE = 'Settlement'
+                    AND VERIFY_STATUS=1
+                    AND STATUS=1
+                GROUP BY
+                    Y.TRADE_TYPE,
+                    Y.AMOUNT_TYPE,
+                    Y.COST_DESCRIPTION,
+                    Y.FINANCIAL_CLASSIFICATION
+            ) U
+            ON (
+                T.TRANSACTION_TYPE = U.TRADE_TYPE
+                AND T.AMOUNT_TYPE=U.AMOUNT_TYPE
+                AND T.AMOUNT_DESCRIPTION=U.COST_DESCRIPTION
+            )
+            WHEN MATCHED THEN
+                UPDATE SET T.FINANCE_TYPE = U.FINANCIAL_CLASSIFICATION WHERE (T.FINANCE_TYPE IS NULL OR T.FINANCE_TYPE= '')
+    </update>
+
+    <!--更新Settlement源报告站点为空的站点-->
+    <update id="updateSite" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementReportCheck">
+        update  CW_SETTLEMENT_DETAIL t set t.SYS_SITE=#{paramCondition.site} WHERE t.SYS_SITE is null and  t.SETTLEMENT_ID=#{paramCondition.settlementId}
+    </update>
+
+</mapper>

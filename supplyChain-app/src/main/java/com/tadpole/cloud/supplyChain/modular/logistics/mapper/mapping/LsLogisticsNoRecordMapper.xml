@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsLogisticsNoRecordMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        A.ID,A.SHIPMENT_NUM,A.OPT_TYPE,A.OPT_DETAIL,A.CREATE_TIME,A.CREATE_USER,A.UPDATE_TIME,A.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsNoRecordParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsNoRecordResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM LS_LOGISTICS_NO_RECORD A
+        WHERE A.SHIPMENT_NUM = #{param.shipmentNum}
+        ORDER BY A.ID DESC
+    </select>
+
+</mapper>

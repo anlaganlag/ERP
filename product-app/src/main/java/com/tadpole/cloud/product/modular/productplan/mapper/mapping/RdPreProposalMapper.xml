@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.productplan.mapper.RdPreProposalMapper">
+
+    <select id="listPage" resultType="com.tadpole.cloud.product.api.productplan.model.result.RdPreProposalExtentResult">
+        select t2.SYS_PL_NAME,
+            t1.SYS_YA_CODE,t1.SYS_C_DATE,t1.SYS_L_DATE,t1.SYS_DEPT_CODE,t1.SYS_DEPT_NAME,t1.SYS_PER_CODE,t1.SYS_PER_NAME,
+            t1.SYS_YA_STATUS,t1.SYS_PL_CODE,t1.SYS_YA_SCENE,t1.SYS_PRO_SOURCE,t1.SYS_DEV_METHOND,t1.SYS_SPU,t1.SYS_OLD_PRO_DEFINE_NUM,
+            t1.SYS_OLD_PRO_DEFINE_VERSION,t1.SYS_PRO_NAME,t1.SYS_STYLE,t1.SYS_BRAND,t1.SYS_MAIN_MATERIAL,t1.SYS_MODEL,t1.SYS_COM_REFER_PIC,
+            t1.SYS_COM_REFER_LINK,t1.SYS_ANNEX,t1.SYS_PUSH_SAMP_QTY,t1.SYS_YA_SELL_POINT_DESC,t1.SYS_YA_MARKET_ASSE,t1.SYS_MAIN_MARKET,t1.SYS_SEASON_LABEL,
+            t1.SYS_FESTIVAL_LABEL,t1.SYS_YA_FUNC_REQUIRE,t1.SYS_YA_SIZE_REQUIRE,t1.SYS_YA_WEIGHT_REQUIRE,t1.SYS_YA_MATERIAL_REQUIRE,t1.SYS_YA_PATTERN_REQUIRE,
+            t1.SYS_YA_PARTS_REQUIRE,t1.SYS_YA_PACKAGE_REQUIRE,t1.SYS_YA_COMPLIANCE_REQUIRE,t1.SYS_YA_CERTIFICATION_REQUIREX,t1.SYS_YA_USAGE_SCENARIO,t1.SYS_YA_USER_GROUP,
+            t1.SYS_PATTERN_NEW_DEMAND,t1.SYS_PATTERN_NEW_DEMAND_PIC,t1.SYS_COLOR_NEW_DEMAND,t1.SYS_COLOR_NEW_DEMAND_PIC,t1.SYS_NORMS_NEW_DEMAND,t1.SYS_PACKAGE_QTY_NEW_DEMAND,
+            t1.SYS_PUR_COST_RANGE_REQ,t1.SYS_BOT_LINE_PUR_PRICE,t1.SYS_EST_SELL_PRICE,t1.SYS_BOT_LINE_SELL_PROFIT,t1.SYS_EST_ORDER_QTY,t1.SYS_LIST_TIME_NODE,t1.SYS_RD_SUGGEST,
+            t1.SYS_SUB_DATE,t1.SYS_SUB_PER_CODE,t1.SYS_SUB_PER_NAME,t2.SYS_PM_PER_CODE,t2.SYS_PM_PER_NAME,t1.SYS_ASSIGN_DATE,t1.SYS_ASSIGN_PER_NAME,t1.SYS_ASSIGN_PER_CODE,
+            t1.SYS_FEBK_RESULT,t1.SYS_FEBK_CONTENT,t1.SYS_FEBK_DATE,t1.SYS_FEBK_NEW_DEV_METHOND,t1.SYS_NEW_PRO_NAME,t1.SYS_NEW_STYLE,t1.SYS_NEW_BRAND,t1.SYS_NEW_MAIN_MATERIAL,
+            t1.SYS_NEW_MODEL,t1.SYS_FEBK_CHANGE_DESC,t1.SYS_FEBK_FIRST_ORDER_QTY_EVA,t1.SYS_FEBK_FIRST_ORDER_AMOUN_EVA,t1.SYS_FEBK_PROPOSAL_LEVEL,t1.SYS_FEBK_PER_NAME,
+            t1.SYS_FEBK_PER_CODE,t1.SYS_EXAM_RESULT,t1.SYS_EXAM_INSTRUCTE,t1.SYS_EXAM_PER_CODE,t1.SYS_EXAM_PER_NAME,t1.SYS_EXAM_DATE,t1.SYS_APPR_RESULT,t1.SYS_APPR_REMARKS,
+            t1.SYS_APPR_DATE,t1.SYS_APPR_PER_CODE,t1.SYS_APPR_PER_NAME,t1.SYS_ARCH_TYPE,t1.SYS_ARCH_REMARKS,t1.SYS_ARCH_DATE,t1.SYS_ARCH_PER_NAME,t1.SYS_ARCH_PER_CODE
+        from RD_PRE_PROPOSAL t1
+        LEFT JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        where 1=1
+        <if test="paramCondition.sysYaStatusList != null and paramCondition.sysYaStatusList.size() > 0">
+            AND t1.SYS_YA_STATUS in
+            <foreach collection="paramCondition.sysYaStatusList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPlCodeList != null and paramCondition.sysPlCodeList.size() > 0">
+            AND t1.SYS_PL_CODE in
+            <foreach collection="paramCondition.sysPlCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSubPerNameList != null and paramCondition.sysSubPerNameList.size() > 0">
+            AND t2.SYS_PL_NAME in
+            <foreach collection="paramCondition.sysSubPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysDevMethondList != null and paramCondition.sysDevMethondList.size() > 0">
+            AND t1.SYS_DEV_METHOND in
+            <foreach collection="paramCondition.sysDevMethondList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysYaCodeList != null and paramCondition.sysYaCodeList.size() > 0">
+            AND t1.SYS_YA_CODE in
+            <foreach collection="paramCondition.sysYaCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSubPerNameList != null and paramCondition.sysSubPerNameList.size() > 0">
+            AND t1.SYS_SUB_PER_NAME in
+            <foreach collection="paramCondition.sysSubPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerNameList != null and paramCondition.sysPmPerNameList.size() > 0">
+            AND t1.SYS_PM_PER_NAME in
+            <foreach collection="paramCondition.sysPmPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysYaSceneList != null and paramCondition.sysYaSceneList.size() > 0">
+            AND t1.SYS_YA_SCENE in
+            <foreach collection="paramCondition.sysYaSceneList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysYaCode != null and paramCondition.sysYaCode != ''">
+            AND t1.SYS_YA_CODE = #{paramCondition.sysYaCode}
+        </if>
+        <if test="paramCondition.sysSubPerName != null and paramCondition.sysSubPerName != ''">
+            AND t1.SYS_SUB_PER_NAME = #{paramCondition.sysSubPerName}
+        </if>
+        <if test="paramCondition.sysPmPerName != null and paramCondition.sysPmPerName != ''">
+            AND t1.SYS_PM_PER_NAME = #{paramCondition.sysPmPerName}
+        </if>
+        <if test="paramCondition.sysYaScene != null and paramCondition.sysYaScene != ''">
+            AND t1.SYS_YA_SCENE = #{paramCondition.sysYaScene}
+        </if>
+        <if test="paramCondition.sysYaStatus != null and paramCondition.sysYaStatus != ''">
+            AND t1.SYS_YA_STATUS = #{paramCondition.sysYaStatus}
+        </if>
+        <if test="paramCondition.sysArchDateList != null and paramCondition.sysArchDateList.size() > 0">
+            AND  t1.SYS_ARCH_DATE &gt;=  to_date(#{paramCondition.sysArchDateList[0]},'yyyy-mm-dd')
+            AND  t1.SYS_ARCH_DATE &lt;= to_date(#{paramCondition.sysArchDateList[1]},'yyyy-mm-dd')+1
+        </if>
+        <if test="paramCondition.sysSubDateList != null and paramCondition.sysSubDateList.size() > 0">
+            AND  t1.SYS_SUB_DATE &gt;=  to_date(#{paramCondition.sysSubDateList[0]},'yyyy-mm-dd')
+            AND  t1.SYS_SUB_DATE &lt;= to_date(#{paramCondition.sysSubDateList[1]},'yyyy-mm-dd')+1
+        </if>
+
+        ORDER BY t1.SYS_YA_CODE DESC
+    </select>
+
+    <select id="detail" resultType="com.tadpole.cloud.product.api.productplan.model.result.RdPreProposalExtentResult">
+        select t2.SYS_PL_NAME,
+             t1.SYS_YA_CODE,t1.SYS_C_DATE,t1.SYS_L_DATE,t1.SYS_DEPT_CODE,t1.SYS_DEPT_NAME,t1.SYS_PER_CODE,t1.SYS_PER_NAME,
+             t1.SYS_YA_STATUS,t1.SYS_PL_CODE,t1.SYS_YA_SCENE,t1.SYS_PRO_SOURCE,t1.SYS_DEV_METHOND,t1.SYS_SPU,t1.SYS_OLD_PRO_DEFINE_NUM,
+             t1.SYS_OLD_PRO_DEFINE_VERSION,t1.SYS_PRO_NAME,t1.SYS_STYLE,t1.SYS_BRAND,t1.SYS_MAIN_MATERIAL,t1.SYS_MODEL,t1.SYS_COM_REFER_PIC,
+             t1.SYS_COM_REFER_LINK,t1.SYS_ANNEX,t1.SYS_PUSH_SAMP_QTY,t1.SYS_YA_SELL_POINT_DESC,t1.SYS_YA_MARKET_ASSE,t1.SYS_MAIN_MARKET,t1.SYS_SEASON_LABEL,
+             t1.SYS_FESTIVAL_LABEL,t1.SYS_YA_FUNC_REQUIRE,t1.SYS_YA_SIZE_REQUIRE,t1.SYS_YA_WEIGHT_REQUIRE,t1.SYS_YA_MATERIAL_REQUIRE,t1.SYS_YA_PATTERN_REQUIRE,
+             t1.SYS_YA_PARTS_REQUIRE,t1.SYS_YA_PACKAGE_REQUIRE,t1.SYS_YA_COMPLIANCE_REQUIRE,t1.SYS_YA_CERTIFICATION_REQUIREX,t1.SYS_YA_USAGE_SCENARIO,t1.SYS_YA_USER_GROUP,
+             t1.SYS_PATTERN_NEW_DEMAND,t1.SYS_PATTERN_NEW_DEMAND_PIC,t1.SYS_COLOR_NEW_DEMAND,t1.SYS_COLOR_NEW_DEMAND_PIC,t1.SYS_NORMS_NEW_DEMAND,t1.SYS_PACKAGE_QTY_NEW_DEMAND,
+             t1.SYS_PUR_COST_RANGE_REQ,t1.SYS_BOT_LINE_PUR_PRICE,t1.SYS_EST_SELL_PRICE,t1.SYS_BOT_LINE_SELL_PROFIT,t1.SYS_EST_ORDER_QTY,t1.SYS_LIST_TIME_NODE,t1.SYS_RD_SUGGEST,
+             t1.SYS_SUB_DATE,t1.SYS_SUB_PER_CODE,t1.SYS_SUB_PER_NAME,t2.SYS_PM_PER_CODE,t2.SYS_PM_PER_NAME,t1.SYS_ASSIGN_DATE,t1.SYS_ASSIGN_PER_NAME,t1.SYS_ASSIGN_PER_CODE,
+             t1.SYS_FEBK_RESULT,t1.SYS_FEBK_CONTENT,t1.SYS_FEBK_DATE,t1.SYS_FEBK_NEW_DEV_METHOND,t1.SYS_NEW_PRO_NAME,t1.SYS_NEW_STYLE,t1.SYS_NEW_BRAND,t1.SYS_NEW_MAIN_MATERIAL,
+             t1.SYS_NEW_MODEL,t1.SYS_FEBK_CHANGE_DESC,t1.SYS_FEBK_FIRST_ORDER_QTY_EVA,t1.SYS_FEBK_FIRST_ORDER_AMOUN_EVA,t1.SYS_FEBK_PROPOSAL_LEVEL,t1.SYS_FEBK_PER_NAME,
+             t1.SYS_FEBK_PER_CODE,t1.SYS_EXAM_RESULT,t1.SYS_EXAM_INSTRUCTE,t1.SYS_EXAM_PER_CODE,t1.SYS_EXAM_PER_NAME,t1.SYS_EXAM_DATE,t1.SYS_APPR_RESULT,t1.SYS_APPR_REMARKS,
+             t1.SYS_APPR_DATE,t1.SYS_APPR_PER_CODE,t1.SYS_APPR_PER_NAME,t1.SYS_ARCH_TYPE,t1.SYS_ARCH_REMARKS,t1.SYS_ARCH_DATE,t1.SYS_ARCH_PER_NAME,t1.SYS_ARCH_PER_CODE
+        from RD_PRE_PROPOSAL t1
+        LEFT JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        where 1=1
+        <if test="paramCondition.sysYaCodeList != null and paramCondition.sysYaCodeList.size() > 0">
+            AND t1.SYS_YA_CODE in
+            <foreach collection="paramCondition.sysYaCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+
+    <select id="listPageFebk" resultType="com.tadpole.cloud.product.api.productplan.model.result.RdPreProposalExtentResult">
+        select t2.SYS_PL_NAME,
+        t1.SYS_YA_CODE,t1.SYS_C_DATE,t1.SYS_L_DATE,t1.SYS_DEPT_CODE,t1.SYS_DEPT_NAME,t1.SYS_PER_CODE,t1.SYS_PER_NAME,
+        t1.SYS_YA_STATUS,t1.SYS_PL_CODE,t1.SYS_YA_SCENE,t1.SYS_PRO_SOURCE,t1.SYS_DEV_METHOND,t1.SYS_SPU,t1.SYS_OLD_PRO_DEFINE_NUM,
+        t1.SYS_OLD_PRO_DEFINE_VERSION,t1.SYS_PRO_NAME,t1.SYS_STYLE,t1.SYS_BRAND,t1.SYS_MAIN_MATERIAL,t1.SYS_MODEL,t1.SYS_COM_REFER_PIC,
+        t1.SYS_COM_REFER_LINK,t1.SYS_ANNEX,t1.SYS_PUSH_SAMP_QTY,t1.SYS_YA_SELL_POINT_DESC,t1.SYS_YA_MARKET_ASSE,t1.SYS_MAIN_MARKET,t1.SYS_SEASON_LABEL,
+        t1.SYS_FESTIVAL_LABEL,t1.SYS_YA_FUNC_REQUIRE,t1.SYS_YA_SIZE_REQUIRE,t1.SYS_YA_WEIGHT_REQUIRE,t1.SYS_YA_MATERIAL_REQUIRE,t1.SYS_YA_PATTERN_REQUIRE,
+        t1.SYS_YA_PARTS_REQUIRE,t1.SYS_YA_PACKAGE_REQUIRE,t1.SYS_YA_COMPLIANCE_REQUIRE,t1.SYS_YA_CERTIFICATION_REQUIREX,t1.SYS_YA_USAGE_SCENARIO,t1.SYS_YA_USER_GROUP,
+        t1.SYS_PATTERN_NEW_DEMAND,t1.SYS_PATTERN_NEW_DEMAND_PIC,t1.SYS_COLOR_NEW_DEMAND,t1.SYS_COLOR_NEW_DEMAND_PIC,t1.SYS_NORMS_NEW_DEMAND,t1.SYS_PACKAGE_QTY_NEW_DEMAND,
+        t1.SYS_PUR_COST_RANGE_REQ,t1.SYS_BOT_LINE_PUR_PRICE,t1.SYS_EST_SELL_PRICE,t1.SYS_BOT_LINE_SELL_PROFIT,t1.SYS_EST_ORDER_QTY,t1.SYS_LIST_TIME_NODE,t1.SYS_RD_SUGGEST,
+        t1.SYS_SUB_DATE,t1.SYS_SUB_PER_CODE,t1.SYS_SUB_PER_NAME,t2.SYS_PM_PER_CODE,t2.SYS_PM_PER_NAME,t1.SYS_ASSIGN_DATE,t1.SYS_ASSIGN_PER_NAME,t1.SYS_ASSIGN_PER_CODE,
+        t1.SYS_FEBK_RESULT,t1.SYS_FEBK_CONTENT,t1.SYS_FEBK_DATE,t1.SYS_FEBK_NEW_DEV_METHOND,t1.SYS_NEW_PRO_NAME,t1.SYS_NEW_STYLE,t1.SYS_NEW_BRAND,t1.SYS_NEW_MAIN_MATERIAL,
+        t1.SYS_NEW_MODEL,t1.SYS_FEBK_CHANGE_DESC,t1.SYS_FEBK_FIRST_ORDER_QTY_EVA,t1.SYS_FEBK_FIRST_ORDER_AMOUN_EVA,t1.SYS_FEBK_PROPOSAL_LEVEL,t1.SYS_FEBK_PER_NAME,
+        t1.SYS_FEBK_PER_CODE,t1.SYS_EXAM_RESULT,t1.SYS_EXAM_INSTRUCTE,t1.SYS_EXAM_PER_CODE,t1.SYS_EXAM_PER_NAME,t1.SYS_EXAM_DATE,t1.SYS_APPR_RESULT,t1.SYS_APPR_REMARKS,
+        t1.SYS_APPR_DATE,t1.SYS_APPR_PER_CODE,t1.SYS_APPR_PER_NAME,t1.SYS_ARCH_TYPE,t1.SYS_ARCH_REMARKS,t1.SYS_ARCH_DATE,t1.SYS_ARCH_PER_NAME,t1.SYS_ARCH_PER_CODE
+        from RD_PRE_PROPOSAL t1
+        JOIN RD_PL_MANAGE t2 ON t1.SYS_PL_CODE=t2.SYS_PL_CODE
+        where 1=1
+        <if test="paramCondition.sysYaStatusList != null and paramCondition.sysYaStatusList.size() > 0">
+            AND t1.SYS_YA_STATUS in
+            <foreach collection="paramCondition.sysYaStatusList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPlCodeList != null and paramCondition.sysPlCodeList.size() > 0">
+            AND t1.SYS_PL_CODE in
+            <foreach collection="paramCondition.sysPlCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSubPerNameList != null and paramCondition.sysSubPerNameList.size() > 0">
+            AND t2.SYS_PL_NAME in
+            <foreach collection="paramCondition.sysSubPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysDevMethondList != null and paramCondition.sysDevMethondList.size() > 0">
+            AND t1.SYS_DEV_METHOND in
+            <foreach collection="paramCondition.sysDevMethondList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysYaCodeList != null and paramCondition.sysYaCodeList.size() > 0">
+            AND t1.SYS_YA_CODE in
+            <foreach collection="paramCondition.sysYaCodeList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysSubPerNameList != null and paramCondition.sysSubPerNameList.size() > 0">
+            AND t1.SYS_SUB_PER_NAME in
+            <foreach collection="paramCondition.sysSubPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerNameList != null and paramCondition.sysPmPerNameList.size() > 0">
+            AND t1.SYS_PM_PER_NAME in
+            <foreach collection="paramCondition.sysPmPerNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysYaSceneList != null and paramCondition.sysYaSceneList.size() > 0">
+            AND t1.SYS_YA_SCENE in
+            <foreach collection="paramCondition.sysYaSceneList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysYaCode != null and paramCondition.sysYaCode != ''">
+            AND t1.SYS_YA_CODE = #{paramCondition.sysYaCode}
+        </if>
+        <if test="paramCondition.sysSubPerName != null and paramCondition.sysSubPerName != ''">
+            AND t1.SYS_SUB_PER_NAME = #{paramCondition.sysSubPerName}
+        </if>
+        <if test="paramCondition.sysPmPerName != null and paramCondition.sysPmPerName != ''">
+            AND t1.SYS_PM_PER_NAME = #{paramCondition.sysPmPerName}
+        </if>
+        <if test="paramCondition.sysPmPerCode != null and paramCondition.sysPmPerCode != ''">
+            AND t2.SYS_PM_PER_CODE = #{paramCondition.sysPmPerCode}
+        </if>
+        <if test="paramCondition.sysYaScene != null and paramCondition.sysYaScene != ''">
+            AND t1.SYS_YA_SCENE = #{paramCondition.sysYaScene}
+        </if>
+        <if test="paramCondition.sysYaStatus != null and paramCondition.sysYaStatus != ''">
+            AND t1.SYS_YA_STATUS = #{paramCondition.sysYaStatus}
+        </if>
+        <if test="paramCondition.sysArchDateList != null and paramCondition.sysArchDateList.size() > 0">
+            AND  t1.SYS_ARCH_DATE &gt;=  to_date(#{paramCondition.sysArchDateList[0]},'yyyy-mm-dd')
+            AND  t1.SYS_ARCH_DATE &lt;= to_date(#{paramCondition.sysArchDateList[1]},'yyyy-mm-dd')+1
+        </if>
+        <if test="paramCondition.sysSubDateList != null and paramCondition.sysSubDateList.size() > 0">
+            AND  t1.SYS_SUB_DATE &gt;=  to_date(#{paramCondition.sysSubDateList[0]},'yyyy-mm-dd')
+            AND  t1.SYS_SUB_DATE &lt;= to_date(#{paramCondition.sysSubDateList[1]},'yyyy-mm-dd')+1
+        </if>
+
+
+        ORDER BY t1.SYS_YA_CODE DESC
+    </select>
+
+</mapper>

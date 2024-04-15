@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.EstLogisticsEstimateFeeDetMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.supplyChain.modular.logistics.model.result.EstLogisticsEstimateFeeDetResult">
+        select * from EST_LOGISTICS_ESTIMATE_FEE_DET ${ew.customSqlSegment}
+    </select>
+
+
+    <!--获取物流商价格-->
+    <select id="getLpPrice"
+            parameterType="com.tadpole.cloud.supplyChain.modular.logistics.model.params.EstLogisticsEstimateFeeDetParam"
+            resultType="com.tadpole.cloud.supplyChain.modular.logistics.model.result.LsLogisticsPriceResult">
+        SELECT
+        P.busLogpChargCurrency,
+        D.busLogpDetUnitPrice,
+        D.busLogpDetCustDlearanceFee,
+        D.busLogpDetCustClearanceFee,
+        D.busLogpDetBusySeasonAddFee,
+        D.busLogpDetFuelFee,
+        D.busLogpDetAddAndSundryFee,
+        D.busLogpDetWeightGreater,
+        D.busLogpDetWeightLess,
+        D.busLogpDetVolumeGreater,
+        D.busLogpDetVolumeLess,
+        D.busLogpDetAppStartDate,
+        D.busLogpDetAppEndDate
+        FROM TbLogisticsNewPrice P
+        LEFT JOIN TbLogisticsNewPriceDet D ON P.pkLogpID = D.pkLogpID
+        WHERE
+        D.busLogpDetStatus = '1'
+        AND D.busLogpDetUseStatus = '已启用'
+        AND busLogpChargCurrency = 'CNY'
+        <if test="param.lpname != null and param.lpname != ''">
+            AND P.busLcCode = #{param.lpname}
+        </if>
+        <if test="param.site != null and param.site != ''">
+            AND P.busLpCountryCode = #{param.site}
+        </if>
+        <if test="param.lspNum != null and param.lspNum != ''">
+            AND P.busLspNum = #{param.lspNum}
+        </if>
+        <if test="param.freightCompany != null and param.freightCompany != ''">
+            AND P.busLogTraMode1 = #{param.freightCompany}
+        </if>
+        <if test="param.transportType != null and param.transportType != ''">
+            AND P.busLogTraMode2 = #{param.transportType}
+        </if>
+        <if test="param.logisticsChannel != null and param.logisticsChannel != ''">
+            AND P.busLogSeaTraRoute = #{param.logisticsChannel}
+        </if>
+        <if test="param.orderType != null and param.orderType != ''">
+            AND P.busLogRedOrBlueList = #{param.orderType}
+        </if>
+
+        <if test="param.hasTax != null and param.hasTax != ''">
+            AND P.busLogpIsIncTax =  #{param.hasTax}
+        </if>
+
+        <if test="param.confirmFeeType != null and param.confirmFeeType != ''">
+            AND P.busLogpChargType = #{param.confirmFeeType}
+        </if>
+            AND D.busLogpDetWeightGreater &lt;= #{param.confirmCountFee}
+            AND D.busLogpDetWeightLess >= #{param.confirmCountFee}
+
+        order by busLogpDetAppStartDate desc
+
+    </select>
+
+    <select id = "shipToList" resultType="java.lang.String">
+        select distinct LogRecHouseName  from TbLogisticsShipToRec
+<!--            where ElePlatformName = 'Amazon' and CountryCode  = 'US'-->
+        order by LogRecHouseName
+    </select>
+
+
+    <select id = "getPostCode"       resultType="com.tadpole.cloud.supplyChain.modular.logistics.model.result.ShipToPostCodeResult">
+
+        select  LogRecHouseName ship_to, max(logRecZip) post_code from TbLogisticsShipToRec
+        where  LogRecHouseName is not null and logRecZip  is not null and ElePlatformName = 'Amazon'
+        group by LogRecHouseName
+
+        <!--        where ElePlatformName = 'Amazon' and CountryCode  = 'US'-->
+
+    </select>
+
+    <select id = "getLogisticsInfo"       resultType="com.tadpole.cloud.supplyChain.modular.logistics.model.result.LogisticsInfoResult">
+        SELECT
+                busLcCode LP_NAME,--物流商名称
+                busLpCountryCode  SITE, --站点
+                busLspNum LSP_NUM,--分区号
+                busLogTraMode1 FREIGHT_COMPANY,--货运方式1
+                busLogTraMode2 TRANSPORT_TYPE,--运输方式
+                busLogSeaTraRoute LOGISTICS_CHANNEL,--物流渠道
+                busLogRedOrBlueList ORDER_TYPE,--红蓝单
+                case busLogpIsIncTax  when 0  then '否' when 1 then '是' else '' end HAS_TAX --是否含税
+        FROM
+            TbLogisticsNewPrice P
+        LEFT JOIN TbLogisticsNewPriceDet D ON
+            P.pkLogpID = D.pkLogpID
+        WHERE
+            D.busLogpDetStatus = '1'
+            AND D.busLogpDetUseStatus = '已启用'
+        <!--        where ElePlatformName = 'Amazon' and CountryCode  = 'US'-->
+    </select>
+
+
+    <select id = "exportList"       resultType="com.tadpole.cloud.supplyChain.modular.logistics.model.result.EstLogisticsEstimateFeeDetExportResult">
+
+        select
+            est_id,
+            shipment_id,
+            ship_to,
+            postcode,
+            weight_kg,
+            volweight_kg,
+            confirm_fee_type,
+            confirm_count_fee,
+            logistics_fee,
+            oilfee,
+            busyseason_fee,
+            others_fee,
+            apply_customsfee,
+            clear_customsfee,
+            fbaconfig_fee,
+            total_fee,
+            est_date,
+            box_num,
+            box_count,
+            entry_unit_price,
+            qty
+        from
+            EST_LOGISTICS_ESTIMATE_FEE_DET t
+        <where>
+            <if test="param.estId != null and param.estId != ''">
+                est_id like '%'||#{param.estId}||'%'
+            </if>
+
+            <if test="param.estIdList != null and param.estIdList.size() != 0">
+                AND est_id IN
+                <foreach collection="param.estIdList" item="estId" index="index" separator="," open="(" close=")">
+                    #{estId}
+                </foreach>
+            </if>
+
+            <if test="param.shipmentId != null and param.shipmentId != ''">
+                AND shipment_id like '%'||#{param.shipmentId}||'%'
+            </if>
+
+            <if test="param.shipmentIdList != null and param.shipmentIdList.size() != 0">
+                AND shipment_id IN
+                <foreach collection="param.shipmentIdList" item="shipmentId" index="index" separator="," open="(" close=")">
+                    #{shipmentId}
+                </foreach>
+            </if>
+
+            <if test="param.estDateStart != null and param.estDateEnd != null ">
+                AND est_date >= #{param.estDateStart} AND est_date &lt;= #{param.estDateEnd}+1
+            </if>
+        </where>
+        order by est_date desc,shipment_id
+
+    </select>
+
+</mapper>

@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.ProdPurchaseRequireMapper">
+
+    <resultMap id="ResultMapWhitCondition" type="com.tadpole.cloud.operationManagement.modular.stock.model.result.ProdPurchaseRequireWithMatResult">
+        <result property="id" column = "id" jdbcType="VARCHAR" />
+        <result property="matCode" column = "MAT_CODE" jdbcType="VARCHAR" />
+        <result property="prodOrderDemandId" column = "PROD_ORDER_DEMAND_ID" jdbcType="VARCHAR" />
+        <result property="createDeptCode" column = "CREATE_DEPT_CODE" jdbcType="VARCHAR" />
+        <result property="createDeptName" column = "CREATE_DEPT_NAME" jdbcType="VARCHAR" />
+        <result property="createPerCode" column = "CREATE_PER_CODE" jdbcType="VARCHAR" />
+        <result property="createPerName" column = "CREATE_PER_NAME" jdbcType="VARCHAR" />
+        <result property="createDate" column = "CREATE_DATE" jdbcType="VARCHAR" />
+        <result property="purRequireType" column = "PUR_REQUIRE_TYPE" jdbcType="VARCHAR" />
+        <result property="department" column = "department" jdbcType="VARCHAR" />
+        <result property="team" column = "team" jdbcType="VARCHAR" />
+        <result property="applyPerCode" column = "APPLY_PER_CODE" jdbcType="VARCHAR" />
+        <result property="applyPerName" column = "APPLY_PER_NAME" jdbcType="VARCHAR" />
+        <result property="matOrderDeptCode" column = "MAT_ORDER_DEPT_CODE" jdbcType="VARCHAR" />
+        <result property="matOrderDeptName" column = "MAT_ORDER_DEPT_NAME" jdbcType="VARCHAR" />
+        <result property="oprApplyQty" column = "OPR_APPLY_QTY" jdbcType="VARCHAR" />
+        <result property="oprExpectDeliveDate" column = "OPR_EXPECT_DELIVE_DATE" jdbcType="VARCHAR" />
+        <result property="applyStatus" column = "APPLY_STATUS" jdbcType="VARCHAR" />
+        <result property="suggestSupplier" column = "SUGGEST_SUPPLIER" jdbcType="VARCHAR" />
+        <result property="isIncludeTax" column = "IS_INCLUDE_TAX" jdbcType="VARCHAR" />
+        <result property="checkDeptCode" column = "CHECK_DEPT_CODE" jdbcType="VARCHAR" />
+        <result property="checkDeptName" column = "CHECK_DEPT_NAME" jdbcType="VARCHAR" />
+        <result property="checkPerCode" column = "CHECK_PER_CODE" jdbcType="VARCHAR" />
+        <result property="checkPerName" column = "CHECK_PER_NAME" jdbcType="VARCHAR" />
+        <result property="checkDate" column = "CHECK_DATE" jdbcType="VARCHAR" />
+        <result property="oprApplyQty3" column = "OPR_APPLY_QTY3" jdbcType="VARCHAR" />
+        <result property="purExpectDeliveDate" column = "PUR_EXPECT_DELIVE_DATE" jdbcType="VARCHAR" />
+        <result property="checkExplain" column = "CHECK_EXPLAIN" jdbcType="VARCHAR" />
+        <result property="pmcApprovePerCode" column = "PMC_APPROVE_PER_CODE" jdbcType="VARCHAR" />
+        <result property="pmcApprovePerName" column = "PMC_APPROVE_PER_NAME" jdbcType="VARCHAR" />
+        <result property="pmcApproveDate" column = "PMC_APPROVE_DATE" jdbcType="VARCHAR" />
+        <result property="pmcApplyExplain" column = "PMC_APPLY_EXPLAIN" jdbcType="VARCHAR" />
+        <result property="orderId" column = "ORDER_ID" jdbcType="VARCHAR" />
+        <result property="effectiveDate" column = "EFFECTIVE_DATE" jdbcType="VARCHAR" />
+        <result property="orderMethod" column = "ORDER_METHOD" jdbcType="VARCHAR" />
+        <result property="matPropertity" column = "MAT_PROPERTITY" jdbcType="VARCHAR" />
+        <result property="matCate" column = "MAT_CATE" jdbcType="VARCHAR" />
+        <result property="matOperateCate" column = "MAT_OPERATE_CATE" jdbcType="VARCHAR" />
+        <result property="matCateCode" column = "MAT_CATE_CODE" jdbcType="VARCHAR" />
+        <result property="matOperateCateCode" column = "MAT_OPERATE_CATE_CODE" jdbcType="VARCHAR" />
+        <result property="matProName" column = "MAT_PRO_NAME" jdbcType="VARCHAR" />
+        <result property="matColor" column = "MAT_COLOR" jdbcType="VARCHAR" />
+
+    </resultMap>
+
+    <resultMap id="ResultPurchaseRequireExtents" type="com.tadpole.cloud.operationManagement.modular.stock.model.result.ProdPurchaseRequireExtentsResult">
+        <result property="id" column = "id" jdbcType="VARCHAR" />
+        <result property="matCode" column = "MAT_CODE" jdbcType="VARCHAR" />
+        <result property="prodOrderDemandId" column = "PROD_ORDER_DEMAND_ID" jdbcType="VARCHAR" />
+        <result property="createDeptCode" column = "CREATE_DEPT_CODE" jdbcType="VARCHAR" />
+        <result property="createDeptName" column = "CREATE_DEPT_NAME" jdbcType="VARCHAR" />
+        <result property="createPerCode" column = "CREATE_PER_CODE" jdbcType="VARCHAR" />
+        <result property="createPerName" column = "CREATE_PER_NAME" jdbcType="VARCHAR" />
+        <result property="createDate" column = "CREATE_DATE" jdbcType="VARCHAR" />
+        <result property="purRequireType" column = "PUR_REQUIRE_TYPE" jdbcType="VARCHAR" />
+        <result property="department" column = "department" jdbcType="VARCHAR" />
+        <result property="team" column = "team" jdbcType="VARCHAR" />
+        <result property="applyPerCode" column = "APPLY_PER_CODE" jdbcType="VARCHAR" />
+        <result property="applyPerName" column = "APPLY_PER_NAME" jdbcType="VARCHAR" />
+        <result property="matOrderDeptCode" column = "MAT_ORDER_DEPT_CODE" jdbcType="VARCHAR" />
+        <result property="matOrderDeptName" column = "MAT_ORDER_DEPT_NAME" jdbcType="VARCHAR" />
+        <result property="oprApplyQty" column = "OPR_APPLY_QTY" jdbcType="VARCHAR" />
+        <result property="oprExpectDeliveDate" column = "OPR_EXPECT_DELIVE_DATE" jdbcType="VARCHAR" />
+        <result property="applyStatus" column = "APPLY_STATUS" jdbcType="VARCHAR" />
+        <result property="isIncludeTax" column = "IS_INCLUDE_TAX" jdbcType="VARCHAR" />
+        <result property="checkDeptCode" column = "CHECK_DEPT_CODE" jdbcType="VARCHAR" />
+        <result property="checkDeptName" column = "CHECK_DEPT_NAME" jdbcType="VARCHAR" />
+        <result property="checkPerCode" column = "CHECK_PER_CODE" jdbcType="VARCHAR" />
+        <result property="checkPerName" column = "CHECK_PER_NAME" jdbcType="VARCHAR" />
+        <result property="checkDate" column = "CHECK_DATE" jdbcType="VARCHAR" />
+        <result property="oprApplyQty3" column = "OPR_APPLY_QTY3" jdbcType="VARCHAR" />
+        <result property="purExpectDeliveDate" column = "PUR_EXPECT_DELIVE_DATE" jdbcType="VARCHAR" />
+        <result property="checkExplain" column = "CHECK_EXPLAIN" jdbcType="VARCHAR" />
+        <result property="pmcApprovePerCode" column = "PMC_APPROVE_PER_CODE" jdbcType="VARCHAR" />
+        <result property="pmcApprovePerName" column = "PMC_APPROVE_PER_NAME" jdbcType="VARCHAR" />
+        <result property="pmcApproveDate" column = "PMC_APPROVE_DATE" jdbcType="VARCHAR" />
+        <result property="pmcApplyExplain" column = "PMC_APPLY_EXPLAIN" jdbcType="VARCHAR" />
+        <result property="orderId" column = "ORDER_ID" jdbcType="VARCHAR" />
+        <result property="effectiveDate" column = "EFFECTIVE_DATE" jdbcType="VARCHAR" />
+        <result property="orderMethod" column = "ORDER_METHOD" jdbcType="VARCHAR" />
+        <result property="matCodeOrg" column = "MAT_CODE_ORG" jdbcType="VARCHAR" />
+        <result property="sysMatCreateDate" column = "SYS_MAT_CREATE_DATE" jdbcType="VARCHAR" />
+        <result property="sysMatCreateDeptCode" column = "SYS_MAT_CREATE_DEPT_CODE" jdbcType="VARCHAR" />
+        <result property="sysMatCreateDeptName" column = "SYS_MAT_CREATE_DEPT_NAME" jdbcType="VARCHAR" />
+        <result property="sysMatCreatePerCode" column = "SYS_MAT_CREATE_PER_CODE" jdbcType="VARCHAR" />
+        <result property="sysMatCreatePerName" column = "SYS_MAT_CREATE_PER_NAME" jdbcType="VARCHAR" />
+        <result property="proposeId" column = "PROPOSE_ID" jdbcType="VARCHAR" />
+        <result property="proposalSource" column = "PROPOSAL_SOURCE" jdbcType="VARCHAR" />
+        <result property="sourceid" column = "sourceid" jdbcType="VARCHAR" />
+        <result property="matCate" column = "MAT_CATE" jdbcType="VARCHAR" />
+        <result property="matOperateCate" column = "MAT_OPERATE_CATE" jdbcType="VARCHAR" />
+        <result property="matCateCode" column = "MAT_CATE_CODE" jdbcType="VARCHAR" />
+        <result property="matOperateCateCode" column = "MAT_OPERATE_CATE_CODE" jdbcType="VARCHAR" />
+        <result property="matProName" column = "MAT_PRO_NAME" jdbcType="VARCHAR" />
+        <result property="matStyle" column = "MAT_STYLE" jdbcType="VARCHAR" />
+        <result property="matMainMaterial" column = "MAT_MAIN_MATERIAL" jdbcType="VARCHAR" />
+        <result property="matPattern" column = "MAT_PATTERN" jdbcType="VARCHAR" />
+        <result property="matComBrand" column = "MAT_COM_BRAND" jdbcType="VARCHAR" />
+        <result property="matBrand" column = "MAT_BRAND" jdbcType="VARCHAR" />
+        <result property="matModel" column = "MAT_MODEL" jdbcType="VARCHAR" />
+        <result property="matColor" column = "MAT_COLOR" jdbcType="VARCHAR" />
+        <result property="matSize" column = "MAT_SIZE" jdbcType="VARCHAR" />
+        <result property="matPackQty" column = "MAT_PACK_QTY" jdbcType="VARCHAR" />
+        <result property="matVerson" column = "MAT_VERSON" jdbcType="VARCHAR" />
+        <result property="upNewMode" column = "UP_NEW_MODE" jdbcType="VARCHAR" />
+        <result property="devType" column = "DEV_TYPE" jdbcType="VARCHAR" />
+        <result property="newExpandType" column = "NEW_EXPAND_TYPE" jdbcType="VARCHAR" />
+        <result property="matMarketMode" column = "MAT_MARKET_MODE" jdbcType="VARCHAR" />
+        <result property="matDevReason" column = "MAT_DEV_REASON" jdbcType="VARCHAR" />
+        <result property="matKeyPoint" column = "MAT_KEY_POINT" jdbcType="VARCHAR" />
+        <result property="matQualityRequire" column = "MAT_QUALITY_REQUIRE" jdbcType="VARCHAR" />
+        <result property="matCompatibleModel" column = "MAT_COMPATIBLE_MODEL" jdbcType="VARCHAR" />
+        <result property="matVersionDesc" column = "MAT_VERSION_DESC" jdbcType="VARCHAR" />
+        <result property="matLogoReplace" column = "MAT_LOGO_REPLACE" jdbcType="VARCHAR" />
+        <result property="matFestLabel" column = "MAT_FEST_LABEL" jdbcType="VARCHAR" />
+        <result property="matColourNumber" column = "MAT_COLOUR_NUMBER" jdbcType="VARCHAR" />
+        <result property="matSeasonLabel" column = "MAT_SEASON_LABEL" jdbcType="VARCHAR" />
+        <result property="matTransport" column = "MAT_TRANSPORT" jdbcType="VARCHAR" />
+        <result property="matSecondaryCate" column = "MAT_SECONDARY_CATE" jdbcType="VARCHAR" />
+        <result property="matMaterial" column = "MAT_MATERIAL" jdbcType="VARCHAR" />
+        <result property="matIsCharged" column = "MAT_IS_CHARGED" jdbcType="VARCHAR" />
+        <result property="matIsCeClass" column = "MAT_IS_CE_CLASS" jdbcType="VARCHAR" />
+        <result property="matPropertity" column = "MAT_PROPERTITY" jdbcType="VARCHAR" />
+        <result property="matDevExamineStatus" column = "MAT_DEV_EXAMINE_STATUS" jdbcType="VARCHAR" />
+        <result property="matPurExamineStatus" column = "MAT_PUR_EXAMINE_STATUS" jdbcType="VARCHAR" />
+        <result property="matOprExamineStatus" column = "MAT_OPR_EXAMINE_STATUS" jdbcType="VARCHAR" />
+        <result property="matFinalExamineStatus" column = "MAT_FINAL_EXAMINE_STATUS" jdbcType="VARCHAR" />
+        <result property="matDevPerCode" column = "MAT_DEV_PER_CODE" jdbcType="VARCHAR" />
+        <result property="matDevPerName" column = "MAT_DEV_PER_NAME" jdbcType="VARCHAR" />
+        <result property="matDevSubmitDate" column = "MAT_DEV_SUBMIT_DATE" jdbcType="VARCHAR" />
+        <result property="matPurPerCode" column = "MAT_PUR_PER_CODE" jdbcType="VARCHAR" />
+        <result property="matPurPerName" column = "MAT_PUR_PER_NAME" jdbcType="VARCHAR" />
+        <result property="matPurSubmitDate" column = "MAT_PUR_SUBMIT_DATE" jdbcType="VARCHAR" />
+        <result property="matOprPerCode" column = "MAT_OPR_PER_CODE" jdbcType="VARCHAR" />
+        <result property="matOprPerName" column = "MAT_OPR_PER_NAME" jdbcType="VARCHAR" />
+        <result property="matOprSubmitDate" column = "MAT_OPR_SUBMIT_DATE" jdbcType="VARCHAR" />
+        <result property="matOprExamineNote" column = "MAT_OPR_EXAMINE_NOTE" jdbcType="VARCHAR" />
+        <result property="matFinalPerCode" column = "MAT_FINAL_PER_CODE" jdbcType="VARCHAR" />
+        <result property="matFinalPerName" column = "MAT_FINAL_PER_NAME" jdbcType="VARCHAR" />
+        <result property="matFinalSubmitDate" column = "MAT_FINAL_SUBMIT_DATE" jdbcType="VARCHAR" />
+        <result property="matFinalExamineResult" column = "MAT_FINAL_EXAMINE_RESULT" jdbcType="VARCHAR" />
+        <result property="matRejectDevReason" column = "MAT_REJECT_DEV_REASON" jdbcType="VARCHAR" />
+        <result property="matRejectPurReason" column = "MAT_REJECT_PUR_REASON" jdbcType="VARCHAR" />
+        <result property="matRemarks" column = "MAT_REMARKS" jdbcType="VARCHAR" />
+        <result property="matArchivePerCode" column = "MAT_ARCHIVE_PER_CODE" jdbcType="VARCHAR" />
+        <result property="matArchivePerName" column = "MAT_ARCHIVE_PER_NAME" jdbcType="VARCHAR" />
+        <result property="matArchiveDate" column = "MAT_ARCHIVE_DATE" jdbcType="VARCHAR" />
+        <result property="matArchiveExplain" column = "MAT_ARCHIVE_EXPLAIN" jdbcType="VARCHAR" />
+        <result property="matNormUnitOrg" column = "MAT_NORM_UNIT_ORG" jdbcType="VARCHAR" />
+        <result property="matNetLengthOrg" column = "MAT_NET_LENGTH_ORG" jdbcType="VARCHAR" />
+        <result property="matNetWidthOrg" column = "MAT_NET_WIDTH_ORG" jdbcType="VARCHAR" />
+        <result property="matNetHeightOrg" column = "MAT_NET_HEIGHT_ORG" jdbcType="VARCHAR" />
+        <result property="matBoxLengthOrg" column = "MAT_BOX_LENGTH_ORG" jdbcType="VARCHAR" />
+        <result property="matBoxWidthOrg" column = "MAT_BOX_WIDTH_ORG" jdbcType="VARCHAR" />
+        <result property="matBoxHeightOrg" column = "MAT_BOX_HEIGHT_ORG" jdbcType="VARCHAR" />
+        <result property="matWeightUnitOrg" column = "MAT_WEIGHT_UNIT_ORG" jdbcType="VARCHAR" />
+        <result property="matNetWeightOrg" column = "MAT_NET_WEIGHT_ORG" jdbcType="VARCHAR" />
+        <result property="matGrossWeightOrg" column = "MAT_GROSS_WEIGHT_ORG" jdbcType="VARCHAR" />
+        <result property="matVolumeOrg" column = "MAT_VOLUME_ORG" jdbcType="VARCHAR" />
+        <result property="matBoxVolumeOrg" column = "MAT_BOX_VOLUME_ORG" jdbcType="VARCHAR" />
+        <result property="matInShortLabelDesc" column="MAT_IN_SHORT_LABEL_DESC" jdbcType="VARCHAR"/>
+        <result property="frontPurName" column="FRONT_PUR_NAME" jdbcType="VARCHAR"/>
+        <result property="frontPurCode" column="FRONT_PUR_CODE" jdbcType="VARCHAR"/>
+
+    </resultMap>
+    <update id="updateOprApplyQty3">
+        UPDATE PROD_PURCHASE_REQUIRE t
+            SET t.OPR_APPLY_QTY3 = CASE
+                                        WHEN (t.OPR_APPLY_QTY3 IS NULL  OR t.OPR_APPLY_QTY3 &lt; = 0 )  AND t.OPR_APPLY_QTY IS NOT NULL THEN t.OPR_APPLY_QTY
+                                        ELSE t.OPR_APPLY_QTY3
+                                   END
+        <where>
+            AND t.ID in
+            <foreach collection="idList" item="id" index="index" separator="," open="(" close=")">
+                #{id}
+            </foreach>
+        </where>
+
+    </update>
+
+
+
+
+    <select id="queryPurchaseRequireExtentsOpr"
+            resultMap="ResultPurchaseRequireExtents">
+        SELECT *
+        FROM PROD_PURCHASE_REQUIRE a
+        JOIN PROD_PRE_MATERIEL  USING(MAT_CODE)
+        <where>
+<!--            <if test="paramCondition.frontPurCode != null and paramCondition.frontPurCode != ''">-->
+<!--                AND ( a.FRONT_PUR_CODE like '%'||#{paramCondition.frontPurCode}||'%' OR a.CHECK_PER_CODE like '%'||#{paramCondition.frontPurCode}||'%')-->
+<!--            </if>-->
+            <if test="paramCondition.matCode != null and paramCondition.matCode != ''">
+                AND MAT_CODE =  #{paramCondition.matCode}
+            </if>
+            <if test="paramCondition.matOprPerCode != null and paramCondition.matOprPerCode != ''">
+                AND MAT_OPR_PER_CODE =  #{paramCondition.matOprPerCode}
+            </if>
+            <if test="paramCondition.proposeId != null and paramCondition.proposeId != ''">
+                AND PROPOSE_ID =  #{paramCondition.proposeId}
+            </if>
+            <if test="paramCondition.applyStatus != null and paramCondition.applyStatus != ''">
+                AND APPLY_STATUS =  #{paramCondition.applyStatus}
+            </if>
+            <if test="paramCondition.applyPerCode != null and paramCondition.applyPerCode != ''">
+                AND (MAT_CATE_CODE || MAT_OPERATE_CATE_CODE) IN
+                    (
+                        SELECT CATEGORY_CODE || OPER_CATEGORY_CODE   FROM PROD_FINAL_EXAMINE_SET
+                            WHERE  FINAL_PER_CODE =  #{paramCondition.applyPerCode}
+                    )
+            </if>
+
+            <if test="paramCondition.dataScopePeople != null and paramCondition.dataScopePeople !=''">
+                AND ( a.FRONT_PUR_CODE IN  ${paramCondition.dataScopePeople} OR a.CHECK_PER_CODE IN ${paramCondition.dataScopePeople} )
+            </if>
+
+     <!--       <if test="reqVO.dataScopeMaterial != null and reqVO.dataScopeMaterial !=''">
+                ${reqVO.dataScopeMaterial}
+            </if>
+
+            <if test="reqVO.dataScopeArea != null and reqVO.dataScopeArea !=''">
+                ${reqVO.dataScopeArea}
+            </if>-->
+
+        </where>
+    </select>
+
+
+
+
+    <select id="purchasePmcCheck"
+            resultMap="ResultPurchaseRequireExtents">
+        SELECT *
+        FROM PROD_PURCHASE_REQUIRE a
+        JOIN PROD_PRE_MATERIEL  USING(MAT_CODE)
+        <where>
+
+            <if test="paramCondition.matCode != null and paramCondition.matCode != ''">
+                AND MAT_CODE =  #{paramCondition.matCode}
+            </if>
+            <if test="paramCondition.matOprPerCode != null and paramCondition.matOprPerCode != ''">
+                AND MAT_OPR_PER_CODE =  #{paramCondition.matOprPerCode}
+            </if>
+            <if test="paramCondition.proposeId != null and paramCondition.proposeId != ''">
+                AND PROPOSE_ID =  #{paramCondition.proposeId}
+            </if>
+            <if test="paramCondition.applyStatus != null and paramCondition.applyStatus != ''">
+                AND APPLY_STATUS =  #{paramCondition.applyStatus}
+            </if>
+            <if test="paramCondition.applyPerCode != null and paramCondition.applyPerCode != ''">
+                AND (MAT_CATE_CODE || MAT_OPERATE_CATE_CODE) IN
+                (
+                SELECT CATEGORY_CODE || OPER_CATEGORY_CODE   FROM PROD_FINAL_EXAMINE_SET
+                WHERE  FINAL_PER_CODE =  #{paramCondition.applyPerCode}
+                )
+            </if>
+
+        </where>
+    </select>
+
+
+    <select id="applyListPage"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.ProdPurchaseRequireExtentsResult">
+
+        SELECT *
+        FROM PROD_PURCHASE_REQUIRE a
+        JOIN PROD_PRE_MATERIEL  USING(MAT_CODE)
+        <where>
+            1=1  and APPLY_STATUS in ('PMC未通过','PMC已通过','已归档')
+
+            <if test="reqVO.matCodeList != null and reqVO.matCodeList.size() != 0">
+                AND MAT_CODE IN
+                <foreach collection="reqVO.matCodeList" item="tm" index="index" separator="," open="(" close=")">
+                    #{tm}
+                </foreach>
+            </if>
+
+            <if test="reqVO.matCode != null and reqVO.matCode != ''">
+                AND MAT_CODE =  #{reqVO.matCode}
+            </if>
+
+            <if test="reqVO.matOperateCateList != null and reqVO.matOperateCateList.size() != 0">
+                AND MAT_OPERATE_CATE IN
+                <foreach collection="reqVO.matOperateCateList" item="tm" index="index" separator="," open="(" close=")">
+                      #{tm}
+                </foreach>
+            </if>
+
+            <if test="reqVO.applyStatus != null and reqVO.applyStatus != ''">
+                AND APPLY_STATUS =  #{reqVO.applyStatus}
+            </if>
+
+            <if test="reqVO.syncStatus != null and reqVO.syncStatus != ''">
+                AND SYNC_STATUS =  #{reqVO.syncStatus}
+            </if>
+
+            <if test="reqVO.matPropertity != null and reqVO.matPropertity != ''">
+                AND MAT_PROPERTITY =  #{reqVO.matPropertity}
+            </if>
+
+            <if test="reqVO.department != null and reqVO.department != ''">
+                AND DEPARTMENT =  #{reqVO.department}
+            </if>
+            <if test="reqVO.departmentList != null and reqVO.departmentList.size() != 0">
+                AND DEPARTMENT IN
+                <foreach collection="reqVO.departmentList" item="department" index="index" separator="," open="(" close=")">
+                    #{department}
+                </foreach>
+            </if>
+            <if test="reqVO.team != null and reqVO.team != ''">
+                AND TEAM =  #{reqVO.team}
+            </if>
+            <if test="reqVO.teamList != null and reqVO.teamList.size() != 0">
+                AND TEAM IN
+                <foreach collection="reqVO.teamList" item="team" index="index" separator="," open="(" close=")">
+                    #{team}
+                </foreach>
+            </if>
+            <if test="reqVO.dataScopePeople != null and reqVO.dataScopePeople !=''">
+                AND ( a.APPLY_PER_CODE IN  ${reqVO.dataScopePeople}
+                     OR a.FRONT_PUR_CODE IN  ${reqVO.dataScopePeople}
+                     OR a.CHECK_PER_CODE IN ${reqVO.dataScopePeople}
+                   )
+            </if>
+        </where>
+        ORDER BY PMC_APPROVE_DATE DESC NULLS LAST
+    </select>
+
+</mapper>

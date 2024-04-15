@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgCustomsPriceMinRuleMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        P.ID,P.COUNTRY_CODE,P.COUNTRY_NAME,P.MIN_CUSTOMS_PRICE,P.CUSTOMS_CURRENCY,P.CREATE_TIME,P.CREATE_USER,P.UPDATE_TIME,P.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomsPriceMinRuleParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomsPriceMinRuleResult">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOMS_PRICE_MIN_RULE P
+        <where>
+            <if test="param.countryCodeList != null and param.countryCodeList.size() != 0">
+                P.COUNTRY_CODE IN
+                <foreach collection="param.countryCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY P.CREATE_TIME DESC, P.ID DESC
+    </select>
+</mapper>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.MonthlyStorageFeesMapper">
+
+    <sql id="MON_CONDITION">
+        <if test="param.monthOfCharge != null and param.monthOfCharge != ''">
+            AND month_of_charge  = #{param.monthOfCharge}
+        </if>
+
+        <if test="param.sysShopsName != null and param.sysShopsName != ''">
+            AND sys_shops_name  = #{param.sysShopsName}
+        </if>
+
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND sys_site IN
+            <foreach collection="param.sysSites" item="sysSite" index="index" separator="," open="(" close=")">
+                #{sysSite}
+            </foreach>
+        </if>
+
+        <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+            AND sys_shops_name IN
+            <foreach collection="param.sysShopsNames" item="sysShopsName" index="index" separator="," open="(" close=")">
+                #{sysShopsName}
+            </foreach>
+        </if>
+    </sql>
+
+
+    <select id="afreshStorageFee">
+
+        begin
+        --月仓存费
+        merge into monthly_storage_fees a
+        using (
+        SELECT a.id,
+        a.sku,
+        a.material_code,
+        round(a.estimated_monthly_storage_fee * a.direct_rate, 2) storage_fee,
+        storage_detaile_fee
+        FROM (
+        SELECT ROW_NUMBER() OVER (PARTITION BY a.id ORDER BY c.create_date DESC)  lev,
+        a.id,
+        c.sku,
+        c.material_code,
+        a.estimated_monthly_storage_fee,
+        decode(a.sys_site,'US',1,b.direct_rate) direct_rate,
+        decode(a.sys_site,'US',a.estimated_monthly_storage_fee,
+        round(decode(a.sys_site, 'JP', a.estimated_monthly_storage_fee * 1.1,
+        a.estimated_monthly_storage_fee) * b2.direct_rate, 2)) storage_detaile_fee
+        FROM monthly_storage_fees a
+        left join rp_spot_exchange_rate b on a.currency = b.original_currency and
+        to_char(b.effect_date, 'yyyy-MM') = a.month_of_charge
+        left join mcms_base_data.inv_product_gallery c
+        on a.sys_shops_name = c.sys_shops_name and a.sys_site = c.sys_site and
+        a.fnsku = c.fnsku
+        left join rp_spot_exchange_rate b2
+        on a.currency = b2.original_currency and b2.effect_date = add_months(b.effect_date, 1)
+        WHERE a.create_time > trunc(sysdate - 30)
+        and a.sku is null
+        ) a
+        WHERE lev = 1
+        ) b
+        on (a.id = b.id)
+        when matched then
+        UPDATE
+        set a.sku=b.sku,
+        a.material_code=b.material_code,
+        a.storage_fee=b.storage_fee,
+        a.storage_detail_fee=b.storage_detaile_fee;
+        end;
+    </select>
+
+  <select id="fnskuFillMonListing" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.MonthlyStorageFeesParam">
+        BEGIN
+<!--        1 fnsku用sku-->
+        UPDATE monthly_storage_fees
+        SET FNSKU = SKU
+        <where>
+            AND FNSKU IS NULL
+            AND status IN (1, 2, 3)
+            <include refid="MON_CONDITION"/>
+        </where>;
+
+        <!--2fnsku用sku-->
+
+        MERGE INTO (SELECT *
+              FROM monthly_storage_fees
+        <where>
+             NVL(department, '0') = '0'
+             AND status IN (1, 2, 3)
+            <include refid="MON_CONDITION"/>
+        </where>) d
+        USING (SELECT a.FNSKU,
+                      a.SYS_SITE,
+                      a.SYS_SHOPS_NAME,
+                      MAX(a.sku) AS sku
+                 FROM mcms_base_data.INV_PRODUCT_GALLERY a
+                WHERE NVL(a.fnsku, 'NULL') != 'NULL'
+                GROUP BY a.FNSKU, a.SYS_SITE, a.SYS_SHOPS_NAME
+               ) g
+        ON (UPPER(d.FNSKU) = UPPER(g.FNSKU) AND d.SYS_SITE = g.SYS_SITE AND d.SYS_SHOPS_NAME = g.SYS_SHOPS_NAME)
+        WHEN MATCHED THEN
+          UPDATE SET d.SKU = g.SKU;
+        <!--3fnsku用sku-->
+        MERGE INTO (SELECT *
+        FROM monthly_storage_fees
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+
+            <include refid="MON_CONDITION"/>
+        </where>) d
+        USING (SELECT a.FNSKU, a.SYS_SITE, a.SYS_SHOPS_NAME, MAX(a.sku) AS sku
+                 FROM mcms_base_data.INV_PRODUCT_GALLERY_FILE a
+                WHERE NVL(a.fnsku, 'NULL') != 'NULL'
+                GROUP BY a.fnsku, a.sys_site, a.sys_shops_name
+               ) g
+        ON (UPPER(d.fnsku) = UPPER(g.fnsku) AND d.sys_site = g.sys_site AND d.sys_shops_name = g.sys_shops_name)
+        WHEN MATCHED THEN
+          UPDATE
+             SET d.SKU = g.SKU;
+
+        <!--4 -->
+        MERGE INTO (SELECT *
+        FROM monthly_storage_fees
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+
+            <include refid="MON_CONDITION"/>
+        </where>) d
+        USING mcms_base_data.INV_PRODUCT_GALLERY g ON (UPPER(d.sku) = UPPER(g.sku) AND d.sys_site = g.sys_site AND d.sys_shops_name = g.sys_shops_name)
+        WHEN MATCHED THEN
+        UPDATE
+        SET d.department    = g.department,
+            d.team          = g.team,
+            d.material_code = g.material_code;
+
+        MERGE INTO (SELECT *
+        FROM monthly_storage_fees
+        <where>
+            NVL(department, '0') = '0'
+            AND status IN (1, 2, 3)
+
+            <include refid="MON_CONDITION"/>
+        </where>) d
+        USING (SELECT SKU,
+              SYS_SITE,
+              SYS_SHOPS_NAME,
+              MATERIAL_CODE,
+              DEPARTMENT,
+              TEAM,
+              LAST_UPDATE_DATE
+         FROM (SELECT SKU,
+                      SYS_SITE,
+                      SYS_SHOPS_NAME,
+                      MATERIAL_CODE,
+                      DEPARTMENT,
+                      TEAM,
+                      LAST_UPDATE_DATE,
+                      ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME ORDER BY LAST_UPDATE_DATE DESC) AS rn
+                 FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE) t
+        WHERE t.rn = 1) G
+        ON (UPPER(d.sku) = UPPER(g.sku) AND D.sys_site = G.sys_site AND D.sys_shops_name = G.sys_shops_name)
+        WHEN MATCHED THEN
+          UPDATE
+             SET D.DEPARTMENT    = G.DEPARTMENT,
+                 D.TEAM          = G.TEAM,
+                 D.MATERIAL_CODE = G.MATERIAL_CODE;
+        END;
+
+    </select>
+
+
+    <select id="emailList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.MonthlyStorageFeesResult">
+        select * from monthly_storage_fees t where (NVL(t.material_code,'0') = '0' or NVL(t.department,'0') = '0') and t.sku!='0'
+            and status in (2,3) and ROWNUM &lt; 100000
+            order by MONTH_OF_CHARGE desc
+    </select>
+
+
+
+</mapper>

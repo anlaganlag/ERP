@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.SubsidySummaryMapper">
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SubsidySummaryResult">
+
+    select t.*,case t.CONFIRM_STATUS when 0 then '未确认'
+                                 when 1 then '已确认' else '' end CONFIRM_STATUS_TXT,
+        decode(t.material_code,'0','0',B.product_type) product_type,
+        decode(t.material_code,'0','0',B.CATEGORY) CATEGORY,
+        decode(t.material_code,'0','0',B.PRODUCT_NAME) PRODUCT_NAME,
+        decode(t.material_code,'0','0',B.STYLE) STYLE,
+        decode(t.material_code,'0','0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+        decode(t.material_code,'0','0',B.DESIGN) DESIGN,
+        decode(t.material_code,'0','0',B.COMPANY_BRAND) COMPANY_BRAND,
+        decode(t.material_code,'0','0',B.FIT_BRAND) FIT_BRAND,
+        decode(t.material_code,'0','0',B.MODEL) MODEL,
+        decode(t.material_code,'0','0',B.COLOR) COLOR,
+        decode(t.material_code,'0','0',B.SIZES) SIZES,
+        decode(t.material_code,'0','0',B.PACKING) PACKING,
+        decode(t.material_code,'0','0',B.VERSION) VERSION,
+        decode(t.material_code,'0','0',B.TYPE) TYPE,
+        decode(t.material_code,'0','0',B.BUYER) BUYER,
+        decode(t.material_code,'0','0',B.DEVELOPER) DEVELOPER,
+        decode(t.material_code,'0','0',to_char(B.ACCOUNT_DATE,'yyyy-mm-dd')) ACCOUNT_DATE,
+        decode(t.material_code,'0','0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL
+
+    from RP_SUBSIDY_SUMMARY t
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE=t.MATERIAL_CODE
+    <where>
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+        </if>
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and t.SHOP_NAME = #{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and t.SITE = #{paramCondition.site}
+        </if>
+        <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+            and t.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+        </if>
+        <if test="paramCondition.department != null and paramCondition.department != ''">
+            and t.DEPARTMENT = #{paramCondition.department}
+        </if>
+        <if test="paramCondition.team != null and paramCondition.team != ''">
+            and t.TEAM = #{paramCondition.team}
+        </if>
+        <if test="paramCondition.subsidyType != null and paramCondition.subsidyType != ''">
+            and t.SUBSIDY_TYPE = #{paramCondition.subsidyType}
+        </if>
+        <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+            and t.SKU in
+            <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                     item="sku">
+                #{sku}
+            </foreach>
+        </if>
+    </where>
+    </select>
+    <select id="queryList" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SubsidySummaryResult">
+        select t.*,case t.CONFIRM_STATUS when 0 then '未确认'
+        when 1 then '已确认' else '' end CONFIRM_STATUS_TXT,
+        B.CATEGORY,
+        B.PRODUCT_TYPE,
+        B.PRODUCT_NAME,
+        B.STYLE,
+        B.MAIN_MATERIAL,
+        B.DESIGN,
+        B.COMPANY_BRAND,
+        B.FIT_BRAND,
+        B.MODEL,
+        B.COLOR,
+        B.SIZES,
+        B.PACKING,
+        B.VERSION,
+        B.TYPE,
+        B.BUYER,
+        B.DEVELOPER,
+        B.FIRST_ORDER_DATE
+        from RP_SUBSIDY_SUMMARY t
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE=t.MATERIAL_CODE
+        where t.AMOUNT > 0
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and t.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and t.SITE = #{paramCondition.site}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+                and t.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                and t.DEPARTMENT = #{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team != ''">
+                and t.TEAM = #{paramCondition.team}
+            </if>
+            <if test="paramCondition.subsidyType != null and paramCondition.subsidyType != ''">
+                and t.SUBSIDY_TYPE = #{paramCondition.subsidyType}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                and t.SKU in
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+    </select>
+    <select id="queryConfirm" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam">
+        select id from RP_SUBSIDY_SUMMARY t
+    <where>
+        t.CONFIRM_STATUS=0
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            and t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+        </if>
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and t.SHOP_NAME = #{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.sites != null and paramCondition.sites.size()>0">
+            and t.SITE  in
+            <foreach collection="paramCondition.sites" open="(" close=")" separator=","
+                                                     item="site">
+            #{site}
+            </foreach>
+        </if>
+    </where>
+    </select>
+    <delete id="deleteBatch" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam">
+        delete from RP_SUBSIDY_SUMMARY t
+        <where>
+            t.CONFIRM_STATUS=0
+            and t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            and t.SHOP_NAME = #{paramCondition.shopName}
+            <if test="paramCondition.sites != null and paramCondition.sites.size()>0">
+                and t.SITE  in
+                <foreach collection="paramCondition.sites" open="(" close=")" separator=","
+                         item="site">
+                    #{site}
+                </foreach>
+            </if>
+        </where>
+    </delete>
+
+    <select id="getQuantity" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SubsidySummaryResult">
+        select SUM(t.AMOUNT) AMOUNT
+        from RP_SUBSIDY_SUMMARY t
+        <where>
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+        </if>
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and t.SHOP_NAME = #{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and t.SITE = #{paramCondition.site}
+        </if>
+        <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus != ''">
+            and t.CONFIRM_STATUS = #{paramCondition.confirmStatus}
+        </if>
+        <if test="paramCondition.department != null and paramCondition.department != ''">
+            and t.DEPARTMENT = #{paramCondition.department}
+        </if>
+        <if test="paramCondition.team != null and paramCondition.team != ''">
+            and t.TEAM = #{paramCondition.team}
+        </if>
+        <if test="paramCondition.subsidyType != null and paramCondition.subsidyType != ''">
+            and t.SUBSIDY_TYPE = #{paramCondition.subsidyType}
+        </if>
+        <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+            and t.SKU in
+            <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                     item="sku">
+                #{sku}
+            </foreach>
+        </if>
+        </where>
+    </select>
+
+    <update id="updateToReport" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam">
+        MERGE INTO RP_SETTLEMENT_REPORT T1
+            USING (SELECT * FROM RP_SUBSIDY_SUMMARY where id = #{paramCondition.id}) T2
+            ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and T1.REPORT_TYPE = T2.REPORT_TYPE and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T1.SKU = T2.SKU
+                    and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM and T1.MATERIAL_CODE = T2.MATERIAL_CODE  and NVL(T1.PRODUCT_TYPE, '0')= case T2.MATERIAL_CODE when '0'  then T2.MATERIAL_CODE else NVL(T1.PRODUCT_TYPE, '0') end)
+            WHEN NOT MATCHED THEN
+                INSERT
+                    (T1.FISCAL_PERIOD,
+                     T1.REPORT_TYPE,
+                     T1.INCOME_TYPE,
+                     T1.SHOP_NAME,
+                     T1.SITE,
+                     T1.SKU,
+                     T1.DEPARTMENT,
+                     T1.TEAM,
+                     T1.MATERIAL_CODE,
+                     T1.SALES_BRAND,
+                     T1.COST_AUXILIARY_DESCRIPTION,
+                     T1.ADVERTISING_SUBSIDY,
+                     T1.INCENTIVE_FUND
+                     )
+                    VALUES
+                        (T2.FISCAL_PERIOD,
+                         T2.REPORT_TYPE,
+                         T2.INCOME_TYPE,
+                         T2.SHOP_NAME,
+                         T2.SITE,
+                         T2.SKU,
+                         T2.DEPARTMENT,
+                         T2.TEAM,
+                         T2.MATERIAL_CODE,
+                         T2.SALES_BRAND,
+                         T2.COST_AUXILIARY_DESCRIPTION,
+                         CASE T2.SUBSIDY_TYPE
+                             WHEN '广告费补贴' THEN
+                                 T2.AMOUNT
+                             ELSE
+                                 0
+                             END,
+                         CASE T2.SUBSIDY_TYPE
+                             WHEN '鼓励金' THEN
+                                 T2.AMOUNT
+                             ELSE
+                                 0
+                             END)
+            WHEN MATCHED THEN
+                UPDATE SET
+                    T1.ADVERTISING_SUBSIDY= T1.ADVERTISING_SUBSIDY +
+                        CASE T2.SUBSIDY_TYPE WHEN '广告费补贴' THEN T2.AMOUNT ELSE 0 END,
+                    T1.INCENTIVE_FUND= T1.INCENTIVE_FUND +
+                        CASE T2.SUBSIDY_TYPE WHEN '鼓励金' THEN T2.AMOUNT ELSE 0 END,
+                    T1.COST_AUXILIARY_DESCRIPTION= T1.COST_AUXILIARY_DESCRIPTION || ',' || T2.COST_AUXILIARY_DESCRIPTION
+    </update>
+    <update id="updateToReportBatch"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SubsidySummaryParam">
+        MERGE INTO RP_SETTLEMENT_REPORT T1
+        USING (SELECT * FROM RP_SUBSIDY_SUMMARY where CONFIRM_STATUS =0
+        and  FISCAL_PERIOD = #{paramCondition.fiscalPeriod} and SHOP_NAME=#{paramCondition.shopName}
+        <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+            AND SITE IN
+            <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+                #{site}
+            </foreach>
+        </if>  ) T2
+        ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and T1.REPORT_TYPE = T2.REPORT_TYPE and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T1.SKU = T2.SKU
+        and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM and T1.MATERIAL_CODE = T2.MATERIAL_CODE  and NVL(T1.PRODUCT_TYPE, '0')= case T2.MATERIAL_CODE when '0'  then T2.MATERIAL_CODE else NVL(T1.PRODUCT_TYPE, '0') end)
+        WHEN NOT MATCHED THEN
+        INSERT
+        (T1.FISCAL_PERIOD,
+        T1.REPORT_TYPE,
+        T1.INCOME_TYPE,
+        T1.SHOP_NAME,
+        T1.SITE,
+        T1.SKU,
+        T1.DEPARTMENT,
+        T1.TEAM,
+        T1.MATERIAL_CODE,
+        T1.SALES_BRAND,
+        T1.COST_AUXILIARY_DESCRIPTION,
+        T1.ADVERTISING_SUBSIDY,
+        T1.INCENTIVE_FUND
+        )
+        VALUES
+        (T2.FISCAL_PERIOD,
+        T2.REPORT_TYPE,
+        T2.INCOME_TYPE,
+        T2.SHOP_NAME,
+        T2.SITE,
+        T2.SKU,
+        T2.DEPARTMENT,
+        T2.TEAM,
+        T2.MATERIAL_CODE,
+        T2.SALES_BRAND,
+        T2.COST_AUXILIARY_DESCRIPTION,
+        CASE T2.SUBSIDY_TYPE
+        WHEN '广告费补贴' THEN
+        T2.AMOUNT
+        ELSE
+        0
+        END,
+        CASE T2.SUBSIDY_TYPE
+        WHEN '鼓励金' THEN
+        T2.AMOUNT
+        ELSE
+        0
+        END)
+        WHEN MATCHED THEN
+        UPDATE SET
+        T1.ADVERTISING_SUBSIDY= T1.ADVERTISING_SUBSIDY +
+        CASE T2.SUBSIDY_TYPE WHEN '广告费补贴' THEN T2.AMOUNT ELSE 0 END,
+        T1.INCENTIVE_FUND= T1.INCENTIVE_FUND +
+        CASE T2.SUBSIDY_TYPE WHEN '鼓励金' THEN T2.AMOUNT ELSE 0 END,
+        T1.COST_AUXILIARY_DESCRIPTION= T1.COST_AUXILIARY_DESCRIPTION || ',' || T2.COST_AUXILIARY_DESCRIPTION
+    </update>
+</mapper>

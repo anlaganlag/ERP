@@ -1,0 +1,200 @@
+server:
+  port: 9004
+
+spring:
+  application:
+    name: bsc-cloud-operationManagement
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource # 当前数据源操作类型
+    driver-class-name: oracle.jdbc.OracleDriver # Oracle数据库驱动包
+    url: jdbc:oracle:thin:@dev.jcintergl.com:1521/ORCLPDB1
+    username: basecloud
+    password: Jinchang001
+  redis:
+    host: dev.jcintergl.com
+    port: 6379
+    password: Jin@Dev001
+    database: 12
+  cloud:
+    nacos:
+      discovery:
+        server-addr: dev.jcintergl.com:8848
+        enabled: true
+        register-enabled: true
+        watch-delay: 1000
+        namespace: dev
+        username: dev
+        password: dev
+ribbon:
+  eager-load:
+    enabled: true
+    # 多个服务用逗号隔开
+    clients: roses-account
+
+feign:
+  sentinel:
+    # 为feign整合sentinel
+    enabled: true
+  client:
+    config:
+      # 全局配置
+      default:
+        # NONE不记录任何日志--BASIC仅请求方法URL,状态码执行时间等--HEADERS在BASIC基础上记录header等--FULL记录所有
+        loggerLevel: full
+        connectTimeout: 30000  #毫秒时间，建立连接的超时时间，一般只在发现服务时用到
+        readTimeout: 180000    #毫秒时间 ，接口请求的超时时间
+        errorDecoder: cn.stylefeng.guns.cloud.libs.cloud.feign.GunsFeignErrorDecoder
+        requestInterceptors:
+          - cn.stylefeng.guns.cloud.libs.cloud.feign.GunsFeignHeaderProcessInterceptor
+  httpclient:
+    # 让feign使用apache httpclient做请求；而不是默认的urlconnection
+    enabled: true
+    # feign的最大连接数
+    max-connections: 200
+    # feign单个路径的最大连接数
+    max-connections-per-route: 50
+
+mybatis-plus:
+  mapper-locations:
+    - classpath*:com/tadpole/cloud/operationManagement/modular/**/mapping/*.xml
+    - classpath*:com/tadpole/cloud/platformSettlement/modular/**/mapping/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+      table-underline: true
+
+roses:
+  scanner:
+    app-code: bsc-cloud-operationManagement
+    app-name: 运营管理
+    open: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+
+#ftp地址
+ftp:
+  address: 192.168.0.216
+  port: 21
+  username: DW_FTP
+  password: D4p599er
+
+ftpRemotePath: \MCMS TEST\
+
+#金蝶erp接口地址
+k3cloud:
+  ipaddress: http://192.168.0.93/K3Cloud/Gateway?BillType=
+  username: 邓亚良
+  password: dyl1030
+  #ipaddress: http://192.168.2.19:8086/K3Cloud/Gateway?BillType=
+  #username: 刘叶凤
+  #password: 123456
+
+  adminUsername: Administrator
+  adminPassword: BSC|JC2018-6
+
+#金蝶webapi配置信息
+k3webapi:
+  acctid: 64be17f73d8ae7
+  username: Administrator
+  appid: 218235_R71ITbhH4kn904Wox17oyzSsSs7bTsnu
+  appsec: 02ffb8b4c5bc43ec95198ae0aa61ae3d
+  serverurl: http://192.168.0.93/k3cloud/
+
+#领星配置信息
+lingxing:
+  addr: https://openapi.lingxing.com
+  app-id: ak_eXEnouhCXONvR
+  app-secret: jmQkzRX6RkmSRULV2GtZJg==
+  business-prefix-url: erp/sc
+  expires-in-value: 300
+  lingxing-auth-token-prefix: LINGXING_AUTH_TOKEN_
+  timeout: 30000
+
+mabang:
+  url: https://gwapi.mabangerp.com/api/v2
+  sec: ec84d32f9485c917980f1b5ddfb3687a
+  appkey: 200687
+  version: 1
+
+
+
+# 文件存储服务器
+file:
+  access-key: business
+  secret-key: oGcTNpEXr_
+  default-bucket: gunsfilesystem
+  server-endpoint: http://sysfile.jcintergl.com:9000
+  external-server-endpoint: http://sysfile.jcintergl.com:9000
+  expire-seconds: 3600
+  path: /mcms_dev
+
+
+# Apache commons email
+apache:
+  email:
+    hostName: smtp.exmail.qq.com
+    userName: infodiffusion@jinchannel.com
+    password: 2kcAQo6CkN6TnGdQ
+
+
+rediskey:
+  confirmListing: CONFIRM_LISTING_DEV
+  confirmUsd: CONFIRM_USD_DEV
+  confirmNoAdjust: CONFIRM_NO_ADJUST_DEV
+  confirmNoStation: CONFIRM_NO_STATION_DEV
+  confirmManualAdjust: CONFIRM_MANUAL_ADJUST_DEV
+  confirmOutsiteFee: CONFIRM_OUTSITE_FEE_DEV
+  confirmStationAuto: CONFIRM_STATION_AUTO_DEV
+  confirmStationManual: CONFIRM_STATION_MANUAL_DEV
+  confirmSubsidy: CONFIRM_SUBSIDY_DEV
+  confirmSettlement: CONFIRM_SETTLEMENT_DEV
+
+#EBMS提供接口地址
+ebms:
+  server: http://192.168.2.174:8083
+  getDeptList: /api/DepartmentFunction/GetDeptList
+  category: /api/MaterialCategoryTree/QueryMaterialCategory
+  operationCategory: /api/MaterialCategoryTree/QueryMaterialOperationCategory
+  saleBrand: /api/ComSaleBrand/GetSaleBrand
+  userInfo: /api/User/GetUser
+  materiel: /api/ComMateriel/GetMateriel
+  categoryTree: /api/MaterialCategoryTree/QueryMaterialCategoryTree
+  comMatBrandClass: /api/ComMateriel/GetComMatBrandClass
+  comMatModelClass: /api/ComMateriel/GetComMatModelClass
+  comMatColorClass: /api/ComMateriel/GetComMatColorClass
+  comMatSizeClass: /api/ComMateriel/GetComMatSizeClass
+  comMatPackQtyClass: /api/ComMateriel/GetComMatPackQtyClass
+  comMatCompatibleModelClass: /api/ComMateriel/GetComMatCompatibleModelClass
+  comMatFestLabelClass: /api/ComMateriel/GetComMatFestLabelClass
+  comMaterielTree: /api/ComMateriel/GetTbComMaterielAttrTree
+  syncMateriel: /api/ComMateriel/SyncMateriel
+  syncMaterielStatus: /api/ComMateriel/SyncMaterielStatus
+  syncMaterielOtherStatus: /api/ComMateriel/SyncMaterielOtherStatus
+  printSampleLabel: http://192.168.106.200:8012/api/ComMateriel/PrintSampleLabel
+  timeout: 60000
+
+objectLogger:
+  serverAddress: http://127.0.0.1:12301
+  businessAppName: ObjectLoggerServer
+  autoLogAttributes: true
+
+
+# 动态表空间名称
+warehouse_database: WAREHOUSE_TEST
+finance_database: FINANCE_TEST

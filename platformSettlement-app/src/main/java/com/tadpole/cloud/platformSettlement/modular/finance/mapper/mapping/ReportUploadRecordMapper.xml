@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.ReportUploadRecordMapper">
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ReportUploadRecordResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ReportUploadRecordParam">
+        select t.platform_name,
+               t.shop_name,
+               t.site,
+               t.report_type,
+               t.file_path,
+               t.bill_type,
+               t.settlement_id,
+               t.start_time,
+               t.end_time,
+               t.original_currency,
+               t.parse_status,
+               t.failure_reason,
+               t.upload_type,
+               t.create_at,
+               t.update_at,
+               t.create_by,
+               t.update_by,
+               t.id,
+               t.original_task_name
+               from CW_REPORT_UPLOAD_RECORD t where 1=1
+           <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+                  and t.platform_name=#{paramCondition.platformName}
+           </if>
+           <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+                  and t.settlement_id=#{paramCondition.settlementId}
+           </if>
+           <if test="paramCondition.billType != null and paramCondition.billType != ''">
+                  and t.bill_type=#{paramCondition.billType}
+           </if>
+           <if test="paramCondition.parseStatus != null and paramCondition.parseStatus != ''">
+                  and t.parse_status=#{paramCondition.parseStatus}
+           </if>
+           <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                  and t.report_type=#{paramCondition.reportType}
+           </if>
+           <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                  and t.shop_name=#{paramCondition.shopName}
+           </if>
+           <if test="paramCondition.site != null and paramCondition.site != ''">
+                  and t.site=#{paramCondition.site}
+           </if>
+           <if test="paramCondition.uploadType != null and paramCondition.uploadType != ''">
+                  and t.UPLOAD_TYPE =#{paramCondition.uploadType}
+           </if>
+           <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+                  and t.start_time>=to_date(#{paramCondition.startTime},'yyyy-mm-dd')
+           </if>
+           <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+                  and t.end_time&lt;=to_date(#{paramCondition.endTime},'yyyy-mm-dd')
+           </if>
+           order by t.start_time asc
+    </select>
+
+
+</mapper>

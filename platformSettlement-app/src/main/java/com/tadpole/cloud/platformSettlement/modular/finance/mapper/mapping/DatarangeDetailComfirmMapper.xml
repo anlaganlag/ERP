@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.DatarangeDetailComfirmMapper">
+
+    <!--根据时间和settlementId汇总金额-->
+    <select id="getRangeMoney" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm">
+        SELECT
+            D.SETTLEMENT_ID,D.BATCHNO,
+            SUM(D.SALES_PROMOTION) SALES_PROMOTION,
+            SUM(D.COMMISSION) COMMISSION ,
+            SUM(D.PREVIOUS_RESERVE_AMOUNT) PREVIOUS_RESERVE_AMOUNT ,
+            SUM(D.REFUND_COMMISSION) REFUND_COMMISSION ,
+            SUM(D.DISPOSAL_FEE) DISPOSAL_FEE ,
+            SUM(D.LONG_TERM_STORAGE_FEE) LONG_TERM_STORAGE_FEE ,
+            SUM(D.GOOD_WILL) GOOD_WILL ,
+            SUM(D.REFUND_PROMOTION) REFUND_PROMOTION ,
+            SUM(D.ADVERTISING) ADVERTISING ,
+            SUM(D.AMAZON_FEE) AMAZON_FEE ,
+            SUM(D.SALES_TAX) SALES_TAX ,
+            SUM(D.SALES_OTHER) SALES_OTHER ,
+            SUM(D.REIMBURSEMENT) REIMBURSEMENT ,
+            SUM(D.OTHER) OTHER ,
+            SUM(D.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING ,
+            SUM(D.STORAGE_FEE) STORAGE_FEE ,
+            SUM(D.REFUND) REFUND ,
+            SUM(D.WITHHELD_TAX) WITHHELD_TAX ,
+            SUM(D.CURRENT_RESERVE_AMOUNT) CURRENT_RESERVE_AMOUNT,
+            SUM(D.UNSUCCESSFUL_TRANSFER) UNSUCCESSFUL_TRANSFER ,
+            SUM(D.REMOVAL_FEE) REMOVAL_FEE ,
+            SUM(D.SALES_PRINCIPAL) SALES_PRINCIPAL,
+            SUM(D.LIGHTNING_DEAL_FEE) LIGHTNING_DEAL_FEE,
+            SUM(D.SUCCESSFUL_CHARGE) SUCCESSFUL_CHARGE,
+            SUM(D.AMT_SOURCE) AMT_SOURCE,
+            SUM(D.MONEY_TRANSFER) MONEY_TRANSFER
+        FROM CW_DATARANGE_DETAIL_COMFIRM D
+        LEFT JOIN CW_DATARANGE R ON D.SETTLEMENT_ID=R.SETTLEMENT_ID AND D.BATCHNO=R.BATCHNO
+        WHERE
+            D.SETTLEMENT_ID=#{paramCondition.settlementId}
+            AND D.POSTED_DATE >=#{paramCondition.postedDate}
+            AND D.POSTED_DATE&lt;=#{paramCondition.createTime}
+            AND R.STATUS=3
+        GROUP BY D.SETTLEMENT_ID,D.BATCHNO
+    </select>
+
+    <!--非Amazon平台费-->
+    <select id="getNotAmazonFee"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm">
+        SELECT
+            SETTLEMENT_ID,
+            SUM(AMAZON_FEE) AMAZON_FEE
+        FROM CW_DATARANGE_DETAIL_COMFIRM
+        WHERE
+            SETTLEMENT_ID=#{paramCondition.settlementId}
+           AND POSTED_DATE >=#{paramCondition.postedDate}
+           AND POSTED_DATE&lt;=#{paramCondition.createTime}
+           AND PLATFORM !='Amazon'
+        GROUP BY SETTLEMENT_ID
+    </select>
+
+    <select id="getPlatformAmazonFee"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDetailComfirm">
+
+        select SETTLEMENT_ID,PLATFORM,
+               sum(AMAZON_FEE) AMAZON_FEE
+        from CW_DATARANGE_DETAIL_COMFIRM WHERE SETTLEMENT_ID=#{paramCondition.settlementId}
+                                           and POSTED_DATE >=#{paramCondition.postedDate}
+                                           and POSTED_DATE&lt;=#{paramCondition.createTime}
+                                           and PLATFORM !='Amazon'
+        group by SETTLEMENT_ID,PLATFORM
+
+    </select>
+    <select id="refreshFailure" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StatementIncomeParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.DetailResult">
+        select D.*,C.FINANCIAL_CLASSIFICATION,C.ID CLASSIFICATION_ID,
+               case C.VERIFY_STATUS when  0 then '未审核'
+                                  when  1 then '审核通过'
+                                  when  2 then '未通过' end VERIFY_STATUS,
+               case C.EDIT_STATUS when  0 then '未编辑'
+                                when  1 then '已编辑' end EDIT_STATUS,
+               case STATUS when  0 then '禁用'
+                           when  1 then '启用' end STATUS,C.COST_NAME,C.CLASSIFICATION_TYPE,C.COST_NAME,C.COST_NAME_CN,
+               C.SITE,C.FINANCIAL_CLASSIFICATION,C.SUBJECT_NAME,C.SUBJECT_CLASSIFICATION_ONE,C.SUBJECT_CLASSIFICATION_TWO
+        from CW_DATARANGE_DETAIL_COMFIRM D LEFT JOIN CW_FINANCIAL_CLASSIFICATION C ON upper(C.COST_NAME)=upper(D.TRANSACTION_TYPE)||upper(D.AMOUNT_TYPE)||upper(D.AMOUNT_DESCRIPTION)
+            and C.SITE=D.SYS_SITE AND C.CLASSIFICATION_TYPE='DataRange'
+            and C.EDIT_STATUS=0
+        WHERE D.SETTLEMENT_ID=#{paramCondition.settlementId} and D.FINANCE_TYPE is null
+    </select>
+
+    <!--更新Data Range源报告站点为空的站点-->
+    <update id="updateSite" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementReportCheck">
+        update  CW_DATARANGE_DETAIL_COMFIRM t set t.SYS_SITE=#{paramCondition.site} WHERE t.SYS_SITE is null and  t.SETTLEMENT_ID=#{paramCondition.settlementId}
+    </update>
+</mapper>

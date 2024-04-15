@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.SpecialApplyInfoV3Mapper">
+
+    <select id="queryListPage" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SpecialApplyInfoV3Param"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SpecialApplyInfoV3Result">
+        SELECT t.* , CASE t.BILL_TYPE
+                         WHEN 'JJBH' THEN '紧急备货'
+                         WHEN 'XPBH' THEN '新品备货'
+                         WHEN 'XMBH' THEN '项目备货'
+                         WHEN 'RCBH' THEN '日常备货'
+                         ELSE '其他' END billTypeName
+        FROM (
+            SELECT product_type, platform, team, area, operator FROM product_line2
+            GROUP BY product_type, platform, team, area, operator
+        ) l  JOIN SPECIAL_APPLY_INFO_V3 t
+            ON l.platform = t.PLATFORM AND l.team = t.TEAM AND l.area = t.AREA AND l.product_type = t.PRODUCT_TYPE
+        WHERE STATUS = 0
+        ORDER BY CREATE_TIME ASC
+    </select>
+
+    <select id="queryList" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SpecialApplyInfoV3Param"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SpecialApplyInfoV3Result">
+        SELECT t.*, CASE t.BILL_TYPE
+                        WHEN 'JJBH' THEN '紧急备货'
+                        WHEN 'XPBH' THEN '新品备货'
+                        WHEN 'XMBH' THEN '项目备货'
+                        WHEN 'RCBH' THEN '日常备货'
+                        ELSE '其他' END billTypeName
+        FROM (
+            SELECT product_type, platform, team, area, operator FROM product_line2
+            where 1=1
+              <if test="paramCondition.operator != null and paramCondition.operator != ''">
+                AND operator like '%'||#{paramCondition.operator}||'%'
+              </if>
+            GROUP BY product_type, platform, team, area, operator
+        ) l  JOIN SPECIAL_APPLY_INFO_V3 t
+            ON l.platform = t.PLATFORM AND l.team = t.TEAM AND l.area = t.AREA AND l.product_type = t.PRODUCT_TYPE
+        WHERE STATUS = 0
+        ORDER BY CREATE_TIME ASC
+    </select>
+
+
+    <select id="queryList2" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SpecialApplyInfoV3Param"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SpecialApplyInfoV3Result">
+        SELECT t.*, CASE t.BILL_TYPE WHEN 'JJBH' THEN '紧急备货'
+                                    WHEN 'XPBH' THEN '新品备货'
+                                    WHEN 'XMBH' THEN '项目备货'
+                                    WHEN 'RCBH' THEN '日常备货'
+                                    ELSE '其他' END billTypeName
+        FROM SPECIAL_APPLY_INFO_V3 t
+        WHERE STATUS = 0
+<!--        <if test="paramCondition.operator != null and paramCondition.operator != ''">-->
+<!--            AND t.APPLY_PERSON_NO like '%'||#{paramCondition.operator}||'%'-->
+<!--        </if>-->
+        <if test="paramCondition.department != null and paramCondition.department != ''">
+            AND t.DEPARTMENT = #{paramCondition.department}
+        </if>
+        <if test="paramCondition.team != null and paramCondition.team != ''">
+            AND t.TEAM = #{paramCondition.team}
+        </if>
+        ORDER BY t.CREATE_TIME desc
+    </select>
+
+
+
+    <select id="uploadValidateData" parameterType="list"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SpecialApplyInfoV3Result">
+        SELECT * FROM SPECIAL_APPLY_INFO_V3 t
+        WHERE STATUS = 0
+        <if test="mergeFields !=null and mergeFields.size() !=0" >
+            AND t.PLATFORM || t.AREA || t.DEPARTMENT || t.TEAM || t.MATERIAL_CODE || t.BILL_TYPE IN
+            <foreach collection="mergeFields" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+</mapper>

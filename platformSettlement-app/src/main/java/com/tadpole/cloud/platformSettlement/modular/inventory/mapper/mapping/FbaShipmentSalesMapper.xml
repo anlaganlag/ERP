@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.FbaShipmentSalesMapper">
+
+  <!-- 分页查询列表、导出 -->
+  <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.FbaShipmentSales"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaShipmentSalesParam">
+    SELECT
+      m.*,
+      CASE m.VERIFY_STATUS WHEN 0 THEN '未审核' WHEN 1 THEN '已审核' WHEN 2 THEN '已作废' END verifyStatusCN,
+      CASE m.GENERATE_STATUS WHEN 0 THEN '未生成' WHEN 1 THEN '已生成' END generateStatusCN
+    FROM FBA_SHIPMENT_SALES m
+    <where>
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size > 0 ">
+        AND ( m.SYS_SITE IN
+          <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+            #{sysSite}
+          </foreach>
+           <if test="paramCondition.sysSite =='空'.toString()">
+                OR m. SYS_SITE IS NULL
+           </if>)
+      </if>
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND m.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+      <if test="paramCondition.currency != null and paramCondition.currency!=''">
+        AND m.currency=#{paramCondition.currency}
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+        AND m.VERIFY_STATUS IN
+          <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator="," item="verifyStatus">
+            #{verifyStatus}
+          </foreach>
+      </if>
+      <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+        AND m.GENERATE_STATUS IN
+        <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator="," item="generateStatus">
+          #{generateStatus}
+        </foreach>
+      </if>
+      <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        and m.SHIPMENT_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+      </if>
+      <if test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND m.upload_mark =#{paramCondition.uploadMark}
+      </if>
+      <if test="paramCondition.platform != null and paramCondition.platform != ''">
+        <if test="paramCondition.platform =='空'.toString()">
+          AND m.platform IS NULL
+        </if>
+        <if test="paramCondition.platform !='空'.toString()">
+          AND m.platform =#{paramCondition.platform}
+        </if>
+      </if>
+      <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+        AND m.AMAZON_ORDER_ID LIKE '%' || #{paramCondition.orderId} ||'%'
+      </if>
+      <if test="paramCondition.salesCode != null and paramCondition.salesCode != '' and paramCondition.salesCode == '空'.toString()">
+          AND (m.SALES_ORGANIZATION_CODE IS NULL OR m.INVENTORY_ORGANIZATION_CODE IS NULL)
+      </if>
+      <if test="paramCondition.salesCode != null and paramCondition.salesCode != '' and paramCondition.salesCode != '空'.toString()">
+        AND m.SALES_ORGANIZATION_CODE =#{paramCondition.salesCode}
+      </if>
+    </where>
+    order by id
+  </select>
+
+  <!--获取没有刷上销售组织编码和库存组织编码的数据-->
+  <select id="remainList" resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.FbaShipmentSales">
+    SELECT m.*
+    FROM FBA_SHIPMENT_SALES m
+    WHERE
+      m.SALES_ORGANIZATION_CODE IS NULL
+      AND m.platform IS NOT NULL
+      AND m.sys_site IS NOT NULL
+      AND m.platform IS NOT NULL
+      AND m.AMAZON_ORDER_ID NOT LIKE 'M%'
+      AND m.AMAZON_ORDER_ID NOT LIKE 'TP%'
+      AND m.platform != 'Error'
+  </select>
+
+  <!-- Quantity合计 -->
+  <select id="getQuantity"
+    resultType="java.lang.Integer"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaShipmentSalesParam">
+    SELECT SUM(quantity)
+    FROM FBA_SHIPMENT_SALES m
+    <where>
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size > 0 ">
+        AND (m.SYS_SITE IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+            #{sysSite}
+        </foreach>
+        <if test="paramCondition.sysSite =='空'.toString()">
+            OR m. SYS_SITE IS NULL
+        </if>)
+      </if>
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND m.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+          item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+      <if test="paramCondition.currency != null and paramCondition.currency!=''">
+        AND m.currency=#{paramCondition.currency}
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+        AND (m.VERIFY_STATUS IN
+        <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator="," item="verifyStatus">
+          #{verifyStatus}
+        </foreach>
+        <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0 and paramCondition.verifyStatuss.get(0) == '0'.toString()">
+          OR m.VERIFY_STATUS IS NULL
+        </if>)
+      </if>
+      <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+        AND m.GENERATE_STATUS IN
+        <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator="," item="generateStatus">
+          #{generateStatus}
+        </foreach>
+      </if>
+      <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        AND m.SHIPMENT_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+      </if>
+      <if test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND m.upload_mark =#{paramCondition.uploadMark}
+      </if>
+      <if test="paramCondition.platform != null and paramCondition.platform != ''">
+        <if test="paramCondition.platform =='空'.toString()">
+          AND m.platform IS NULL
+        </if>
+        <if test="paramCondition.platform !='空'.toString()">
+          AND m.platform =#{paramCondition.platform}
+        </if>
+      </if>
+      <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+        AND m.AMAZON_ORDER_ID LIKE '%' || #{paramCondition.orderId} ||'%'
+      </if>
+      <if test="paramCondition.salesCode != null and paramCondition.salesCode != '' and paramCondition.salesCode == '空'.toString()">
+          AND (m.SALES_ORGANIZATION_CODE IS NULL OR m.INVENTORY_ORGANIZATION_CODE IS NULL)
+      </if>
+      <if test="paramCondition.salesCode != null and paramCondition.salesCode != '' and paramCondition.salesCode != '空'.toString()">
+        AND m.SALES_ORGANIZATION_CODE =#{paramCondition.salesCode}
+      </if>
+    </where>
+  </select>
+
+  <!--根据账号、站点、sku获取物料编码-->
+  <select id="getMaterial"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaShipmentSalesParam"
+    resultType="java.lang.String">
+    SELECT a.material_code
+    FROM mcms_base_data.INV_PRODUCT_GALLERY a
+    WHERE a.sku = #{paramCondition.sku}
+      AND a.sys_site = #{paramCondition.sysSite}
+      AND a.sys_shops_name = #{paramCondition.sysShopsName }
+  </select>
+
+  <!--获取销售出库列表头部数据-->
+  <select id="getListHeader"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.FbaShipmentSalesParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.SalesStockOut">
+    SELECT
+      TO_CHAR(to_date(#{paramCondition.shipmentDate}, 'YYYY/MM'), 'YYYY') YEAR,
+      TO_CHAR(to_date(#{paramCondition.shipmentDate}, 'YYYY/MM'), 'MM') MONTH,
+      PLATFORM,
+      SYS_SHOPS_NAME shop_name,
+      SYS_SITE site,
+      ORG,
+      INVENTORY_ORGANIZATION_CODE,
+      WAREHOUSE_NAME,
+      WAREHOUSE_CODE,
+      SALES_ORGANIZATION,
+      SALES_ORGANIZATION_CODE
+    FROM FBA_SHIPMENT_SALES t
+    WHERE
+      TO_CHAR(t.SHIPMENT_DATE, 'YYYY/MM') = TO_CHAR(TO_DATE(#{paramCondition.shipmentDate}, 'YYYY/MM'), 'YYYY/MM')
+      AND NVL(t.GENERATE_STATUS, 0) = 0
+      AND t.VERIFY_STATUS = 1
+      AND t.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+      AND t.SALES_ORGANIZATION_CODE IS NOT NULL
+    GROUP BY
+      PLATFORM,
+      SYS_SHOPS_NAME,
+      SYS_SITE,
+      ORG,
+      INVENTORY_ORGANIZATION_CODE,
+      WAREHOUSE_NAME,
+      WAREHOUSE_CODE,
+      SALES_ORGANIZATION,
+      SALES_ORGANIZATION_CODE
+  </select>
+
+  <!--同步ERP仓库组织编码-->
+  <update id="syncErpCode" parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ErpOrgCode">
+    MERGE INTO ERP_WAREHOUSE_CODE T1
+    USING (
+      SELECT
+        #{paramCondition.organizationCode} AS ORGANIZATION_CODE,
+        #{paramCondition.organizationName} AS ORGANIZATION_NAME,
+        #{paramCondition.organizationType} AS ORGANIZATION_TYPE,
+        #{paramCondition.useOrganization}  AS USE_ORGANIZATION
+      FROM dual
+    ) T2
+    ON (
+      T1.ORGANIZATION_NAME = T2.ORGANIZATION_NAME
+      AND T1.ORGANIZATION_TYPE = T2.ORGANIZATION_TYPE
+      AND T1.USE_ORGANIZATION = T2.USE_ORGANIZATION
+    )
+    WHEN MATCHED THEN
+      UPDATE SET T1.ORGANIZATION_CODE = T2.ORGANIZATION_CODE
+    WHEN NOT MATCHED THEN
+      INSERT (
+        T1.ORGANIZATION_CODE,
+        T1.ORGANIZATION_NAME,
+        T1.ORGANIZATION_TYPE,
+        T1.USE_ORGANIZATION
+      )
+      VALUES (
+        T2.ORGANIZATION_CODE,
+        T2.ORGANIZATION_NAME,
+        T2.ORGANIZATION_TYPE,
+        T2.USE_ORGANIZATION
+      )
+  </update>
+
+  <!--刷组织名称（Amazon_账号_站点）-->
+  <update id="addOrgName" >
+    UPDATE FBA_SHIPMENT_SALES A
+    SET A.org = 'Amazon_' || A.SYS_SHOPS_NAME || '_' || A.SYS_SITE
+    WHERE A.org IS NULL
+    AND A.SYS_SHOPS_NAME IS NOT NULL
+    AND A.SYS_SITE IS NOT NULL
+  </update>
+
+  <!--刷仓库组织名称（Amazon_账号_站点_仓库）-->
+  <update id="addWarehouseOrgName" >
+	UPDATE FBA_SHIPMENT_SALES A
+    SET A.warehouse_name = 'Amazon_' || A.SYS_SHOPS_NAME || '_' ||A.SYS_SITE || '_仓库'
+    WHERE A.warehouse_name IS NULL
+    AND A.SYS_SHOPS_NAME IS NOT NULL
+    AND A.SYS_SITE IS NOT NULL
+  </update>
+
+  <!--根据组织名称刷库存组织编码-->
+  <update id="refreshOrgCode">
+    MERGE INTO FBA_SHIPMENT_SALES A
+    USING (
+      SELECT
+        wc.ORGANIZATION_CODE,
+        wc.ORGANIZATION_NAME
+      FROM erp_warehouse_code wc
+      WHERE wc.ORGANIZATION_TYPE = 'organization'
+      GROUP BY
+        wc.ORGANIZATION_CODE,
+        wc.ORGANIZATION_NAME
+    ) C
+    ON (A.ORG = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+      UPDATE SET A.INVENTORY_ORGANIZATION_CODE = C.ORGANIZATION_CODE
+      WHERE A.ORG IS NOT NULL
+        AND A.INVENTORY_ORGANIZATION_CODE IS NULL
+  </update>
+
+  <!--根据仓库组织名称刷仓库组织编码-->
+  <update id="refreshWareOrgCode">
+    MERGE INTO FBA_SHIPMENT_SALES A
+    USING (
+        SELECT
+          wc.ORGANIZATION_CODE,
+          wc.ORGANIZATION_NAME
+        FROM erp_warehouse_code wc
+        WHERE wc.ORGANIZATION_TYPE = 'warehouse'
+        GROUP BY
+          wc.ORGANIZATION_CODE,
+          wc.ORGANIZATION_NAME
+    ) C
+    ON (A.WAREHOUSE_NAME = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+      UPDATE SET A.WAREHOUSE_CODE = C.ORGANIZATION_CODE
+      WHERE A.WAREHOUSE_NAME IS NOT NULL
+        AND A.WAREHOUSE_CODE IS NULL
+  </update>
+
+  <!--匹配订单表刷销售组织名称（平台_账号_站点，只刷平台为Amazon的）-->
+  <update id="addSalOrg">
+    MERGE INTO FBA_SHIPMENT_SALES A
+    USING (
+      SELECT
+        AMAZON_ORDER_ID,
+        SKU,
+        SYS_SITE,
+        SYS_SHOPS_NAME,
+        PLATFORM
+      FROM MCMS_BASE_DATA.AMAZON_ORDER_DETAIL
+      GROUP BY
+        AMAZON_ORDER_ID,
+        SKU,
+        SYS_SITE,
+        SYS_SHOPS_NAME,
+        PLATFORM
+    ) C
+    ON (A.AMAZON_ORDER_ID = C.AMAZON_ORDER_ID AND A.SKU = C.SKU)
+    WHEN MATCHED THEN
+      UPDATE
+      SET A.SALES_ORGANIZATION = C.PLATFORM || '_' || C.SYS_SHOPS_NAME || '_' || C.SYS_SITE
+      WHERE A.PLATFORM = 'Amazon' AND A.SALES_ORGANIZATION IS NULL
+  </update>
+
+  <!--平台为null的先去订单表刷平台-->
+  <update id="refreshOrderPlatform">
+    MERGE INTO FBA_SHIPMENT_SALES S
+    USING(
+        SELECT
+            O.MERCHANT_ORDER_ID,
+            O.AMAZON_ORDER_ID,
+            OD.SKU,
+            OD.PLATFORM,
+            OD.SYS_SHOPS_NAME,
+            OD.SYS_SITE
+        FROM ${amazonOrders} O
+        LEFT JOIN ${amazonOrderDetail} OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID group by O.MERCHANT_ORDER_ID,
+        O.AMAZON_ORDER_ID,OD.SKU,OD.PLATFORM,OD.SYS_SHOPS_NAME,OD.SYS_SITE
+    ) T ON (S.AMAZON_ORDER_ID = T.MERCHANT_ORDER_ID AND S.SKU = T.SKU)
+    WHEN MATCHED THEN
+        UPDATE
+        SET S.PLATFORM = T.PLATFORM
+    WHERE S.PLATFORM IS NULL
+  </update>
+
+  <!--销售组织为空的，拿到FBA_SHIPMENT_SALES的AMAZON_ORDER_ID去匹配AMAZON_ORDERS的MERCHANT_ORDER_ID，再根据AMAZON_ORDER_DETAIL拿到销售平台、账号、站点（只刷平台为Amazon的）-->
+  <update id="refreshOrderSalOrg">
+    MERGE INTO FBA_SHIPMENT_SALES S
+    USING(
+        SELECT
+            O.MERCHANT_ORDER_ID,
+            O.AMAZON_ORDER_ID,
+            OD.SKU,
+            OD.PLATFORM,
+            OD.SYS_SHOPS_NAME,
+            OD.SYS_SITE
+        FROM ${amazonOrders} O
+        LEFT JOIN ${amazonOrderDetail} OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID group by O.MERCHANT_ORDER_ID,
+        O.AMAZON_ORDER_ID,OD.SKU,OD.PLATFORM,OD.SYS_SHOPS_NAME,OD.SYS_SITE
+    ) T ON (S.AMAZON_ORDER_ID = T.MERCHANT_ORDER_ID AND S.SKU = T.SKU)
+    WHEN MATCHED THEN
+        UPDATE
+        SET S.SALES_ORGANIZATION = T.PLATFORM || '_' || T.SYS_SHOPS_NAME || '_' || T.SYS_SITE
+    WHERE S.PLATFORM = 'Amazon' AND S.SALES_ORGANIZATION IS NULL
+  </update>
+
+  <!--拿到OrderId和sku去结算报告里匹配销售组织名称（平台_账号_站点，只刷平台为Amazon的）-->
+  <update id="refreshSalOrg">
+    MERGE INTO FBA_SHIPMENT_SALES A
+    USING (
+			SELECT
+				D.MERCHANT_ORDER_ID,
+				D.PLATFORM,
+				D.SYS_SHOPS_NAME,
+				D.SYS_SITE,
+				D.SKU
+			FROM ${settlementDetail} D
+			WHERE D.PLATFORM = 'Amazon'
+			    AND D.CREATE_TIME >= ADD_MONTHS(SYSDATE, -3)
+			GROUP BY
+				D.MERCHANT_ORDER_ID,
+				D.PLATFORM,
+				D.SYS_SHOPS_NAME,
+				D.SYS_SITE,
+				D.SKU
+    ) C
+    ON (A.AMAZON_ORDER_ID = C.MERCHANT_ORDER_ID AND A.SKU = C.SKU)
+    WHEN MATCHED THEN
+      UPDATE
+      SET A.SALES_ORGANIZATION = C.PLATFORM || '_' || C.SYS_SHOPS_NAME || '_' || C.SYS_SITE
+      WHERE A.PLATFORM = 'Amazon' AND  A.SALES_ORGANIZATION IS NULL
+  </update>
+
+  <!--根据销售组织名称刷销售组织编码-->
+  <update id="refreshSalOrgCode">
+    MERGE INTO FBA_SHIPMENT_SALES A
+    USING (
+      SELECT
+        wc.ORGANIZATION_CODE,
+        wc.ORGANIZATION_NAME
+      FROM erp_warehouse_code wc
+      GROUP BY
+        wc.ORGANIZATION_CODE,
+        wc.ORGANIZATION_NAME
+    ) C
+    ON (A.SALES_ORGANIZATION = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+        UPDATE
+        SET A.SALES_ORGANIZATION_CODE = C.ORGANIZATION_CODE
+        WHERE A.SALES_ORGANIZATION IS NOT NULL
+            AND A.SALES_ORGANIZATION_CODE IS NULL
+  </update>
+
+  <!--同步ERP仓库组织编码-->
+  <select id="getErpCode"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ErpOrgCode">
+    select *
+    from View_OrgCode_To_Bi
+  </select>
+
+  <!--批量审核-->
+  <update id="verifyUpdateBatch" parameterType="java.util.List">
+    UPDATE FBA_SHIPMENT_SALES a
+    SET
+      a.VERIFY_AT = SYSDATE,
+      a.UPDATE_TIME = SYSDATE,
+      a.VERIFY_BY = #{paramCondition.verifyBy},
+      a.UPDATE_BY = #{paramCondition.updateBy},
+      a.VERIFY_STATUS = 1
+    WHERE
+      a.VERIFY_STATUS = 0
+      AND a.GENERATE_STATUS = 0
+      AND a.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+      AND a.SALES_ORGANIZATION_CODE IS NOT NULL
+      AND a.WAREHOUSE_CODE IS NOT NULL
+      AND a.BILL_CODE IS NULL
+      <if test="paramCondition.sysShopsName != null and paramCondition.sysShopsName !=''">
+        AND a.SYS_SHOPS_NAME = #{paramCondition.sysShopsName}
+      </if>
+      <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+        AND a.SYS_SHOPS_NAME IN
+        <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="sysShopsName">
+          #{sysShopsName}
+        </foreach>
+      </if>
+      <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+        AND a.SYS_SITE IN
+        <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+          #{sysSite}
+        </foreach>
+        <if test="paramCondition.sysSites.get(0)=='空'.toString()">
+          OR a.SYS_SITE IS NULL
+        </if>
+      </if>
+      <if test="paramCondition.currency != null and paramCondition.currency!=''">
+        AND a.currency=#{paramCondition.currency}
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND a.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        and a.SHIPMENT_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 - INTERVAL '1' SECOND
+      </if>
+      <if test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+        AND a.upload_mark =#{paramCondition.uploadMark}
+      </if>
+      <if test="paramCondition.platform != null and paramCondition.platform != ''">
+        <if test="paramCondition.platform =='空'.toString()">
+          AND a.platform IS NULL
+        </if>
+        <if test="paramCondition.platform !='空'.toString()">
+          AND a.platform =#{paramCondition.platform}
+        </if>
+      </if>
+      <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+        AND a.AMAZON_ORDER_ID LIKE '%' || #{paramCondition.orderId} ||'%'
+      </if>
+      <if test="paramCondition.salesCode != null and paramCondition.salesCode == '空'.toString()">
+        AND a.SALES_ORGANIZATION_CODE IS NULL
+      </if>
+      <if test="paramCondition.salesCode != null and paramCondition.salesCode != '空'.toString()">
+        AND a.SALES_ORGANIZATION_CODE =#{paramCondition.salesCode}
+      </if>
+  </update>
+
+  <!--批量作废-->
+  <update id="rejectBatch" parameterType="java.util.List">
+    UPDATE fba_shipment_sales a
+    SET
+      a.VERIFY_AT = SYSDATE,
+      a.UPDATE_TIME = SYSDATE,
+      a.VERIFY_BY = #{paramCondition.verifyBy},
+      a.UPDATE_BY = #{paramCondition.updateBy},
+      a.VERIFY_STATUS = 2
+    WHERE
+      a.verify_status = 0
+      AND a.generate_status = 0
+      AND a.id IN
+      <foreach collection="paramCondition.idList" open="(" close=")" separator="," item="id">
+        #{id}
+      </foreach>
+  </update>
+
+  <!--销售出库列表明细刷listing-->
+  <update id="updateDetailList">
+    MERGE INTO (SELECT * FROM SALES_STOCK_OUT_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) d
+    USING mcms_base_data.INV_PRODUCT_GALLERY g
+    ON (
+      UPPER(d.sku) = UPPER(g.sku)
+      AND d.site = g.SYS_SITE
+      AND d.shop_name = g.SYS_SHOPS_NAME
+    )
+    WHEN MATCHED THEN
+      UPDATE SET d.department = g.department, d.team = g.team, d.material_code = g.material_code
+  </update>
+
+  <!--销售出库列表明细刷存档listing-->
+  <update id="updateFileDetailList">
+    MERGE INTO (SELECT * FROM SALES_STOCK_OUT_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )) D
+    USING (
+      SELECT
+        SKU,
+        SYS_SITE,
+        SYS_SHOPS_NAME,
+        MATERIAL_CODE,
+        DEPARTMENT,
+        TEAM,
+        LAST_UPDATE_DATE
+      FROM (
+        SELECT
+        SKU,
+        SYS_SITE,
+        SYS_SHOPS_NAME,
+        MATERIAL_CODE,
+        DEPARTMENT,
+        TEAM,
+        LAST_UPDATE_DATE,
+        ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+        FROM mcms_base_data.INV_PRODUCT_GALLERY_FILE
+      ) t
+      WHERE t.rn = 1
+    ) G
+    ON (UPPER(D.sku) = UPPER(G.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+    WHEN MATCHED THEN
+        UPDATE SET D.DEPARTMENT = G.DEPARTMENT, D.TEAM = G.TEAM, D.MATERIAL_CODE = G.MATERIAL_CODE
+  </update>
+
+  <!--获取销售列表明细数据-->
+  <select id="getDetailList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.SalesStockOut"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.SalesStockOutDetail">
+    SELECT
+      SKU,
+      PLATFORM,
+      SYS_SHOPS_NAME SHOP_NAME,
+      SYS_SITE SITE,
+      SALES_ORGANIZATION,
+      SUM(QUANTITY) SALES_STOCKOUT_AMOUNT,
+      0 IS_CANCEL,
+      0 SYNC_STATUS,
+      SYSDATE UPDATE_AT
+    FROM FBA_SHIPMENT_SALES t
+    WHERE
+      TO_CHAR(t.SHIPMENT_DATE, 'YYYYMM') = #{paramCondition.year} || #{paramCondition.month}
+      AND t.PLATFORM = #{paramCondition.platform}
+      AND t.SYS_SHOPS_NAME = #{paramCondition.shopName}
+      AND t.SYS_SITE = #{paramCondition.site}
+      AND t.SALES_ORGANIZATION_CODE = #{paramCondition.salesOrganizationCode}
+      AND t.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      And t.GENERATE_STATUS = 0
+      AND t.VERIFY_STATUS = 1
+    GROUP BY SKU, PLATFORM, SYS_SHOPS_NAME, SYS_SITE, SALES_ORGANIZATION
+  </select>
+
+  <!--更新销售出库fba_shipment_sales源报告生成状态和单据头编码-->
+  <update id="updateSrcList">
+    UPDATE fba_shipment_sales
+    SET
+      bill_code = #{paramCondition.billCode},
+      generate_status = 1,
+      update_time = SYSDATE,
+      update_by = #{paramCondition.warehouseName}
+    WHERE
+      generate_status = 0
+      AND verify_status = 1
+      AND to_char(SHIPMENT_DATE, 'YYYYMM') = #{paramCondition.year} || #{paramCondition.month}
+      AND platform = #{paramCondition.platform}
+      AND sys_shops_name = #{paramCondition.shopName}
+      AND SALES_ORGANIZATION_CODE = #{paramCondition.salesOrganizationCode}
+      AND INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      AND SYS_SITE = #{paramCondition.site}
+      AND bill_code IS NULL
+  </update>
+
+  <!--获取销售出库列表组织编码及物料编码-->
+  <select id="assignMaterialList" parameterType="java.util.List"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ZZDistributeMcms">
+    SELECT
+      t.INVENTORY_ORGANIZATION_CODE shop_code,
+      d.material_code
+    FROM sales_stock_out t
+    JOIN sales_stock_out_detail d ON t.id = d.out_id
+    WHERE
+      t.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+      AND d.material_code IS NOT NULL
+      <if test="detailIdList != null and detailIdList.size>0">
+        AND d.id IN
+        <foreach collection="detailIdList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+    UNION
+    SELECT
+      t.sales_organization_code shop_code,
+      d.material_code
+    FROM sales_stock_out t
+    JOIN sales_stock_out_detail d ON t.id = d.out_id
+    WHERE
+      t.sales_organization_code IS NOT NULL
+      AND d.material_code IS NOT NULL
+      <if test="detailIdList != null and detailIdList.size>0">
+        AND d.id IN
+        <foreach collection="detailIdList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+  </select>
+
+  <!--针对B2B情况特殊处理，FBA_SHIPMENT_SALES存在B2B平台解析出来是Amazon，需要替换销售组织编码位：B2B_MK_ALL-->
+  <update id="updateB2BSalOrg">
+      UPDATE FBA_SHIPMENT_SALES S
+      SET S.SALES_ORGANIZATION = 'B2B_MK_ALL'
+      WHERE S.SALES_ORGANIZATION LIKE 'B2B_%' AND S.SALES_ORGANIZATION != 'B2B_MK_ALL'
+  </update>
+
+  <!--针对eBay刷销售组织名称:数据为【eBay】的：销售账号从amazon_order_id中获取，第一个“-”和第二个“-”之间的字符串即为销售账号，站点值为ALL-->
+  <update id="addEBaySalOrg">
+    UPDATE FBA_SHIPMENT_SALES S
+    SET S.SALES_ORGANIZATION = 'eBay_' || SUBSTR(S.AMAZON_ORDER_ID, 6, 2) || '_ALL'
+    WHERE S.PLATFORM = 'eBay' AND S.SALES_ORGANIZATION IS NULL
+  </update>
+
+  <!--针对Rakuten刷销售组织名称:数据为【Rakuten】的：销售账号从amazon_order_id中获取，第一个“-”和第二个“-”之间的字符串即为销售账号，站点值取表中sys_site字段值-->
+  <update id="addRakutenSalOrg">
+    UPDATE FBA_SHIPMENT_SALES S
+    SET S.SALES_ORGANIZATION = 'Rakuten_' || SUBSTR(S.AMAZON_ORDER_ID, 4, 2) || '_' || S.SYS_SITE
+    WHERE S.PLATFORM = 'Rakuten' AND S.SALES_ORGANIZATION IS NULL
+  </update>
+
+  <!--针对shopify情况特殊处理，FBA_SHIPMENT_SALES存在B2B平台解析出来是Amazon，需要替换销售组织编码位：shopify_Glucoracy_ALL-->
+  <update id="addShopifySalOrg">
+      UPDATE FBA_SHIPMENT_SALES S
+      SET S.SALES_ORGANIZATION = 'shopify_Glucoracy_ALL'
+      WHERE S.SALES_ORGANIZATION LIKE 'shopify_%' AND S.SALES_ORGANIZATION != 'shopify_Glucoracy_ALL'
+  </update>
+</mapper>
+
+

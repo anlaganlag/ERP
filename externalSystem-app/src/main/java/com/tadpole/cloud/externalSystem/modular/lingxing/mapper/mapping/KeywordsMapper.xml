@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.lingxing.mapper.KeywordsMapper">
+
+
+    <insert id="saveLog">
+        insert INTO L_respose_log ( sid,shop, site,length,start_date,end_date,type) values
+    (
+    #{log.sid},#{log.shop},#{log.site},#{log.length},#{log.startDate},#{log.endDate},#{log.type}
+    )
+    </insert>
+</mapper>

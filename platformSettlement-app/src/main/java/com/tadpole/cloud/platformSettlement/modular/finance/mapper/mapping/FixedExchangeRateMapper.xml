@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.FixedExchangeRateMapper">
+
+
+
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.FixedExchangeRateResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FixedExchangeRateParam">
+        select
+            *
+        from CW_FIXED_EXCHANGE_RATE where 1=1
+
+        <if test="paramCondition.currency != null and paramCondition.currency.size()>0">
+        AND ORIGINAL_CURRENCY IN
+        <foreach collection="paramCondition.currency" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        <if test="paramCondition.searchDate != null and paramCondition.searchDate!=''">
+            AND EFFECT_DATE &lt;=to_date(#{paramCondition.searchDate},'yyyy-mm-dd')
+            AND INEFFECTIVE_DATE >=to_date(#{paramCondition.searchDate},'yyyy-mm-dd')
+        </if>
+        order by EFFECT_DATE desc
+
+    </select>
+
+    <select id="queryErp" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.FixedExchangeRate">
+        select
+            *
+        from fixed_exchange_rate_mcms
+
+    </select>
+
+    <delete id="deleteAll">
+
+        delete from CW_FIXED_EXCHANGE_RATE
+
+    </delete>
+
+    <select id="originalCurrencyList" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.FixedExchangeRate">
+        SELECT T.ORIGINAL_CURRENCY, T.ORIGINAL_CURRENCY_NAME FROM
+        (
+            SELECT
+                ORIGINAL_CURRENCY,ORIGINAL_CURRENCY_NAME
+            FROM CW_FIXED_EXCHANGE_RATE GROUP BY ORIGINAL_CURRENCY,ORIGINAL_CURRENCY_NAME
+            UNION ALL
+            SELECT
+                TARGET_CURRENCY ORIGINAL_CURRENCY,TARGET_CURRENCY_NAME ORIGINAL_CURRENCY_NAME
+            FROM CW_FIXED_EXCHANGE_RATE GROUP BY TARGET_CURRENCY,TARGET_CURRENCY_NAME
+        ) T GROUP BY T.ORIGINAL_CURRENCY, T.ORIGINAL_CURRENCY_NAME
+        ORDER BY T.ORIGINAL_CURRENCY ASC
+    </select>
+
+    <!--查询固定利率-->
+    <select id="getRateByDateCurrency"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.FixedExchangeRate"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FixedExchangeRateParam">
+        SELECT
+            *
+        FROM CW_FIXED_EXCHANGE_RATE
+        WHERE TARGET_CURRENCY ='CNY'
+            AND ORIGINAL_CURRENCY = #{paramCondition.originalCurrency}
+            AND  INEFFECTIVE_DATE >= #{paramCondition.effectDate}
+            AND EFFECT_DATE &lt;= #{paramCondition.effectDate}
+    </select>
+
+    <!--查询ERP固定利率-->
+    <select id="getRateByDateCurrencyErp"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.FixedExchangeRate"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FixedExchangeRateParam">
+        select
+            DIRECT_RATE,
+            INDIRECT_RATE,
+            RATE_TYPE,
+            ORIGINAL_CURRENCY,
+            ORIGINAL_CURRENCY_NAME,
+            TARGET_CURRENCY,
+            TARGET_CURRENCY_NAME,
+            EFFECT_DATE,
+            INEFFECTIVE_DATE,
+            DATA_STATUS,
+            FORBIDDEN_STATUS
+        from fixed_exchange_rate_mcms where TARGET_CURRENCY ='CNY'
+            <if test="paramCondition.originalCurrency != null and paramCondition.originalCurrency != ''">
+                and ORIGINAL_CURRENCY =#{paramCondition.originalCurrency}
+            </if>
+            <if test="paramCondition.effectDate != null">
+                and DATEDIFF(DAY, EFFECT_DATE, #{paramCondition.effectDate}) >= 0
+                and DATEDIFF(DAY, #{paramCondition.effectDate}, INEFFECTIVE_DATE) >= 0
+            </if>
+    </select>
+
+    <!--查询固定利率-->
+    <select id="getFixedExchangeRateList"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.FixedExchangeRate"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.FixedExchangeRateParam">
+        SELECT
+            *
+        FROM CW_FIXED_EXCHANGE_RATE
+        WHERE TARGET_CURRENCY ='CNY'
+        <if test="paramCondition.originalCurrency != null and paramCondition.originalCurrency != ''">
+            AND ORIGINAL_CURRENCY =#{paramCondition.originalCurrency}
+        </if>
+        <if test="paramCondition.effectDate != null">
+            AND  INEFFECTIVE_DATE>=#{paramCondition.effectDate} AND EFFECT_DATE &lt;=#{paramCondition.effectDate}
+        </if>
+    </select>
+</mapper>

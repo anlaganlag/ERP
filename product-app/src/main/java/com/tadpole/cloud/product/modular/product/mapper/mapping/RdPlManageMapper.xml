@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.product.mapper.RdPlManageMapper">
+
+    <select id="listPage" resultType="com.tadpole.cloud.product.modular.product.model.result.RdPlManageResult">
+        select * from RD_PL_MANAGE
+        where 1=1
+        <if test="paramCondition.sysPlNameList != null and paramCondition.sysPlNameList.size() > 0">
+            AND SYS_PL_NAME in
+            <foreach collection="paramCondition.sysPlNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerCodeList != null and paramCondition.sysPmPerCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysPmPerCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_PM_PER_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysDeptExamPerCodeList != null and paramCondition.sysDeptExamPerCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysDeptExamPerCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_DEPT_EXAM_PER_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysApprPerCodeList != null and paramCondition.sysApprPerCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysApprPerCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_APPR_PER_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPlCode != null and paramCondition.sysPlCode != ''">
+            AND SYS_PL_CODE LIKE '%'|| #{paramCondition.sysPlCode} ||'%'
+        </if>
+        <if test="paramCondition.sysPlCodeList != null and paramCondition.sysPlCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysPlCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_PL_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        ORDER BY SYS_PL_CODE DESC
+    </select>
+    <select id="list" resultType="com.tadpole.cloud.product.modular.product.model.result.RdPlManageResult">
+        select * from RD_PL_MANAGE
+        where 1=1
+        <if test="paramCondition.sysPlNameList != null and paramCondition.sysPlNameList.size() > 0">
+            AND SYS_PL_NAME in
+            <foreach collection="paramCondition.sysPlNameList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPmPerCodeList != null and paramCondition.sysPmPerCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysPmPerCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_PM_PER_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysDeptExamPerCodeList != null and paramCondition.sysDeptExamPerCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysDeptExamPerCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_DEPT_EXAM_PER_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysApprPerCodeList != null and paramCondition.sysApprPerCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysApprPerCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_APPR_PER_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.sysPlCode != null and paramCondition.sysPlCode != ''">
+            AND SYS_PL_CODE LIKE '%'|| #{paramCondition.sysPlCode} ||'%'
+        </if>
+        <if test="paramCondition.sysPlCodeList != null and paramCondition.sysPlCodeList.size() > 0">
+            AND
+            <foreach collection="paramCondition.sysPlCodeList" item="item" index="index" open="(" separator=" or " close=")">
+                SYS_PL_CODE  LIKE '%'|| #{item} ||'%'
+            </foreach>
+        </if>
+        ORDER BY SYS_PL_CODE DESC
+    </select>
+</mapper>

@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.NoAllocationAdjustMapper">
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NoAllocationAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.NoAllocationAdjustResult">
+         SELECT A.FISCAL_PERIOD,
+                A.REPORT_TYPE,
+                A.INCOME_TYPE,
+                A.SHOP_NAME,
+                A.SITE,
+                A.ACCOUNTING_CURRENCY,
+                A.SKU,
+                A.DEPARTMENT,
+                A.TEAM,
+                A.SALES_BRAND,
+                A.MATERIAL_CODE,
+                A.VOLUME_NORMAL,
+                A.VOLUME_REISSUE,
+                A.SALES_EXCLUDING_TAX,
+                A.TAX,
+                A.SALES_PROMOTION,
+                A.REFUND,
+                A.REFUND_PROMOTION,
+                A.GIFTWARP_SHIPPING,
+                A.COMMISSION,
+                A.REFUND_COMMISSION,
+                A.GOODWILL,
+                A.AMAZON_FEES,
+                A.REIMBURSEMENT,
+                A.OTHER,
+                A.WITHHELD_TAX,
+                A.REMOVAL_DEAL,
+                A.DISPOSE_FEE,
+                A.COST_ACCOUNTING_FEE,
+                A.ADDITIONAL_COST_AMOUNT,
+                A.FIRST_TRIP_FEE,
+                A.UNIT_PURCHASE_COST,
+                A.UNIT_PURCHASE_COST_ADDITONAL,
+                A.UNIT_LOGISTICS_COST,
+                A.CONFIRM_DATE,
+                A.CONFIRM_BY,
+                CASE A.CONFIRM_STATUS WHEN 0 THEN '未确认'
+                WHEN 1 THEN '已确认'
+                END AS CONFIRM_STATUS_TXT,
+                A.CREATE_BY,
+                A.CREATE_AT,
+                A.ID,
+                decode(A.material_code,'0','0',B.product_type) product_type,
+                decode(A.material_code,'0','0',B.CATEGORY) CATEGORY,
+                decode(A.material_code,'0','0',B.PRODUCT_NAME) PRODUCT_NAME,
+                decode(A.material_code,'0','0',B.STYLE) STYLE,
+                decode(A.material_code,'0','0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+                decode(A.material_code,'0','0',B.DESIGN) DESIGN,
+                decode(A.material_code,'0','0',B.COMPANY_BRAND) COMPANY_BRAND,
+                decode(A.material_code,'0','0',B.FIT_BRAND) FIT_BRAND,
+                decode(A.material_code,'0','0',B.MODEL) MODEL,
+                decode(A.material_code,'0','0',B.COLOR) COLOR,
+                decode(A.material_code,'0','0',B.SIZES) SIZES,
+                decode(A.material_code,'0','0',B.PACKING) PACKING,
+                decode(A.material_code,'0','0',B.VERSION) VERSION,
+                decode(A.material_code,'0','0',B.TYPE) TYPE,
+                decode(A.material_code,'0','0',B.BUYER) BUYER,
+                decode(A.material_code,'0','0',B.DEVELOPER) DEVELOPER,
+                decode(A.material_code,'0','0',to_char(B.ACCOUNT_DATE,'yyyy-mm-dd')) ACCOUNT_DATE,
+                decode(A.material_code,'0','0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL
+        FROM RP_NO_ALLOCATION_ADJUST A
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE=A.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and A.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and A.report_type=#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and A.SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and A.SITE=#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department !=''">
+                and A.DEPARTMENT=#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team !=''">
+                and A.TEAM=#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus !=''">
+                and A.CONFIRM_STATUS=#{paramCondition.confirmStatus}
+            </if>
+          <if test="paramCondition.isDefect" >
+            AND A.COST_ACCOUNTING_FEE+A.ADDITIONAL_COST_AMOUNT+A.FIRST_TRIP_FEE = 0
+          </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND A.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+        order by ID asc
+    </select>
+
+    <select id="getExitSkuAdjust" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementDetailUsdResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementDetailUsdParam">
+        select D.fiscal_period,
+        D.report_type,
+        D.income_type,
+        D.shop_name,
+        D.site,
+        D.department,
+        D.team,
+        D.volume_normal,
+        sum(D.SALES_EXCLUDING_TAX) SALES_EXCLUDING_TAX,
+        sum(D.TAX) TAX,
+        sum(D.SALES_PROMOTION) SALES_PROMOTION,
+        sum(D.REFUND) REFUND,
+        sum(D.REFUND_COMMISSION) REFUND_COMMISSION,
+        sum(D.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+        sum(D.COMMISSION) COMMISSION,
+        sum(D.REFUND_PROMOTION) REFUND_PROMOTION,
+        sum(D.GOODWILL) GOOD_WILL,
+        sum(D.AMAZON_FEES) AMAZON_FEES,
+        sum(D.STORAGE_FEE) STORAGE_FEE,
+        sum(D.REIMBURSEMENT) REIMBURSEMENT,
+        sum(D.OTHER) OTHER,
+        sum(D.WITHHELD_TAX) WITHHELD_TAX,
+        sum(D.REMOVAL_DEAL) REMOVAL_DEAL,
+        sum(D.DISPOSE_FEE) DISPOSE_FEE,
+        sum(D.ADVERTISING) ADVERTISING
+        FROM RP_SETTLEMENT_DETAIL_USD D
+        <where>
+            D.sku!='0'
+            and D.income_type='调整' and D.id = #{paramCondition.id}
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and D.fiscal_period = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and D.report_type=#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and D.SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and D.SITE=#{paramCondition.site}
+            </if>
+        </where>
+        group by D.fiscal_period,
+        D.report_type,
+        D.income_type,
+        D.shop_name,
+        D.site,
+        D.department,
+        D.team,
+        D.volume_normal
+    </select>
+
+    <select id="getQuantity"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NoAllocationAdjustParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.NoAllocationAdjustResult">
+        SELECT
+        SUM(T.VOLUME_NORMAL) VOLUME_NORMAL,
+        SUM(T.VOLUME_REISSUE) VOLUME_REISSUE,
+        SUM(T.SALES_EXCLUDING_TAX) SALES_EXCLUDING_TAX,
+        SUM(T.TAX) TAX,
+        SUM(T.SALES_PROMOTION) SALES_PROMOTION,
+        SUM(T.REFUND) REFUND,
+        SUM(T.REFUND_PROMOTION) REFUND_PROMOTION,
+        SUM(T.GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+        SUM(T.COMMISSION) COMMISSION,
+        SUM(T.AMAZON_FEES) AMAZON_FEES,
+        SUM(T.REFUND_COMMISSION) REFUND_COMMISSION,
+        SUM(T.REIMBURSEMENT) REIMBURSEMENT,
+        SUM(T.GOODWILL) GOODWILL,
+        SUM(T.OTHER) OTHER,
+        SUM(T.WITHHELD_TAX) WITHHELD_TAX,
+        SUM(T.REMOVAL_DEAL) REMOVAL_DEAL,
+        SUM(T.DISPOSE_FEE) DISPOSE_FEE,
+        SUM(T.COST_ACCOUNTING_FEE) COST_ACCOUNTING_FEE,
+        SUM(T.ADDITIONAL_COST_AMOUNT) ADDITIONAL_COST_AMOUNT,
+        SUM(T.FIRST_TRIP_FEE) FIRST_TRIP_FEE,
+        SUM(T.UNIT_PURCHASE_COST) UNIT_PURCHASE_COST,
+        SUM(T.UNIT_PURCHASE_COST_ADDITONAL) UNIT_PURCHASE_COST_ADDITONAL,
+        SUM(T.UNIT_LOGISTICS_COST) UNIT_LOGISTICS_COST
+        FROM RP_NO_ALLOCATION_ADJUST T
+        <where>
+
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and T.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+                and T.report_type=#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                and T.SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                and T.SITE=#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department !=''">
+                and T.DEPARTMENT=#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team !=''">
+                and T.TEAM=#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus !=''">
+                and T.CONFIRM_STATUS=#{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND T.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+          <if test="paramCondition.isDefect" >
+            AND T.ADDITIONAL_COST_AMOUNT+T.FIRST_TRIP_FEE+T.COST_ACCOUNTING_FEE = 0
+          </if>
+
+        </where>
+    </select>
+
+    <update id="updateToReport" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NoAllocationAdjustParam">
+        MERGE INTO RP_SETTLEMENT_REPORT T1
+            USING (SELECT FISCAL_PERIOD,
+                          REPORT_TYPE,
+                          INCOME_TYPE,
+                          SHOP_NAME,
+                          SITE,
+                          SKU,
+                          DEPARTMENT,
+                          TEAM,
+                          MATERIAL_CODE,
+                          MAX(SALES_BRAND) SALES_BRAND,
+                          MAX(PRODUCT_TYPE) PRODUCT_TYPE,
+                          SUM(VOLUME_NORMAL) VOLUME_NORMAL,
+                          SUM(VOLUME_REISSUE) VOLUME_REISSUE,
+                          SUM(SALES_EXCLUDING_TAX) SALES_EXCLUDING_TAX,
+                          SUM(TAX) TAX,
+                          SUM(SALES_PROMOTION) SALES_PROMOTION,
+                          SUM(REFUND) REFUND,
+                          SUM(REFUND_PROMOTION) REFUND_PROMOTION,
+                          SUM(GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+                          SUM(COMMISSION) COMMISSION,
+                          SUM(REFUND_COMMISSION) REFUND_COMMISSION,
+                          SUM(GOODWILL) GOODWILL,
+                          SUM(AMAZON_FEES) AMAZON_FEES,
+                          SUM(REIMBURSEMENT) REIMBURSEMENT,
+                          SUM(OTHER) OTHER,
+                          SUM(WITHHELD_TAX) WITHHELD_TAX,
+                          SUM(REMOVAL_DEAL) REMOVAL_DEAL,
+                          SUM(DISPOSE_FEE) DISPOSE_FEE,
+                          SUM(COST_ACCOUNTING_FEE) COST_ACCOUNTING_FEE,
+                          SUM(ADDITIONAL_COST_AMOUNT) ADDITIONAL_COST_AMOUNT,
+                          SUM(FIRST_TRIP_FEE) FIRST_TRIP_FEE
+                   FROM RP_NO_ALLOCATION_ADJUST
+                   where  id = #{paramCondition.id}
+                   GROUP BY FISCAL_PERIOD,
+                            REPORT_TYPE,
+                            INCOME_TYPE,
+                            SHOP_NAME,
+                            SITE,
+                            SKU,
+                            DEPARTMENT,
+                            TEAM,
+                            MATERIAL_CODE) T2
+            ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and NVL(T1.REPORT_TYPE, '0') = '0' and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T1.SKU = T2.SKU and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM and T1.MATERIAL_CODE = T2.MATERIAL_CODE and T1.PRODUCT_TYPE = T2.PRODUCT_TYPE and T1.CONFIRM_STATUS = 0)
+            WHEN NOT MATCHED THEN
+                INSERT
+                    (T1.FISCAL_PERIOD,
+                     T1.REPORT_TYPE,
+                     T1.INCOME_TYPE,
+                     T1.SHOP_NAME,
+                     T1.SITE,
+                     T1.SKU,
+                     T1.DEPARTMENT,
+                     T1.TEAM,
+                     T1.MATERIAL_CODE,
+                     T1.SALES_BRAND,
+                     T1.PRODUCT_TYPE,
+                     T1.VOLUME_NORMAL,
+                     T1.VOLUME_REISSUE,
+                     T1.SALES_EXCLUDING_TAX,
+                     T1.TAX,
+                     T1.SALES_PROMOTION,
+                     T1.REFUND,
+                     T1.REFUND_PROMOTION,
+                     T1.GIFTWARP_SHIPPING,
+                     T1.COMMISSION,
+                     T1.REFUND_COMMISSION,
+                     T1.GOODWILL,
+                     T1.AMAZON_FEES,
+                     T1.REIMBURSEMENT,
+                     T1.OTHER,
+                     T1.WITHHELD_TAX,
+                     T1.REMOVAL_DEAL,
+                     T1.DISPOSE_FEE,
+                     T1.NET_SALES,
+                     T1.COST_ACCOUNTING_FEE,
+                     T1.ADDITIONAL_COST_AMOUNT,
+                     T1.FIRST_TRIP_FEE)
+                    VALUES
+                    (T2.FISCAL_PERIOD,
+                     T2.REPORT_TYPE,
+                     T2.INCOME_TYPE,
+                     T2.SHOP_NAME,
+                     T2.SITE,
+                     T2.SKU,
+                     T2.DEPARTMENT,
+                     T2.TEAM,
+                     T2.MATERIAL_CODE,
+                     T2.SALES_BRAND,
+                     T2.PRODUCT_TYPE,
+                     T2.VOLUME_NORMAL,
+                     T2.VOLUME_REISSUE,
+                     T2.SALES_EXCLUDING_TAX,
+                     T2.TAX,
+                     T2.SALES_PROMOTION,
+                     T2.REFUND,
+                     T2.REFUND_PROMOTION,
+                     T2.GIFTWARP_SHIPPING,
+                     T2.COMMISSION,
+                     T2.REFUND_COMMISSION,
+                     T2.GOODWILL,
+                     T2.AMAZON_FEES,
+                     T2.REIMBURSEMENT,
+                     T2.OTHER,
+                     T2.WITHHELD_TAX,
+                     T2.REMOVAL_DEAL,
+                     T2.DISPOSE_FEE,
+                     T2.SALES_EXCLUDING_TAX + T2.TAX + T2.SALES_PROMOTION + T2.REFUND +
+                     T2.REFUND_PROMOTION + T2.GIFTWARP_SHIPPING,
+                     T2.COST_ACCOUNTING_FEE,
+                     T2.ADDITIONAL_COST_AMOUNT,
+                     T2.FIRST_TRIP_FEE)
+            WHEN MATCHED THEN
+                UPDATE
+                    SET T1.VOLUME_NORMAL          = T1.VOLUME_NORMAL + T2.VOLUME_NORMAL,
+                        T1.VOLUME_REISSUE         = T1.VOLUME_REISSUE + T2.VOLUME_REISSUE,
+                        T1.SALES_EXCLUDING_TAX    = T1.SALES_EXCLUDING_TAX +
+                                                    T2.SALES_EXCLUDING_TAX,
+                        T1.TAX                    = T1.TAX + T2.TAX,
+                        T1.SALES_PROMOTION        = T1.SALES_PROMOTION + T2.SALES_PROMOTION,
+                        T1.REFUND                 = T1.REFUND + T2.REFUND,
+                        T1.REFUND_PROMOTION       = T1.REFUND_PROMOTION +
+                                                    T2.REFUND_PROMOTION,
+                        T1.GIFTWARP_SHIPPING      = T1.GIFTWARP_SHIPPING +
+                                                    T2.GIFTWARP_SHIPPING,
+                        T1.COMMISSION             = T1.COMMISSION + T2.COMMISSION,
+                        T1.REFUND_COMMISSION      = T1.REFUND_COMMISSION +
+                                                    T2.REFUND_COMMISSION,
+                        T1.GOODWILL               = T1.GOODWILL + T2.GOODWILL,
+                        T1.AMAZON_FEES            = T1.AMAZON_FEES + T2.AMAZON_FEES,
+                        T1.REIMBURSEMENT          = T1.REIMBURSEMENT + T2.REIMBURSEMENT,
+                        T1.OTHER                  = T1.OTHER + T2.OTHER,
+                        T1.WITHHELD_TAX           = T1.WITHHELD_TAX + T2.WITHHELD_TAX,
+                        T1.REMOVAL_DEAL           = T1.REMOVAL_DEAL + T2.REMOVAL_DEAL,
+                        T1.DISPOSE_FEE            = T1.DISPOSE_FEE + T2.DISPOSE_FEE,
+                        T1.NET_SALES              = T1.NET_SALES + T2.SALES_EXCLUDING_TAX +
+                                                    T2.TAX + T2.SALES_PROMOTION + T2.REFUND +
+                                                    T2.REFUND_PROMOTION +
+                                                    T2.GIFTWARP_SHIPPING,
+                        T1.COST_ACCOUNTING_FEE    = T1.COST_ACCOUNTING_FEE +
+                                                    T2.COST_ACCOUNTING_FEE,
+                        T1.ADDITIONAL_COST_AMOUNT = T1.ADDITIONAL_COST_AMOUNT +
+                                                    T2.ADDITIONAL_COST_AMOUNT,
+                        T1.FIRST_TRIP_FEE         = T1.FIRST_TRIP_FEE + T2.FIRST_TRIP_FEE
+    </update>
+    <update id="updateAmountOrInsert" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementDetailUsd">
+        MERGE INTO RP_NO_ALLOCATION_ADJUST T1
+            USING (SELECT * FROM RP_SETTLEMENT_DETAIL_USD where id = #{paramCondition.id}) T2
+            ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and T1.REPORT_TYPE = T2.REPORT_TYPE and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T1.SKU = T2.SKU and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM
+                and T1.MATERIAL_CODE =T2.MATERIAL_CODE  and T1.CONFIRM_STATUS=0)
+            WHEN NOT MATCHED THEN
+                INSERT
+                    (
+                     T1.CREATE_BY,
+                     T1.CREATE_AT,
+                     T1.FISCAL_PERIOD,
+                     T1.REPORT_TYPE,
+                     T1.INCOME_TYPE,
+                     T1.SHOP_NAME,
+                     T1.SITE,
+                     T1.SKU,
+                     T1.DEPARTMENT,
+                     T1.TEAM,
+                     T1.MATERIAL_CODE,
+                     T1.SALES_BRAND,
+                     T1.PRODUCT_TYPE,
+                     T1.VOLUME_NORMAL,T1.VOLUME_REISSUE,T1.SALES_EXCLUDING_TAX,T1.TAX,T1.SALES_PROMOTION,
+                     T1.REFUND,T1.REFUND_PROMOTION,T1.GIFTWARP_SHIPPING,T1.COMMISSION,T1.REFUND_COMMISSION
+                        ,T1.GOODWILL,T1.AMAZON_FEES,T1.REIMBURSEMENT,T1.OTHER,T1.WITHHELD_TAX,T1.REMOVAL_DEAL,T1.DISPOSE_FEE)
+                    VALUES
+                        (
+                         #{paramCondition.confirmBy},
+                         #{paramCondition.confirmDate},
+                         T2.FISCAL_PERIOD,
+                         T2.REPORT_TYPE,
+                         T2.INCOME_TYPE,
+                         T2.SHOP_NAME,
+                         T2.SITE,
+                         T2.SKU,
+                         T2.DEPARTMENT,
+                         T2.TEAM,
+                         T2.MATERIAL_CODE,
+                         T2.SALES_BRAND,
+                         T2.PRODUCT_TYPE,
+                         T2.VOLUME_NORMAL,T2.VOLUME_REISSUE,T2.SALES_EXCLUDING_TAX,T2.TAX,T2.SALES_PROMOTION,
+                         T2.REFUND,T2.REFUND_PROMOTION,T2.GIFTWARP_SHIPPING,T2.COMMISSION,T2.REFUND_COMMISSION
+                            ,T2.GOODWILL,T2.AMAZON_FEES,T2.REIMBURSEMENT,T2.OTHER,T2.WITHHELD_TAX,T2.REMOVAL_DEAL,T2.DISPOSE_FEE
+                        )
+            WHEN MATCHED THEN
+                UPDATE SET  T1.VOLUME_NORMAL = T1.VOLUME_NORMAL + T2.VOLUME_NORMAL ,
+                    T1.VOLUME_REISSUE = T1.VOLUME_REISSUE + T2.VOLUME_REISSUE,
+                    T1.SALES_EXCLUDING_TAX = T1.SALES_EXCLUDING_TAX + T2.SALES_EXCLUDING_TAX,
+                    T1.TAX= T1.TAX + T2.TAX,
+                    T1.SALES_PROMOTION = T1.SALES_PROMOTION + T2.SALES_PROMOTION,
+                    T1.REFUND = T1.REFUND + T2.REFUND,
+                    T1.REFUND_PROMOTION = T1.REFUND_PROMOTION + T2.REFUND_PROMOTION,
+                    T1.GIFTWARP_SHIPPING = T1.GIFTWARP_SHIPPING + T2.GIFTWARP_SHIPPING,
+                    T1.COMMISSION = T1.COMMISSION + T2.COMMISSION,
+                    T1.REFUND_COMMISSION = T1.REFUND_COMMISSION + T2.REFUND_COMMISSION
+                    ,T1.GOODWILL = T1.GOODWILL + T2.GOODWILL,
+                    T1.AMAZON_FEES = T1.AMAZON_FEES + T2.AMAZON_FEES,
+                    T1.REIMBURSEMENT = T1.REIMBURSEMENT + T2.REIMBURSEMENT,
+                    T1.OTHER = T1.OTHER + T2.OTHER,T1.WITHHELD_TAX = T1.WITHHELD_TAX + T2.WITHHELD_TAX,
+                    T1.REMOVAL_DEAL = T1.REMOVAL_DEAL + T2.REMOVAL_DEAL,
+                    T1.DISPOSE_FEE = T1.DISPOSE_FEE + T2.DISPOSE_FEE,
+                    T1.CREATE_BY = #{paramCondition.confirmBy},
+                    T1.CREATE_AT = #{paramCondition.confirmDate}
+    </update>
+
+    <update id="updateCostBatch">
+        MERGE INTO RP_NO_ALLOCATION_ADJUST T1
+            USING
+                (
+                    SELECT A.ID,B.PURCHASE_UNIT_PRICE,B.ADDITIONAL_UNIT_PRICE,B.LOGISTICS_UNIT_PRICE,C.DIRECT_RATE FROM RP_NO_ALLOCATION_ADJUST A
+                    LEFT JOIN RP_NEW_AVERAGE_PRICE B ON B.FISCAL_PERIOD=A.FISCAL_PERIOD
+                        AND B.SHOP_NAME=A.SHOP_NAME AND B.SITE=A.SITE AND B.MATERIAL_CODE=A.MATERIAL_CODE
+                        AND B.CONFIRM_STATUS=1
+                    LEFT JOIN RP_SPOT_EXCHANGE_RATE C ON C.ORIGINAL_CURRENCY='CNY' AND C.TARGET_CURRENCY ='USD'
+                        AND  C.INEFFECTIVE_DATE>=TO_DATE(A.FISCAL_PERIOD || '-02', 'YYYY-MM-DD')
+                        AND C.EFFECT_DATE &lt;=TO_DATE(A.FISCAL_PERIOD || '-02', 'YYYY-MM-DD')
+                    WHERE B.PURCHASE_UNIT_PRICE IS NOT NULL AND B.ADDITIONAL_UNIT_PRICE IS NOT NULL AND B.LOGISTICS_UNIT_PRICE IS NOT NULL
+                      AND C.DIRECT_RATE IS NOT NULL
+                ) T2 ON (T2.ID=T1.ID and T1.CONFIRM_STATUS=0)
+            WHEN MATCHED THEN
+                UPDATE
+                    SET T1.COST_ACCOUNTING_FEE = T2.PURCHASE_UNIT_PRICE * (T1.VOLUME_NORMAL+T1.VOLUME_REISSUE)*T2.DIRECT_RATE,
+                        T1.ADDITIONAL_COST_AMOUNT=T2.ADDITIONAL_UNIT_PRICE*(T1.VOLUME_NORMAL+T1.VOLUME_REISSUE)*T2.DIRECT_RATE,
+                        T1.FIRST_TRIP_FEE=T2.LOGISTICS_UNIT_PRICE*(T1.VOLUME_NORMAL+T1.VOLUME_REISSUE)*T2.DIRECT_RATE,
+                        T1.UNIT_PURCHASE_COST=T2.PURCHASE_UNIT_PRICE,
+                        T1.UNIT_PURCHASE_COST_ADDITONAL=T2.ADDITIONAL_UNIT_PRICE,
+                        T1.UNIT_LOGISTICS_COST=T2.LOGISTICS_UNIT_PRICE
+    </update>
+    <update id="updateToReportBatch" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.NoAllocationAdjustParam">
+                MERGE INTO RP_SETTLEMENT_REPORT T1
+                USING (SELECT FISCAL_PERIOD,
+                REPORT_TYPE,
+                INCOME_TYPE,
+                SHOP_NAME,
+                SITE,
+                SKU,
+                DEPARTMENT,
+                TEAM,
+                MATERIAL_CODE,
+                MAX(SALES_BRAND) SALES_BRAND,
+                MAX(PRODUCT_TYPE) PRODUCT_TYPE,
+                SUM(VOLUME_NORMAL) VOLUME_NORMAL,
+                SUM(VOLUME_REISSUE) VOLUME_REISSUE,
+                SUM(SALES_EXCLUDING_TAX) SALES_EXCLUDING_TAX,
+                SUM(TAX) TAX,
+                SUM(SALES_PROMOTION) SALES_PROMOTION,
+                SUM(REFUND) REFUND,
+                SUM(REFUND_PROMOTION) REFUND_PROMOTION,
+                SUM(GIFTWARP_SHIPPING) GIFTWARP_SHIPPING,
+                SUM(COMMISSION) COMMISSION,
+                SUM(REFUND_COMMISSION) REFUND_COMMISSION,
+                SUM(GOODWILL) GOODWILL,
+                SUM(AMAZON_FEES) AMAZON_FEES,
+                SUM(REIMBURSEMENT) REIMBURSEMENT,
+                SUM(OTHER) OTHER,
+                SUM(WITHHELD_TAX) WITHHELD_TAX,
+                SUM(REMOVAL_DEAL) REMOVAL_DEAL,
+                SUM(DISPOSE_FEE) DISPOSE_FEE,
+                SUM(COST_ACCOUNTING_FEE) COST_ACCOUNTING_FEE,
+                SUM(ADDITIONAL_COST_AMOUNT) ADDITIONAL_COST_AMOUNT,
+                SUM(FIRST_TRIP_FEE) FIRST_TRIP_FEE
+                FROM RP_NO_ALLOCATION_ADJUST
+                where CONFIRM_STATUS =0 and  FISCAL_PERIOD = #{paramCondition.fiscalPeriod} and SHOP_NAME=#{paramCondition.shopName}
+                <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+                    AND SITE IN
+                    <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+                        #{site}
+                    </foreach>
+                </if>
+                GROUP BY FISCAL_PERIOD,
+                REPORT_TYPE,
+                INCOME_TYPE,
+                SHOP_NAME,
+                SITE,
+                SKU,
+                DEPARTMENT,
+                TEAM,
+                MATERIAL_CODE) T2
+                ON (T1.FISCAL_PERIOD = T2.FISCAL_PERIOD and NVL(T1.REPORT_TYPE, '0') = '0' and T1.INCOME_TYPE = T2.INCOME_TYPE and T1.SHOP_NAME = T2.SHOP_NAME and T1.SITE = T2.SITE and T1.SKU = T2.SKU and T1.DEPARTMENT = T2.DEPARTMENT and T1.TEAM = T2.TEAM and T1.MATERIAL_CODE = T2.MATERIAL_CODE and T1.PRODUCT_TYPE = T2.PRODUCT_TYPE and T1.CONFIRM_STATUS = 0)
+                WHEN NOT MATCHED THEN
+                INSERT
+                (T1.FISCAL_PERIOD,
+                T1.REPORT_TYPE,
+                T1.INCOME_TYPE,
+                T1.SHOP_NAME,
+                T1.SITE,
+                T1.SKU,
+                T1.DEPARTMENT,
+                T1.TEAM,
+                T1.MATERIAL_CODE,
+                T1.SALES_BRAND,
+                T1.PRODUCT_TYPE,
+                T1.VOLUME_NORMAL,
+                T1.VOLUME_REISSUE,
+                T1.SALES_EXCLUDING_TAX,
+                T1.TAX,
+                T1.SALES_PROMOTION,
+                T1.REFUND,
+                T1.REFUND_PROMOTION,
+                T1.GIFTWARP_SHIPPING,
+                T1.COMMISSION,
+                T1.REFUND_COMMISSION,
+                T1.GOODWILL,
+                T1.AMAZON_FEES,
+                T1.REIMBURSEMENT,
+                T1.OTHER,
+                T1.WITHHELD_TAX,
+                T1.REMOVAL_DEAL,
+                T1.DISPOSE_FEE,
+                T1.NET_SALES,
+                T1.COST_ACCOUNTING_FEE,
+                T1.ADDITIONAL_COST_AMOUNT,
+                T1.FIRST_TRIP_FEE)
+                VALUES
+                (T2.FISCAL_PERIOD,
+                T2.REPORT_TYPE,
+                T2.INCOME_TYPE,
+                T2.SHOP_NAME,
+                T2.SITE,
+                T2.SKU,
+                T2.DEPARTMENT,
+                T2.TEAM,
+                T2.MATERIAL_CODE,
+                T2.SALES_BRAND,
+                T2.PRODUCT_TYPE,
+                T2.VOLUME_NORMAL,
+                T2.VOLUME_REISSUE,
+                T2.SALES_EXCLUDING_TAX,
+                T2.TAX,
+                T2.SALES_PROMOTION,
+                T2.REFUND,
+                T2.REFUND_PROMOTION,
+                T2.GIFTWARP_SHIPPING,
+                T2.COMMISSION,
+                T2.REFUND_COMMISSION,
+                T2.GOODWILL,
+                T2.AMAZON_FEES,
+                T2.REIMBURSEMENT,
+                T2.OTHER,
+                T2.WITHHELD_TAX,
+                T2.REMOVAL_DEAL,
+                T2.DISPOSE_FEE,
+                T2.SALES_EXCLUDING_TAX + T2.TAX + T2.SALES_PROMOTION + T2.REFUND +
+                T2.REFUND_PROMOTION + T2.GIFTWARP_SHIPPING,
+                T2.COST_ACCOUNTING_FEE,
+                T2.ADDITIONAL_COST_AMOUNT,
+                T2.FIRST_TRIP_FEE)
+                WHEN MATCHED THEN
+                UPDATE
+                SET T1.VOLUME_NORMAL          = T1.VOLUME_NORMAL + T2.VOLUME_NORMAL,
+                T1.VOLUME_REISSUE         = T1.VOLUME_REISSUE + T2.VOLUME_REISSUE,
+                T1.SALES_EXCLUDING_TAX    = T1.SALES_EXCLUDING_TAX +
+                T2.SALES_EXCLUDING_TAX,
+                T1.TAX                    = T1.TAX + T2.TAX,
+                T1.SALES_PROMOTION        = T1.SALES_PROMOTION + T2.SALES_PROMOTION,
+                T1.REFUND                 = T1.REFUND + T2.REFUND,
+                T1.REFUND_PROMOTION       = T1.REFUND_PROMOTION +
+                T2.REFUND_PROMOTION,
+                T1.GIFTWARP_SHIPPING      = T1.GIFTWARP_SHIPPING +
+                T2.GIFTWARP_SHIPPING,
+                T1.COMMISSION             = T1.COMMISSION + T2.COMMISSION,
+                T1.REFUND_COMMISSION      = T1.REFUND_COMMISSION +
+                T2.REFUND_COMMISSION,
+                T1.GOODWILL               = T1.GOODWILL + T2.GOODWILL,
+                T1.AMAZON_FEES            = T1.AMAZON_FEES + T2.AMAZON_FEES,
+                T1.REIMBURSEMENT          = T1.REIMBURSEMENT + T2.REIMBURSEMENT,
+                T1.OTHER                  = T1.OTHER + T2.OTHER,
+                T1.WITHHELD_TAX           = T1.WITHHELD_TAX + T2.WITHHELD_TAX,
+                T1.REMOVAL_DEAL           = T1.REMOVAL_DEAL + T2.REMOVAL_DEAL,
+                T1.DISPOSE_FEE            = T1.DISPOSE_FEE + T2.DISPOSE_FEE,
+                T1.NET_SALES              = T1.NET_SALES + T2.SALES_EXCLUDING_TAX +
+                T2.TAX + T2.SALES_PROMOTION + T2.REFUND +
+                T2.REFUND_PROMOTION +
+                T2.GIFTWARP_SHIPPING,
+                T1.COST_ACCOUNTING_FEE    = T1.COST_ACCOUNTING_FEE +
+                T2.COST_ACCOUNTING_FEE,
+                T1.ADDITIONAL_COST_AMOUNT = T1.ADDITIONAL_COST_AMOUNT +
+                T2.ADDITIONAL_COST_AMOUNT,
+                T1.FIRST_TRIP_FEE         = T1.FIRST_TRIP_FEE + T2.FIRST_TRIP_FEE
+    </update>
+</mapper>

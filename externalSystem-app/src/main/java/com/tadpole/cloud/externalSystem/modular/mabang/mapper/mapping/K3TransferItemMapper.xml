@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.K3TransferItemMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.K3TransferItem">
+        <id column="ID" property="id" />
+        <result column="BILL_NO" property="billNo" />
+        <result column="ENTRY_ID" property="entryId" />
+        <result column="MATERIAL_CODE" property="materialCode" />
+        <result column="MATERIAL_NAME" property="materialName" />
+        <result column="SRCSTOCK_CODE" property="srcstockCode" />
+        <result column="SRCSTOCK_NAME" property="srcstockName" />
+        <result column="DESTSTOCK_CODE" property="deststockCode" />
+        <result column="DESTSTOCK_NAME" property="deststockName" />
+        <result column="QTY" property="qty" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="APPROVE_DATE" property="approveDate" />
+        <result column="CANCEL_STATUS" property="cancelStatus" />
+        <result column="CANCEL_DATE" property="cancelDate" />
+        <result column="SYNC_TYPE" property="syncType" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="SYNC_STATUS" property="syncStatus" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, BILL_NO, ENTRY_ID, MATERIAL_CODE, MATERIAL_NAME, SRCSTOCK_CODE, SRCSTOCK_NAME, DESTSTOCK_CODE, DESTSTOCK_NAME, QTY, DOCUMENT_STATUS, CREATE_DATE, APPROVE_DATE, CANCEL_STATUS, CANCEL_DATE, SYNC_TYPE, SYNC_TIME, SYNC_STATUS, CREATE_TIME, UPDATE_TIME
+    </sql>
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.K3TransferItemParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.entity.K3TransferItem">
+            select ENTRY_ID AS ID,ENTRY_ID,BILL_NO,MATERIAL_CODE,MATERIAL_NAME,SRCSTOCK_CODE
+                 ,SRCSTOCK_NAME,DESTSTOCK_CODE,DESTSTOCK_NAME,QTY,DOCUMENT_STATUS
+                 ,CREATE_DATE,APPROVE_DATE,CANCEL_STATUS,CANCEL_DATE
+            from View_TransferOut_To_MaBang
+    </select>
+
+
+        <select id="k3MabangWarehouse"
+            resultType="java.util.HashMap">
+
+            SELECT a.FNUMBER,b.FNAME FROM T_BD_Stock a,T_BD_STOCK_L b WHERE a.ISSPECIALWAREHOUSE= 1 AND a.FUSEORGID= 100269 AND a.FSTOCKID= b.FSTOCKID
+
+    </select>
+
+    <select id="queryK3AvailableQty"
+            parameterType="java.util.List"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3AvailableResult">
+
+        select
+            b.FNUMBER materialCode,
+            MAX(d.FPRICE)  purchasePrice,
+            MAX(d.FAPPROVEDATE) purchaseDate,
+            MAX(b.FNAME) productName,
+            MAX(b.FDATAVALUE) productType,
+            SUM(a.FBaseQty) qty ,
+            c. FNAME stockName,
+            c.FNUMBER stockNo,
+            c.FSTOCKID stockId
+
+        FROM
+            T_STK_INVENTORY a
+                JOIN ( select m.FMATERIALID, m.FNUMBER,ml.FNAME,al.FDATAVALUE
+                        FROM T_BD_MATERIAL m
+                            JOIN T_BD_MATERIAL_L ml on m.FMATERIALID=ml.FMATERIALID
+                            JOIN T_BAS_ASSISTANTDATAENTRY_L al on m.F_BSC_CATEGORIES=al.FENTRYID
+                      ) b on a.FMATERIALID = b.FMATERIALID
+
+                JOIN ( SELECT s.FSTOCKID, L.FNAME,s.FNUMBER from T_BD_STOCK S JOIN T_BD_STOCK_L L ON S.FSTOCKID = L.FSTOCKID
+                       WHERE 1=1
+                    <if test="warehouseList != null and warehouseList.size() != 0">
+                        AND L.FNAME IN
+                        <foreach collection="warehouseList" item="warehouse" index="index" separator="," open="(" close=")">
+                            #{warehouse}
+                        </foreach>
+                    </if>
+                      ) c on a.FStockId = c.FSTOCKID
+
+                LEFT JOIN (   -- 获取最新采购价 和可以库存关联
+                        SELECT * from (
+                            select  o.FPURCHASEORGID,o.FDOCUMENTSTATUS,m.FNUMBER,o.FAPPROVEDATE,oif.FPRICE,
+                            ROW_NUMBER () OVER ( PARTITION BY  m.FNUMBER  ORDER BY o.FAPPROVEDATE DESC ) AS RN1
+
+                            FROM t_PUR_POOrder o
+                            JOIN t_PUR_POOrderEntry oi on o.FID =oi.FID
+                            JOIN T_PUR_POORDERENTRY_F oif  on oif.FENTRYID=oi.FENTRYID
+                            JOIN T_BD_MATERIAL m on m.FMATERIALID=oi.FMATERIALID
+                            WHERE o.FDOCUMENTSTATUS in ('C','D')
+                            --AND m.FNUMBER in ('P00T4Y01','HKT210003','P036H901','ATC220296')
+                            AND o.FPURCHASEORGID='100269'
+                        ) a WHERE a.RN1=1
+                    ) d on d.FNUMBER= b.FNUMBER
+        GROUP by
+            b.FNUMBER,
+            c. FNAME,
+            c.FSTOCKID,
+            c.FNUMBER
+        HAVING
+            SUM(a.FBaseQty)>0
+
+    </select>
+
+
+
+</mapper>

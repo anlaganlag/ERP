@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.K3CrossTransferMapper">
+
+    <sql id="List_Condition">
+        <if test="paramCondition.fBillNo != null and paramCondition.fBillNo != ''">
+            AND a.F_Bill_NO LIKE '%'||#{paramCondition.fBillNo}||'%'
+        </if>
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND a.shop_name LIKE '%'||#{paramCondition.shopName}||'%'
+        </if>
+        <if test="paramCondition.financeCode != null and paramCondition.financeCode != ''">
+            AND a.original_finance_code LIKE '%'||#{paramCondition.financeCode}||'%'
+        </if>
+        <if test="paramCondition.fNote != null and paramCondition.fNote != ''">
+            AND a.f_note LIKE '%'||#{paramCondition.fNote}||'%'
+        </if>
+        <if test="paramCondition.syncStatus!= null and paramCondition.syncStatus != ''">
+            AND a.sync_status = #{paramCondition.syncStatus}
+        </if>
+        <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+            and  a.f_date &gt;=to_date(#{paramCondition.startTime},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+            and  a.f_date &lt;=to_date(#{paramCondition.endTime},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+
+        <trim prefix="AND  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="paramCondition.ownerIdHeadNames != null and paramCondition.ownerIdHeadNames.size() != 0 ">
+                    a.f_owner_id_head_name IN
+                    <foreach collection="paramCondition.ownerIdHeadNames" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="paramCondition.fOwnerIdHeadName =='空'.toString()">
+                    OR a.f_owner_id_head_name IS NULL
+                </if>
+            </trim>
+        </trim>
+
+        <if test="paramCondition.platformNames != null and paramCondition.platformNames.size() != 0">
+            AND a.platform_name IN
+            <foreach collection="paramCondition.platformNames" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+    </sql>
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.K3CrossTransferParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3CrossTransferResult">
+        select a.F_Bill_NO fBillNo,
+               a.f_transfer_biz_type,
+               a.f_biz_type,
+               a.f_transfer_direct,
+               a.f_unw_businesstype,
+               a.f_unw_text,
+               a.f_date,
+               a.f_stock_outorg_id,
+               a.f_owner_type_out_id_head,
+               a.f_owner_out_id_head,
+               a.f_stock_org_id,
+               a.f_owner_type_id_head,
+               a.f_owner_id_head,
+               a.f_owner_id_head_name,
+               a.f_note,
+               a.platform_name,
+               a.shop_name,
+               a.finance_code,
+               a.is_delete,
+               a.sync_type,
+               a.sync_time,
+               a.original_finance_code,
+               a.sync_status,
+               case when a.sync_status='-1' THEN '未推送'
+               when a.sync_status='0' THEN '推送失败'
+               when a.sync_status='1' THEN '推送成功'
+               when a.sync_status='2' THEN '提交失败'
+               when a.sync_status='3' THEN '审核失败'
+                   end as syncStatusTxt,
+               a.sync_success_times,
+               a.sync_fail_times,
+               a.sync_requst_par,
+               a.sync_result_msg,
+               a.create_time,
+               a.update_time,
+               a.id from k3_cross_transfer a
+        <where>
+
+            <include refid="List_Condition" />
+        </where>
+        order by a.f_date desc
+    </select>
+
+    <select id="list" parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.K3CrossTransferItemParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3CrossTransferItemResult">
+        select t1.f_bill_no,
+        t1.platform_name,
+        t1.shop_name,
+        t1.f_note,
+        t2.f_bsc_base,
+        t2.f_material_id,
+        t2.f_material_name,
+        t2.f_qty,
+        t2.f_unit_id,
+        t2.stock_warehouse_id,
+        t2.stock_warehouse
+        from k3_cross_transfer t1
+        left join K3_CROSS_TRANSFER_ITEM t2
+        on t2.cross_id=t1.id
+        <where>
+
+            <if test="paramCondition.fBillNo != null and paramCondition.fBillNo != ''">
+                AND t1.f_bill_no = #{paramCondition.fBillNo}
+            </if>
+            <if test="paramCondition.crossId != null and paramCondition.crossId != ''">
+                AND t2.cross_id = #{paramCondition.crossId}
+            </if>
+
+        </where>
+
+    </select>
+
+    <!-- k3跨组织调拨单查询列表 -->
+    <select id="findPageBySpecV2"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.K3CrossTransferParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.ExportK3CrossTransferResult">
+        select  a.id,
+                a.F_Bill_NO fbillNo,
+                case
+                when a.f_transfer_biz_type = 'OverOrgTransfer' THEN '跨组织调拨'
+                when a.f_transfer_biz_type = 'InnerOrgTransfer' THEN '组织内调拨'
+                end as fTransferBizType,
+                case
+                when a.f_unw_businesstype = 'A' THEN '亚马逊出货'
+                when a.f_unw_businesstype = 'B' THEN '小袋出货'
+                when a.f_unw_businesstype = 'C' THEN 'B2B 出货'
+                when a.f_unw_businesstype = 'D' THEN '批量出货'
+                when a.f_unw_businesstype = 'E' THEN '滞销销毁出货'
+                end as f_unw_businesstype,
+                a.f_date,
+                a.f_stock_outorg_id,
+                a.f_owner_type_out_id_head,
+                case
+                when a.f_owner_out_id_head = '002' THEN '采购中心'
+                end as f_owner_out_id_head,
+                a.f_stock_org_id,
+                a.f_owner_id_head,
+                a.f_owner_id_head_name,
+                a.f_note,
+                a.platform_name,
+                a.shop_name,
+                a.finance_code,
+                a.sync_type,
+                a.sync_time,
+                a.original_finance_code,
+                a.sync_status,
+                case
+                when a.sync_status = '-1' THEN '未推送'
+                when a.sync_status = '0' THEN '推送失败'
+                when a.sync_status = '1' THEN '推送成功'
+                when a.sync_status = '2' THEN '提交失败'
+                when a.sync_status = '3' THEN '审核失败'
+                end as syncStatusTxt,
+                a.sync_result_msg,
+                d.f_bsc_base,
+                d.f_material_id,
+                m.material_name as f_material_name,
+                d.f_qty,
+                d.f_unit_id,
+                d.stock_warehouse_id,
+                d.stock_warehouse
+        from K3_CROSS_TRANSFER a
+        left join K3_CROSS_TRANSFER_ITEM d
+        ON d.CROSS_ID = a.ID
+        left join mcms_base_data.rp_material m
+        on m.material_code=d.f_material_id
+        <where>
+            <include refid="List_Condition" />
+        </where>
+        order by a.f_date desc
+    </select>
+
+    <!--马帮已发货订单同步k3列表 -->
+    <select id="syncMabangOrders"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangOrdersParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangOrders">
+        SELECT *
+        FROM MABANG_ORDERS a
+        WHERE a.CREATE_CROSS_TRANSFER = 0
+          AND a.ORDER_STATUS = #{paramCondition.orderStatus}
+          AND a.EXPRESS_TIME >= to_date('2022-07-08', 'yyyy-MM-dd')
+          AND a.PLATFORM_ID IN ('eBay', 'LAZADA', 'Mercadolibre', 'Shopee', '速卖通')
+    </select>
+
+    <!--马帮已发货订单非限定平台订单状态更新 -->
+    <update id="updateLimitPlatformOrders" parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangOrdersParam">
+        UPDATE MABANG_ORDERS T
+        SET T.CREATE_CROSS_TRANSFER = #{param.createCrossTransfer}
+        WHERE T.EXPRESS_TIME >= to_date('2022-07-08', 'yyyy-MM-dd')
+          AND T.CREATE_CROSS_TRANSFER = 0
+          AND T.PLATFORM_ID NOT IN ('eBay', 'LAZADA', 'Mercadolibre', 'Shopee', '速卖通')
+    </update>
+
+</mapper>

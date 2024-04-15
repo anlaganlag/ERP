@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!--日志格式应用spring boot默认的格式，也可以自己更改-->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!--获取启动环境参数-->
+    <springProperty scope="context" name="active" source="spring.profiles.active" />
+
+    <!--定义日志存放的位置，默认存放在项目启动的相对路径的目录-->
+    <springProperty scope="context" name="LOG_PATH" source="log.path" defaultValue="app-logs/externalSystem-log/${active}"/>
+
+
+    <!-- 彩色日志格式 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+    </appender>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/log_total.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/log_total.%d{yyyyMMdd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder charset="UTF-8">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="LOGSTASH-DEV" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>elk.jcintergl.com:5048</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" >
+        </encoder>
+    </appender>
+    <appender name="LOGSTASH-TEST" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>elk.jcintergl.com:5049</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" >
+        </encoder>
+    </appender>
+    <appender name="LOGSTASH-PROD" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>elk.jcintergl.com:5050</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" >
+        </encoder>
+    </appender>
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+        <springProfile name="dev,local">
+            <appender-ref ref="LOGSTASH-DEV"/>
+        </springProfile>
+        <springProfile name="test">
+            <appender-ref ref="LOGSTASH-TEST"/>
+        </springProfile>
+        <springProfile name="prod">
+            <appender-ref ref="LOGSTASH-PROD"/>
+        </springProfile>
+    </root>
+
+</configuration>
+
+

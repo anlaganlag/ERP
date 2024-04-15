@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.OperApplyInfoHistoryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.operationManagement.modular.stock.entity.OperApplyInfoHistory">
+        <id column="ID" property="id" />
+        <result column="STOCK_STATUS" property="stockStatus" />
+        <result column="APPLY_PERSON_NO" property="applyPersonNo" />
+        <result column="APPLY_PERSON_NAME" property="applyPersonName" />
+        <result column="APPLY_DATE" property="applyDate" />
+        <result column="OPER_CUR_MONTH_QTY" property="operCurMonthQty" />
+        <result column="OPER_CUR_MONTH_ADD1_QTY" property="operCurMonthAdd1Qty" />
+        <result column="OPER_CUR_MONTH_ADD2_QTY" property="operCurMonthAdd2Qty" />
+        <result column="OPER_CUR_MONTH_ADD3_QTY" property="operCurMonthAdd3Qty" />
+        <result column="OPER_CUR_MONTH_ADD4_QTY" property="operCurMonthAdd4Qty" />
+        <result column="OPER_CUR_MONTH_ADD5_QTY" property="operCurMonthAdd5Qty" />
+        <result column="OPER_CUR_MONTH_ADD6_QTY" property="operCurMonthAdd6Qty" />
+        <result column="SALES_STOCK_DAYS" property="salesStockDays" />
+        <result column="OPER_COVERS_SALES_DATE" property="operCoversSalesDate" />
+        <result column="EXTRA_DAYS" property="extraDays" />
+        <result column="SALES_DEMAND" property="salesDemand" />
+        <result column="STOCK_QTY_AREA" property="stockQtyArea" />
+        <result column="TURNOVER_DAYS_AREA" property="turnoverDaysArea" />
+        <result column="STOCK_REASON" property="stockReason" />
+        <result column="OVER_TIME_NOT" property="overTimeNot" />
+        <result column="BILL_TYPE" property="billType" />
+        <result column="COMIT_TYPE" property="comitType" />
+        <result column="ALL_COMIT" property="allComit" />
+        <result column="TEAM_VERIF_NO" property="teamVerifNo" />
+        <result column="DEPT_TEAM_VERIF_NO" property="deptTeamVerifNo" />
+        <result column="BIZDATE" property="bizdate" />
+        <result column="AREA" property="area" />
+        <result column="PLATFORM" property="platform" />
+        <result column="ASIN" property="asin" />
+        <result column="DEPARTMENT" property="department" />
+        <result column="TEAM" property="team" />
+        <result column="MATERIAL_CODE" property="materialCode" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="RECOM_DELIVERY_TYPE" property="recomDeliveryType" />
+        <result column="PRODUCT_TYPE" property="productType" />
+        <result column="PRODUCT_NAME" property="productName" />
+        <result column="STYLE" property="style" />
+        <result column="MAIN_MATERIAL" property="mainMaterial" />
+        <result column="PATTERN" property="pattern" />
+        <result column="COMPANY_BRAND" property="companyBrand" />
+        <result column="BRAND" property="brand" />
+        <result column="MODEL" property="model" />
+        <result column="COLOR" property="color" />
+        <result column="SIZES" property="sizes" />
+        <result column="PACKING" property="packing" />
+        <result column="VERSION_DES" property="versionDes" />
+        <result column="MATSTYLESECONDLABEL" property="matstylesecondlabel" />
+        <result column="MATPROCYCLE" property="matprocycle" />
+        <result column="TYPE" property="type" />
+        <result column="MINPOQTY" property="minpoqty" />
+        <result column="SPU" property="spu" />
+        <result column="NBDU" property="nbdu" />
+        <result column="FESTIVAL_LABEL" property="festivalLabel" />
+        <result column="DELIVERY_TYPE" property="deliveryType" />
+        <result column="SUPPLYCLE" property="supplycle" />
+        <result column="CANUSEQTY" property="canuseqty" />
+        <result column="UNPURCHASE" property="unpurchase" />
+        <result column="NOPICK" property="nopick" />
+        <result column="UNPACK" property="unpack" />
+        <result column="UNSEND" property="unsend" />
+        <result column="INTERNAL_STAY_DELIVER_QTY" property="internalStayDeliverQty" />
+        <result column="AMAZON_AVAILABLE_QTY" property="amazonAvailableQty" />
+        <result column="AMAZON_RESERVED_QTY" property="amazonReservedQty" />
+        <result column="AMAZON_STAY_DELIVER_QTY" property="amazonStayDeliverQty" />
+        <result column="AIR_QTY" property="airQty" />
+        <result column="SHIPPING_QTY" property="shippingQty" />
+        <result column="TRAIN_QTY" property="trainQty" />
+        <result column="CAR_QTY" property="carQty" />
+        <result column="IN_STOCK_QTY" property="inStockQty" />
+        <result column="STORE_ONTIME_TOTAL_QTY" property="storeOntimeTotalQty" />
+        <result column="DELIVERY_NUM_OVERSEA" property="deliveryNumOversea" />
+        <result column="INVENTORY_NUM_OVERSEA" property="inventoryNumOversea" />
+        <result column="TOTAL_INVENTORY_NUM_OVERSEA" property="totalInventoryNumOversea" />
+        <result column="OVER_D180_INV_AGE_QTY" property="overD180InvAgeQty" />
+        <result column="OVER_D180_INV_AGE_QTY_RATE" property="overD180InvAgeQtyRate" />
+        <result column="FIRST_ROUTE_INSTOCK_DATE" property="firstRouteInstockDate" />
+        <result column="FIRST_ROUTE_DELIVERY_QTY" property="firstRouteDeliveryQty" />
+        <result column="DAY7QTY" property="day7qty" />
+        <result column="DAY14QTY" property="day14qty" />
+        <result column="DAY30QTY" property="day30qty" />
+        <result column="CUR_PRE_MONTH_QTY" property="curPreMonthQty" />
+        <result column="LAST_PRE_MONTH_QTY" property="lastPreMonthQty" />
+        <result column="CUR_PRE_MONTH_LAST_PRE_MONTH" property="curPreMonthLastPreMonth" />
+        <result column="CUR_MONTH_MINUS3_QTY" property="curMonthMinus3Qty" />
+        <result column="CUR_MONTH_MINUS2_QTY" property="curMonthMinus2Qty" />
+        <result column="CUR_MONTH_MINUS1_QTY" property="curMonthMinus1Qty" />
+        <result column="CUR_MONTH_QTY" property="curMonthQty" />
+        <result column="CUR_MONTH_ADD1_QTY" property="curMonthAdd1Qty" />
+        <result column="CUR_MONTH_ADD2_QTY" property="curMonthAdd2Qty" />
+        <result column="CUR_MONTH_ADD3_QTY" property="curMonthAdd3Qty" />
+        <result column="CUR_MONTH_ADD4_QTY" property="curMonthAdd4Qty" />
+        <result column="CUR_MONTH_ADD5_QTY" property="curMonthAdd5Qty" />
+        <result column="CUR_MONTH_ADD6_QTY" property="curMonthAdd6Qty" />
+        <result column="PRODUCT_SALE_LEVEL" property="productSaleLevel" />
+        <result column="PRODUCT_SALE_LEVEL_TEAM" property="productSaleLevelTeam" />
+        <result column="DAYAVGQTY" property="dayavgqty" />
+        <result column="SHOP_SUPPLYDAYS" property="shopSupplydays" />
+        <result column="RECOM_PRE_QTY" property="recomPreQty" />
+        <result column="SEASON_LABEL" property="seasonLabel" />
+        <result column="VERSION" property="version" />
+        <result column="FLAG" property="flag" />
+        <result column="SELLABLE_SUPPLYDAYS" property="sellableSupplydays" />
+        <result column="CATEGORY" property="category" />
+        <result column="MINPOQTY_NOTES" property="minpoqtyNotes" />
+        <result column="SPELL_ORDERNUM " property="spellOrdernum" />
+        <result column="SPELL_ORDERNUM_REMARK " property="spellOrdernumRemark" />
+        <result column="FBA_FIRST_RECEIVEDATE" property="fbaFirstReceivedate" />
+        <result column="NOTE" property="note" />
+        <result column="SAFE_SALEDAYS" property="safeSaledays" />
+        <result column="ORDER_DAYS" property="orderDays" />
+        <result column="DELIVERY_DAYS" property="deliveryDays" />
+        <result column="ORDER_DEAL_DAY" property="orderDealDay" />
+        <result column="OUTER_DEAL_DAY" property="outerDealDay" />
+        <result column="INNER_DEAL_DAY" property="innerDealDay" />
+        <result column="TOTAL_BACK_DAYS" property="totalBackDays" />
+        <result column="FORMULA" property="formula" />
+        <result column="FORMULA_NUM" property="formulaNum" />
+        <result column="PREPARE_DAYS" property="prepareDays" />
+        <result column="FORMULA_PREQTY" property="formulaPreqty" />
+        <result column="TURNOVER_DAYS" property="turnoverDays" />
+        <result column="APPROVE_QTY" property="approveQty" />
+        <result column="RECOM_BACK_OVER_DAYS" property="recomBackOverDays" />
+        <result column="PRE_SALE_QTY" property="preSaleQty" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+        <result column="EXPECTED_DELIVERY_DATE" property="expectedDeliveryDate" />
+        <result column="TOTAL_VOLUME" property="totalVolume" />
+        <result column="OPER_EXPECTED_DATE" property="operExpectedDate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, STOCK_STATUS, APPLY_PERSON_NO, APPLY_PERSON_NAME, APPLY_DATE, OPER_CUR_MONTH_QTY, OPER_CUR_MONTH_ADD1_QTY, OPER_CUR_MONTH_ADD2_QTY, OPER_CUR_MONTH_ADD3_QTY, OPER_CUR_MONTH_ADD4_QTY, OPER_CUR_MONTH_ADD5_QTY, OPER_CUR_MONTH_ADD6_QTY, SALES_STOCK_DAYS, OPER_COVERS_SALES_DATE, EXTRA_DAYS, SALES_DEMAND, STOCK_QTY_AREA, TURNOVER_DAYS_AREA, STOCK_REASON, OVER_TIME_NOT, BILL_TYPE, COMIT_TYPE, ALL_COMIT, TEAM_VERIF_NO, DEPT_TEAM_VERIF_NO, BIZDATE, AREA, PLATFORM, ASIN, DEPARTMENT, TEAM, MATERIAL_CODE, CREATE_DATE, RECOM_DELIVERY_TYPE, PRODUCT_TYPE, PRODUCT_NAME, STYLE, MAIN_MATERIAL, PATTERN, COMPANY_BRAND, BRAND, MODEL, COLOR, SIZES, PACKING, VERSION_DES, MATSTYLESECONDLABEL, MATPROCYCLE, TYPE, MINPOQTY, SPU, NBDU, FESTIVAL_LABEL, DELIVERY_TYPE, SUPPLYCLE, CANUSEQTY, UNPURCHASE, NOPICK, UNPACK, UNSEND, INTERNAL_STAY_DELIVER_QTY, AMAZON_AVAILABLE_QTY, AMAZON_RESERVED_QTY, AMAZON_STAY_DELIVER_QTY, AIR_QTY, SHIPPING_QTY, TRAIN_QTY, CAR_QTY, IN_STOCK_QTY, STORE_ONTIME_TOTAL_QTY, DELIVERY_NUM_OVERSEA, INVENTORY_NUM_OVERSEA, TOTAL_INVENTORY_NUM_OVERSEA, OVER_D180_INV_AGE_QTY, OVER_D180_INV_AGE_QTY_RATE, FIRST_ROUTE_INSTOCK_DATE, FIRST_ROUTE_DELIVERY_QTY, DAY7QTY, DAY14QTY, DAY30QTY, CUR_PRE_MONTH_QTY, LAST_PRE_MONTH_QTY, CUR_PRE_MONTH_LAST_PRE_MONTH, CUR_MONTH_MINUS3_QTY, CUR_MONTH_MINUS2_QTY, CUR_MONTH_MINUS1_QTY, CUR_MONTH_QTY, CUR_MONTH_ADD1_QTY, CUR_MONTH_ADD2_QTY, CUR_MONTH_ADD3_QTY, CUR_MONTH_ADD4_QTY, CUR_MONTH_ADD5_QTY, CUR_MONTH_ADD6_QTY, PRODUCT_SALE_LEVEL,PRODUCT_SALE_LEVEL_TEAM, DAYAVGQTY, SHOP_SUPPLYDAYS, RECOM_PRE_QTY, SEASON_LABEL, VERSION, FLAG, SELLABLE_SUPPLYDAYS, CATEGORY, MINPOQTY_NOTES, SPELL_ORDERNUM, SPELL_ORDERNUM_REMARK ,
+FBA_FIRST_RECEIVEDATE, NOTE, SAFE_SALEDAYS, ORDER_DAYS, DELIVERY_DAYS, ORDER_DEAL_DAY, OUTER_DEAL_DAY, INNER_DEAL_DAY, TOTAL_BACK_DAYS, FORMULA, FORMULA_NUM, PREPARE_DAYS, FORMULA_PREQTY, TURNOVER_DAYS, APPROVE_QTY, RECOM_BACK_OVER_DAYS, PRE_SALE_QTY, CREATE_TIME, UPDATE_TIME, EXPECTED_DELIVERY_DATE, TOTAL_VOLUME, OPER_EXPECTED_DATE
+    </sql>
+</mapper>

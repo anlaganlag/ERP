@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.AmazonInventoryEuTransferMapper">
+
+    <select id="getEbmsEuTransfer"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.AmazonInventoryEuTransfer">
+        --欧洲站点调拨
+        --调入仓
+        SELECT
+        t1.TransferInOrganizeName org, t2.TransferInHouseName warehouseName,t2.Sku,sum(t2.TransferQuantity) qty,'调入仓'  source
+        FROM TbLogisticsTransferRecord t1
+        join TbLogisticsTransferRecordDet t2 on t1.SysID=t2.SysID
+        where t1.TransfersSource='欧洲站点调拨' and t1.Status='已处理'
+        and TransferDate> #{startDate} and TransferDate &lt; #{endDate}
+        group by t1.TransferInOrganizeName,t2.TransferInHouseName,t2.Sku
+        union  all
+        --调出仓
+        SELECT
+        t1.TransferOutOrganizeName org ,t2.TransferOutHouseName warehouseName,t2.Sku,sum(t2.TransferQuantity)*-1 qty,'调出仓'  source
+        FROM TbLogisticsTransferRecord t1
+        join TbLogisticsTransferRecordDet t2 on t1.SysID=t2.SysID
+        where t1.TransfersSource='欧洲站点调拨' and t1.Status='已处理'
+        and TransferDate>#{startDate} and TransferDate &lt; #{endDate}
+        group by t1.TransferOutOrganizeName,t2.TransferOutHouseName,t2.Sku
+    </select>
+</mapper>

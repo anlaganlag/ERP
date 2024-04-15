@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.MaterialLogisticsMapper">
+
+    <select id="customPageList"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SysMaterialResult"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            ml.id,
+            ml.department,
+            ml.team,
+            ml.platform,
+            ml.area,
+            m.material_code,
+            m.category,
+            m.product_type,
+            m.product_name,
+            m.style,
+            m.main_material,
+            m.design AS pattern,
+            m.company_brand,
+            m.FIT_BRAND as brand,
+            m.model,
+            m.type,
+            m.color,
+            m.sizes,
+            m.version_des,
+            m.MAT_IS_AVAILABLE_SALE,
+            m.first_order_date,
+            m.packing,
+            m.version,
+            ml.logistics_mode,
+            m.spu,
+            m.style_second_label,
+            case m.MAT_IS_AVAILABLE_SALE
+            when '是' then '启用'
+            when '否' then '禁用'
+            else '未设置'
+            end forbidstatus_new,
+
+            case ml.logistics_mode
+            when '海运' then '已设置'
+            when '空运' then '已设置'
+            else '未设置'
+            end  mat_edit_state
+            FROM
+            STOCKING.MATERIAL_LOGISTICS ml
+            JOIN MCMS_BASE_DATA.RP_MATERIAL m ON m.material_code = ml.material_code
+
+        where 1= 1
+
+        <if test="paramCondition.category != null and paramCondition.category != ''">
+            and m.category LIKE ('%'|| #{paramCondition.category}|| '%')
+        </if>
+
+
+        <if test="paramCondition.productType != null and paramCondition.productType != ''">
+            and m.product_type like ('%'||#{paramCondition.productType}||'%')
+        </if>
+
+        <if test="paramCondition.productName != null and paramCondition.productName != ''">
+            and m.product_name like ('%'||#{paramCondition.productName}||'%')
+        </if>
+
+        <if test="paramCondition.style != null and paramCondition.style != ''">
+            and m.style like ('%'||#{paramCondition.style}||'%')
+        </if>
+
+        <if test="paramCondition.mainMaterial != null and paramCondition.mainMaterial != ''">
+            and m.main_material like ('%'||#{paramCondition.mainMaterial}||'%')
+        </if>
+
+        <if test="paramCondition.pattern != null and paramCondition.pattern != ''">
+            and m.design like ('%'||#{paramCondition.pattern}||'%')
+        </if>
+
+        <if test="paramCondition.companyBrand != null and paramCondition.companyBrand != ''">
+            and m.company_brand like ('%'||#{paramCondition.companyBrand}||'%')
+        </if>
+        <if test="paramCondition.brand != null and paramCondition.brand != ''">
+            and m.FIT_BRAND like ('%'||#{paramCondition.brand}||'%')
+        </if>
+
+
+        <if test="paramCondition.model != null and paramCondition.model != ''">
+            and m.model like ('%'||#{paramCondition.model}||'%')
+        </if>
+
+
+        <if test="paramCondition.type != null and paramCondition.type != ''">
+            and m.type like ('%'||#{paramCondition.type}||'%')
+        </if>
+
+
+        <if test="paramCondition.spu != null and paramCondition.spu != ''">
+            and m.spu =#{paramCondition.spu}
+        </if>
+
+        <if test="paramCondition.spuList != null and paramCondition.spuList.size >0 ">
+            and m.spu  IN
+            <foreach item="spu" collection="paramCondition.spuList" open="(" separator="," close=")">
+                #{spu}
+            </foreach>
+        </if>
+
+
+
+        <if test="paramCondition.materialCode != null and paramCondition.materialCode != ''">
+            and m.material_code =#{paramCondition.materialCode}
+        </if>
+
+
+        <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size >0 ">
+            and m.material_code IN
+            <foreach item="materialCode" collection="paramCondition.materialCodeList" open="(" separator="," close=")">
+                #{materialCode}
+            </foreach>
+        </if>
+
+
+        <if test="paramCondition.logisticsMode != null and paramCondition.logisticsMode != ''">
+            and ml.logistics_mode =#{paramCondition.logisticsMode}
+        </if>
+
+        <if test="paramCondition.forbidstatus != null and paramCondition.forbidstatus != ''">
+            and m.forbidstatus = #{paramCondition.forbidstatus}
+        </if>
+
+
+        <if test="paramCondition.area != null and paramCondition.area != ''">
+            and ml.area =#{paramCondition.area}
+        </if>
+
+
+        <if test="paramCondition.department != null and paramCondition.department != ''">
+            and ml.department =#{paramCondition.department}
+        </if>
+
+
+        <if test="paramCondition.team != null and paramCondition.team != ''">
+            and ml.team =#{paramCondition.team}
+        </if>
+
+
+        <if test="paramCondition.platform != null and paramCondition.platform != ''">
+            and ml.platform =#{paramCondition.platform}
+        </if>
+
+
+        <if test="paramCondition.matEditState != null and paramCondition.matEditState != ''">
+
+            and case ml.logistics_mode
+            when '海运' then '已设置'
+            when '空运' then '已设置'
+            else '未设置'
+            end like ('%'||#{paramCondition.matEditState}||'%')
+        </if>
+
+
+        ORDER BY
+            m.material_code,
+            m.spu,
+            ml.area DESC
+    </select>
+
+
+    <insert id="insertOrUpdateBatchByCustom"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        <selectKey keyProperty="status" resultType="int" order="BEFORE">
+            select count(*) from STOCKING.MATERIAL_LOGISTICS
+            <where>
+                <if test="paramCondition.status != null and paramCondition.status != ''">
+                    and id =#{paramCondition.id}
+                </if>
+            </where>
+        </selectKey>
+        <if test="status == 1">
+            update country
+            set countryname = #{countryname},countrycode = #{countrycode}
+            where id = #{id}
+        </if>
+        <if test="status==0">
+            insert into country values(#{id},#{countryname},#{countrycode})
+        </if>
+    </insert>
+
+    <insert id="analysis"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        insert into STOCKING.MATERIAL_LOGISTICS (platform,department,team,area,material_code,logistics_mode,create_by,status)
+        SELECT
+            a.platform,
+            a.department,
+            a.team,
+            a.area,
+            a.material_code,
+            a.logistics_mode,
+            #{paramCondition.operator},
+            0
+        FROM
+            STOCKING.MATERIAL_LOGISTICS s right JOIN (
+                SELECT
+                    l.platform,
+                    l.department,
+                    l.team,
+                    l.area,
+                    m.material_code,
+                    m.logistics_mode
+                FROM
+                    ( SELECT platform, department, team, area FROM STOCKING.product_line2 GROUP BY platform, department, team, area ) l
+                        , MCMS_BASE_DATA.RP_MATERIAL m
+                where m.logistics_mode='空运') a
+                                            ON a.material_code = s.material_code
+                                                AND s.platform = a.platform
+                                                AND s.department = a.department
+                                                AND s.team = a.team
+                                                AND s.area = a.area
+
+        where s.logistics_mode is null
+
+    </insert>
+
+
+    <delete id="deleteBatch" parameterType="java.util.List">
+        delete from STOCKING.MATERIAL_LOGISTICS
+        where id in
+        <foreach item="id" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

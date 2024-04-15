@@ -1,0 +1,25 @@
+package com.tadpole.cloud.operationManagement.modular.brand.service;
+
+
+import com.tadpole.cloud.operationManagement.api.brand.model.result.*;
+import com.tadpole.cloud.operationManagement.api.brand.model.params.*;
+import com.tadpole.cloud.operationManagement.api.brand.entity.TbBrandAuthorization;
+import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
+
+/**
+ * <p>
+ * 品牌授权表 服务类
+ * </p>
+ *
+ * @author S20190161
+ * @since 2023-10-30
+ */
+public interface TbBrandAuthorizationService extends IService<TbBrandAuthorization> {
+  void save(TbBrandAuthorizationParam param);
+  TbBrandAuthorizationResult queryById(Long id);
+  List<TbBrandAuthorization> queryByBcId(Long bcId);
+  void delete(Long id);
+}
+

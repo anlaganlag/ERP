@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.shipment.mapper.ShipmentApplyItemMapper">
+
+    <resultMap id="ResultMapVerifyList" type="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ShipmentApplyItemVerifyResult">
+        <result property="applyBatchNo" column="APPLY_BATCH_NO" jdbcType="VARCHAR"/>
+        <result property="dataSourceType" column="DATA_SOURCE_TYPE" jdbcType="VARCHAR"/>
+        <result property="applyDate" column="APPLY_DATE" jdbcType="VARCHAR"/>
+        <result property="bizdate" column="BIZDATE" jdbcType="VARCHAR"/>
+        <result property="department" column="DEPARTMENT" jdbcType="VARCHAR"/>
+        <result property="team" column="team" jdbcType="VARCHAR"/>
+        <result property="apllyPerson" column="APLLY_PERSON" jdbcType="VARCHAR"/>
+        <result property="platform" column="PLATFORM" jdbcType="VARCHAR"/>
+        <result property="area" column="AREA" jdbcType="VARCHAR"/>
+        <result property="asin" column="ASIN" jdbcType="VARCHAR"/>
+        <result property="materialCode" column="MATERIAL_CODE" jdbcType="VARCHAR"/>
+        <result property="materialInfo" column="MATERIAL_INFO" jdbcType="VARCHAR"/>
+        <result property="productType" column="PRODUCT_TYPE" jdbcType="VARCHAR"/>
+        <result property="productName" column="PRODUCT_NAME" jdbcType="VARCHAR"/>
+        <result property="reasonableCheck" column="REASONABLE_CHECK" jdbcType="VARCHAR"/>
+        <result property="domesticRecommSendQty" column="DOMESTIC_RECOMM_SEND_QTY" jdbcType="VARCHAR"/>
+        <result property="turnoverBeforeSendDays" column="TURNOVER_BEFORE_SEND_DAYS" jdbcType="VARCHAR"/>
+        <result property="turnoverAfterSendDays" column="turnover_after_send_days" jdbcType="VARCHAR"/>
+        <result property="commitedAvailQty" column="commited_avail_qty" jdbcType="VARCHAR"/>
+
+        <result property="deliverypointNo" column="DELIVERYPOINT_NO" jdbcType="VARCHAR"/>
+        <result property="deliverypoint" column="DELIVERYPOINT" jdbcType="VARCHAR"/>
+
+        <result property="curqty" column="curqty" jdbcType="VARCHAR"/>
+        <result property="nextmMon1qty" column="NEXTM_MON1QTY" jdbcType="VARCHAR"/>
+        <result property="nextmMon2qty" column="NEXTM_MON2QTY" jdbcType="VARCHAR"/>
+        <result property="nextmMon3qty" column="NEXTM_MON3QTY" jdbcType="VARCHAR"/>
+        <result property="nextmMon4qty" column="NEXTM_MON4QTY" jdbcType="VARCHAR"/>
+        <result property="nextmMon5qty" column="NEXTM_MON5QTY" jdbcType="VARCHAR"/>
+        <result property="nextmMon6qty" column="NEXTM_MON6QTY" jdbcType="VARCHAR"/>
+        <result property="day7qty" column="day7qty" jdbcType="VARCHAR"/>
+        <result property="day14qty" column="day14qty" jdbcType="VARCHAR"/>
+        <result property="day30qty" column="day30qty" jdbcType="VARCHAR"/>
+        <result property="dayavgsell" column="dayavgsell" jdbcType="VARCHAR"/>
+        <result property="isCutGoods" column="IS_CUT_GOODS" jdbcType="VARCHAR"/>
+        <result property="requirementSendTotalQty" column="REQUIREMENT_SEND_TOTAL_QTY" jdbcType="VARCHAR"/>
+
+        <result property="azOverseaTotalQty" column="AZ_OVERSEA_TOTAL_QTY" jdbcType="VARCHAR"/>
+        <result property="azTotalQty" column="AZ_TOTAL_QTY" jdbcType="VARCHAR"/>
+        <result property="azAvailQty" column="AZ_AVAIL_QTY" jdbcType="VARCHAR"/>
+        <result property="azReservedQty" column="AZ_RESERVED_QTY" jdbcType="VARCHAR"/>
+        <result property="azWaitSendQty" column="AZ_WAIT_SEND_QTY" jdbcType="VARCHAR"/>
+        <result property="azAirQty" column="AZ_AIR_QTY" jdbcType="VARCHAR"/>
+        <result property="azShipQty" column="AZ_SHIP_QTY" jdbcType="VARCHAR"/>
+        <result property="azTrainQty" column="AZ_TRAIN_QTY" jdbcType="VARCHAR"/>
+        <result property="azCarQty" column="AZ_CAR_QTY" jdbcType="VARCHAR"/>
+        <result property="overseaTotalQty" column="OVERSEA_TOTAL_QTY" jdbcType="VARCHAR"/>
+        <result property="overseaInvQty" column="OVERSEA_INV_QTY" jdbcType="VARCHAR"/>
+        <result property="overseaOnwayQty" column="OVERSEA_ONWAY_QTY" jdbcType="VARCHAR"/>
+
+        <result property="domesticUncheckQty" column="DOMESTIC_UNCHECK_QTY" jdbcType="VARCHAR"/>
+        <result property="undoneIn7daysQty" column="UNDONE_IN7DAYS_QTY" jdbcType="VARCHAR"/>
+        <result property="undone8to14daysQty" column="UNDONE_8TO14DAYS_QTY" jdbcType="VARCHAR"/>
+        <result property="undoneAfter15daysQty" column="UNDONE_AFTER15DAYS_QTY" jdbcType="VARCHAR"/>
+        <result property="domesticTransferAvailQty" column="DOMESTIC_TRANSFER_AVAIL_QTY" jdbcType="VARCHAR"/>
+
+        <result property="restockProductionCycle" column="RESTOCK_PRODUCTION_CYCLE" jdbcType="VARCHAR"/>
+        <result property="domesticWarehouseHandleDays" column="DOMESTIC_WAREHOUSE_HANDLE_DAYS" jdbcType="VARCHAR"/>
+        <result property="deliveryDays" column="DELIVERY_DAYS" jdbcType="VARCHAR"/>
+        <result property="overseaWarehouserHandleDays" column="OVERSEA_WAREHOUSER_HANDLE_DAYS" jdbcType="VARCHAR"/>
+        <result property="saleSafelyDays" column="SALE_SAFELY_DAYS" jdbcType="VARCHAR"/>
+        <result property="sendGapDays" column="SEND_GAP_DAYS" jdbcType="VARCHAR"/>
+        <result property="sendTotalDays" column="SEND_TOTAL_DAYS" jdbcType="VARCHAR"/>
+        <result property="canSaleDate" column="CAN_SALE_DATE" jdbcType="VARCHAR"/>
+
+        <collection property="applyItemList"
+                    ofType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ShipmentApplyItemResult">
+            <result property="sysShopsName" column="SYS_SHOPS_NAME" jdbcType="VARCHAR"/>
+            <result property="sysSite" column="SYS_SITE" jdbcType="VARCHAR"/>
+            <result property="sku" column="sku" jdbcType="VARCHAR"/>
+            <result property="fbaNo" column="FBA_NO" jdbcType="VARCHAR"/>
+            <result property="receiveWarehouse" column="RECEIVE_WAREHOUSE" jdbcType="VARCHAR"/>
+            <result property="sendQty" column="send_qty" jdbcType="VARCHAR"/>
+            <result property="transportationType" column="transportation_type" jdbcType="VARCHAR"/>
+            <result property="unwType" column="UNW_TYPE" jdbcType="VARCHAR"/>
+            <result property="remark1" column="remark1" jdbcType="VARCHAR"/>
+            <result property="remark2" column="remark2" jdbcType="VARCHAR"/>
+            <result property="remark3" column="remark3" jdbcType="VARCHAR"/>
+            <result property="syncResultMsg" column="SYNC_RESULT_MSG" jdbcType="VARCHAR"/>
+            <result property="deliverypoint" column="DELIVERYPOINT" jdbcType="VARCHAR"/>
+            <result property="deliverypointNo" column="DELIVERYPOINT_NO" jdbcType="VARCHAR"/>
+        </collection>
+    </resultMap>
+
+
+
+    <!--获取EBMS标签管理数据-->
+    <select id="warehouse" resultType="java.util.Map">
+        SELECT
+        w.owName,
+        w.countryCode,
+        w.owState,
+        w.elePlatformName
+        FROM TbComOverseasWarehouse w
+        <where>
+            <if test="platform != null and platform != ''">
+                AND w.elePlatformName = #{platform}
+            </if>
+            <if test="site != null and site != ''">
+                AND w.countryCode = #{site}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="batchQueryQty" resultType="java.util.Map">
+        SELECT
+        w.owName,
+        w.countryCode,
+        w.owState,
+        w.elePlatformName
+        FROM TbComOverseasWarehouse w
+        <where>
+            <if test="platform != null and platform != ''">
+                AND w.elePlatformName = #{platform}
+            </if>
+            <if test="site != null and site != ''">
+                AND w.countryCode = #{site}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="selectVerifyList"
+            resultMap="ResultMapVerifyList">
+        SELECT
+            t2.*,t1.*
+        FROM (SELECT platform, area, department, team, product_type
+              FROM product_line2
+              WHERE INSTR(dept_mgr, #{deptMgr}) > 0
+              GROUP BY platform,area,department,team,product_type) l
+        JOIN SHIPMENT_APPLY_ITEM t2
+            ON l.platform = t2.platform
+            AND l.area = t2.area
+            AND l.team = t2.Team
+            AND l.product_type = t2.product_type
+        LEFT JOIN SHIPMENT_RECOM_SNAPSHOT t1
+            ON t1.id = t2.recom_snapshot_id
+        WHERE t2.apply_status = #{applyStatus}
+              AND check_status = 0
+        ORDER BY t2.apply_batch_no DESC
+    </select>
+
+
+    <select id="selectVerifyListByDept"
+            resultMap="ResultMapVerifyList">
+        SELECT
+            t2.*,t1.*
+        FROM
+                 SHIPMENT_APPLY_ITEM t2
+                 LEFT JOIN SHIPMENT_RECOM_SNAPSHOT t1
+                           ON t1.id = t2.recom_snapshot_id
+        WHERE t2.apply_status = #{applyStatus}
+               and t2.DEPARTMENT = #{department}
+          AND t2.check_status = 0
+        ORDER BY t2.apply_batch_no DESC
+    </select>
+
+
+        <select id="exportVerifyList"
+                parameterType="com.tadpole.cloud.operationManagement.modular.shipment.model.params.ShipmentTrackingParam"
+                resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ExportVerifyListResult">
+        SELECT
+            t2.apply_batch_no,
+            t2.aplly_person,
+            t2.apply_date,
+            t2.platform,
+            t2.area,
+            t2.asin,
+            t2.material_code,
+            t2.product_type,
+            t2.product_name,
+            t2.sys_shops_name,
+            t2.sys_site,
+            t2.sku,
+            t2.fba_no,
+            t2.deliverypoint,
+            t2.receive_warehouse,
+            t2.send_qty,
+            t2.transportation_type,
+            t2.unw_type,
+            t2.remark1,
+            t2.remark2,
+            t2.remark3,
+            t2.sync_result_msg,
+            t2.commited_avail_qty
+        FROM
+            SHIPMENT_APPLY_ITEM t2
+                JOIN MCMS_BASE_DATA.RP_MATERIAL material
+                     ON t2.MATERIAL_CODE = material.MATERIAL_CODE
+
+                LEFT JOIN SHIPMENT_RECOM_SNAPSHOT t1
+                    ON t1.id = t2.recom_snapshot_id
+                WHERE t2.apply_status = 1
+                      AND check_status = 0
+            <if test="paramCondition.dataScopePeople != null and paramCondition.dataScopePeople !=''">
+                AND t2.APLLY_PERSON_NO  IN  ${paramCondition.dataScopePeople}
+            </if>
+
+            <if test="paramCondition.dataScopeMaterial != null and paramCondition.dataScopeMaterial !=''">
+                ${paramCondition.dataScopeMaterial}
+            </if>
+
+            <if test="paramCondition.dataScopeArea != null and paramCondition.dataScopeArea !=''">
+                ${paramCondition.dataScopeArea}
+            </if>
+            ORDER BY t2.apply_batch_no DESC,t2.send_qty
+        </select>
+
+
+    <select id="selectVerifyListDatalimit"
+            parameterType="com.tadpole.cloud.operationManagement.modular.shipment.model.params.ShipmentTrackingParam"
+            resultMap="ResultMapVerifyList">
+        SELECT
+            t2.*,t1.*
+        FROM
+            SHIPMENT_APPLY_ITEM t2
+                JOIN MCMS_BASE_DATA.RP_MATERIAL material
+                     ON t2.MATERIAL_CODE = material.MATERIAL_CODE
+                LEFT JOIN SHIPMENT_RECOM_SNAPSHOT t1
+                          ON t1.id = t2.recom_snapshot_id
+        WHERE t2.apply_status = #{paramCondition.applyStatus}
+          AND t2.check_status = 0
+
+        <if test="paramCondition.dataScopePeople != null and paramCondition.dataScopePeople !=''">
+            AND t2.APLLY_PERSON_NO  IN  ${paramCondition.dataScopePeople}
+        </if>
+
+        <if test="paramCondition.dataScopeMaterial != null and paramCondition.dataScopeMaterial !=''">
+            ${paramCondition.dataScopeMaterial}
+        </if>
+
+        <if test="paramCondition.dataScopeArea != null and paramCondition.dataScopeArea !=''">
+            ${paramCondition.dataScopeArea}
+        </if>
+        ORDER BY t2.apply_batch_no DESC,t2.send_qty
+    </select>
+
+</mapper>

@@ -1,0 +1,160 @@
+<<<<<<< HEAD
+2023-10-23 18:05:41.093 [main] INFO  c.s.g.c.s.c.dbs.dao.DataBaseInfoDao - >>> åˆ é™¤masterçš„databaseInfoä¿¡æ¯ï¼åˆ é™¤1æ¡ï¼
+2023-10-23 18:05:41.339 [main] INFO  c.s.g.c.s.c.dbs.dao.DataBaseInfoDao - >>> åˆå§‹åŒ–masterçš„databaseInfoä¿¡æ¯ï¼åˆå§‹åŒ–1æ¡ï¼
+2023-10-23 18:05:41.489 [main] INFO  modular.k3.ViewBusinessServiceTest - The following profiles are active: dev
+=======
+2023-10-31 14:06:06.147 [main] INFO  c.s.g.c.s.c.dbs.dao.DataBaseInfoDao - >>> É¾³ýmasterµÄdatabaseInfoÐÅÏ¢£¡É¾³ý1Ìõ£¡
+2023-10-31 14:06:06.377 [main] INFO  c.s.g.c.s.c.dbs.dao.DataBaseInfoDao - >>> ³õÊ¼»¯masterµÄdatabaseInfoÐÅÏ¢£¡³õÊ¼»¯1Ìõ£¡
+2023-10-31 14:06:06.539 [main] INFO  modular.k3.ViewBusinessServiceTest - The following profiles are active: dev
+2023-10-31 14:06:31.101 [main] WARN  o.s.boot.actuate.endpoint.EndpointId - Endpoint ID 'nacos-discovery' contains invalid characters, please migrate to a valid format.
+2023-10-31 14:06:31.428 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode!
+2023-10-31 14:06:31.432 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2023-10-31 14:06:32.432 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 364ms. Found 0 Redis repository interfaces.
+2023-10-31 14:06:32.486 [main] WARN  o.s.boot.actuate.endpoint.EndpointId - Endpoint ID 'service-registry' contains invalid characters, please migrate to a valid format.
+2023-10-31 14:06:33.309 [main] INFO  o.s.cloud.context.scope.GenericScope - BeanFactory id=6a293035-2e69-30fe-8811-e4f6b5ba1b4a
+2023-10-31 14:06:34.008 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'cn.stylefeng.guns.cloud.libs.config.ScannerConfig' of type [cn.stylefeng.guns.cloud.libs.config.ScannerConfig$$EnhancerBySpringCGLIB$$8038d4c2] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-10-31 14:06:34.023 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'apiResourceFactory' of type [cn.stylefeng.guns.cloud.libs.scanner.factory.DefaultApiResourceFactory] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-10-31 14:06:34.034 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'scannerProperties' of type [cn.stylefeng.guns.cloud.libs.config.properties.ScannerProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-10-31 14:06:34.094 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'spring.cloud.sentinel-com.alibaba.cloud.sentinel.SentinelProperties' of type [com.alibaba.cloud.sentinel.SentinelProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-10-31 14:06:34.161 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.alibaba.cloud.sentinel.custom.SentinelAutoConfiguration' of type [com.alibaba.cloud.sentinel.custom.SentinelAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2023-10-31 14:06:34.626 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port(s): 0 (http)
+2023-10-31 14:06:34.641 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2023-10-31 14:06:34.642 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/9.0.31]
+2023-10-31 14:06:34.796 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2023-10-31 14:06:34.797 [main] INFO  o.s.web.context.ContextLoader - Root WebApplicationContext: initialization completed in 28254 ms
+2023-10-31 14:06:34.815 [main] INFO  c.t.c.e.config.MultiDataSourceConfig - Éú³ÉdruidÕËºÅ:lcn748m0£¬ÃÜÂë:gy0n5low
+2023-10-31 14:06:36.799 [main] INFO  o.s.b.a.e.w.ServletEndpointRegistrar - Registered '/actuator/jolokia' to jolokia-actuator-endpoint
+2023-10-31 14:06:37.279 [main] INFO  c.g.y.a.MybatisPlusJoinAutoConfiguration - MPJSqlInjector init
+2023-10-31 14:06:37.463 [main] INFO  c.alibaba.druid.pool.DruidDataSource - {dataSource-1} inited
+2023-10-31 14:06:44.769 [main] INFO  c.a.c.s.SentinelWebAutoConfiguration - [Sentinel Starter] register SentinelWebInterceptor with urlPatterns: [/**].
+2023-10-31 14:06:44.890 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 20 endpoint(s) beneath base path '/actuator'
+2023-10-31 14:06:45.210 [main] INFO  s.d.s.w.PropertySourcedRequestMappingHandlerMapping - Mapped URL path [/v2/api-docs] onto method [springfox.documentation.swagger2.web.Swagger2Controller#getDocumentation(String, HttpServletRequest)]
+2023-10-31 14:06:45.246 [main] WARN  c.n.c.sources.URLConfigurationSource - No URLs will be polled as dynamic configuration sources.
+2023-10-31 14:06:45.246 [main] INFO  c.n.c.sources.URLConfigurationSource - To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2023-10-31 14:06:45.251 [main] WARN  c.n.c.sources.URLConfigurationSource - No URLs will be polled as dynamic configuration sources.
+2023-10-31 14:06:45.251 [main] INFO  c.n.c.sources.URLConfigurationSource - To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2023-10-31 14:06:45.410 [main] INFO  o.s.s.c.ThreadPoolTaskExecutor - Initializing ExecutorService 'applicationTaskExecutor'
+2023-10-31 14:06:45.811 [main] INFO  o.s.s.c.ThreadPoolTaskScheduler - Initializing ExecutorService 'Nacso-Watch-Task-Scheduler'
+2023-10-31 14:06:46.214 [main] INFO  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 18b2c9e1-5382-41f3-aa1c-605b4ad690db
+
+2023-10-31 14:06:46.416 [main] INFO  o.s.s.web.DefaultSecurityFilterChain - Creating filter chain: any request, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@1be15455, org.springframework.security.web.context.SecurityContextPersistenceFilter@49c74506, org.springframework.security.web.header.HeaderWriterFilter@26fee641, org.springframework.security.web.authentication.logout.LogoutFilter@59845cb3, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@2252dc5d, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@53a3ccc, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@2ff4d61b, org.springframework.security.web.session.SessionManagementFilter@77e2a5d3, org.springframework.security.web.access.ExceptionTranslationFilter@2806fe58, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@5680f009]
+2023-10-31 14:06:46.876 [main] INFO  s.d.s.w.p.DocumentationPluginsBootstrapper - Context refreshed
+2023-10-31 14:06:46.886 [main] INFO  s.d.s.w.p.DocumentationPluginsBootstrapper - Found 1 custom documentation plugin(s)
+2023-10-31 14:06:46.922 [main] INFO  s.d.s.w.s.ApiListingReferenceScanner - Scanning for api listing references
+2023-10-31 14:06:47.139 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_1
+2023-10-31 14:06:47.141 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteBatchIdsUsingGET_1
+2023-10-31 14:06:47.142 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_1
+2023-10-31 14:06:47.175 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_1
+2023-10-31 14:06:47.199 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_1
+2023-10-31 14:06:47.211 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_2
+2023-10-31 14:06:47.212 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteBatchIdsUsingGET_2
+2023-10-31 14:06:47.213 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_2
+2023-10-31 14:06:47.214 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: editUsingPOST_1
+2023-10-31 14:06:47.221 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_2
+2023-10-31 14:06:47.224 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_2
+2023-10-31 14:06:47.225 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByIdUsingGET_1
+2023-10-31 14:06:47.233 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_3
+2023-10-31 14:06:47.235 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteBatchIdsUsingGET_3
+2023-10-31 14:06:47.236 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_3
+2023-10-31 14:06:47.237 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: editUsingPOST_2
+2023-10-31 14:06:47.255 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_3
+2023-10-31 14:06:47.261 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_3
+2023-10-31 14:06:47.262 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByPlatformOrderIdUsingGET_1
+2023-10-31 14:06:47.373 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_4
+2023-10-31 14:06:47.381 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_4
+2023-10-31 14:06:47.411 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_5
+2023-10-31 14:06:47.412 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: listUsingPOST_1
+2023-10-31 14:06:47.425 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: findPageBySpecUsingPOST_1
+2023-10-31 14:06:47.435 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_5
+2023-10-31 14:06:47.454 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getLoginUrlUsingGET_1
+2023-10-31 14:06:47.476 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_6
+2023-10-31 14:06:47.478 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_4
+2023-10-31 14:06:47.478 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: editUsingPOST_3
+2023-10-31 14:06:47.483 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_4
+2023-10-31 14:06:47.484 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByIdUsingGET_2
+2023-10-31 14:06:47.493 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_5
+2023-10-31 14:06:47.496 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByIdUsingGET_3
+2023-10-31 14:06:47.519 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: listUsingPOST_2
+2023-10-31 14:06:47.525 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: displayUsingGET_1
+2023-10-31 14:06:47.529 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportExcelUsingPOST_1
+2023-10-31 14:06:47.534 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: listUsingPOST_3
+2023-10-31 14:06:47.538 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: mergeListUsingPOST_1
+2023-10-31 14:06:47.542 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: ssoLoginUsingGET_1
+2023-10-31 14:06:47.553 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: listUsingPOST_4
+2023-10-31 14:06:47.555 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: displayUsingGET_2
+2023-10-31 14:06:47.574 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_6
+2023-10-31 14:06:47.583 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: listUsingPOST_5
+2023-10-31 14:06:47.587 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_7
+2023-10-31 14:06:47.593 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: listUsingPOST_6
+2023-10-31 14:06:47.599 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportExcelUsingPOST_2
+2023-10-31 14:06:47.599 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: listUsingPOST_7
+2023-10-31 14:06:47.600 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryNamesUsingGET_1
+2023-10-31 14:06:47.601 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryPlatformNamesUsingGET_1
+2023-10-31 14:06:47.607 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getOrderListUsingPOST_1
+2023-10-31 14:06:47.646 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportExcelUsingPOST_3
+2023-10-31 14:06:47.648 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryNamesUsingGET_2
+2023-10-31 14:06:47.652 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: findPageBySpecUsingPOST_2
+2023-10-31 14:06:47.662 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: ssoLoginUsingGET_2
+2023-10-31 14:06:47.687 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_8
+2023-10-31 14:06:47.692 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: findPageBySpecUsingPOST_3
+2023-10-31 14:06:47.693 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: platformSelectUsingGET_1
+2023-10-31 14:06:47.699 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: findPageBySpecUsingPOST_4
+2023-10-31 14:06:47.703 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_9
+2023-10-31 14:06:47.706 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: findPageBySpecUsingPOST_5
+2023-10-31 14:06:47.707 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: monthSelectUsingGET_1
+2023-10-31 14:06:47.708 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: platformSelectUsingGET_2
+2023-10-31 14:06:47.708 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: shopSelectUsingPOST_1
+2023-10-31 14:06:47.709 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: siteSelectUsingGET_1
+2023-10-31 14:06:47.709 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: syncBaseStatusSelectUsingGET_1
+2023-10-31 14:06:47.710 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: yearSelectUsingGET_1
+2023-10-31 14:06:47.710 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getLoginUrlUsingGET_2
+2023-10-31 14:06:47.713 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_7
+2023-10-31 14:06:47.713 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteBatchIdsUsingGET_4
+2023-10-31 14:06:47.714 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_6
+2023-10-31 14:06:47.714 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: editUsingPOST_4
+2023-10-31 14:06:47.717 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_10
+2023-10-31 14:06:47.719 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_5
+2023-10-31 14:06:47.720 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByIdUsingGET_4
+2023-10-31 14:06:47.726 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_8
+2023-10-31 14:06:47.727 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteBatchIdsUsingGET_5
+2023-10-31 14:06:47.728 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_7
+2023-10-31 14:06:47.728 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: editUsingPOST_5
+2023-10-31 14:06:47.734 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_11
+2023-10-31 14:06:47.739 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_6
+2023-10-31 14:06:47.740 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByIdUsingGET_5
+2023-10-31 14:06:47.743 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_9
+2023-10-31 14:06:47.744 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteBatchIdsUsingGET_6
+2023-10-31 14:06:47.745 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_8
+2023-10-31 14:06:47.745 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: editUsingPOST_6
+2023-10-31 14:06:47.749 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_12
+2023-10-31 14:06:47.752 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_7
+2023-10-31 14:06:47.752 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByIdUsingGET_6
+2023-10-31 14:06:47.755 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_10
+2023-10-31 14:06:47.756 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteBatchIdsUsingGET_7
+2023-10-31 14:06:47.756 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: deleteByIdUsingGET_9
+2023-10-31 14:06:47.757 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: editUsingPOST_7
+2023-10-31 14:06:47.760 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: exportUsingPOST_13
+2023-10-31 14:06:47.762 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: paginQueryUsingPOST_8
+2023-10-31 14:06:47.762 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: queryByIdUsingGET_7
+2023-10-31 14:06:47.778 [main] INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: addUsingPOST_11
+2023-10-31 14:06:47.820 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port(s): 39073 (http) with context path ''
+2023-10-31 14:06:47.866 [main] INFO  c.a.c.n.r.NacosServiceRegistry - nacos registry, DEFAULT_GROUP bsc-cloud-externalSystem 192.168.0.98:39073 register finished
+2023-10-31 14:06:47.985 [main] INFO  modular.k3.ViewBusinessServiceTest - Started ViewBusinessServiceTest in 43.474 seconds (JVM running for 44.313)
+2023-10-31 14:06:48.204 [main] INFO  c.n.loadbalancer.BaseLoadBalancer - Client: guns-cloud-system instantiated a LoadBalancer: DynamicServerListLoadBalancer:{NFLoadBalancer:name=guns-cloud-system,current list of Servers=[],Load balancer stats=Zone stats: {},Server stats: []}ServerList:null
+2023-10-31 14:06:48.209 [main] INFO  c.n.l.DynamicServerListLoadBalancer - Using serverListUpdater PollingServerListUpdater
+2023-10-31 14:06:48.244 [main] INFO  c.n.l.DynamicServerListLoadBalancer - DynamicServerListLoadBalancer for client guns-cloud-system initialized: DynamicServerListLoadBalancer:{NFLoadBalancer:name=guns-cloud-system,current list of Servers=[192.168.2.235:9001],Load balancer stats=Zone stats: {unknown=[Zone:unknown;	Instance count:1;	Active connections count: 0;	Circuit breaker tripped count: 0;	Active connections per server: 0.0;]
+},Server stats: [[Server:192.168.2.235:9001;	Zone:UNKNOWN;	Total Requests:0;	Successive connection failure:0;	Total blackout seconds:0;	Last connection made:Thu Jan 01 08:00:00 CST 1970;	First connection made: Thu Jan 01 08:00:00 CST 1970;	Active Connections:0;	total failure count in last (1000) msecs:0;	average resp time:0.0;	90 percentile resp time:0.0;	95 percentile resp time:0.0;	min resp time:0.0;	max resp time:0.0;	stddev resp time:0.0]
+]}ServerList:com.alibaba.cloud.nacos.ribbon.NacosServerList@5fb0c234
+2023-10-31 14:06:48.285 [main] INFO  c.s.g.c.l.c.r.NacosSameClusterWeightedRule - Ñ¡ÔñµÄÊµÀýÊÇ port = 9001, instance = {"clusterName":"DEFAULT","enabled":true,"ephemeral":true,"healthy":true,"instanceHeartBeatInterval":5000,"instanceHeartBeatTimeOut":15000,"instanceId":"192.168.2.235#9001#DEFAULT#DEFAULT_GROUP@@guns-cloud-system","ip":"192.168.2.235","ipDeleteTimeout":30000,"metadata":{"preserved.register.source":"SPRING_CLOUD"},"port":9001,"serviceName":"DEFAULT_GROUP@@guns-cloud-system","weight":1.0}
+2023-10-31 14:06:48.703 [main] INFO  c.n.loadbalancer.BaseLoadBalancer - Client: roses-account instantiated a LoadBalancer: DynamicServerListLoadBalancer:{NFLoadBalancer:name=roses-account,current list of Servers=[],Load balancer stats=Zone stats: {},Server stats: []}ServerList:null
+2023-10-31 14:06:48.703 [main] INFO  c.n.l.DynamicServerListLoadBalancer - Using serverListUpdater PollingServerListUpdater
+2023-10-31 14:06:48.714 [main] INFO  c.n.l.DynamicServerListLoadBalancer - DynamicServerListLoadBalancer for client roses-account initialized: DynamicServerListLoadBalancer:{NFLoadBalancer:name=roses-account,current list of Servers=[],Load balancer stats=Zone stats: {},Server stats: []}ServerList:com.alibaba.cloud.nacos.ribbon.NacosServerList@1660bba7
+2023-10-31 14:06:49.049 [main] INFO  c.alibaba.druid.pool.DruidDataSource - {dataSource-2} inited
+2023-10-31 14:06:49.621 [Thread-31] INFO  c.n.l.PollingServerListUpdater - Shutting down the Executor Pool for PollingServerListUpdater
+2023-10-31 14:06:49.624 [SpringContextShutdownHook] INFO  o.s.s.c.ThreadPoolTaskScheduler - Shutting down ExecutorService 'Nacso-Watch-Task-Scheduler'
+2023-10-31 14:06:49.625 [SpringContextShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registering from Nacos Server now...
+2023-10-31 14:06:49.634 [SpringContextShutdownHook] INFO  c.a.c.n.r.NacosServiceRegistry - De-registration finished.
+2023-10-31 14:06:49.635 [SpringContextShutdownHook] INFO  o.s.s.c.ThreadPoolTaskExecutor - Shutting down ExecutorService 'applicationTaskExecutor'
+>>>>>>> 48f0d55dc5f90527e7784a60d263444d0b675045

@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.AmazonVatTransactionsReportMapper">
+
+    <select id="queryListPage" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.AmazonVatTransactionsReportResult"
+    parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        select case t.verify_status
+        when 1 then
+        '未审核'
+        when 2 then
+        '已自动审核'
+        when 3 then
+        '已手动审核'
+        when 4 then
+        '已作废'
+        when 5 then
+        '已生成'
+        end verify_status_txt,
+        t.*
+        from AMAZON_VAT_TRANSACTIONS_REPORT t
+            <where>
+        <if test="param.activityPeriod != null and param.activityPeriod !=''">
+            t.ACTIVITY_PERIOD = #{param.activityPeriod}
+        </if>
+        <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+            AND t.SYS_SHOPS_NAME IN
+            <foreach collection="param.sysShopsNames" item="sysShopsName" index="index" separator="," open="(" close=")">
+                #{sysShopsName}
+            </foreach>
+        </if>
+        <if test="param.saleDepartCountrys != null and param.saleDepartCountrys.size() != 0">
+            AND t.SALE_DEPART_COUNTRY IN
+            <foreach collection="param.saleDepartCountrys" item="saleDepartCountry" index="index" separator="," open="(" close=")">
+                #{saleDepartCountry}
+            </foreach>
+        </if>
+        <if test="param.saleArrivalCountrys != null and param.saleArrivalCountrys.size() != 0">
+            AND t.SALE_ARRIVAL_COUNTRY IN
+            <foreach collection="param.saleArrivalCountrys" item="saleArrivalCountry" index="index" separator="," open="(" close=")">
+                #{saleArrivalCountry}
+            </foreach>
+        </if>
+        <if test="param.priceOfItemsVatRatePercent != null and param.priceOfItemsVatRatePercent !=''">
+            AND t.PRICE_OF_ITEMS_VAT_RATE_PERCENT = #{param.priceOfItemsVatRatePercent}
+        </if>
+        <if test="param.taxCollectionResponsibility != null and param.taxCollectionResponsibility !=''">
+            AND t.TAX_COLLECTION_RESPONSIBILITY = #{param.taxCollectionResponsibility}
+        </if>
+        <if test="param.transactionEventId != null and param.transactionEventId !=''">
+            AND t.TRANSACTION_EVENT_ID = #{param.transactionEventId}
+        </if>
+        <trim prefix="and  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.exportOutsideEus != null and param.exportOutsideEus.size > 0 ">
+                    t.EXPORT_OUTSIDE_EU IN
+                    <foreach collection="param.exportOutsideEus" open="(" close=")" separator=","
+                             item="exportOutsideEu">
+                        #{exportOutsideEu}
+                    </foreach>
+                </if>
+                <if test="param.exportOutsideEu =='空'.toString()">
+                    OR  t.EXPORT_OUTSIDE_EU is null
+                </if>
+            </trim>
+        </trim>
+        <trim prefix="and  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.transactionCurrencyCodes != null and param.transactionCurrencyCodes.size > 0 ">
+                    t.TRANSACTION_CURRENCY_CODE IN
+                    <foreach collection="param.transactionCurrencyCodes" open="(" close=")" separator=","
+                             item="transactionCurrencyCode">
+                        #{transactionCurrencyCode}
+                    </foreach>
+                </if>
+                <if test="param.transactionCurrencyCode =='空'.toString()">
+                    OR  t.TRANSACTION_CURRENCY_CODE is null
+                </if>
+            </trim>
+        </trim>
+        <trim prefix="and  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.priceAbnormals != null and param.priceAbnormals.size > 0 ">
+                    t.PRICE_ABNORMAL IN
+                    <foreach collection="param.priceAbnormals" open="(" close=")" separator=","
+                             item="priceAbnormal">
+                        #{priceAbnormal}
+                    </foreach>
+                </if>
+                <if test="param.priceAbnormal =='空'.toString()">
+                    OR  t.PRICE_ABNORMAL is null
+                </if>
+            </trim>
+        </trim>
+        <trim prefix="and  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.taxCollectionResponsibilitys != null and param.taxCollectionResponsibilitys.size > 0 ">
+                    t.TAX_COLLECTION_RESPONSIBILITY IN
+                    <foreach collection="param.taxCollectionResponsibilitys" open="(" close=")" separator=","
+                             item="taxCollectionResponsibility">
+                        #{taxCollectionResponsibility}
+                    </foreach>
+                </if>
+                <if test="param.taxCollectionResponsibility =='空'.toString()">
+                    OR  t.TAX_COLLECTION_RESPONSIBILITY is null
+                </if>
+            </trim>
+        </trim>
+        <if test="param.verifyStatuss != null and param.verifyStatuss.size() != 0">
+            AND t.VERIFY_STATUS IN
+            <foreach collection="param.verifyStatuss" item="verifyStatus" index="index" separator="," open="(" close=")">
+                #{verifyStatus}
+            </foreach>
+        </if>
+            </where>
+        order by t.ACTIVITY_PERIOD desc
+    </select>
+    <select id="querySum" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.AmazonVatTransactionsReportResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        select sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL) TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL,
+               sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW) TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW from AMAZON_VAT_TRANSACTIONS_REPORT t
+        <where>
+            <if test="param.activityPeriod != null and param.activityPeriod !=''">
+                t.ACTIVITY_PERIOD = #{param.activityPeriod}
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND t.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="sysShopsName" index="index" separator="," open="(" close=")">
+                    #{sysShopsName}
+                </foreach>
+            </if>
+            <if test="param.saleDepartCountrys != null and param.saleDepartCountrys.size() != 0">
+                AND t.SALE_DEPART_COUNTRY IN
+                <foreach collection="param.saleDepartCountrys" item="saleDepartCountry" index="index" separator="," open="(" close=")">
+                    #{saleDepartCountry}
+                </foreach>
+            </if>
+            <if test="param.saleArrivalCountrys != null and param.saleArrivalCountrys.size() != 0">
+                AND t.SALE_ARRIVAL_COUNTRY IN
+                <foreach collection="param.saleArrivalCountrys" item="saleArrivalCountry" index="index" separator="," open="(" close=")">
+                    #{saleArrivalCountry}
+                </foreach>
+            </if>
+            <if test="param.priceOfItemsVatRatePercent != null and param.priceOfItemsVatRatePercent !=''">
+                AND t.PRICE_OF_ITEMS_VAT_RATE_PERCENT = #{param.priceOfItemsVatRatePercent}
+            </if>
+            <if test="param.taxCollectionResponsibility != null and param.taxCollectionResponsibility !=''">
+                AND t.TAX_COLLECTION_RESPONSIBILITY = #{param.taxCollectionResponsibility}
+            </if>
+            <if test="param.transactionEventId != null and param.transactionEventId !=''">
+                AND t.TRANSACTION_EVENT_ID = #{param.transactionEventId}
+            </if>
+            <trim prefix="and  (" suffix=")" >
+                <trim  suffixOverrides="OR">
+                    <if test="param.exportOutsideEus != null and param.exportOutsideEus.size > 0 ">
+                        t.EXPORT_OUTSIDE_EU IN
+                        <foreach collection="param.exportOutsideEus" open="(" close=")" separator=","
+                                 item="exportOutsideEu">
+                            #{exportOutsideEu}
+                        </foreach>
+                    </if>
+                    <if test="param.exportOutsideEu =='空'.toString()">
+                        OR  t.EXPORT_OUTSIDE_EU is null
+                    </if>
+                </trim>
+            </trim>
+            <trim prefix="and  (" suffix=")" >
+                <trim  suffixOverrides="OR">
+                    <if test="param.transactionCurrencyCodes != null and param.transactionCurrencyCodes.size > 0 ">
+                        t.TRANSACTION_CURRENCY_CODE IN
+                        <foreach collection="param.transactionCurrencyCodes" open="(" close=")" separator=","
+                                 item="transactionCurrencyCode">
+                            #{transactionCurrencyCode}
+                        </foreach>
+                    </if>
+                    <if test="param.transactionCurrencyCode =='空'.toString()">
+                        OR  t.TRANSACTION_CURRENCY_CODE is null
+                    </if>
+                </trim>
+            </trim>
+            <trim prefix="and  (" suffix=")" >
+                <trim  suffixOverrides="OR">
+                    <if test="param.priceAbnormals != null and param.priceAbnormals.size > 0 ">
+                        t.PRICE_ABNORMAL IN
+                        <foreach collection="param.priceAbnormals" open="(" close=")" separator=","
+                                 item="priceAbnormal">
+                            #{priceAbnormal}
+                        </foreach>
+                    </if>
+                    <if test="param.priceAbnormal =='空'.toString()">
+                        OR  t.PRICE_ABNORMAL is null
+                    </if>
+                </trim>
+            </trim>
+            <trim prefix="and  (" suffix=")" >
+                <trim  suffixOverrides="OR">
+                    <if test="param.taxCollectionResponsibilitys != null and param.taxCollectionResponsibilitys.size > 0 ">
+                        t.TAX_COLLECTION_RESPONSIBILITY IN
+                        <foreach collection="param.taxCollectionResponsibilitys" open="(" close=")" separator=","
+                                 item="taxCollectionResponsibility">
+                            #{taxCollectionResponsibility}
+                        </foreach>
+                    </if>
+                    <if test="param.taxCollectionResponsibility =='空'.toString()">
+                        OR  t.TAX_COLLECTION_RESPONSIBILITY is null
+                    </if>
+                </trim>
+            </trim>
+            <if test="param.verifyStatuss != null and param.verifyStatuss.size() != 0">
+                AND t.VERIFY_STATUS IN
+                <foreach collection="param.verifyStatuss" item="verifyStatus" index="index" separator="," open="(" close=")">
+                    #{verifyStatus}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="getEditData" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.AmazonVatTransactionsReportResult">
+        select t.transaction_event_id,
+               t.seller_sku,
+               t.sales_total,
+               sum(t.qty) qty,max(t.REMARK) REMARK,
+               sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL) TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL,
+               t.sales_total - sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL) PRICE_DIFFERENCE
+        from AMAZON_VAT_TRANSACTIONS_REPORT t where t.transaction_event_id=#{paramCondition.transactionEventId} and t.seller_sku=#{paramCondition.sellerSku}
+        and t.SYS_SHOPS_NAME =#{paramCondition.sysShopsName} and t.ACTIVITY_PERIOD =#{paramCondition.activityPeriod} and t.VERIFY_STATUS=1
+        and t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL is not null
+        group by t.transaction_event_id, t.seller_sku, t.sales_total
+
+    </select>
+
+    <update id="refreshSalesTotalFromDataRange"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into (select *
+            from AMAZON_VAT_TRANSACTIONS_REPORT
+            where verify_status = 1) r
+            using (select t.shop_name, t.order_id, t.sku,sum(t.product_sales + t.product_sales_tax +
+            t.shipping_credits + t.shipping_credits_tax +
+            t.gift_wrap_credits + t.gift_wrap_credits_tax +
+            t.promotional_rebates + t.promotional_rebates_tax +
+            t.marketplace_facilitator_tax) amout
+            from CW_LINGXING_DATARANGE t
+            group by t.shop_name, t.order_id, t.sku) d
+            on (r.sys_shops_name = d.shop_name and r.transaction_event_id = d.order_id and r.seller_sku = d.sku
+            and r.activity_period = #{paramCondition.activityPeriod})
+            when matched then
+        update set r.sales_total = d.amout
+    </update>
+    <update id="generateMainData"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into VAT_SALES_DETAIL s
+            using (select t.activity_period, t.sys_shops_name, t.SYS_SITE
+                   from AMAZON_VAT_TRANSACTIONS_REPORT t WHERE t.verify_status in (2,3)
+                   and t.activity_period=#{paramCondition.activityPeriod}
+                   group by t.activity_period, t.sys_shops_name, t.SYS_SITE) r
+            on (s.activity_period = r.activity_period and s.sys_shops_name = r.sys_shops_name and s.sys_site = r.SYS_SITE)
+            when not matched then
+                insert
+                    (activity_period, sys_shops_name, sys_site,TRANSACTION_CURRENCY_CODE)
+                    values
+                        (r.activity_period, r.sys_shops_name, r.SYS_SITE,
+                         case r.SYS_SITE when 'UK' then 'GBP' else 'EUR' END)
+    </update>
+    <update id="generateMainDataMdg"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into VAT_SALES_DETAIL s
+            using (select t.activity_period, t.sys_shops_name, t.SALE_ARRIVAL_COUNTRY sys_site
+                   from AMAZON_VAT_TRANSACTIONS_REPORT t WHERE t.verify_status in (2,3)
+                                                           and t.activity_period=#{paramCondition.activityPeriod}
+                   group by t.activity_period, t.sys_shops_name, t.SALE_ARRIVAL_COUNTRY) r
+            on (s.activity_period = r.activity_period and s.sys_shops_name = r.sys_shops_name and s.sys_site = r.SYS_SITE)
+            when not matched then
+                insert
+                    (activity_period, sys_shops_name, sys_site,TRANSACTION_CURRENCY_CODE)
+                    values
+                        (r.activity_period, r.sys_shops_name,  case r.SYS_SITE when 'GB' then 'UK' else r.SYS_SITE END,
+                         case r.SYS_SITE when 'GB' then 'GBP' else 'EUR' END)
+    </update>
+    <update id="refreshSellerFhg"   parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into VAT_SALES_DETAIL s using (
+            select t.activity_period,t.sys_shops_name,t.sys_site,case t.sys_site when 'UK' then 'GBP' else 'EUR' END TRANSACTION_CURRENCY_CODE,round(sum(t.EXCHANGE_RATE_AMOUNT ),2) EXCHANGE_RATE_AMOUNT
+            from AMAZON_VAT_TRANSACTIONS_REPORT t
+             left join BASE_TAX_LIST l on t.sys_shops_name = l.account and case t.SALE_ARRIVAL_COUNTRY  when 'GB' then 'UK' else t.SALE_ARRIVAL_COUNTRY END = l.country
+            where t.TAX_COLLECTION_RESPONSIBILITY = 'SELLER' and t.verify_status in (2,3)
+              and t.PRICE_OF_ITEMS_VAT_RATE_PERCENT is not null
+              and t.PRICE_OF_ITEMS_VAT_RATE_PERCENT != 0 and t.activity_period=#{paramCondition.activityPeriod}
+              and (l.IS_TAX_ID = 0 or l.IS_TAX_ID is null)
+              and t.SALE_ARRIVAL_COUNTRY in (select country from BASE_EU_COUNTRIES where IS_DELETE=0)
+            group by t.activity_period,t.sys_shops_name,t.sys_site) a
+            on (s.activity_period = a.activity_period and s.sys_shops_name = a.sys_shops_name and s.sys_site = a.sys_site and s.transaction_currency_code=a.transaction_currency_code)
+                when  matched then
+                update set s.SALE_DEPART_COUNTRY = nvl(s.SALE_ARRIVAL_COUNTRY,0) + nvl(a.EXCHANGE_RATE_AMOUNT,0)
+                when not matched then
+                insert
+                    (activity_period, sys_shops_name, sys_site,TRANSACTION_CURRENCY_CODE,SALE_DEPART_COUNTRY)
+                    values
+                        (a.activity_period, a.sys_shops_name, a.SYS_SITE,
+                         case a.SYS_SITE when 'UK' then 'GBP' else 'EUR' END,nvl(a.EXCHANGE_RATE_AMOUNT,0))
+    </update>
+    <update id="refreshSellerMdg"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into VAT_SALES_DETAIL s using (
+            select t.activity_period,t.sys_shops_name,case t.SALE_ARRIVAL_COUNTRY when 'GB' then 'UK' else t.SALE_ARRIVAL_COUNTRY END sys_site,case t.SALE_ARRIVAL_COUNTRY when 'GB' then 'GBP' else 'EUR' END TRANSACTION_CURRENCY_CODE,round(sum(t.EXCHANGE_RATE_AMOUNT_MDG ),2) EXCHANGE_RATE_AMOUNT_MDG
+            from AMAZON_VAT_TRANSACTIONS_REPORT t
+            left join BASE_TAX_LIST l on t.sys_shops_name = l.account and case t.SALE_ARRIVAL_COUNTRY  when 'GB' then 'UK' else t.SALE_ARRIVAL_COUNTRY END = l.country
+            where t.TAX_COLLECTION_RESPONSIBILITY = 'SELLER' and t.verify_status in (2,3)
+              and t.PRICE_OF_ITEMS_VAT_RATE_PERCENT is not null
+              and t.PRICE_OF_ITEMS_VAT_RATE_PERCENT != 0 and t.activity_period=#{paramCondition.activityPeriod}
+              and l.IS_TAX_ID = 1 and t.SALE_ARRIVAL_COUNTRY in (select country from BASE_EU_COUNTRIES where IS_DELETE=0)
+            group by t.activity_period,t.sys_shops_name,t.SALE_ARRIVAL_COUNTRY) a
+            on (s.activity_period = a.activity_period and s.sys_shops_name = a.sys_shops_name and s.sys_site = a.sys_site and s.transaction_currency_code=a.transaction_currency_code)
+            when  matched then
+                update set s.SALE_ARRIVAL_COUNTRY = nvl(s.SALE_ARRIVAL_COUNTRY,0) + nvl(a.EXCHANGE_RATE_AMOUNT_MDG,0)
+            when not matched then
+            insert
+                    (activity_period, sys_shops_name, sys_site,TRANSACTION_CURRENCY_CODE,SALE_ARRIVAL_COUNTRY)
+                    values
+                        (a.activity_period, a.sys_shops_name, a.SYS_SITE,
+                         case a.SYS_SITE when 'UK' then 'GBP' else 'EUR' END,nvl(a.EXCHANGE_RATE_AMOUNT_MDG,0))
+    </update>
+    <update id="refreshMarket" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into VAT_SALES_DETAIL s using (
+            select t.activity_period,t.sys_shops_name,t.sys_site,case t.sys_site when 'UK' then 'GBP' else 'EUR' END TRANSACTION_CURRENCY_CODE,round(sum(t.EXCHANGE_RATE_AMOUNT),2) EXCHANGE_RATE_AMOUNT
+            from AMAZON_VAT_TRANSACTIONS_REPORT t
+            where t.TAX_COLLECTION_RESPONSIBILITY = 'MARKETPLACE' and t.verify_status in (2,3)
+              and t.activity_period=#{paramCondition.activityPeriod}
+             and t.SALE_ARRIVAL_COUNTRY in (select country from BASE_EU_COUNTRIES where IS_DELETE=0)
+             and t.sys_site in (select country from BASE_EU_COUNTRIES where IS_DELETE=0)
+            group by t.activity_period,t.sys_shops_name,t.sys_site) a
+            on (s.activity_period = a.activity_period and s.sys_shops_name = a.sys_shops_name and s.sys_site = a.sys_site and s.transaction_currency_code=a.transaction_currency_code)
+            when  matched then
+                update set s.MAKETPLACE = nvl(s.MAKETPLACE,0) + nvl(a.EXCHANGE_RATE_AMOUNT,0)
+            when not matched then
+            insert
+                    (activity_period, sys_shops_name, sys_site,TRANSACTION_CURRENCY_CODE,MAKETPLACE)
+                    values
+                        (a.activity_period, a.sys_shops_name, a.SYS_SITE,
+                         case a.SYS_SITE when 'UK' then 'GBP' else 'EUR' END,nvl(a.EXCHANGE_RATE_AMOUNT,0))
+    </update>
+    <update id="refreshBtbSellerFhg" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into VAT_SALES_DETAIL s using (
+            select t.activity_period,t.sys_shops_name,t.sys_site,case t.sys_site when 'UK' then 'GBP' else 'EUR' END TRANSACTION_CURRENCY_CODE,round(sum(t.EXCHANGE_RATE_AMOUNT),2) EXCHANGE_RATE_AMOUNT
+            from AMAZON_VAT_TRANSACTIONS_REPORT t
+            where t.TAX_COLLECTION_RESPONSIBILITY = 'SELLER' and t.verify_status in (2,3)
+              and (t.PRICE_OF_ITEMS_VAT_RATE_PERCENT is null
+              or t.PRICE_OF_ITEMS_VAT_RATE_PERCENT = 0) and t.activity_period=#{paramCondition.activityPeriod}
+              and t.SALE_ARRIVAL_COUNTRY in (select country from BASE_EU_COUNTRIES where IS_DELETE=0)
+              and t.BUYER_VAT_NUMBER_COUNTRY!=t.SALE_DEPART_COUNTRY and t.BUYER_VAT_NUMBER is not null
+            group by t.activity_period,t.sys_shops_name,t.sys_site) a
+            on (s.activity_period = a.activity_period and s.sys_shops_name = a.sys_shops_name and s.sys_site = a.sys_site and s.transaction_currency_code=a.transaction_currency_code)
+            when  matched then
+                update set s.SALE_DEPART_COUNTRY_B = nvl(s.SALE_DEPART_COUNTRY_B,0) + nvl(a.EXCHANGE_RATE_AMOUNT,0)
+            when not matched then
+            insert
+                    (activity_period, sys_shops_name, sys_site,TRANSACTION_CURRENCY_CODE,SALE_DEPART_COUNTRY_B)
+                    values
+                        (a.activity_period, a.sys_shops_name, a.SYS_SITE,
+                         case a.SYS_SITE when 'UK' then 'GBP' else 'EUR' END,nvl(a.EXCHANGE_RATE_AMOUNT,0))
+    </update>
+    <update id="refreshDiffrence"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into (select *
+            from AMAZON_VAT_TRANSACTIONS_REPORT
+            where verify_status = 1) r
+            using (select t.sys_shops_name, t.transaction_event_id, t.seller_sku, sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW) amout
+            from AMAZON_VAT_TRANSACTIONS_REPORT t
+            where t. verify_status = 1
+            and t.activity_period = #{paramCondition.activityPeriod}
+            group by t.sys_shops_name, t.transaction_event_id, t.seller_sku having sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW)!=max(nvl(t.sales_total,0)) ) d
+            on (r.sys_shops_name = d.sys_shops_name and r.transaction_event_id = d.transaction_event_id
+            and r.seller_sku = d.seller_sku and r.activity_period = #{paramCondition.activityPeriod})
+            when matched then
+        update set r.price_difference = nvl(r.sales_total,0)-nvl(d.amout,0),r.price_abnormal='是'
+    </update>
+    <update id="autoVerify"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into (select *
+            from AMAZON_VAT_TRANSACTIONS_REPORT
+            where verify_status = 1) r
+            using (select t.sys_shops_name, t.transaction_event_id, t.seller_sku, sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW) amout
+            from AMAZON_VAT_TRANSACTIONS_REPORT t
+            where t. verify_status = 1
+            and t.activity_period = #{paramCondition.activityPeriod}
+            group by t.sys_shops_name, t.transaction_event_id, t.seller_sku having sum(t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW)=max(nvl(t.sales_total,0)) ) d
+            on (r.sys_shops_name = d.sys_shops_name and r.transaction_event_id = d.transaction_event_id
+            and r.seller_sku = d.seller_sku and r.activity_period = #{paramCondition.activityPeriod})
+            when matched then
+        update set r. verify_status = 2,r.price_abnormal='否',r.price_difference=0
+    </update>
+    <update id="autoFei"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        update AMAZON_VAT_TRANSACTIONS_REPORT t set t.verify_status=4
+        where t.verify_status=1  and t.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL is null and t.activity_period = #{paramCondition.activityPeriod}
+    </update>
+    <update id="refreshExchangeRate"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        merge into (select * from AMAZON_VAT_TRANSACTIONS_REPORT where activity_period = #{paramCondition.activityPeriod} and verify_status in (2,3)) s
+            using (select exchange_rate,original_currency,TARGET_CURRENCY from BASE_EXCHANGE_RATE where IS_DELETE = 0
+            and to_char(add_months(EXCHANGE_RATE_DATE,-1),'yyyy-mm')= #{paramCondition.activityPeriod} ) r
+            on (r.original_currency = s.TRANSACTION_CURRENCY_CODE and r.TARGET_CURRENCY = case s.SYS_SITE when 'UK' then 'GBP' else 'EUR' END)
+            when matched then
+        update
+            set s.EXCHANGE_RATE_AMOUNT = s.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW *
+            r.exchange_rate WHERE  ((s.sys_site='UK' AND s.transaction_currency_code!='GBP')
+                               OR (s.sys_site!='UK' AND s.transaction_currency_code!='EUR'))
+    </update>
+    <update id="refreshExchangeRateMdg">
+        merge into (select * from AMAZON_VAT_TRANSACTIONS_REPORT where activity_period = #{paramCondition.activityPeriod} and verify_status in (2,3)) s
+            using (select exchange_rate,original_currency,TARGET_CURRENCY from BASE_EXCHANGE_RATE where IS_DELETE = 0
+            and to_char(add_months(EXCHANGE_RATE_DATE,-1),'yyyy-mm')= #{paramCondition.activityPeriod} ) r
+            on (r.original_currency = s.TRANSACTION_CURRENCY_CODE and r.TARGET_CURRENCY = case s.SALE_ARRIVAL_COUNTRY when 'GB' then 'GBP' else 'EUR' END)
+            when matched then
+        update
+            set s.EXCHANGE_RATE_AMOUNT_MDG = s.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW *
+            r.exchange_rate WHERE  ((s.SALE_ARRIVAL_COUNTRY='GB' AND s.transaction_currency_code!='GBP')
+                               OR (s.SALE_ARRIVAL_COUNTRY!='GB' AND s.transaction_currency_code!='EUR'))
+    </update>
+    <update id="refreshRateOne" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        update AMAZON_VAT_TRANSACTIONS_REPORT s  set s.EXCHANGE_RATE_AMOUNT = s.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW
+        WHERE  ((s.sys_site='UK' AND s.transaction_currency_code='GBP')
+            OR (s.sys_site!='UK' AND s.transaction_currency_code='EUR'))
+          and s.activity_period = #{paramCondition.activityPeriod} and s.verify_status in (2,3)
+    </update>
+    <update id="refreshRateOneMdg" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        update AMAZON_VAT_TRANSACTIONS_REPORT s  set s.EXCHANGE_RATE_AMOUNT_MDG = s.TOTAL_ACTIVITY_VALUE_AMT_VAT_INCL_NEW
+        WHERE  ((s.SALE_ARRIVAL_COUNTRY='GB' AND s.transaction_currency_code='GBP')
+            OR (s.SALE_ARRIVAL_COUNTRY!='GB' AND s.transaction_currency_code='EUR'))
+          and s.activity_period = #{paramCondition.activityPeriod} and s.verify_status in (2,3)
+    </update>
+    <update id="updateStatus" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        update AMAZON_VAT_TRANSACTIONS_REPORT s  set s.verify_status=5
+        where  s.activity_period = #{paramCondition.activityPeriod} and s.verify_status in (2,3)
+    </update>
+    <select id="notExchangeRate"  resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.BaseExchangeRateResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.AmazonVatTransactionsReportParam">
+        select to_char(add_months(to_date(s.activity_period,'yyyy-mm'),1),'yyyy-mm') activity_period,
+               s.transaction_currency_code original_currency,
+               case s.SYS_SITE
+                   when 'UK' then
+                       'GBP'
+                   else
+                       'EUR'
+                   END as TARGET_CURRENCY
+        from AMAZON_VAT_TRANSACTIONS_REPORT s
+                 left join BASE_EXCHANGE_RATE r
+                           on (r.original_currency = s.TRANSACTION_CURRENCY_CODE and  r.IS_DELETE = 0 and
+                               to_char(add_months(r.EXCHANGE_RATE_DATE,-1), 'yyyy-mm') = s.activity_period AND
+                               r.TARGET_CURRENCY = case s.SYS_SITE
+                                                       when 'UK' then
+                                                           'GBP'
+                                                       else
+                                                           'EUR'
+                                   END)
+        where r.exchange_rate is null
+          and ((s.sys_site = 'UK' AND s.transaction_currency_code != 'GBP') OR
+               (s.sys_site != 'UK' AND s.transaction_currency_code != 'EUR'))
+          and s.activity_period = #{paramCondition.activityPeriod} and s.verify_status in (2,3)
+        union
+        select to_char(add_months(to_date(s.activity_period,'yyyy-mm'),1),'yyyy-mm') activity_period,
+               s.transaction_currency_code original_currency,
+               case s.SALE_ARRIVAL_COUNTRY
+                   when 'GB' then
+                       'GBP'
+                   else
+                       'EUR'
+                   END as TARGET_CURRENCY
+        from AMAZON_VAT_TRANSACTIONS_REPORT s
+                 left join BASE_EXCHANGE_RATE r
+                           on (r.original_currency = s.TRANSACTION_CURRENCY_CODE and  r.IS_DELETE = 0 and
+                               to_char(add_months(r.EXCHANGE_RATE_DATE,-1), 'yyyy-mm') = s.activity_period and
+                               r.TARGET_CURRENCY = case s.SALE_ARRIVAL_COUNTRY
+                                                       when 'GB' then
+                                                           'GBP'
+                                                       else
+                                                           'EUR'
+                                   END)
+        where r.exchange_rate is null
+          and ((s.SALE_ARRIVAL_COUNTRY = 'GB' AND
+                s.transaction_currency_code != 'GBP') OR
+               (s.SALE_ARRIVAL_COUNTRY != 'GB' AND
+       s.transaction_currency_code != 'EUR')) and s.activity_period = #{paramCondition.activityPeriod} and s.verify_status in (2,3)
+    </select>
+</mapper>

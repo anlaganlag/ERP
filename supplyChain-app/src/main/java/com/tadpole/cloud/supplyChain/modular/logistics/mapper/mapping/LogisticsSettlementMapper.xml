@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LogisticsSettlementMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, SHIPMENT_DATE, SHOPS_NAME, SITE, CONTRACT_NO, IS_CUSTOMS, HAS_TAX, FREIGHT_COMPANY, TRANSPORT_TYPE, LOGISTICS_CHANNEL, ORDER_TYPE, SHIPMENT_NUM, LOGISTICS_ORDER, SHIPMENT_UNIT, WEIGHT, VOLUME, VOLUME_WEIGHT, CONFIRM_FEE_TYPE, CONFIRM_COUNT_FEE, PREDICT_COUNT_FEE, SHIPMENT_ID, SHIPMENT_QUANTITY, PREDICT_UNIT_PRICE, PREDICT_LOGISTICS_FEE, PREDICT_OIL_FEE, PREDICT_BUSY_SEASON_FEE, PREDICT_OTHERS_FEE, PREDICT_TARIFF_FEE, PREDICT_CLEAR_TARIFF_FEE, PREDICT_TAX_FEE, PREDICT_TYPE, PREDICT_TOTAL_FEE, UNIT_PRICE, BILL_STATUS, OPERATION_TYPE, REMARK, CURRENCY, CREATE_TIME, CREATE_USER, UPDATE_TIME, UPDATE_USER, SIGN_DATE
+    </sql>
+
+    <!-- 物流实际结算查询列表查询条件1 -->
+    <sql id="query_page_condition_one">
+        WHERE
+            DATA_STATUS = 1
+            <if test="param.logisticsSettlementOrder != null and param.logisticsSettlementOrder != ''">
+                AND LOGISTICS_SETTLEMENT_ORDER = #{param.logisticsSettlementOrder}
+            </if>
+            <if test="param.logisticsBillOrder != null and param.logisticsBillOrder != ''">
+                AND LOGISTICS_BILL_ORDER = #{param.logisticsBillOrder}
+            </if>
+            <if test="param.taxBillOrder != null and param.taxBillOrder != ''">
+                AND TAX_BILL_ORDER = #{param.taxBillOrder}
+            </if>
+            <if test="param.logisticsErpDateStart != null and param.logisticsErpDateStart != ''">
+                AND LOGISTICS_ERP_DATE &gt;= TO_DATE(#{param.logisticsErpDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.logisticsErpDateEnd != null and param.logisticsErpDateEnd != ''">
+                AND LOGISTICS_ERP_DATE &lt;= TO_DATE(#{param.logisticsErpDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.taxErpDateStart != null and param.taxErpDateStart != ''">
+                AND TAX_ERP_DATE &gt;= TO_DATE(#{param.taxErpDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.taxErpDateEnd != null and param.taxErpDateEnd != ''">
+                AND TAX_ERP_DATE &lt;= TO_DATE(#{param.taxErpDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+    </sql>
+
+    <!-- 物流实际结算查询列表查询条件2 -->
+    <sql id="query_page_condition_two">
+        <where>
+            <if test="param.needDetail != null and param.needDetail != ''">
+                <trim prefix="EXISTS (" suffix=")">
+                    SELECT D.SHIPMENT_NUM
+                    FROM LOGISTICS_SETTLEMENT_DETAIL D
+                    WHERE S.SHIPMENT_NUM = D.SHIPMENT_NUM
+                        AND DATA_STATUS = 1
+                    <if test="param.logisticsSettlementOrder != null and param.logisticsSettlementOrder != ''">
+                        AND D.LOGISTICS_SETTLEMENT_ORDER = #{param.logisticsSettlementOrder}
+                    </if>
+                    <if test="param.logisticsBillOrder != null and param.logisticsBillOrder != ''">
+                        AND D.LOGISTICS_BILL_ORDER = #{param.logisticsBillOrder}
+                    </if>
+                    <if test="param.taxBillOrder != null and param.taxBillOrder != ''">
+                        AND D.TAX_BILL_ORDER = #{param.taxBillOrder}
+                    </if>
+                    <if test="param.logisticsErpDateStart != null and param.logisticsErpDateStart != ''">
+                        AND D.LOGISTICS_ERP_DATE &gt;= TO_DATE(#{param.logisticsErpDateStart}, 'YYYY-MM-DD')
+                    </if>
+                    <if test="param.logisticsErpDateEnd != null and param.logisticsErpDateEnd != ''">
+                        AND D.LOGISTICS_ERP_DATE &lt;= TO_DATE(#{param.logisticsErpDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+                    </if>
+                    <if test="param.taxErpDateStart != null and param.taxErpDateStart != ''">
+                        AND D.TAX_ERP_DATE &gt;= TO_DATE(#{param.taxErpDateStart}, 'YYYY-MM-DD')
+                    </if>
+                    <if test="param.taxErpDateEnd != null and param.taxErpDateEnd != ''">
+                        AND D.TAX_ERP_DATE &lt;= TO_DATE(#{param.taxErpDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+                    </if>
+                </trim>
+            </if>
+            <if test="param.shipmentNum != null and param.shipmentNum != ''">
+                AND S.SHIPMENT_NUM = #{param.shipmentNum}
+            </if>
+            <if test="param.shipmentDateStart != null and param.shipmentDateStart != ''">
+                AND S.SHIPMENT_DATE &gt;= TO_DATE(#{param.shipmentDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentDateEnd != null and param.shipmentDateEnd != ''">
+                AND S.SHIPMENT_DATE &lt;= TO_DATE(#{param.shipmentDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.shopsNames != null and param.shopsNames.size() != 0">
+                AND
+                <foreach collection="param.shopsNames" item="code" index="index" separator="OR" open="(" close=")">
+                    S.SHOPS_NAME LIKE CONCAT(CONCAT('%', #{code}), '%')
+                </foreach>
+            </if>
+            <if test="param.sites != null and param.sites.size() != 0">
+                AND S.SITE IN
+                <foreach collection="param.sites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.contractNos != null and param.contractNos.size() != 0">
+                AND S.CONTRACT_NO IN
+                <foreach collection="param.contractNos" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.isCustoms != null and param.isCustoms != ''">
+                AND S.IS_CUSTOMS = #{param.isCustoms}
+            </if>
+            <if test="param.hasTax != null and param.hasTax != ''">
+                AND S.HAS_TAX = #{param.hasTax}
+            </if>
+            <if test="param.freightCompanys != null and param.freightCompanys.size() != 0">
+                AND S.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanys" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypes != null and param.transportTypes.size() != 0">
+                AND S.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypes" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsChannels != null and param.logisticsChannels.size() != 0">
+                AND S.LOGISTICS_CHANNEL IN
+                <foreach collection="param.logisticsChannels" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.orderType != null and param.orderType != ''">
+                AND S.ORDER_TYPE = #{param.orderType}
+            </if>
+            <if test="param.logisticsOrder != null and param.logisticsOrder != ''">
+                AND S.LOGISTICS_ORDER = #{param.logisticsOrder}
+            </if>
+            <if test="param.shipmentId != null and param.shipmentId != ''">
+                AND S.SHIPMENT_ID = #{param.shipmentId}
+            </if>
+            <if test="param.predictType != null and param.predictType != ''">
+                AND S.PREDICT_TYPE = #{param.predictType}
+            </if>
+            <if test="param.billStatus != null and param.billStatus != ''">
+                AND S.BILL_STATUS = #{param.billStatus}
+            </if>
+            <if test="param.minDiffTotalFee != null and param.minDiffTotalFee != '' and param.maxDiffTotalFee != null and param.maxDiffTotalFee != ''">
+                AND ABS(NVL(S.PREDICT_TOTAL_FEE, 0) - SD.TOTAL_FEE) &gt;= #{param.minDiffTotalFee}
+                AND ABS(NVL(S.PREDICT_TOTAL_FEE, 0) - SD.TOTAL_FEE) &lt;= #{param.maxDiffTotalFee}
+            </if>
+        </where>
+    </sql>
+
+    <!--物流实际结算查询列表-->
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LogisticsSettlementParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LogisticsSettlementResult">
+        SELECT
+            S.ID,
+            TO_CHAR(S.SHIPMENT_DATE, 'YYYY/MM/DD') AS SHIPMENT_DATE,
+            S.SHOPS_NAME,
+            S.SITE,
+            S.CONTRACT_NO,
+            S.IS_CUSTOMS,
+            S.HAS_TAX,
+            S.FREIGHT_COMPANY,
+            S.TRANSPORT_TYPE,
+            S.LOGISTICS_CHANNEL,
+            S.ORDER_TYPE,
+            S.SHIPMENT_NUM,
+            S.LOGISTICS_ORDER,
+            S.SHIPMENT_UNIT,
+            S.WEIGHT,
+            S.VOLUME,
+            S.VOLUME_WEIGHT,
+            S.CONFIRM_FEE_TYPE,
+            S.CONFIRM_COUNT_FEE,
+            S.PREDICT_COUNT_FEE,
+            S.SHIPMENT_ID,
+            S.SHIPMENT_QUANTITY,
+            S.PREDICT_UNIT_PRICE,
+            S.PREDICT_LOGISTICS_FEE,
+            S.PREDICT_OIL_FEE,
+            S.PREDICT_BUSY_SEASON_FEE,
+            S.PREDICT_OTHERS_FEE,
+            S.PREDICT_TARIFF_FEE,
+            S.PREDICT_CLEAR_TARIFF_FEE,
+            S.PREDICT_TAX_FEE,
+            S.PREDICT_TYPE,
+            S.PREDICT_TOTAL_FEE,
+            S.BILL_STATUS,
+            S.OPERATION_TYPE,
+            S.REMARK,
+            S.SIGN_DATE,
+            S.CREATE_TIME,
+            S.CREATE_USER,
+            S.UPDATE_TIME,
+            S.UPDATE_USER,
+            SD.LOGISTICS_COUNT_FEE,
+            CASE WHEN SD.LOGISTICS_COUNT_FEE IS NOT NULL AND S.PREDICT_COUNT_FEE IS NOT NULL THEN SD.LOGISTICS_COUNT_FEE - S.PREDICT_COUNT_FEE
+            ELSE NULL END AS DIFF_COUNT_FEE,
+            SD.TOTAL_FEE,
+            ABS(NVL(S.PREDICT_TOTAL_FEE, 0) - SD.TOTAL_FEE) AS DIFF_TOTAL_FEE
+        FROM LOGISTICS_SETTLEMENT S
+        LEFT JOIN (
+            SELECT
+                SHIPMENT_NUM,
+                SUM(NVL(TOTAL_FEE, 0)) AS TOTAL_FEE,
+                SUM(NVL(LOGISTICS_COUNT_FEE, 0)) AS LOGISTICS_COUNT_FEE
+            FROM LOGISTICS_SETTLEMENT_DETAIL
+            <include refid="query_page_condition_one"></include>
+            GROUP BY SHIPMENT_NUM
+        ) SD ON S.SHIPMENT_NUM = SD.SHIPMENT_NUM
+        <include refid="query_page_condition_two"></include>
+        ORDER BY S.ID DESC
+    </select>
+
+    <!--物流实际结算查询列表汇总-->
+    <select id="queryTotalPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LogisticsSettlementParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LogisticsSettlementPageTotalResult">
+        SELECT
+            SUM(NVL(S.SHIPMENT_UNIT, 0)) AS SHIPMENT_UNIT,
+            SUM(NVL(S.WEIGHT, 0)) AS WEIGHT,
+            SUM(NVL(S.VOLUME, 0)) AS VOLUME,
+            SUM(NVL(S.VOLUME_WEIGHT, 0)) AS VOLUME_WEIGHT,
+            SUM(NVL(S.PREDICT_LOGISTICS_FEE, 0)) AS PREDICT_LOGISTICS_FEE,
+            SUM(NVL(S.PREDICT_OIL_FEE, 0)) AS PREDICT_OIL_FEE,
+            SUM(NVL(S.PREDICT_BUSY_SEASON_FEE, 0)) AS PREDICT_BUSY_SEASON_FEE,
+            SUM(NVL(S.PREDICT_OTHERS_FEE, 0)) AS PREDICT_OTHERS_FEE,
+            SUM(NVL(S.PREDICT_TARIFF_FEE, 0)) AS PREDICT_TARIFF_FEE,
+            SUM(NVL(S.PREDICT_CLEAR_TARIFF_FEE, 0)) AS PREDICT_CLEAR_TARIFF_FEE,
+            SUM(NVL(S.PREDICT_TAX_FEE, 0)) AS PREDICT_TAX_FEE,
+            SUM(NVL(S.PREDICT_TOTAL_FEE, 0)) AS PREDICT_TOTAL_FEE,
+            SUM(NVL(S.SHIPMENT_QUANTITY, 0)) AS SHIPMENT_QUANTITY,
+            SUM(ABS(NVL(S.PREDICT_TOTAL_FEE, 0) - SD.TOTAL_FEE)) AS DIFF_TOTAL_FEE
+        FROM LOGISTICS_SETTLEMENT S
+        LEFT JOIN (
+            SELECT SHIPMENT_NUM, SUM(NVL(TOTAL_FEE, 0)) AS TOTAL_FEE
+            FROM LOGISTICS_SETTLEMENT_DETAIL
+            <include refid="query_page_condition_one"></include>
+            GROUP BY SHIPMENT_NUM
+        ) SD ON S.SHIPMENT_NUM = SD.SHIPMENT_NUM
+        <include refid="query_page_condition_two"></include>
+        ORDER BY S.ID DESC
+    </select>
+
+    <!--物流实际结算查询列表导出-->
+    <select id="exportList"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LogisticsSettlementParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LogisticsSettlementExportResult">
+        SELECT
+            TO_CHAR(S.SHIPMENT_DATE, 'YYYY-MM-DD') AS SHIPMENT_DATE,
+            S.SHOPS_NAME,
+            S.SITE,
+            S.CONTRACT_NO,
+            S.IS_CUSTOMS,
+            S.HAS_TAX,
+            S.FREIGHT_COMPANY,
+            S.TRANSPORT_TYPE,
+            S.LOGISTICS_CHANNEL,
+            S.ORDER_TYPE,
+            S.SHIPMENT_NUM,
+            S.LOGISTICS_ORDER,
+            S.SHIPMENT_UNIT,
+            S.WEIGHT,
+            S.VOLUME,
+            S.VOLUME_WEIGHT,
+            S.CONFIRM_FEE_TYPE,
+            S.CONFIRM_COUNT_FEE,
+            S.PREDICT_COUNT_FEE,
+            S.SHIPMENT_ID,
+            S.SHIPMENT_QUANTITY,
+            S.PREDICT_UNIT_PRICE,
+            S.PREDICT_LOGISTICS_FEE,
+            S.PREDICT_OIL_FEE,
+            S.PREDICT_BUSY_SEASON_FEE,
+            S.PREDICT_OTHERS_FEE,
+            S.PREDICT_TARIFF_FEE,
+            S.PREDICT_CLEAR_TARIFF_FEE,
+            S.PREDICT_TAX_FEE,
+            S.PREDICT_TYPE,
+            S.PREDICT_TOTAL_FEE,
+            S.BILL_STATUS,
+            S.REMARK,
+            S.SIGN_DATE,
+            D.UNIT_PRICE,
+            D.LOGISTICS_FEE,
+            D.LOGISTICS_CURRENCY,
+            D.DTP,
+            D.TARIFF_FEE,
+            D.CLEAR_TARIFF_FEE,
+            D.BUSY_SEASON_FEE,
+            D.OIL_FEE,
+            D.OIL_FEE_PERCENT,
+            D.OTHERS_FEE,
+            D.PRODUCT_FEE,
+            D.LOGISTICS_SETTLEMENT_ORDER,
+            D.CHANGE_TAX,
+            D.DUTY,
+            D.TAX_CURRENCY,
+            D.TAX_ORDER,
+            D.C88,
+            D.C88_REMARK,
+            D.VAT,
+            D.TAX_INVOICE_ORDER,
+            D.TOTAL_FEE,
+            TO_CHAR(D.LOGISTICS_ERP_DATE, 'YYYY-MM-DD') AS LOGISTICS_ERP_DATE,
+            D.LOGISTICS_BILL_ORDER,
+            TO_CHAR(D.TAX_ERP_DATE, 'YYYY-MM-DD') AS TAX_ERP_DATE,
+            D.TAX_BILL_ORDER,
+            SD.LOGISTICS_COUNT_FEE,
+            CASE WHEN SD.LOGISTICS_COUNT_FEE IS NOT NULL AND S.PREDICT_COUNT_FEE IS NOT NULL THEN SD.LOGISTICS_COUNT_FEE - S.PREDICT_COUNT_FEE
+            ELSE NULL END AS DIFF_COUNT_FEE,
+            SD.TOTAL_FEE AS TOTAL_FEE_SUM,
+            ABS(NVL(S.PREDICT_TOTAL_FEE, 0) - SD.TOTAL_FEE) AS DIFF_TOTAL_FEE
+        FROM LOGISTICS_SETTLEMENT S
+        LEFT JOIN LOGISTICS_SETTLEMENT_DETAIL D ON S.SHIPMENT_NUM = D.SHIPMENT_NUM
+        LEFT JOIN (
+            SELECT
+                SHIPMENT_NUM,
+                SUM(NVL(TOTAL_FEE, 0)) AS TOTAL_FEE,
+                SUM(NVL(LOGISTICS_COUNT_FEE, 0)) AS LOGISTICS_COUNT_FEE
+            FROM LOGISTICS_SETTLEMENT_DETAIL
+            <include refid="query_page_condition_one"></include>
+            GROUP BY SHIPMENT_NUM
+        ) SD ON S.SHIPMENT_NUM = SD.SHIPMENT_NUM
+        WHERE
+            D.DATA_STATUS = 1
+            <if test="param.shipmentNum != null and param.shipmentNum != ''">
+                AND S.SHIPMENT_NUM = #{param.shipmentNum}
+            </if>
+            <if test="param.shipmentDateStart != null and param.shipmentDateStart != ''">
+                AND S.SHIPMENT_DATE &gt;= TO_DATE(#{param.shipmentDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentDateEnd != null and param.shipmentDateEnd != ''">
+                AND S.SHIPMENT_DATE &lt;= TO_DATE(#{param.shipmentDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.shopsNames != null and param.shopsNames.size() != 0">
+                AND
+                <foreach collection="param.shopsNames" item="code" index="index" separator="OR" open="(" close=")">
+                    S.SHOPS_NAME LIKE CONCAT(CONCAT('%', #{code}), '%')
+                </foreach>
+            </if>
+            <if test="param.sites != null and param.sites.size() != 0">
+                AND S.SITE IN
+                <foreach collection="param.sites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.contractNos != null and param.contractNos.size() != 0">
+                AND S.CONTRACT_NO IN
+                <foreach collection="param.contractNos" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.isCustoms != null and param.isCustoms != ''">
+                AND S.IS_CUSTOMS = #{param.isCustoms}
+            </if>
+            <if test="param.hasTax != null and param.hasTax != ''">
+                AND S.HAS_TAX = #{param.hasTax}
+            </if>
+            <if test="param.freightCompanys != null and param.freightCompanys.size() != 0">
+                AND S.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanys" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypes != null and param.transportTypes.size() != 0">
+                AND S.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypes" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsChannels != null and param.logisticsChannels.size() != 0">
+                AND S.LOGISTICS_CHANNEL IN
+                <foreach collection="param.logisticsChannels" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.orderType != null and param.orderType != ''">
+                AND S.ORDER_TYPE = #{param.orderType}
+            </if>
+            <if test="param.logisticsOrder != null and param.logisticsOrder != ''">
+                AND S.LOGISTICS_ORDER = #{param.logisticsOrder}
+            </if>
+            <if test="param.shipmentId != null and param.shipmentId != ''">
+                AND S.SHIPMENT_ID = #{param.shipmentId}
+            </if>
+            <if test="param.predictType != null and param.predictType != ''">
+                AND S.PREDICT_TYPE = #{param.predictType}
+            </if>
+            <if test="param.billStatus != null and param.billStatus != ''">
+                AND S.BILL_STATUS = #{param.billStatus}
+            </if>
+            <if test="param.logisticsSettlementOrder != null and param.logisticsSettlementOrder != ''">
+                AND D.LOGISTICS_SETTLEMENT_ORDER = #{param.logisticsSettlementOrder}
+            </if>
+            <if test="param.logisticsBillOrder != null and param.logisticsBillOrder != ''">
+                AND D.LOGISTICS_BILL_ORDER = #{param.logisticsBillOrder}
+            </if>
+            <if test="param.taxBillOrder != null and param.taxBillOrder != ''">
+                AND D.TAX_BILL_ORDER = #{param.taxBillOrder}
+            </if>
+            <if test="param.logisticsErpDateStart != null and param.logisticsErpDateStart != ''">
+                AND D.LOGISTICS_ERP_DATE &gt;= TO_DATE(#{param.logisticsErpDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.logisticsErpDateEnd != null and param.logisticsErpDateEnd != ''">
+                AND D.LOGISTICS_ERP_DATE &lt;= TO_DATE(#{param.logisticsErpDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.taxErpDateStart != null and param.taxErpDateStart != ''">
+                AND D.TAX_ERP_DATE &gt;= TO_DATE(#{param.taxErpDateStart}, 'YYYY-MM-DD')
+            </if>
+            <if test="param.taxErpDateEnd != null and param.taxErpDateEnd != ''">
+                AND D.TAX_ERP_DATE &lt;= TO_DATE(#{param.taxErpDateEnd}, 'YYYY-MM-DD HH24:MI:SS')
+            </if>
+            <if test="param.minDiffTotalFee != null and param.minDiffTotalFee != '' and param.maxDiffTotalFee != null and param.maxDiffTotalFee != ''">
+                AND ABS(NVL(S.PREDICT_TOTAL_FEE, 0) - SD.TOTAL_FEE) &gt;= #{param.minDiffTotalFee}
+                AND ABS(NVL(S.PREDICT_TOTAL_FEE, 0) - SD.TOTAL_FEE) &lt;= #{param.maxDiffTotalFee}
+            </if>
+        ORDER BY S.ID DESC
+    </select>
+
+    <!--获取EBMS合约号下拉-->
+    <select id="contractNoSelect" resultType="java.util.Map">
+        SELECT
+            w.lcCode
+        FROM TbLogisticsAccount w
+    </select>
+
+    <!--获取EBMS货运方式1下拉-->
+    <select id="freightCompanySelect" resultType="java.util.Map">
+        SELECT
+            w.logTraMode1
+        FROM TbLogisticsLink w
+    </select>
+
+    <!--获取EBMS运输方式下拉-->
+    <select id="transportTypeSelect" resultType="java.util.Map">
+        SELECT
+            w.dicValueCode,
+            w.dicValueName
+        FROM TbSysDictionary w
+        WHERE w.dicClassCode = 'p30'
+    </select>
+
+    <!--获取EBMS物流渠道下拉-->
+    <select id="logisticsChannelSelect" resultType="java.util.Map">
+        SELECT
+            w.dicValueCode,
+            w.dicValueName
+        FROM TbSysDictionary w
+        WHERE w.dicClassCode = 'p31'
+    </select>
+
+    <!--获取EBMS物流单类型下拉-->
+    <select id="orderTypeSelect" resultType="java.util.Map">
+        SELECT
+            w.dicValueCode,
+            w.dicValueName
+        FROM TbSysDictionary w
+        WHERE w.dicClassCode = 'p29'
+    </select>
+
+    <!--更新主表为未对账和置空操作类型-->
+    <update id="batchUpdateStatus">
+        UPDATE LOGISTICS_SETTLEMENT
+        SET
+            BILL_STATUS = '未对账',
+            OPERATION_TYPE = NULL
+        WHERE
+            SHIPMENT_NUM IN
+            <foreach collection="shipmentNumSet" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+    </update>
+
+
+    <!--获取EBMS物流跟踪表的签收日期-->
+    <select id="getEbmsSignDate"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.entity.LogisticsSettlement"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.LogisticsSettlement">
+        SELECT c.LhrCode AS shipmentNum, c.LerSignDate AS signDate
+        FROM TbLogisticsListToEndRoute c
+        WHERE c.LhrCode IN
+        <foreach collection="param" item="item" index="index" separator="," open="(" close=")">
+            #{item.shipmentNum}
+        </foreach>
+        AND c.LerSignDate IS NOT NULL
+    </select>
+
+    <!--定时刷物流跟踪表的签收日期-->
+    <update id="refreshSignDate" parameterType="java.util.List">
+        <foreach collection="param" item="item" index="index" open="BEGIN" close=";END;" separator=";">
+            UPDATE LOGISTICS_SETTLEMENT SET SIGN_DATE = #{item.signDate} WHERE SHIPMENT_NUM = #{item.shipmentNum}
+        </foreach>
+    </update>
+</mapper>

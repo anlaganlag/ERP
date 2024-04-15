@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.brand.mapper.TbBrandCommunalMapper">
+
+    <select id="getPage"
+            resultType="com.tadpole.cloud.operationManagement.api.brand.model.result.TbBrandCommunalResult">
+        SELECT
+        (SELECT decode(count(1),0,0,1) FROM tb_brand_after_sales_service_card where bc_id=a.id) hasCard,
+        (SELECT decode(count(1),0,0,1) FROM tb_brand_logo  where bc_id=a.id) hasLogo,
+        (SELECT decode(count(1),0,0,1) FROM tb_brand_outer_packaging  where bc_id=a.id) hasPack,
+        (SELECT decode(count(1),0,0,1) FROM tb_brand_slogan  where bc_id=a.id) hasSlogan,
+        a.* FROM tb_brand_communal a
+        WHERE 1 = 1
+        <if test="param.salesBrands != null and param.salesBrands.size > 0">
+            AND a.sales_brand IN
+            <foreach collection="param.salesBrands" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+</mapper>

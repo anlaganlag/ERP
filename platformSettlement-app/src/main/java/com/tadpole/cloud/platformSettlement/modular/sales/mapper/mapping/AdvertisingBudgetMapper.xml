@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.sales.mapper.AdvertisingBudgetMapper">
+
+  <sql id="Page_Column_List">
+    ID,
+    PLATFORM,
+    DEPARTMENT,
+    TEAM,
+    PRODUCT_TYPE,
+    COMPANY_BRAND,
+    ADVERTISING_PROPORTION,
+    SEASON_ONE_PROPORTION,
+    SEASON_TWO_PROPORTION,
+    SEASON_THREE_PROPORTION,
+    SEASON_FOUR_PROPORTION,
+    SEASON_ONE_MONEY,
+    SEASON_TWO_MONEY,
+    SEASON_THREE_MONEY,
+    SEASON_FOUR_MONEY,
+    YEAR,
+    VERSION,
+    CURRENCY,
+    CONFIRM_STATUS,
+    CASE CONFIRM_STATUS WHEN 1 THEN '已确认' WHEN 0 THEN '未确认' ELSE '其他' END CONFIRM_STATUS_TXT,
+    CREATE_AT,
+    CREATE_BY,
+    CONFIRM_DATE,
+    CONFIRM_BY,
+    UPDATE_AT,
+    UPDATE_BY,
+    (SEASON_ONE_MONEY+SEASON_TWO_MONEY+SEASON_THREE_MONEY+SEASON_FOUR_MONEY) YEAR_MONEY,
+    shop_name,
+    retract_line,
+    newold_product
+  </sql>
+
+  <sql id="Group_List">
+    PLATFORM,
+    DEPARTMENT,
+    TEAM,
+    PRODUCT_TYPE,
+    COMPANY_BRAND,
+    YEAR,
+    VERSION
+  </sql>
+
+  <sql id="List_Sum">
+       SUM(SEASON_ONE_MONEY + SEASON_TWO_MONEY + SEASON_THREE_MONEY + SEASON_FOUR_MONEY) / SUM(SEASON_ONE + SEASON_TWO + SEASON_THREE + SEASON_FOUR) advertisingProportion,
+       SUM(SEASON_ONE_MONEY + SEASON_TWO_MONEY + SEASON_THREE_MONEY + SEASON_FOUR_MONEY) yearMoney,
+       DECODE(SUM(SEASON_ONE),0,0,SUM(SEASON_ONE_MONEY) / SUM(SEASON_ONE)) seasonOneProportion,
+       DECODE(SUM(SEASON_TWO),0,0,SUM(SEASON_TWO_MONEY) / SUM(SEASON_TWO)) seasonTwoProportion,
+       DECODE(SUM(SEASON_THREE),0,0,SUM(SEASON_THREE_MONEY) / SUM(SEASON_THREE)) seasonThreeProportion,
+       DECODE(SUM(SEASON_FOUR),0,0,SUM(SEASON_FOUR_MONEY) / SUM(SEASON_FOUR)) seasonFourProportion,
+       SUM(SEASON_ONE_MONEY) seasonOneMoney,
+       SUM(SEASON_TWO_MONEY) seasonTwoMoney,
+       SUM(SEASON_THREE_MONEY) seasonThreeMoney,
+       SUM(SEASON_FOUR_MONEY) seasonFourMoney
+  </sql>
+
+  <sql id="List_Condition">
+    <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+      AND t1.platform IN
+      <foreach collection="paramCondition.platforms" open="(" close=")" separator="," item="platform">
+        #{platform}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+      AND t1.department IN
+      <foreach collection="paramCondition.departments" open="(" close=")" separator="," item="department">
+        #{department}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+      AND t1.team IN
+      <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="team">
+        #{team}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.productTypes != null and paramCondition.productTypes.size>0">
+      AND t1.product_type IN
+      <foreach collection="paramCondition.productTypes" open="(" close=")" separator="," item="productType">
+        #{productType}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.companyBrands != null and paramCondition.companyBrands.size>0">
+      AND t1.company_brand IN
+      <foreach collection="paramCondition.companyBrands" open="(" close=")" separator="," item="companyBrand">
+        #{companyBrand}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.year != null and paramCondition.year != ''">
+      AND t1.year =#{paramCondition.year}
+    </if>
+
+    <if test="paramCondition.version != null and paramCondition.version != ''">
+      AND t1.version =#{paramCondition.version}
+    </if>
+
+    <if test="paramCondition.retractLines != null and paramCondition.retractLines.size>0">
+      AND t1.RETRACT_LINE IN
+      <foreach collection="paramCondition.retractLines" open="(" close=")" separator=","
+               item="retractLine">
+        #{retractLine}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.newoldProducts != null and paramCondition.newoldProducts.size>0">
+      AND t1.newold_product IN
+      <foreach collection="paramCondition.newoldProducts" open="(" close=")" separator=","
+               item="newoldProduct">
+        #{newoldProduct}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+      AND t1.SHOP_NAME like '%'||#{paramCondition.shopName}||'%'
+    </if>
+  </sql>
+
+  <select id="list"
+    parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.AdvertisingBudgetParam"
+    resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.AdvertisingBudgetResult">
+    select <include refid="Page_Column_List"/> FROM ADVERTISING_BUDGET t1
+    <where>
+      <include refid="List_Condition"/>
+    </where>
+    ORDER BY ID
+
+  </select>
+
+  <select id="listSum"
+    parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.AdvertisingBudgetParam"
+    resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.AdvertisingBudgetResult">
+    SELECT <include refid="List_Sum"/>  FROM ADVERTISING_BUDGET t1 FULL JOIN SALES_VOLUME_TARGET t2 on
+          NVL(t1.PLATFORM,0)=NVL(t2.PLATFORM,0)
+          AND t1.DEPARTMENT = t2.DEPARTMENT
+          AND t1.TEAM = t2.TEAM
+          AND NVL(t1.PRODUCT_TYPE,0)=NVL(t2.PRODUCT_TYPE,0)
+          AND NVL(t1.COMPANY_BRAND,0)=NVL(t2.COMPANY_BRAND,0)
+          AND NVL(t1.shop_name,0)=NVL(t2.shop_name,0)
+          AND NVL(t1.retract_line,0)=NVL(t2.retract_line,0)
+          AND NVL(t1.newold_product,0)=NVL(t2.newold_product,0)
+          AND    t1.YEAR = t2.YEAR
+          AND    t1.VERSION = t2.VERSION
+    <where>
+      <include refid="List_Condition"/>
+    </where>
+  </select>
+</mapper>

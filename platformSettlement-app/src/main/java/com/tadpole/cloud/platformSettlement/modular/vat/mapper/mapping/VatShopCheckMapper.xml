@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.VatShopCheckMapper">
+
+    <update id="shopCheckInsert" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.TbComShop">
+        merge into vat_shop_check C
+            using (select #{shop.shopNameSimple} as sys_shops_name,
+                          #{shop.countryCode} as sys_site,
+                          #{shop.shopColAccBank} as activity_period
+                   from BASE_EU_COUNTRIES R WHERE R.COUNTRY=#{shop.countryCode}) S
+            on (c.ebms_shops_name = s.sys_shops_name  and c.activity_period = s.activity_period)
+            when not matched then
+                insert
+                    (activity_period, ebms_shops_name ,sys_shops_name,ABNORMAL_TYPE)
+                    values
+                        (s.activity_period, s.sys_shops_name,null,'VAT报告缺失')
+    </update>
+    <update id="shopCheckStatus" parameterType="String">
+        merge into vat_shop_check C
+            using (select r.sys_shops_name, activity_period
+                   from AMAZON_VAT_TRANSACTIONS_REPORT R
+                   where r.activity_period = #{period}
+                   group by r.sys_shops_name, activity_period) S
+            on (c.ebms_shops_name = s.sys_shops_name and c.activity_period = s.activity_period)
+            when matched then
+                update set c.ABNORMAL_TYPE='正常',c.sys_shops_name=c.ebms_shops_name
+    </update>
+    <select id="queryListPage" parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatShopCheckParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatShopCheckResult">
+        select * from vat_shop_check t
+        <where>
+            <if test="param.activityPeriod != null and param.activityPeriod!=''">
+                t.ACTIVITY_PERIOD =#{param.activityPeriod}
+            </if>
+            <if test="param.abnormalType != null and param.abnormalType!=''">
+                AND t.ABNORMAL_TYPE =#{param.abnormalType}
+            </if>
+        </where>
+        order by t.ACTIVITY_PERIOD desc
+    </select>
+    <select id="euShop" resultType="String">
+        select distinct ebms_shops_name from vat_shop_check t order by ebms_shops_name
+    </select>
+</mapper>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LtShopifySettlementReportMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtShopifySettlementReportResult">
+        select <include refid="DETAIL_COL_NOT_MAT"/>,
+         <include refid="MAT_PROP"/>
+          from LT_SHOPIFY_SETTLEMENT_REPORT A
+         LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+         ON B.MATERIAL_CODE = A.MAT_CODE
+    </select>
+
+    <select id="exportByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtShopifySettlementReport">
+        select * from LT_SHOPIFY_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+    <select id="downloadExport" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtShopifySettlementReportExport">
+        select * from LT_SHOPIFY_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+    <sql id="SHOPIFY_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <sql id ="MAT_PROP">
+        decode(B.MATERIAL_CODE,null,'0', B.CATEGORY) CATEGORY,
+         A.product_type,
+         decode(B.MATERIAL_CODE,null,'0',B.PRODUCT_NAME) PRODUCT_NAME,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE) STYLE,
+         decode(B.MATERIAL_CODE,null,'0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+         decode(B.MATERIAL_CODE,null,'0',B.DESIGN) DESIGN,
+         decode(B.MATERIAL_CODE,null,'0',B.COMPANY_BRAND) COMPANY_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.FIT_BRAND) FIT_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.MODEL) MODEL,
+         decode(B.MATERIAL_CODE,null,'0',B.COLOR) COLOR,
+         decode(B.MATERIAL_CODE,null,'0',B.SIZES) SIZES,
+         decode(B.MATERIAL_CODE,null,'0',B.PACKING) PACKING,
+         decode(B.MATERIAL_CODE,null,'0',B.VERSION) VERSION,
+         decode(B.MATERIAL_CODE,null,'0',B.TYPE) TYPE,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL,
+         PROPERTY_MERGE,
+         SALES_BRAND
+    </sql>
+
+    <sql id = "DETAIL_COL_NOT_MAT">
+        A.ID,
+        A.PLATFORM ,
+        A.SKU,
+        A.MAT_CODE,
+        A.VOLUME_NORMAL,
+        A.SALES_EXCLUDING_TAX,
+        A.TAX,
+        A.REFUND,
+        A.GIFTWARP_SHIPPING,
+        A.AMAZON_FEES,
+        A.OTHER_ADVERTISEMENTS,
+        A.OTHER,
+        A.COLLECTION,
+        A.COST_ACCOUNTING_FEE,
+        A.ADDITIONAL_COST_AMOUNT,
+        A.FIRST_TRIP_FEE,
+        A.LOCAL_LOGISTICS_FEE,
+        A.PROFIT,
+        A.SITE,
+        A.PERIOD,
+        A.SHOP_NAME,
+        A.DELIVERY_MODE,
+        A.ORDER_NUM,
+        A.PAYPAL_TRANSACTION_ID,
+        A.COST_AUXILIARY_DESCRIPTION,
+        A.UPDATE_TIME,
+        A.UPDATE_BY,
+        A.CREATE_TIME,
+        A.CREATE_BY,
+        A.CONFIRM_STATUS,
+        A.REVENUE_RATION,
+        A.PEOPLE_COST,
+        A.PEOPLE_NUM,
+        A.DEPARTMENT,
+        A.TEAM
+
+    </sql>
+
+
+    <sql id = "detail_col">
+        detail.ID,
+        detail.SKU,
+        detail.MAT_CODE,
+        detail.CATEGORY,
+        detail.PRODUCT_TYPE,
+        detail.PRODUCT_NAME,
+        detail.STYLE,
+        detail.MAIN_MATERIAL,
+        detail.DESIGN,
+        detail.FIT_BRAND,
+        detail.MODEL,
+        detail.COLOR,
+        detail.SIZES,
+        detail.PACKING,
+        detail.VERSION,
+        detail.TYPE,
+        detail.STYLE_SECOND_LABEL,
+        detail.PROPERTY_MERGE,
+        detail.SALES_BRAND,
+        detail.VOLUME_NORMAL,
+        detail.SALES_EXCLUDING_TAX,
+        detail.TAX,
+        detail.REFUND,
+        detail.GIFTWARP_SHIPPING,
+        detail.AMAZON_FEES,
+        detail.OTHER_ADVERTISEMENTS,
+        detail.OTHER,
+        detail.COLLECTION,
+        detail.COST_ACCOUNTING_FEE,
+        detail.ADDITIONAL_COST_AMOUNT,
+        detail.FIRST_TRIP_FEE,
+        detail.LOCAL_LOGISTICS_FEE,
+        detail.PROFIT,
+        detail.SITE,
+        detail.PERIOD,
+        detail.SHOP_NAME,
+        detail.DELIVERY_MODE,
+        detail.ORDER_NUM,
+        detail.PAYPAL_TRANSACTION_ID,
+        detail.COST_AUXILIARY_DESCRIPTION,
+        detail.COMPANY_BRAND,
+        detail.UPDATE_TIME,
+        detail.UPDATE_BY,
+        detail.CREATE_TIME,
+        detail.CREATE_BY,
+        detail.CONFIRM_STATUS,
+        detail.DEPARTMENT,
+        detail.TEAM
+
+    </sql>
+
+
+    <select id="mergeShopifySettleNallocStruct"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtShopifySettlementReportParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtShopifySettlementReportResult">
+        SELECT <include refid="detail_col"/> ,
+        case WHEN detail.VOLUME_NORMAL &lt; 0 THEN 0 ELSE  detail.VOLUME_NORMAL END detailSalesVol,
+        SUM(case WHEN detail.VOLUME_NORMAL &lt; 0 THEN 0 ELSE  detail.VOLUME_NORMAL END) OVER(PARTITION BY detail.Period,detail.department,detail.team ) AS teamsalesVol,
+               struct.id struct_id,
+               struct.period,
+               struct.dept3,
+               struct.dept4,
+               struct.shopify_alloc amazon_alloc
+          FROM
+
+        (select * from lt_shopify_settlement_report
+        <where>
+            <include refid="SHOPIFY_CONDITION"/>
+        </where>) detail
+          LEFT JOIN (SELECT t.* FROM alloc_structure t
+        <where>
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+            and shopify_alloc > 0
+            and status =1
+      </where>) struct
+            ON struct.period = detail.Period
+           AND struct.dept3 = detail.department
+           AND struct.dept4 = detail.team
+    </select>
+
+
+    <update id="insertStructure"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtRakutenSettlementReportParam">
+        <!--        删除避免重复插入 -->
+        BEGIN
+        DELETE FROM lt_shopify_settlement_report
+        <where>
+            CONFIRM_STATUS = '1'
+            <include refid="SHOPIFY_CONDITION"/>
+        </where>;
+        <!--                插入架构数据-->
+        INSERT INTO
+        lt_shopify_settlement_report (PERIOD ,
+        DEPARTMENT ,
+        team,
+        REVENUE_RATION ,
+        PEOPLE_NUM,
+        PEOPLE_COST,
+        CREATE_TIME ,
+        CREATE_BY)
+        SELECT
+        PERIOD ,
+        DEPT3 ,
+        dept4,
+        0 REVENUE_RATION ,
+        shopify_alloc,
+        round(shopify_alloc * -7000 * #{param.directRate},12),
+        SYSDATE ,
+        #{param.createBy}
+        FROM
+        ALLOC_STRUCTURE
+        <where>
+            STATUS = '1'
+            and shopify_alloc>0
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+        </where>;
+
+        END;
+
+
+    </update>
+
+
+                <update id="updatePeopleCostZero"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtShopifySettlementReportParam">
+                MERGE INTO lt_shopify_settlement_report det
+                    USING (
+                        SELECT
+                            *
+                        FROM
+                            alloc_structure as2
+                        WHERE
+                            status = 1
+                            AND is_labor_cost = '否'
+                        <include refid="ALLOC_STRUCTURE_CONDITION"/>) src
+                              ON (src.period = det.period
+                              AND src.dept3 = det.department
+                              AND src.dept4 = det.team)
+                        WHEN MATCHED THEN
+                    UPDATE
+                    SET
+                        det.PEOPLE_COST = 0
+            </update>
+
+</mapper>

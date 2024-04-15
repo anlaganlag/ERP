@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.OrderAbnormalMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        OA.ID,OA.PURCHASE_DATE,OA.SHIPPED_DATE,OA.RETURN_DATE,OA.SETTLEMENT_DATE,OA.SYS_SHOPS_NAME,OA.SYS_SITE,OA.ORDER_ID,OA.SALE_QUANTITY,OA.SHIPPED_QUANTITY,
+        OA.FBA_SHIPPED_QUANTITY,OA.SALE_RETURN_QUANTITY,OA.SALE_SETTLEMENT_QUANTITY,OA.IS_SHIPPED_ERROR,OA.IS_RETURN_ERROR,OA.IS_SETTLEMENT_ERROR,OA.CREATE_TIME,
+        OA.CREATE_BY,OA.UPDATE_TIME,OA.UPDATE_BY,OA.OUT_SITE,OA.IS_ERROR,OA.FULFILLMENT_CHANNEL
+    </sql>
+
+    <!-- 订单异常情况汇总列表 -->
+    <select id="queryOrderAbnormalPage"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OrderAbnormalParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OrderAbnormalResult">
+        SELECT
+            OA.ORDER_ID AS settlementId,
+            <include refid="Base_Column_List"></include>
+        FROM
+            CW_ORDER_ABNORMAL OA
+         <where>
+             <if test="param.shippedDateStart != null and param.shippedDateStart != '' and param.shippedDateEnd != null and param.shippedDateEnd != ''">
+                 AND TO_DATE(OA.SHIPPED_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.shippedDateStart},'yyyy-mm-dd hh24:mi:ss')
+                 AND TO_DATE(OA.SHIPPED_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.shippedDateEnd},'yyyy-mm-dd hh24:mi:ss')
+             </if>
+             <if test="param.returnDateStart != null and param.returnDateStart != '' and param.returnDateEnd != null and param.returnDateEnd != ''">
+                 AND TO_DATE(OA.RETURN_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.returnDateStart},'yyyy-mm-dd hh24:mi:ss')
+                 AND TO_DATE(OA.RETURN_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.returnDateEnd},'yyyy-mm-dd hh24:mi:ss')
+             </if>
+             <if test="param.settlementDateStart != null and param.settlementDateStart != '' and param.settlementDateEnd != null and param.settlementDateEnd != ''">
+                 AND TO_DATE(OA.SETTLEMENT_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.settlementDateStart},'yyyy-mm-dd hh24:mi:ss')
+                 AND TO_DATE(OA.SETTLEMENT_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.settlementDateEnd},'yyyy-mm-dd hh24:mi:ss')
+             </if>
+             <if test="param.purchaseDateStart != null and param.purchaseDateStart != '' and param.purchaseDateEnd != null and param.purchaseDateEnd != ''">
+                 AND TO_DATE(OA.PURCHASE_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+                 AND TO_DATE(OA.PURCHASE_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+             </if>
+             <if test="param.sysShopsName != null and param.sysShopsName != ''">
+                 AND OA.SYS_SHOPS_NAME = #{param.sysShopsName}
+             </if>
+             <if test="param.sysSite != null and param.sysSite != ''">
+                 AND OA.SYS_SITE = #{param.sysSite}
+             </if>
+             <if test="param.settlementIdList != null and param.settlementIdList.size() != 0">
+                 AND OA.ORDER_ID IN
+                 <foreach collection="param.settlementIdList" item="code" index="index" separator="," open="(" close=")">
+                     #{code}
+                 </foreach>
+             </if>
+             <if test="param.errorType != null and param.errorType == '发货异常'.toString()">
+                 AND OA.IS_SHIPPED_ERROR = '异常'
+             </if>
+             <if test="param.errorType != null and param.errorType == '退货异常'.toString()">
+                 AND OA.IS_RETURN_ERROR = '异常'
+             </if>
+             <if test="param.errorType != null and param.errorType == '结算异常'.toString()">
+                 AND OA.IS_SETTLEMENT_ERROR = '异常'
+             </if>
+             <if test="param.errorType != null and param.errorType == '销售出库异常'.toString()">
+                 AND OA.IS_ERROR = '异常'
+             </if>
+         </where>
+        ORDER BY
+            OA.PURCHASE_DATE DESC,
+            OA.SHIPPED_DATE DESC,
+            OA.RETURN_DATE DESC,
+            OA.SETTLEMENT_DATE DESC,
+            OA.SYS_SHOPS_NAME,
+            OA.SYS_SITE,
+            OA.ID DESC
+    </select>
+
+    <!-- 订单异常情况汇总数据生成（刷新） -->
+    <select id="refresh" parameterType="java.lang.String">
+        -- 默认只刷新前3个月数据
+        INSERT INTO CW_ORDER_ABNORMAL B
+        (
+            B.OUT_SITE,
+            B.IS_ERROR,
+            B.PURCHASE_DATE,
+            B.SYS_SHOPS_NAME,
+            B.SYS_SITE,
+            B.ORDER_ID,
+            B.SHIPPED_DATE,
+            B.RETURN_DATE,
+            B.SETTLEMENT_DATE,
+            B.SALE_QUANTITY,
+            B.SHIPPED_QUANTITY,
+            B.FULFILLMENT_CHANNEL,
+            B.FBA_SHIPPED_QUANTITY,
+            B.SALE_RETURN_QUANTITY,
+            B.SALE_SETTLEMENT_QUANTITY,
+            B.IS_SHIPPED_ERROR,
+            B.IS_RETURN_ERROR,
+            B.IS_SETTLEMENT_ERROR,
+            B.CREATE_TIME
+        )
+        SELECT
+            T3.OUT_SITE,
+            CASE WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' THEN '正常' WHEN T1.SYS_SITE IS NOT NULL AND T1.SYS_SITE = T3.OUT_SITE THEN '正常' ELSE '异常' END AS IS_ERROR,
+            T1.PURCHASEDATE,
+            T1.SYS_SHOPS_NAME,
+            T1.SYS_SITE,
+            T1.AMAZON_ORDER_ID,
+            T1.SHIPPEDDATE,
+            T2.returnDate,
+            T4.settlementDate,
+            T1.saleQuantity,
+            T1.shippedQuantity,
+            T1.FULFILLMENT_CHANNEL,
+            NVL(T3.fbaShippedQuantity, 0) AS fbaShippedQuantity,
+            NVL(T2.saleReturnQuantity, 0) AS saleReturnQuantity,
+            CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0) ELSE NVL(T5.settlementQuantity, 0) END AS saleSettlementQuantity,
+            CASE WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' THEN '正常'
+                WHEN NVL(T1.shippedQuantity, 0) != NVL(T3.fbaShippedQuantity, 0) THEN '异常' ELSE '正常' END AS isShippedError,
+            CASE WHEN NVL(T2.saleReturnQuantity, 0) > NVL(T3.fbaShippedQuantity, 0) THEN '异常' ELSE '正常' END AS isReturnError,
+            CASE WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' AND T1.saleQuantity = (CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0) ELSE NVL(T5.settlementQuantity, 0) END) THEN '正常'
+                WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' AND T1.saleQuantity != (CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0) ELSE NVL(T5.settlementQuantity, 0) END) THEN '异常'
+                WHEN T1.FULFILLMENT_CHANNEL != 'Merchant' AND NVL(T3.fbaShippedQuantity, 0) - NVL(T2.saleReturnQuantity, 0) !=
+                (
+                    CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0)
+                    ELSE NVL(T5.settlementQuantity, 0) END - NVL(T2.saleReturnQuantity, 0)
+                ) THEN '异常' ELSE '正常' END AS isSettlementError,
+            SYSDATE
+        FROM
+        (
+            SELECT
+                O.PLATFORM,
+                TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd') AS purchaseDate,
+                DECODE(O.ORDER_STATUS, 'Shipped', TO_CHAR(O.LAST_UPDATED_DATE,'yyyy-mm-dd'), 'Shipping', TO_CHAR(O.LAST_UPDATED_DATE,'yyyy-mm-dd'), NULL) AS shippedDate,
+                OD.SYS_SHOPS_NAME,
+                OD.SYS_SITE,
+                OD.AMAZON_ORDER_ID,
+                O.FULFILLMENT_CHANNEL,
+                SUM(NVL(OD.QUANTITY, 0)) AS saleQuantity,
+                SUM(CASE WHEN OD.ITEM_STATUS = 'Shipped' THEN NVL(OD.QUANTITY, 0) ELSE 0 END) AS shippedQuantity
+            FROM AMAZON_ORDERS O
+            LEFT JOIN AMAZON_ORDER_DETAIL OD ON OD.AMAZON_ORDER_ID = O.AMAZON_ORDER_ID
+            WHERE
+                OD.PURCHASE_DATE >= ADD_MONTHS(SYSDATE, -3)
+                AND O.PLATFORM = 'Amazon'
+                AND O.TYPE = 'Normal'
+                AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled')
+                AND NOT (O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled')
+            GROUP BY
+                O.PLATFORM,
+                TO_CHAR(OD.PURCHASE_DATE,'yyyy-mm-dd'),
+                DECODE(O.ORDER_STATUS, 'Shipped', TO_CHAR(O.LAST_UPDATED_DATE,'yyyy-mm-dd'), 'Shipping', TO_CHAR(O.LAST_UPDATED_DATE,'yyyy-mm-dd'), NULL),
+                OD.SYS_SHOPS_NAME,
+                OD.SYS_SITE,
+                OD.AMAZON_ORDER_ID,
+                O.FULFILLMENT_CHANNEL
+         ) T1
+        LEFT JOIN
+        (
+            SELECT
+                FCR.SALES_ORGANIZATION,
+                FCR.ORDER_ID AS AMAZON_ORDER_ID,
+                TO_CHAR(FCR.RETURN_DATE,'yyyy-mm-dd') AS returnDate,
+                SUM(NVL(FCR.QUANTITY, 0)) AS saleReturnQuantity
+            FROM
+                ${fbaCustomerReturns} FCR
+            WHERE
+                FCR.RETURN_DATE >= ADD_MONTHS(SYSDATE, -3)
+                AND FCR.VERIFY_STATUS = 1
+                AND FCR.SALES_ORGANIZATION IS NOT NULL
+            GROUP BY
+                FCR.SALES_ORGANIZATION,
+                FCR.ORDER_ID,
+                TO_CHAR(FCR.RETURN_DATE,'yyyy-mm-dd')
+        ) T2 ON T1.PLATFORM || '_' || T1.SYS_SHOPS_NAME || '_' || T1.SYS_SITE = T2.SALES_ORGANIZATION AND T1.AMAZON_ORDER_ID = T2.AMAZON_ORDER_ID
+        LEFT JOIN
+        (
+            SELECT
+                FSS.SALES_ORGANIZATION,
+                FSS.AMAZON_ORDER_ID,
+                CASE WHEN INSTR('BE,DE,ES,FR,IT,NL,PL,SE,TR,UK', FSS.SYS_SITE) > 0 THEN SALES_SITE
+                    WHEN INSTR('CA,MX,US', FSS.SYS_SITE) > 0 THEN SALES_SITE
+                    ELSE FSS.SYS_SITE END AS OUT_SITE,
+                SUM(NVL(FSS.QUANTITY, 0)) AS fbaShippedQuantity
+            FROM
+            (
+                SELECT SALES_ORGANIZATION,AMAZON_ORDER_ID,SYS_SITE,SUBSTR(SALES_ORGANIZATION, INSTR(SALES_ORGANIZATION, '_', 1, 2)+1) AS SALES_SITE,QUANTITY
+                FROM WAREHOUSE.FBA_SHIPMENT_SALES
+                WHERE
+                    SHIPMENT_DATE >= ADD_MONTHS(SYSDATE, -3)
+                AND VERIFY_STATUS != 2
+                AND SALES_ORGANIZATION IS NOT NULL
+            ) FSS
+            GROUP BY
+                FSS.SALES_ORGANIZATION,
+                FSS.AMAZON_ORDER_ID,
+                CASE WHEN INSTR('BE,DE,ES,FR,IT,NL,PL,SE,TR,UK', FSS.SYS_SITE) > 0 THEN SALES_SITE
+                    WHEN INSTR('CA,MX,US', FSS.SYS_SITE) > 0 THEN SALES_SITE
+                    ELSE FSS.SYS_SITE END
+        ) T3 ON T1.PLATFORM || '_' || T1.SYS_SHOPS_NAME || '_' || T1.SYS_SITE = T3.SALES_ORGANIZATION AND T1.AMAZON_ORDER_ID = T3.AMAZON_ORDER_ID
+        LEFT JOIN(
+            SELECT
+                LD.SHOP_NAME AS SYS_SHOPS_NAME,
+                LD.SITE AS SYS_SITE,
+                LD.ORDER_ID AS AMAZON_ORDER_ID,
+                TO_CHAR(MAX(LD.DATE_TIME),'yyyy-mm-dd') AS settlementDate
+            FROM
+                CW_LINGXING_DATARANGE LD
+            WHERE
+                LD.DATE_TIME >= ADD_MONTHS(SYSDATE, -3)
+            GROUP BY
+                LD.SHOP_NAME,
+                LD.SITE,
+                LD.ORDER_ID
+        ) T4 ON T1.SYS_SHOPS_NAME = T4.SYS_SHOPS_NAME AND T1.SYS_SITE = T4.SYS_SITE AND T1.AMAZON_ORDER_ID = T4.AMAZON_ORDER_ID
+        LEFT JOIN
+        (
+            SELECT
+                SD.SYS_SHOPS_NAME,
+                SD.SYS_SITE,
+                SD.ORDER_ID AS AMAZON_ORDER_ID,
+                SUM(SD.QUANTITY_PURCHASED) AS settlementQuantity
+            FROM
+                CW_SETTLEMENT S
+            LEFT JOIN CW_SETTLEMENT_DETAIL SD ON S.SETTLEMENT_ID = SD.SETTLEMENT_ID
+            WHERE
+                S.SETTLEMENT_START_DATE >= ADD_MONTHS(SYSDATE, -3)
+                AND SD.AMOUNT_TYPE = 'ItemPrice'
+                AND SD.AMOUNT_DESCRIPTION = 'Principal'
+            GROUP BY
+                SD.SYS_SHOPS_NAME,
+                SD.SYS_SITE,
+                SD.ORDER_ID
+        ) T5 ON T1.SYS_SHOPS_NAME = T5.SYS_SHOPS_NAME AND T1.SYS_SITE = T5.SYS_SITE AND T1.AMAZON_ORDER_ID = T5.AMAZON_ORDER_ID
+        LEFT JOIN
+        (
+            SELECT
+                DD.SYS_SHOPS_NAME,
+                DD.SYS_SITE,
+                DD.ORDER_ID AS AMAZON_ORDER_ID,
+                SUM(DD.QUANTITY) AS settlementQuantity
+            FROM
+                CW_DATARANGE D
+            LEFT JOIN CW_DATARANGE_DTAIL DD ON D.SETTLEMENT_ID = DD.SETTLEMENT_ID
+            WHERE
+                D.SETTLEMENT_START_DATE >= ADD_MONTHS(SYSDATE, -3)
+            GROUP BY
+                DD.SYS_SHOPS_NAME,
+                DD.SYS_SITE,
+                DD.ORDER_ID
+        ) T6 ON T1.SYS_SHOPS_NAME = T6.SYS_SHOPS_NAME AND T1.SYS_SITE = T6.SYS_SITE AND T1.AMAZON_ORDER_ID = T6.AMAZON_ORDER_ID
+        WHERE
+            (
+                CASE WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' THEN '正常'
+                WHEN NVL(T1.shippedQuantity, 0) != NVL(T3.fbaShippedQuantity, 0) THEN '异常' ELSE '正常' END = '异常'
+            )
+            OR NVL(T2.saleReturnQuantity, 0) > NVL(T3.fbaShippedQuantity, 0)
+            OR
+            (
+                CASE WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' AND T1.saleQuantity = (CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0) ELSE NVL(T5.settlementQuantity, 0) END) THEN '正常'
+                WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' AND T1.saleQuantity != (CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0) ELSE NVL(T5.settlementQuantity, 0) END) THEN '异常'
+                WHEN T1.FULFILLMENT_CHANNEL != 'Merchant' AND NVL(T3.fbaShippedQuantity, 0) - NVL(T2.saleReturnQuantity, 0) !=
+                (
+                    CASE WHEN NVL(T5.settlementQuantity, 0) = 0 THEN NVL(T6.settlementQuantity, 0)
+                    ELSE NVL(T5.settlementQuantity,0) END - NVL(T2.saleReturnQuantity, 0)
+                ) THEN '异常' ELSE '正常' END = '异常'
+            )
+            OR
+            (
+                CASE WHEN T1.FULFILLMENT_CHANNEL = 'Merchant' THEN '正常' WHEN T1.SYS_SITE IS NOT NULL AND T1.SYS_SITE = T3.OUT_SITE THEN '正常' ELSE '异常' END = '异常'
+            )
+    </select>
+</mapper>

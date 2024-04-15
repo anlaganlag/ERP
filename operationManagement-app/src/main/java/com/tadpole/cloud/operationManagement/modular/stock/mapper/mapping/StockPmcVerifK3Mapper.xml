@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.StockPmcVerifK3Mapper">
+
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.StockPmcVerifK3Param"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.StockPmcVerifK3Result">
+
+        select a.*,
+        CASE a.INCLUDE_TAX
+        WHEN 1 THEN 'HS'
+        ELSE 'BHS' END includeTaxName,
+
+        CASE a.SYNC_STATUS
+        WHEN '0' THEN '同步失败'
+        WHEN '1' THEN '同步成功'
+        ELSE '待同步' END syncStatusName,
+
+        CASE a.BILL_TYPE
+        WHEN 'JJBH' THEN '紧急备货'
+        WHEN 'XPBH' THEN '新品备货'
+        WHEN 'XMBH' THEN '项目备货'
+        WHEN 'RCBH' THEN '日常备货'
+        WHEN 'HHBH' THEN '混合备货'
+        ELSE '其他' END billTypeName
+        from STOCK_PMC_VERIF_K3 a
+        WHERE 1=1
+
+        <if test="reqVO.syncStatus != null and reqVO.syncStatus !=''">
+            AND a.SYNC_STATUS = #{reqVO.syncStatus}
+        </if>
+
+        <if test="reqVO.createOrderType != null and reqVO.createOrderType !=''">
+            AND a.CREATE_ORDER_TYPE = #{reqVO.createOrderType}
+        </if>
+
+
+        <if test="reqVO.departmentList != null and reqVO.departmentList.size() != 0">
+            AND a.DEPARTMENT IN
+            <foreach collection="reqVO.departmentList" item="department" index="index" separator="," open="(" close=")">
+                #{department}
+            </foreach>
+        </if>
+
+        <if test="reqVO.teamList != null and reqVO.teamList.size() != 0">
+            AND a.TEAM IN
+            <foreach collection="reqVO.teamList" item="team" index="index" separator="," open="(" close=")">
+                #{team}
+            </foreach>
+        </if>
+
+        <if test="reqVO.materialCode != null and reqVO.materialCode !=''">
+            AND a.material_code = #{reqVO.materialCode}
+        </if>
+
+        <if test="reqVO.materialCodeList != null and reqVO.materialCodeList.size() != 0">
+            AND a.material_code IN
+            <foreach collection="reqVO.materialCodeList" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+
+        <if test="reqVO.productTypeList != null and reqVO.productTypeList.size() != 0">
+            AND a.product_type IN
+            <foreach collection="reqVO.productTypeList" item="productType" index="index" separator="," open="("
+                     close=")">
+                #{productType}
+            </foreach>
+        </if>
+
+        <if test="reqVO.adviceSupplierList != null and reqVO.adviceSupplierList.size() != 0">
+            AND a.ADVICE_SUPPLIER_ID IN
+            <foreach collection="reqVO.adviceSupplierList" item="adviceSupplier" index="index" separator="," open="("  close=")">
+                #{adviceSupplier}
+            </foreach>
+        </if>
+
+        <if test="reqVO.verifDateStart != null  and reqVO.verifDateEnd != null ">
+            AND  VERIF_DATE >= #{reqVO.verifDateStart} AND
+            VERIF_DATE &lt; #{reqVO.verifDateEnd}+1
+        </if>
+
+        order by a.CREATE_TIME DESC
+    </select>
+
+
+</mapper>

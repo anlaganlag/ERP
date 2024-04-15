@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.SysDictMapper">
+
+
+    <select id="queryDetail" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SysDictDetail"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SysDictDetail">
+        select
+            *
+        from CW_SYS_DICT_DETAIL where 1=1
+        <if test="paramCondition.dictId!= null and paramCondition.dictId != ''">
+            and DICT_ID =#{paramCondition.dictId}
+        </if>
+        <if test="paramCondition.dictValue != null and paramCondition.dictValue != ''">
+            and DICT_VALUE like '%' || #{paramCondition.dictValue}|| '%'
+        </if>
+    </select>
+
+    <select id="getByDictCode" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.SysDictDetail"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.CwSysDict">
+        select
+        D.DICT_VALUE,D.ID,D.DICT_ID,D.SYMBOL,D.REMARK,D.DICT_CODE
+        from CW_SYS_DICT_DETAIL D left join CW_SYS_DICT C on C.ID=D.DICT_ID where 1=1
+
+        <if test="paramCondition.dictCode!= null and paramCondition.dictCode != ''">
+            and C.DICT_CODE =#{paramCondition.dictCode}
+        </if>
+        <if test="paramCondition.dictName!= null and paramCondition.dictName != ''">
+            and D.DICT_VALUE =#{paramCondition.dictName}
+        </if>
+    </select>
+
+    <insert id="add" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SysDictDetail">
+        insert into CW_SYS_DICT_DETAIL (DICT_ID,DICT_VALUE,SYMBOL,REMARK,DICT_CODE)
+        values (
+         #{paramCondition.dictId},
+         #{paramCondition.dictValue},
+         #{paramCondition.symbol},
+         #{paramCondition.remark},
+         #{paramCondition.dictCode}
+               )
+    </insert>
+
+    <delete id="delete" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SysDictDetail">
+        delete  CW_SYS_DICT_DETAIL  where ID=#{paramCondition.id}
+    </delete>
+
+</mapper>

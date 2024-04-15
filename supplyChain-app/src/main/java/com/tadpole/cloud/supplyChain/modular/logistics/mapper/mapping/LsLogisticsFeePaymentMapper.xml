@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsLogisticsFeePaymentMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        A.ID,A.LOGISTICS_FEE_NO,A.LP_CODE,A.LP_NAME,A.LP_SIMPLE_NAME,A.TOTAL_LOGISTICS_FEE,A.TOTAL_TAX_FEE,A.TOTAL_PAYMENT_FEE,
+        A.PAYMENT_APPLY_STATUS,A.ERP_APPLY_DATE,A.PAYMENT_APPLY_NO,A.CREATE_TIME,A.CREATE_USER,A.UPDATE_TIME,A.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsFeePaymentParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsFeePaymentResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM LS_LOGISTICS_FEE_PAYMENT A
+        <where>
+            <if test="param.logisticsFeeNoList != null and param.logisticsFeeNoList.size() != 0">
+                AND A.LOGISTICS_FEE_NO IN
+                <foreach collection="param.logisticsFeeNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.paymentApplyNoList != null and param.paymentApplyNoList.size() != 0">
+                AND A.PAYMENT_APPLY_NO IN
+                <foreach collection="param.paymentApplyNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.paymentApplyStatusList != null and param.paymentApplyStatusList.size() != 0">
+                AND A.PAYMENT_APPLY_STATUS IN
+                <foreach collection="param.paymentApplyStatusList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.erpApplyStartDate != null and param.erpApplyStartDate != ''">
+                AND A.ERP_APPLY_DATE &gt;= to_date(#{param.erpApplyStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.erpApplyEndDate != null and param.erpApplyEndDate != ''">
+                AND A.ERP_APPLY_DATE &lt;= to_date(#{param.erpApplyEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="(param.shipmentNumList != null and param.shipmentNumList.size() != 0)
+                   or (param.logisticsCheckOrderList != null and param.logisticsCheckOrderList.size() != 0)">
+                AND A.LOGISTICS_FEE_NO IN
+                (
+                    SELECT D.LOGISTICS_FEE_NO FROM LS_LOGISTICS_FEE_PAYMENT_DETAIL D
+                    <where>
+                        <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                            AND D.SHIPMENT_NUM IN
+                            <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                            </foreach>
+                        </if>
+                        <if test="param.logisticsCheckOrderList != null and param.logisticsCheckOrderList.size() != 0">
+                            AND D.LOGISTICS_CHECK_ORDER IN
+                            <foreach collection="param.logisticsCheckOrderList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                            </foreach>
+                        </if>
+                    </where>
+                )
+            </if>
+        </where>
+        ORDER BY A.ID DESC
+    </select>
+
+    <!--获取最新的发票号-->
+    <select id="getNowLogisticsFeeNo" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT MAX(C.LOGISTICS_FEE_NO) AS nowOrder FROM LS_LOGISTICS_FEE_PAYMENT C WHERE C.LOGISTICS_FEE_NO LIKE #{orderPre} || '%'
+    </select>
+
+    <!--获取物流费付款最新的K3单据编号-->
+    <select id="getNowLogisticsPaymentNo" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT MAX(C.PAYMENT_APPLY_NO) AS nowOrder FROM LS_K3_PAYMENT_APPLY C WHERE C.PAYMENT_APPLY_NO LIKE #{orderPre} || '%'
+    </select>
+
+    <!--组织下拉-->
+    <select id="orgSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            A.ORGANIZATION_CODE AS code,
+            A.ORGANIZATION_NAME AS name
+        FROM ERP_WAREHOUSE_CODE A WHERE A.ORGANIZATION_TYPE = 'organization'
+    </select>
+
+    <!--付款类型下拉-->
+    <select id="payTypeSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            A.FNUMBER AS code,
+            B.FDATAVALUE AS name
+        FROM T_BAS_ASSISTANTDATAENTRY A
+        LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L B ON A.FENTRYID = B.FENTRYID
+        WHERE A.FID = '5ec78bc20b7e22' AND A.FDOCUMENTSTATUS ='C' AND A.FFORBIDSTATUS ='A'
+    </select>
+
+    <!--结算方式下拉-->
+    <select id="settlementTypeSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            A.FNUMBER AS code,
+            B.FNAME AS name
+        FROM T_BD_SETTLETYPE A
+        LEFT JOIN T_BD_SETTLETYPE_L B ON A.FID = B.FID
+        WHERE A.FDOCUMENTSTATUS ='C' AND A.FFORBIDSTATUS ='A'
+    </select>
+
+    <!--付款用途下拉-->
+    <select id="useTypeSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            A.FNUMBER AS code,
+            B.FNAME AS name
+        FROM T_CN_RECPAYPURPOSE A
+        LEFT JOIN T_CN_RECPAYPURPOSE_L B ON A.FID = B.FID
+        WHERE A.FRECPAYTYPE='1' AND A.FDOCUMENTSTATUS = 'C' AND A.FFORBIDSTATUS = 'A' AND B.FNAME = '物流费'
+    </select>
+
+    <!--物流收款单位下拉-->
+    <select id="lsCompanySelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            A.FNUMBER AS code,
+            B.FNAME AS name
+        FROM T_BD_SUPPLIER A
+        LEFT JOIN T_BD_SUPPLIER_L B ON A.FSUPPLIERID = B.FSUPPLIERID
+        WHERE A.FUSEORGID='100269' AND A.FDOCUMENTSTATUS ='C' AND A.FFORBIDSTATUS ='A' AND A.FPRIMARYGROUP IN ('133041')
+    </select>
+
+    <!--内部供应商下拉-->
+    <select id="supplierNameSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT
+            A.FNUMBER AS code,
+            B.FNAME AS name
+        FROM T_BD_SUPPLIER A
+        LEFT JOIN T_BD_SUPPLIER_L B ON A.FSUPPLIERID = B.FSUPPLIERID
+        WHERE A.FUSEORGID='100269' AND A.FDOCUMENTSTATUS ='C' AND A.FFORBIDSTATUS ='A' AND A.FPRIMARYGROUP IN ('133039')
+    </select>
+
+    <!--对方银行信息下拉-->
+    <select id="lsCompanyBankSelect"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsCompanyBankParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsCompanyBankParam">
+        SELECT
+            A.FNUMBER AS lsCompanyCode,
+            B.FNAME AS lsCompanyName,
+            C.FBANKCODE AS bankAccNo,
+            C.FBANKHOLDER AS bankAccName,
+            D.FOPENBANKNAME AS bankName
+        FROM T_BD_SUPPLIER A
+        LEFT JOIN T_BD_SUPPLIER_L B on A.FSUPPLIERID = B.FSUPPLIERID
+        LEFT JOIN T_BD_SupplierBank C on A.FSUPPLIERID = C.FSUPPLIERID
+        LEFT JOIN T_BD_SUPPLIERBANK_L D on D.FBANKID = C.FBANKID
+        WHERE
+            A.FUSEORGID='100269'
+            AND A.FDOCUMENTSTATUS ='C'
+            AND A.FFORBIDSTATUS ='A'
+            AND A.FPRIMARYGROUP IN ('133041')
+            AND A.FNUMBER = #{param.lsCompanyCode}
+    </select>
+
+    <!--K3币别下拉-->
+    <select id="k3CurrencySelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.K3CurrencyResult">
+        SELECT
+            C.FNUMBER AS currencyCode,
+            C.FCODE AS currencyEn,
+            L.FNAME AS currencyName
+        FROM T_BD_CURRENCY C
+        LEFT JOIN T_BD_CURRENCY_L L ON C.FCURRENCYID = L.FCURRENCYID
+    </select>
+
+</mapper>

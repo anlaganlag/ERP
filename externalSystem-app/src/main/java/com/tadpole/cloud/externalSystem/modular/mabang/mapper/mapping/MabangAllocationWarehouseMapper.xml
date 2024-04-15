@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.MabangAllocationWarehouseMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangAllocationWarehouse">
+        <id column="ID" property="id" />
+        <result column="SUMMARY_ID" property="summaryId" />
+        <result column="BILL_NO" property="billNo" />
+        <result column="SPLIT_TOTAL" property="splitTotal" />
+        <result column="SPLIT_NUM" property="splitNum" />
+        <result column="ALLOCATION_CODE" property="allocationCode" />
+        <result column="ANTI_AUDIT" property="antiAudit" />
+        <result column="REVERSE_ALLOCATION_CODE" property="reverseAllocationCode" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="APPROVE_DATE" property="approveDate" />
+        <result column="CANCEL_STATUS" property="cancelStatus" />
+        <result column="CANCEL_DATE" property="cancelDate" />
+        <result column="START_WAREHOUSE_NAME" property="startWarehouseName" />
+        <result column="TARGET_WAREHOUSE_NAME" property="targetWarehouseName" />
+        <result column="SKU" property="sku" />
+        <result column="START_WAREHOUSE_ID" property="startWarehouseId" />
+        <result column="TARGET_WAREHOUSE_ID" property="targetWarehouseId" />
+        <result column="TRANSPORT_TYPE" property="transportType" />
+        <result column="FREIGHT" property="freight" />
+        <result column="CHANNEL" property="channel" />
+        <result column="TRACK_NUMBER" property="trackNumber" />
+        <result column="SHARE_METHOD" property="shareMethod" />
+        <result column="REMARK" property="remark" />
+        <result column="IS_DELETE" property="isDelete" />
+        <result column="SYNC_TYPE" property="syncType" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="SYNC_STATUS" property="syncStatus" />
+        <result column="SYNC_SUCCESS_TIMES" property="syncSuccessTimes" />
+        <result column="SYNC_FAIL_TIMES" property="syncFailTimes" />
+        <result column="SYNC_RESULT_MSG" property="syncResultMsg" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <sql id="List_Condition">
+
+        <if test="paramCondition.billNo != null and paramCondition.billNo != ''">
+            AND t.BILL_NO  like '%'|| #{paramCondition.billNo}||'%'
+        </if>
+
+        <if test="paramCondition.startWarehouseName != null and paramCondition.startWarehouseName != ''">
+            AND t.START_WAREHOUSE_NAME like '%'||  #{paramCondition.startWarehouseName}||'%'
+        </if>
+
+        <if test="paramCondition.targetWarehouseName != null and paramCondition.targetWarehouseName != ''">
+            AND t.TARGET_WAREHOUSE_NAME like '%'||  #{paramCondition.targetWarehouseName}||'%'
+        </if>
+
+        <if test="paramCondition.allocationCode != null and paramCondition.allocationCode != ''">
+            AND t.ALLOCATION_CODE like '%'||  #{paramCondition.allocationCode}||'%'
+        </if>
+
+        <if test="paramCondition.createStartDate != null  and paramCondition.createEndDate != null ">
+            and  t.CREATE_DATE  >=  #{paramCondition.createStartDate}
+            AND t.CREATE_DATE &lt;     #{paramCondition.createEndDate}+1
+        </if>
+
+        <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+            AND t.SYNC_STATUS = #{paramCondition.syncStatus}
+        </if>
+
+        <if test="paramCondition.syncStartTime != null  and paramCondition.syncEndTime != null ">
+            and  t.SYNC_TIME  >=  #{paramCondition.syncStartTime}
+            AND t.SYNC_TIME &lt;     #{paramCondition.syncEndTime}+1
+        </if>
+    </sql>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, SUMMARY_ID, BILL_NO, SPLIT_TOTAL, SPLIT_NUM, ALLOCATION_CODE, ANTI_AUDIT, REVERSE_ALLOCATION_CODE, DOCUMENT_STATUS, CREATE_DATE, APPROVE_DATE, CANCEL_STATUS, CANCEL_DATE, START_WAREHOUSE_NAME, TARGET_WAREHOUSE_NAME, SKU, START_WAREHOUSE_ID, TARGET_WAREHOUSE_ID, TRANSPORT_TYPE, FREIGHT, CHANNEL, TRACK_NUMBER, SHARE_METHOD, REMARK, IS_DELETE, SYNC_TYPE, SYNC_TIME, SYNC_STATUS, SYNC_SUCCESS_TIMES, SYNC_FAIL_TIMES, SYNC_RESULT_MSG, CREATE_TIME, UPDATE_TIME
+    </sql>
+    <select id="list" resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangAllocationWarehouseResult">
+        select      <include refid="Base_Column_List"/>  from MABANG_ALLOCATION_WAREHOUSE t
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY APPROVE_DATE DESC,SYNC_TIME DESC
+
+    </select>
+
+    <sql id="showColumns">
+        t.ID,
+        t.BILL_NO ,
+        t.APPROVE_DATE ,
+        t.SPLIT_NUM ,
+        t.START_WAREHOUSE_NAME ,
+        t.TARGET_WAREHOUSE_NAME ,
+        t.ALLOCATION_CODE ,
+        t.CREATE_TIME ,
+        t.SYNC_STATUS ,
+        t.SYNC_TIME ,
+        i.ID AS IID,
+        i.MATERIAL_CODE ,
+        i.MATERIAL_NAME ,
+        i.QTY ,
+        'Pcs' AS PCS,
+        to_char(t.SYNC_RESULT_MSG) SYNC_RESULT_MSG
+    </sql>
+
+    <select id="mergeList" resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangAllocationWarehouse2Result">
+        SELECT <include refid="showColumns" /> FROM MABANG_ALLOCATION_WAREHOUSE t
+        LEFT JOIN K3_TRANSFER_MABANG_ITEM i ON i.BILL_NO = t.BILL_NO AND i.ALLOCATION_CODE= t.ALLOCATION_CODE
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY APPROVE_DATE DESC,SYNC_TIME DESC
+    </select>
+
+
+</mapper>

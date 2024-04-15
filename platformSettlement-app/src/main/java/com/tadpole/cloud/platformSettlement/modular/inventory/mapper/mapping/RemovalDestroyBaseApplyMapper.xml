@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.RemovalDestroyBaseApplyMapper">
+
+    <select id="bankAccountList"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.ErpBankAccountParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.ErpBankAccountResult">
+            select distinct * from View_bankAccount_To_MCMS
+        <where>
+            <if test="paramCondition.bankAccount != null and paramCondition.bankAccount !=''">
+                and bankAccount=#{paramCondition.bankAccount}
+            </if>
+            <if test="paramCondition.bankName != null and paramCondition.bankName !=''">
+                and bankName=#{paramCondition.bankName}
+            </if>
+            <if test="paramCondition.bankAttribution != null and paramCondition.bankAttribution !=''">
+                and bankAttribution=#{paramCondition.bankAttribution}
+            </if>
+            <if test="paramCondition.bankNumber != null and paramCondition.bankNumber !=''">
+                and bankNumber=#{paramCondition.bankNumber}
+            </if>
+        </where>
+    </select>
+
+</mapper>

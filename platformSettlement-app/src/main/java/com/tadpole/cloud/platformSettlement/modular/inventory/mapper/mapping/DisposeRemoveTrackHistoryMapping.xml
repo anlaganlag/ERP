@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.DisposeRemoveTrackHistoryMapper">
+
+    <!--销毁移除跟踪历史表、导出-->
+    <select id="trackHistoryList"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.DisposeRemoveTrackHistoryParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.DisposeRemoveTrackHistoryResult">
+        SELECT
+            TO_CHAR(D.ORDER_APPLY_DATE, 'YYYY-MM') AS fiscalPeriod,
+            D.PLATFORM,
+            D.SHOP_NAME AS shopName,
+            D.SITE ,
+            D.DEPARTMENT,
+            D.TEAM,
+            D.ASIN,
+            D.FNSKU,
+            D.SKU,
+            D.MATERIAL_CODE AS materialCode,
+            D.ORDER_APPLY_DATE AS orderApplyDate,
+            D.ORDER_ID AS orderId,
+            D.ORDER_TYPE AS orderType,
+            D.ORDER_STATUS AS orderStatus,
+            NVL(D.APPLY_AMOUNT, 0) AS applyAmount,
+            NVL(D.CANCEL_AMOUNT, 0) AS cancelAmount,
+            NVL(D.ORDER_DISPOSED_AMOUNT, 0) AS orderDisposedAmount,
+            NVL(D.ORDER_SHIPPED_AMOUNT, 0) AS orderShippedAmount,
+            NVL(D.DISPOSE_AMOUNT, 0) AS disposeAmount,
+            NVL(D.REMOVE_AMOUNT, 0) AS removeAmount,
+            D.ID,
+            D.UPDATE_TIME AS updateTime,
+            D.UPDATE_BY AS updateBy,
+            TO_CHAR(D.A_UPLOAD_DATE, 'YYYY-MM-DD') AS shipmentDateStr,
+            TO_CHAR(D.B_UPLOAD_DATE, 'YYYY-MM-DD') AS orderDateStr,
+            M.PRODUCT_TYPE AS productType,
+            M.CATEGORY,
+            M.PRODUCT_NAME AS productName,
+            M.STYLE,
+            M.MAIN_MATERIAL AS mainMaterial,
+            M.DESIGN,
+            M.COMPANY_BRAND AS companyBrand,
+            M.FIT_BRAND AS fitBrand,
+            M.MODEL,
+            M.COLOR,
+            M.SIZES,
+            M.PACKING,
+            M.VERSION,
+            M.TYPE,
+            M.STYLE_SECOND_LABEL AS styleSecondLabel,
+            NVL(D.APPLY_AMOUNT, 0) - NVL(D.CANCEL_AMOUNT, 0) - NVL(D.ORDER_DISPOSED_AMOUNT, 0) - NVL(D.ORDER_SHIPPED_AMOUNT, 0) AS surplusAmount,
+            D.REMOVAL_FEE AS destroyFee,
+            D.CURRENCY AS currency,
+            D.DATA_MONTH
+        FROM DISPOSE_REMOVE_TRACK_HISTORY D
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON D.MATERIAL_CODE = M.MATERIAL_CODE
+        WHERE
+            D.DATA_MONTH = #{paramCondition.dataMonth}
+            <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+                AND D.SHOP_NAME IN
+                <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="shopName">
+                    #{shopName}
+                </foreach>
+            </if>
+            <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+                AND D.SITE IN
+                <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+                    #{site}
+                </foreach>
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND D.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+            <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+                AND D.DEPARTMENT IN
+                <foreach collection="paramCondition.departments" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+                AND D.TEAM IN
+                <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderTypes != null and paramCondition.orderTypes.size>0">
+                AND D.ORDER_TYPE IN
+                <foreach collection="paramCondition.orderTypes" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderType != null and paramCondition.orderType =='空'.toString()">
+                OR D.ORDER_TYPE IS NULL
+            </if>
+            <if test="paramCondition.orderStatuss != null and paramCondition.orderStatuss.size>0">
+                AND D.ORDER_STATUS IN
+                <foreach collection="paramCondition.orderStatuss" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderStatus != null and paramCondition.orderStatus =='空'.toString()">
+                OR D.ORDER_STATUS IS NULL
+            </if>
+            <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+                AND D.ORDER_ID=#{paramCondition.orderId}
+            </if>
+            <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+                AND D.ORDER_APPLY_DATE BETWEEN
+                to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+                to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 - INTERVAL '1' SECOND
+            </if>
+            <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size>0">
+                AND D.MATERIAL_CODE IN
+                <foreach collection="paramCondition.materialCodeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size>0">
+                AND M.PRODUCT_TYPE IN
+                <foreach collection="paramCondition.productTypeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productNameList != null and paramCondition.productNameList.size>0">
+                AND M.PRODUCT_NAME IN
+                <foreach collection="paramCondition.productNameList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.styleList != null and paramCondition.styleList.size>0">
+                AND M.STYLE IN
+                <foreach collection="paramCondition.styleList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        ORDER BY D.ID, D.B_UPLOAD_DATE DESC, D.A_UPLOAD_DATE DESC
+    </select>
+
+    <!--销毁移除跟踪历史表汇总数量-->
+    <select id="getTrackHistoryQuantity"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.DisposeRemoveTrackHistoryParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.DisposeRemoveTrackTotalResult">
+        SELECT
+            SUM(NVL(D.APPLY_AMOUNT, 0)) AS applyAmount,
+            SUM(NVL(D.ORDER_DISPOSED_AMOUNT, 0)) AS orderDisposedAmount,
+            SUM(NVL(D.ORDER_SHIPPED_AMOUNT, 0)) AS orderShippedAmount,
+            SUM(NVL(D.CANCEL_AMOUNT, 0)) AS cancelAmount,
+            SUM(NVL(D.APPLY_AMOUNT, 0)) - SUM(NVL(D.ORDER_DISPOSED_AMOUNT, 0)) - SUM(NVL(D.ORDER_SHIPPED_AMOUNT, 0)) - SUM(NVL(D.CANCEL_AMOUNT, 0)) AS surplusAmount,
+            SUM(NVL(D.DISPOSE_AMOUNT, 0)) AS disposeAmount,
+            SUM(NVL(D.REMOVE_AMOUNT, 0)) AS removeAmount
+        FROM DISPOSE_REMOVE_TRACK_HISTORY D
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON D.MATERIAL_CODE = M.MATERIAL_CODE
+        WHERE
+            D.DATA_MONTH = #{paramCondition.dataMonth}
+            <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+                AND D.SHOP_NAME IN
+                <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="shopName">
+                    #{shopName}
+                </foreach>
+            </if>
+            <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+                AND D.SITE IN
+                <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+                    #{site}
+                </foreach>
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND D.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+            <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+                AND D.DEPARTMENT IN
+                <foreach collection="paramCondition.departments" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+                AND D.TEAM IN
+                <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderTypes != null and paramCondition.orderTypes.size>0">
+                AND D.ORDER_TYPE IN
+                <foreach collection="paramCondition.orderTypes" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderType != null and paramCondition.orderType =='空'.toString()">
+                OR D.ORDER_TYPE IS NULL
+            </if>
+            <if test="paramCondition.orderStatuss != null and paramCondition.orderStatuss.size>0">
+                AND D.ORDER_STATUS IN
+                <foreach collection="paramCondition.orderStatuss" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderStatus != null and paramCondition.orderStatus =='空'.toString()">
+                OR D.ORDER_STATUS IS NULL
+            </if>
+            <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+                AND D.ORDER_ID=#{paramCondition.orderId}
+            </if>
+            <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+                and D.ORDER_APPLY_DATE BETWEEN
+                to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+                to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+            </if>
+            <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size>0">
+                AND D.MATERIAL_CODE IN
+                <foreach collection="paramCondition.materialCodeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size>0">
+                AND M.PRODUCT_TYPE IN
+                <foreach collection="paramCondition.productTypeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productNameList != null and paramCondition.productNameList.size>0">
+                AND M.PRODUCT_NAME IN
+                <foreach collection="paramCondition.productNameList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.styleList != null and paramCondition.styleList.size>0">
+                AND M.STYLE IN
+                <foreach collection="paramCondition.styleList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+    </select>
+
+    <!--生成销毁移除跟踪历史表数据-->
+    <insert id="generateHistoryTrack">
+        INSERT INTO DISPOSE_REMOVE_TRACK_HISTORY
+        (
+            PLATFORM,
+            SHOP_NAME,
+            SITE,
+            DEPARTMENT,
+            TEAM,
+            ASIN,
+            FNSKU,
+            SKU,
+            MATERIAL_CODE,
+            ORDER_APPLY_DATE,
+            ORDER_ID,
+            ORDER_TYPE,
+            ORDER_STATUS,
+            APPLY_AMOUNT,
+            DISPOSE_AMOUNT,
+            REMOVE_AMOUNT,
+            CANCEL_AMOUNT,
+            UPDATE_TIME,
+            UPDATE_BY,
+            A_UPLOAD_DATE,
+            B_UPLOAD_DATE,
+            REMOVAL_FEE,
+            CURRENCY,
+            CREATE_TIME,
+            CREATE_USER,
+            ORDER_DISPOSED_AMOUNT,
+            ORDER_SHIPPED_AMOUNT,
+            ORDER_APPLY_DATE_UTC,
+            DATA_MONTH
+        )
+        SELECT
+            PLATFORM,
+            SHOP_NAME,
+            SITE,
+            DEPARTMENT,
+            TEAM,
+            ASIN,
+            FNSKU,
+            SKU,
+            MATERIAL_CODE,
+            ORDER_APPLY_DATE,
+            ORDER_ID,
+            ORDER_TYPE,
+            ORDER_STATUS,
+            APPLY_AMOUNT,
+            DISPOSE_AMOUNT,
+            REMOVE_AMOUNT,
+            CANCEL_AMOUNT,
+            UPDATE_TIME,
+            UPDATE_BY,
+            A_UPLOAD_DATE,
+            B_UPLOAD_DATE,
+            REMOVAL_FEE,
+            CURRENCY,
+            CREATE_TIME,
+            CREATE_USER,
+            ORDER_DISPOSED_AMOUNT,
+            ORDER_SHIPPED_AMOUNT,
+            ORDER_APPLY_DATE_UTC,
+            #{dataMonth}
+        FROM DISPOSE_REMOVE_TRACK
+    </insert>
+</mapper>

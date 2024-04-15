@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.BackPrepareRecomBiMapper">
+
+    <select id="queryPage" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.BackPrepareRecomBiParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.BackPrepareRecomBiResult">
+
+
+        SELECT a.* FROM
+        (
+        SELECT product_type, platform, team, area
+        FROM product_line2
+        <where>
+            <if test="reqVO.operator != null and reqVO.operator != ''">
+                 operator||team_supervise||dept_mgr like '%'||#{reqVO.operator}||'%'
+            </if>
+        </where>
+        GROUP BY product_type, platform, team, area
+        ) l
+        JOIN BACK_PREPARE_RECOM_BI a
+        ON l.platform = a.platform AND l.team = a.team AND l.area = a.area AND l.product_type = a.product_type
+        WHERE 1=1
+        <if test="reqVO != null">
+            <if test="reqVO.department != null and reqVO.department !=''">
+                AND a.department = #{reqVO.department}
+            </if>
+
+            <if test="reqVO.team != null and reqVO.team.size() != 0">
+                AND a.team IN
+                <foreach collection="reqVO.team" item="tm" index="index" separator="," open="(" close=")">
+                    #{tm}
+                </foreach>
+            </if>
+
+            <if test="reqVO.productType != null and reqVO.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.productType" item="pt" index="index" separator="," open="(" close=")">
+                    #{pt}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.productTypeList != null and reqVO.productTypeList.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.productTypeList" item="pt" index="index" separator="," open="(" close=")">
+                    #{pt}
+                </foreach>
+            </if>
+
+
+            <if test="reqVO.teamList != null and reqVO.teamList.size() != 0">
+                AND a.team IN
+                <foreach collection="reqVO.teamList" item="team" index="index" separator="," open="(" close=")">
+                    #{team}
+                </foreach>
+            </if>
+
+            <if test="reqVO.area != null and reqVO.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+
+            <if test="reqVO.areaList != null and reqVO.areaList.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.areaList" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+
+            <if test="reqVO.dataZeroNotRecom != null and reqVO.dataZeroNotRecom !=''">
+                AND ( a.note IS  NULL OR  a.note not like '%' ||#{reqVO.dataZeroNotRecom} ||'%' )
+            </if>
+
+            <if test="reqVO.removeBlacklist != null and reqVO.removeBlacklist !=''">
+                AND (a.note IS  NULL OR  a.note not like '%' ||#{reqVO.removeBlacklist} ||'%' )
+            </if>
+
+            <if test="reqVO.obsoleteMat != null and reqVO.obsoleteMat !=''">
+                AND (a.note IS  NULL OR  a.note not like '%' ||#{reqVO.obsoleteMat} ||'%' )
+            </if>
+        </if>
+        order by a.material_code,a.area
+    </select>
+
+    <select id="exportExcel"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.BackPrepareRecomBiParam"
+               resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.BackPrepareRecomBiExcel">
+        SELECT BIZDATE,PLATFORM,DEPARTMENT,TEAM,MATERIAL_CODE,"ASIN",CREATE_DATE,PRODUCT_TYPE,PRODUCT_NAME,"STYLE",MAIN_MATERIAL,
+               PATTERN,COMPANY_BRAND,BRAND,MODEL,MATSTYLESECONDLABEL,COLOR,SIZES,PACKING,VERSION_DES,"TYPE",MINPOQTY, MINPOQTY_NOTES,SPELL_ORDERNUM,SPELL_ORDERNUM_REMARK,FESTIVAL_LABEL,
+               SEASON_LABEL,AREA,TOTAL_VOLUME,INTERNAL_STAY_DELIVER_QTY,STORE_ONTIME_TOTAL_QTY,IN_STOCK_QTY,AMAZON_STAY_DELIVER_QTY,
+               AIR_QTY,SHIPPING_QTY,TRAIN_QTY,CAR_QTY,TOTAL_INVENTORY_NUM_OVERSEA,INVENTORY_NUM_OVERSEA,DELIVERY_NUM_OVERSEA,CANUSEQTY,
+               UNPURCHASE,APPROVE_QTY,FIRST_ROUTE_INSTOCK_DATE,FIRST_ROUTE_DELIVERY_QTY,CUR_MONTH_MINUS3_QTY,CUR_MONTH_MINUS2_QTY,
+               CUR_MONTH_MINUS1_QTY,CUR_MONTH_QTY,CUR_MONTH_ADD1_QTY,CUR_MONTH_ADD2_QTY,CUR_MONTH_ADD3_QTY,CUR_MONTH_ADD4_QTY,
+               CUR_MONTH_ADD5_QTY,CUR_MONTH_ADD6_QTY,PRODUCT_SALE_LEVEL,PRODUCT_SALE_LEVEL_TEAM,DAY7QTY,DAY14QTY,DAY30QTY,DAYAVGQTY,PREPARE_DAYS,
+               OVER_D180_INV_AGE_QTY_RATE,RECOM_DELIVERY_TYPE,TOTAL_BACK_DAYS,SUPPLYCLE,SAFE_SALEDAYS,ORDER_DAYS,DELIVERY_DAYS,
+               ORDER_DEAL_DAY,OUTER_DEAL_DAY,INNER_DEAL_DAY,PRE_SALE_QTY,RECOM_PRE_QTY,RECOM_BACK_OVER_DAYS,CUR_PRE_MONTH_LAST_PRE_MONTH,NOTE
+        FROM BACK_PREPARE_RECOM_BI a WHERE 1=1
+        <if test="reqVO != null">
+
+            <if test="reqVO.department != null and reqVO.department !=''">
+                AND a.department = #{reqVO.department}
+            </if>
+
+            <if test="reqVO.team != null and reqVO.team.size() != 0">
+                AND a.team IN
+                <foreach collection="reqVO.team" item="tm" index="index" separator="," open="(" close=")">
+                    #{tm}
+                </foreach>
+            </if>
+
+            <if test="reqVO.productType != null and reqVO.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.productType" item="pt" index="index" separator="," open="(" close=")">
+                    #{pt}
+                </foreach>
+            </if>
+
+            <if test="reqVO.area != null and reqVO.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+
+            <if test="reqVO.dataZeroNotRecom != null and reqVO.dataZeroNotRecom !=''">
+                AND (a.note IS NULL OR  a.note not like '%'||#{reqVO.dataZeroNotRecom}||'%')
+            </if>
+
+            <if test="reqVO.removeBlacklist != null and reqVO.removeBlacklist !=''">
+                AND (a.note IS  NULL OR  a.note not like '%'||#{reqVO.removeBlacklist}||'%')
+            </if>
+        </if>
+    </select>
+
+
+    <select id="creatTeamVerif" parameterType="String"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.entity.TeamVerif">
+        select
+               max(t.bizdate) bizdate,
+               max(t.platform) platform,
+               max(t.area) area,
+               max(department) department,
+               max(t.team) team,
+               max(t.material_code) material_code,
+--        max(t.apply_date) apply_date,
+               max(t.create_date) create_date,
+               max(NVL(t.product_type, 0)) product_type,
+               max(NVL(t.product_name, 0)) product_name,
+               max(t.style) style,
+               max(t.main_material) main_material,
+               max(t.pattern) pattern,
+               max(t.company_brand) company_brand,
+               max(t.brand) brand,
+               max(t.model) model,
+               max(t.color) color,
+               max(t.sizes) sizes,
+               max(t.packing) packing,
+               max(t.version_des) version_des,
+               max(NVL(t.version, 0)) version,
+               max(NVL(t.matstylesecondlabel, 0)) matstylesecondlabel,
+               max(NVL(t.matprocycle, 0)) matprocycle,
+               max(t.type) type,
+               max(NVL(t.minpoqty, 0)) minpoqty,
+               max(NVL(t.minpoqty_notes, 0)) minpoqty_notes,
+               max(NVL(t.SPELL_ORDERNUM , 0)) SPELL_ORDERNUM ,
+               max(NVL(t.SPELL_ORDERNUM_REMARK , 0)) SPELL_ORDERNUM_REMARK ,
+               max(t.spu) spu,
+               max(t.nbdu) nbdu,
+               max(t.festival_label) festival_label,
+               max(NVL(t.delivery_type, 0)) delivery_type,
+               max(NVL(t.supplycle, 0)) supplycle,
+               max(t.recom_delivery_type) recom_delivery_type,
+--                0 oper_cur_month_qty,
+--                0 oper_cur_month_add1_qty,
+--                0 oper_cur_month_add2_qty,
+--                0 oper_cur_month_add3_qty,
+--                0 oper_cur_month_add4_qty,
+--                0 oper_cur_month_add5_qty,
+--                0 oper_cur_month_add6_qty,
+--                0 sales_stock_days, --销售需求备货天数  修改  ok  取值来源：特殊备货申请.销售需求备货天数
+--                0 extra_days,
+--                0 sales_demand,
+--                0 stock_qty_area,  -- 申请区域备货数量 修改  ok  特殊备货申请.申请区域备货数量
+--                0 turnover_days_area, -- 申请区域备货后周转天数 修改  ok '界面实时计算：MAX(每日备货推荐.销售需求2,每日备货推荐.AZ海外总库存D5)/日均销量D5
+--                0 comit_type,
+--                0 turnover_days,
+               sum(NVL(t.TOTAL_VOLUME, 0)) TOTAL_VOLUME,
+               sum(NVL(t.STORE_ONTIME_TOTAL_QTY, 0)) STORE_ONTIME_TOTAL_QTY,
+
+               -- max(t.stock_reason,0)),
+--        max(NVL(t.bill_type, 0)) bill_type,
+
+               max(NVL(t.delivery_type, 0)) delivery_type, -- 建议物流方式  修改  ok 特殊备货申请.需求运输方式D5
+               max(NVL(t.canuseqty, 0)) canuseqty,
+               max(NVL(t.unpurchase, 0)) unpurchase,
+               max(NVL(t.approve_qty, 0)) approve_qty,
+               max(NVL(t.nopick, 0)) nopick,
+               max(NVL(t.unpack, 0)) unpack,
+               max(NVL(t.unsend, 0)) unsend,
+               sum(NVL(t.internal_stay_deliver_qty, 0)) internal_stay_deliver_qty, -- 国内代发货数量
+               sum(NVL(t.amazon_available_qty, 0)) amazon_available_qty,
+               sum(NVL(t.amazon_reserved_qty, 0)) amazon_reserved_qty,
+               sum(NVL(t.amazon_stay_deliver_qty, 0)) amazon_stay_deliver_qty,
+               sum(NVL(t.air_qty, 0)) air_qty,
+               sum(NVL(t.shipping_qty, 0)) shipping_qty,
+               sum(NVL(t.train_qty, 0)) train_qty,
+               sum(NVL(t.car_qty, 0)) car_qty,
+               sum(NVL(t.in_stock_qty, 0)) in_stock_qty,
+               sum(NVL(t.store_ontime_total_qty, 0)) store_ontime_total_qty, -- AZ店铺即时库存总数D6
+               sum(NVL(t.delivery_num_oversea, 0)) delivery_num_oversea,
+               sum(NVL(t.inventory_num_oversea, 0)) inventory_num_oversea,
+               sum(NVL(t.total_inventory_num_oversea, 0)) total_inventory_num_oversea, --  海外仓总库存D6
+               sum(NVL(t.over_d180_inv_age_qty, 0)) over_d180_inv_age_qty,
+               sum(NVL(t.over_d180_inv_age_qty_rate, 0)) over_d180_inv_age_qty_rate, -- AZ超180天库龄数量占比D6  修改
+               max(t.first_route_instock_date) first_route_instock_date,
+               sum(NVL(t.first_route_delivery_qty, 0)) first_route_delivery_qty, -- 头程在途到货数量
+               sum(NVL(t.day7qty, 0)) day7qty,
+               sum(NVL(t.day14qty, 0)) day14qty,
+               sum(NVL(t.day30qty, 0)) day30qty,
+               sum(NVL(t.cur_pre_month_qty, 0)) cur_pre_month_qty,
+               sum(NVL(t.last_pre_month_qty, 0)) last_pre_month_qty,
+               sum(NVL(t.cur_pre_month_last_pre_month, 0)) cur_pre_month_last_pre_month, -- 今年上月/去年上月  修改 ok   ：SUM(每日备货推荐.今年上月合计D6)/SUM(每日备货推荐.去年上月合计D6)
+               sum(NVL(t.cur_month_minus3_qty, 0)) cur_month_minus3_qty,
+               sum(NVL(t.cur_month_minus2_qty, 0)) cur_month_minus2_qty,
+               sum(NVL(t.cur_month_minus1_qty, 0)) cur_month_minus1_qty,
+               sum(NVL(t.cur_month_qty, 0)) cur_month_qty,
+               sum(NVL(t.cur_month_add1_qty, 0)) cur_month_add1_qty,
+               sum(NVL(t.cur_month_add2_qty, 0)) cur_month_add2_qty,
+               sum(NVL(t.cur_month_add3_qty, 0)) cur_month_add3_qty,
+               sum(NVL(t.cur_month_add4_qty, 0)) cur_month_add4_qty,
+               sum(NVL(t.cur_month_add5_qty, 0)) cur_month_add5_qty,
+               sum(NVL(t.cur_month_add6_qty, 0)) cur_month_add6_qty,
+               max(t.product_sale_level) product_sale_level, -- 销售等级标签
+               max(t.product_sale_level_team) product_sale_level_team, -- 销售等级标签Team
+               sum(NVL(t.dayavgqty, 0)) dayavgqty,
+               -- sum(NVL(t.shop_supplydays,0)),
+               sum(NVL(t.recom_pre_qty, 0)) recom_pre_qty,
+               max(t.season_label) season_label,
+--        max(t.flag) flag,
+               -- sum(NVL(t.sellable_supplydays,0)),
+               max(t.fba_first_receivedate) fba_first_receivedate,
+               max(t.note) note,
+               sum(NVL(t.safe_saledays, 0)) safe_saledays,
+               sum(NVL(t.order_days, 0)) order_days,
+               max(NVL(t.delivery_days, 0)) delivery_days,
+               sum(NVL(t.order_deal_day, 0)) order_deal_day,
+               sum(NVL(t.outer_deal_day, 0)) outer_deal_day,
+               sum(NVL(t.inner_deal_day, 0)) inner_deal_day,
+               DECODE((SUM(NVL(t.PRE_SALE_QTY,0))),0,(MAX(NVL(t.total_back_days,0))),round ((SUM(NVL(t.PRE_SALE_QTY,0) *NVL(t.total_back_days,0))/SUM(NVL(t.PRE_SALE_QTY,0))))) total_back_days, --总备货天数
+               -- sum(NVL(t.formula,0)),
+               -- sum(NVL(t.formula_num,0)),
+               sum(NVL(t.prepare_days, 0)) prepare_days,
+               -- sum(NVL(t.formula_preqty,0)),
+
+               max(t.recom_back_over_days) recom_back_over_days,
+               min(t.EXPECTED_DELIVERY_DATE) EXPECTED_DELIVERY_DATE, -- 期望交期
+--        min(t.OPER_EXPECTED_DATE) OPER_EXPECTED_DATE,
+               sum(NVL(t.pre_sale_qty, 0)) pre_sale_qty
+
+        from BACK_PREPARE_RECOM_BI  t
+        where (note is null or note like '%建议淘汰产品%')
+          and t.platform|| t.area ||t.department|| t.team|| t.material_code   = #{groupFiled}
+    </select>
+
+    <select id="createPurchaseOrder" parameterType="String" resultType="com.tadpole.cloud.operationManagement.modular.stock.entity.PurchaseOrders">
+        select
+        max(t.bizdate) bizdate, -- 推荐日期
+        LISTAGG(to_char(t.stock_reason), ',') WITHIN GROUP ( ORDER BY ID) purchase_reason, -- 申请备货原因  修改 ok 取值来源：特殊备货申请.申请备货原因D5
+        max(t.platform) platform,
+        max(t.bill_type) bill_type,
+        max(department) department,
+        max(t.team) team,
+        max(t.material_code) material_code,
+        max(t.create_date) create_date,
+        max(NVL(t.product_type, 0)) product_type,
+        max(NVL(t.product_name, 0)) product_name,
+        max(t.style) style,
+        max(t.main_material) main_material,
+        max(t.pattern) pattern,
+        max(t.company_brand) company_brand,
+        max(t.brand) brand,
+        max(t.model) model,
+        max(t.color) color,
+        max(t.sizes) sizes,
+        max(t.packing) packing,
+        max(t.version_des) version_des,
+        max(NVL(t.version, 0)) version,
+        max(NVL(t.matstylesecondlabel, 0)) matstylesecondlabel,
+        max(NVL(t.matprocycle, 0)) matprocycle,
+        max(t.type) type,
+        max(NVL(t.minpoqty, 0)) minpoqty,
+        max(NVL(t.MINPOQTY_NOTES, 0)) MINPOQTY_NOTES,
+        max(NVL(t.SPELL_ORDERNUM, 0)) SPELL_ORDERNUM,
+        max(NVL(t.SPELL_ORDERNUM_REMARK, 0)) SPELL_ORDERNUM_REMARK,
+        max(t.spu) spu,
+        max(t.nbdu) nbdu,
+        max(t.festival_label) festival_label,
+        max(NVL(t.delivery_type, 0)) delivery_type,
+        max(NVL(t.supplycle, 0)) supplycle,
+        max(t.recom_delivery_type) recom_delivery_type,
+        sum(NVL(t.oper_cur_month_qty, 0)) oper_cur_month_qty,
+        sum(NVL(t.oper_cur_month_add1_qty, 0)) oper_cur_month_add1_qty,
+        sum(NVL(t.oper_cur_month_add2_qty, 0)) oper_cur_month_add2_qty,
+        sum(NVL(t.oper_cur_month_add3_qty, 0)) oper_cur_month_add3_qty,
+        sum(NVL(t.oper_cur_month_add4_qty, 0)) oper_cur_month_add4_qty,
+        sum(NVL(t.oper_cur_month_add5_qty, 0)) oper_cur_month_add5_qty,
+        sum(NVL(t.oper_cur_month_add6_qty, 0)) oper_cur_month_add6_qty,
+        TRUNC (AVG(  DECODE(SIGN(SALES_STOCK_DAYS) ,1,SALES_STOCK_DAYS, 0, NULL,-1,NULL, SALES_STOCK_DAYS) ))  SALES_STOCK_DAYS,
+        sum(NVL(t.extra_days, 0)) extra_days,
+        sum(NVL(t.sales_demand, 0)) sales_demand, -- 销售需求  修改 ok 取值来源：特殊备货申请.销售需求D5
+        sum(NVL(t.stock_qty_area, 0)) purchase_apply_qty,
+        sum(NVL(t.stock_qty_area, 0)) advice_apply_qty,
+        sum(NVL(t.turnover_days_area, 0)) turnover_days_area,
+        max(NVL(t.delivery_type, 0)) delivery_type,
+        MAX(NVL(t.canuseqty, 0)) canuseqty,
+        MAX(NVL(t.unpurchase, 0)) unpurchase,
+        sum(NVL(t.nopick, 0)) nopick,
+        sum(NVL(t.unpack, 0)) unpack,
+        sum(NVL(t.unsend, 0)) unsend,
+        sum(NVL(t.internal_stay_deliver_qty, 0)) internal_stay_deliver_qty,
+        sum(NVL(t.amazon_available_qty, 0)) amazon_available_qty,
+        sum(NVL(t.amazon_reserved_qty, 0)) amazon_reserved_qty,
+        sum(NVL(t.amazon_stay_deliver_qty, 0)) amazon_stay_deliver_qty,
+        sum(NVL(t.air_qty, 0)) air_qty,
+        sum(NVL(t.shipping_qty, 0)) shipping_qty,
+        sum(NVL(t.train_qty, 0)) train_qty,
+        sum(NVL(t.car_qty, 0)) car_qty,
+        sum(NVL(t.in_stock_qty, 0)) in_stock_qty,
+        sum(NVL(t.store_ontime_total_qty, 0)) store_ontime_total_qty,
+        sum(NVL(t.delivery_num_oversea, 0)) delivery_num_oversea,
+        sum(NVL(t.inventory_num_oversea, 0)) inventory_num_oversea,
+        sum(NVL(t.total_inventory_num_oversea, 0)) total_inventory_num_oversea, --  海外仓总库存
+        sum(NVL(t.over_d180_inv_age_qty, 0)) over_d180_inv_age_qty,
+        sum(NVL(t.over_d180_inv_age_qty_rate, 0)) over_d180_inv_age_qty_rate,
+        max(t.first_route_instock_date) first_route_instock_date, --  头程在途预计到货时间
+        sum(NVL(t.first_route_delivery_qty, 0)) first_route_delivery_qty,
+        sum(NVL(t.day7qty, 0)) day7qty, -- Az7天销售数量D6
+        sum(NVL(t.day14qty, 0)) day14qty, -- Az14天销售数量D6
+        sum(NVL(t.day30qty, 0)) day30qty, -- Az30天销售数量D6
+        sum(NVL(t.cur_pre_month_qty, 0)) cur_pre_month_qty,
+        sum(NVL(t.last_pre_month_qty, 0)) last_pre_month_qty,
+        sum(NVL(t.cur_pre_month_last_pre_month, 0)) cur_pre_month_last_pre_month,
+        sum(NVL(t.cur_month_minus3_qty, 0)) cur_month_minus3_qty,
+        sum(NVL(t.cur_month_minus2_qty, 0)) cur_month_minus2_qty,
+        sum(NVL(t.cur_month_minus1_qty, 0)) cur_month_minus1_qty,
+        sum(NVL(t.cur_month_qty, 0)) cur_month_qty,
+        sum(NVL(t.cur_month_add1_qty, 0)) cur_month_add1_qty,
+        sum(NVL(t.cur_month_add2_qty, 0)) cur_month_add2_qty,
+        sum(NVL(t.cur_month_add3_qty, 0)) cur_month_add3_qty,
+        sum(NVL(t.cur_month_add4_qty, 0)) cur_month_add4_qty,
+        sum(NVL(t.cur_month_add5_qty, 0)) cur_month_add5_qty,
+        sum(NVL(t.cur_month_add6_qty, 0)) cur_month_add6_qty,
+        max(t.product_sale_level) product_sale_level,
+        max(t.product_sale_level_team) product_sale_level_team, -- 销售等级标签Team
+        sum(NVL(t.dayavgqty, 0)) dayavgqty, -- 日均销量
+        sum(NVL(t.recom_pre_qty, 0)) recom_pre_qty, -- 建议备货数量
+        max(t.season_label) season_label,
+        max(t.flag) flag,
+        max(t.fba_first_receivedate) fba_first_receivedate,
+        max(t.note) note,
+        sum(NVL(t.safe_saledays, 0)) safe_saledays,
+        sum(NVL(t.order_days, 0)) order_days,
+        max(NVL(t.delivery_days, 0)) delivery_days,
+        sum(NVL(t.order_deal_day, 0)) order_deal_day,
+        sum(NVL(t.outer_deal_day, 0)) outer_deal_day,
+        sum(NVL(t.inner_deal_day, 0)) inner_deal_day,
+        DECODE((SUM(NVL(t.PRE_SALE_QTY,0))),0,(MAX(NVL(t.total_back_days,0))),round ((SUM(NVL(t.PRE_SALE_QTY,0) *NVL(t.total_back_days,0))/SUM(NVL(t.PRE_SALE_QTY,0))))) total_back_days,
+        sum(NVL(t.prepare_days, 0)) prepare_days, -- AZ海外总库存供货天数  修改 ok  向下取整 SUM(每日备货推荐.AZ海外总库存D6)/(SUM(每日备货推荐.预估销售数量D6)/DISTINCT(总备货天数D6))
+        sum(NVL(t.turnover_days, 0)) turnover_days,
+        MAX(NVL(t.approve_qty, 0)) approve_qty,
+        max(t.recom_back_over_days) recom_back_over_days,
+        min(t.EXPECTED_DELIVERY_DATE) EXPECTED_DELIVERY_DATE,
+        min(t.OPER_EXPECTED_DATE) OPER_EXPECTED_DATE,
+        sum(NVL(t.pre_sale_qty, 0)) pre_sale_qty,
+        sum(NVL(t.TOTAL_VOLUME, 0)) TOTAL_VOLUME -- AZ海外总库存
+
+        FROM STOCK_TEAM_VERIF  t
+        <where>
+--             平台+事业部+Team+物料编码+备货类型
+            t.platform||t.department||t.team||t.material_code||t.bill_type = #{platformDepartTeamMentlcodeBilltype}
+            AND t.id IN
+            <foreach collection="teamVerifList" item="item" index="index" separator="," open="(" close=")">
+                #{item.id}
+            </foreach>
+        </where>
+    </select>
+
+
+    <update id="updatePurchaseApplyNo">
+        UPDATE STOCK_TEAM_VERIF  t SET t.PURCHASE_APPLY_NO=  #{purchaseApplyNo} ,t.UPDATE_TIME = SYSDATE
+        <where>
+            t.VERIF_STATUS=2
+            AND t.PURCHASE_APPLY_NO IS NULL
+            AND t.platform||t.department||t.team||t.material_code||t.bill_type = #{platformDepartTeamMentlcodeBilltype}
+            AND t.BILL_TYPE = #{billType}
+            AND t.ID IN
+            <foreach collection="reqParamList" item="item" index="index" separator="," open="(" close=")">
+                #{item.id}
+            </foreach>
+        </where>
+
+    </update>
+
+
+    <select id="excelQueryPage" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.BackPrepareRecomBiParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.BackPrepareRecomBiExcel">
+
+
+        SELECT a.* FROM
+        (
+        SELECT product_type, platform, team, area
+        FROM product_line2
+        <where>
+            <if test="reqVO.operator != null and reqVO.operator != ''">
+                operator||team_supervise||dept_mgr like '%'||#{reqVO.operator}||'%'
+            </if>
+        </where>
+        GROUP BY product_type, platform, team, area
+        ) l
+        JOIN BACK_PREPARE_RECOM_BI a
+        ON l.platform = a.platform AND l.team = a.team AND l.area = a.area AND l.product_type = a.product_type
+        WHERE 1=1
+        <if test="reqVO != null">
+            <if test="reqVO.department != null and reqVO.department !=''">
+                AND a.department = #{reqVO.department}
+            </if>
+
+            <if test="reqVO.team != null and reqVO.team.size() != 0">
+                AND a.team IN
+                <foreach collection="reqVO.team" item="tm" index="index" separator="," open="(" close=")">
+                    #{tm}
+                </foreach>
+            </if>
+
+            <if test="reqVO.productType != null and reqVO.productType.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.productType" item="pt" index="index" separator="," open="(" close=")">
+                    #{pt}
+                </foreach>
+            </if>
+
+            <if test="reqVO.area != null and reqVO.area.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.area" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+
+            <if test="reqVO.dataZeroNotRecom != null and reqVO.dataZeroNotRecom !=''">
+                AND ( a.note IS  NULL OR  a.note not like '%' ||#{reqVO.dataZeroNotRecom} ||'%' )
+            </if>
+
+            <if test="reqVO.removeBlacklist != null and reqVO.removeBlacklist !=''">
+                AND (a.note IS  NULL OR  a.note not like '%' ||#{reqVO.removeBlacklist} ||'%' )
+            </if>
+
+            <if test="reqVO.teamList != null and reqVO.teamList.size() != 0">
+                AND a.team IN
+                <foreach collection="reqVO.teamList" item="team" index="index" separator="," open="(" close=")">
+                    #{team}
+                </foreach>
+            </if>
+
+            <if test="reqVO.productTypeList != null and reqVO.productTypeList.size() != 0">
+                AND a.product_type IN
+                <foreach collection="reqVO.productTypeList" item="pt" index="index" separator="," open="(" close=")">
+                    #{pt}
+                </foreach>
+            </if>
+
+            <if test="reqVO.areaList != null and reqVO.areaList.size() != 0">
+                AND a.area IN
+                <foreach collection="reqVO.areaList" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+
+        </if>
+        order by a.material_code,a.area
+    </select>
+
+</mapper>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.InvReportUploadRecordMapper">
+
+
+  <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.InvReportUploadRecord"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.InvReportUploadRecordParam">
+    select *
+
+    from INV_REPORT_UPLOAD_RECORD m
+
+
+    where 1 = 1
+
+
+  </select>
+
+
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.SaleOutOrderK3Mapper">
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.k3.SaleOutOrderK3QueryResult"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.k3.SaleOutOrderK3QueryResult">
+        SELECT
+            *
+        FROM SALE_OUT_ORDER_K3 sook JOIN SALE_OUT_ORDER_ITEM_K3 sooik  ON sook.F_BILL_NO = sooik.F_BILL_NO
+        <where>
+            1=1
+            <if test="paramCondition.fBillNo != null and paramCondition.fBillNo != ''">
+                AND sook.F_BILL_NO LIKE '%'||#{paramCondition.fBillNo}||'%'
+            </if>
+            <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+                AND sook.SYNC_STATUS = #{paramCondition.syncStatus}
+            </if>
+
+            <if test="paramCondition.createPurchaseOrder != null ">
+                AND sook.CREATE_PURCHASE_ORDER = #{paramCondition.createPurchaseOrder}
+            </if>
+
+            <if test="paramCondition.fMaterialId != null and paramCondition.fMaterialId != ''">
+                AND sooik.F_MATERIAL_ID LIKE '%'||#{paramCondition.fMaterialId}||'%'
+            </if>
+
+            <if test="paramCondition.warehouseName != null and paramCondition.warehouseName != ''">
+                AND sooik.WAREHOUSE_NAME = #{paramCondition.warehouseName}
+            </if>
+
+            <if test="paramCondition.groupId != null and paramCondition.groupId != ''">
+                AND sooik.GROUP_ID LIKE '%'||#{paramCondition.groupId}||'%'
+            </if>
+
+            <if test="paramCondition.startCreateTime != null and paramCondition.startCreateTime != ''">
+                AND sook.CREATE_TIME &gt;= to_date(#{paramCondition.startCreateTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+
+            <if test="paramCondition.endCreateTime != null and paramCondition.endCreateTime != ''">
+                AND sook.CREATE_TIME &lt;= to_date(#{paramCondition.endCreateTime},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+            </if>
+
+        </where>
+        order by sook.CREATE_TIME DESC, sook.F_BILL_NO DESC, sooik.F_MATERIAL_ID DESC
+    </select>
+</mapper>

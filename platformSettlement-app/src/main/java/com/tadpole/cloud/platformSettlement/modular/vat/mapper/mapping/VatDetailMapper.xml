@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.VatDetailMapper">
+
+    <sql id="List_Condition">
+        <if test="param.activityPeriod != null and param.activityPeriod != ''">
+            AND T.ACTIVITY_PERIOD = #{param.activityPeriod}
+        </if>
+        <if test="param.ebmsShopsNames != null and param.ebmsShopsNames.size() != 0">
+            AND T.EBMS_SHOPS_NAME IN
+            <foreach collection="param.ebmsShopsNames" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND T.SYS_SITE IN
+            <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.generateStatus != null">
+            AND T.GENERATE_STATUS = #{param.generateStatus}
+        </if>
+    </sql>
+
+    <!--税金测算VAT明细查询列表-->
+    <select id="queryListPage" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatDetailResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatDetailParam">
+        SELECT T.ID,
+        T.ACTIVITY_PERIOD,
+        T.EBMS_SHOPS_NAME,
+        T.SYS_SITE,
+        T.TRANSACTION_CURRENCY_CODE,
+        NVL(T.SALE_DEPART_COUNTRY,0) AS SALE_DEPART_COUNTRY,
+        NVL(T.SALE_ARRIVAL_COUNTRY,0) AS SALE_ARRIVAL_COUNTRY,
+        NVL(T.SALE_DEPART_COUNTRY,0) + NVL(T.SALE_ARRIVAL_COUNTRY,0) AS SELLER_VAT,
+        NVL(T.MAKETPLACE,0) AS MAKETPLACE,
+        NVL(T.SALE_DEPART_COUNTRY_B,0) AS SALE_DEPART_COUNTRY_B,
+        CASE WHEN T.GENERATE_STATUS=0 THEN '未生成'
+        WHEN T.GENERATE_STATUS=1 THEN '已生成'
+        END AS GENERATE_STATUS,
+        T.CREATE_PERSON,
+        T.CREATE_TIME,
+        T.UPDATE_TIME,
+        T.UPDATE_PERSON FROM VAT_DETAIL T
+
+        <where>
+            <include refid="List_Condition" />
+        </where>
+        order by T.ACTIVITY_PERIOD desc
+    </select>
+
+    <!--税金测算VAT明细查询合计-->
+    <select id="listSum" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatDetailResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatDetailParam">
+        SELECT
+        NVL(SUM(T.SALE_DEPART_COUNTRY),0) SALE_DEPART_COUNTRY,
+        NVL(SUM(T.SALE_ARRIVAL_COUNTRY),0) SALE_ARRIVAL_COUNTRY,
+        NVL(SUM(NVL(T.MAKETPLACE,0)),0) MAKETPLACE,
+        NVL(SUM(NVL(T.SALE_DEPART_COUNTRY,0) + NVL(T.SALE_ARRIVAL_COUNTRY,0)),0) SELLER_VAT,
+        NVL(SUM(NVL(T.MAKETPLACE,0)),0) AMAZON_VAT,
+        NVL(SUM(T.SALE_DEPART_COUNTRY_B),0) SALE_DEPART_COUNTRY_B
+        FROM VAT_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+    </select>
+
+    <!--税金测算VAT明细导出-->
+    <select id="vatDetailList" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatDetailResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatDetailParam">
+        SELECT T.ID,
+                T.ACTIVITY_PERIOD,
+                T.EBMS_SHOPS_NAME,
+                T.SYS_SITE,
+                T.TRANSACTION_CURRENCY_CODE,
+                NVL(T.SALE_DEPART_COUNTRY,0) SALE_DEPART_COUNTRY,
+                NVL(T.SALE_ARRIVAL_COUNTRY,0) SALE_ARRIVAL_COUNTRY,
+                NVL(T.MAKETPLACE,0) MAKETPLACE,
+                NVL(T.SALE_DEPART_COUNTRY_B,0) SALE_DEPART_COUNTRY_B,
+        CASE WHEN T.GENERATE_STATUS=0 THEN '未生成'
+        WHEN T.GENERATE_STATUS=1 THEN '已生成'
+        END AS GENERATE_STATUS
+        FROM VAT_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+        UNION ALL
+        SELECT
+        null,null,null,null,
+        '小计',
+        NVL(SUM(T.SALE_DEPART_COUNTRY),0) SALE_DEPART_COUNTRY,
+        NVL(SUM(T.SALE_ARRIVAL_COUNTRY),0) SALE_ARRIVAL_COUNTRY,
+        NVL(SUM(NVL(T.MAKETPLACE,0)),0) MAKETPLACE,
+        NVL(SUM(T.SALE_DEPART_COUNTRY_B),0) SALE_DEPART_COUNTRY_B,
+        null
+        FROM VAT_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+        UNION ALL
+        SELECT
+        null,null,null,null,
+        '合计',
+        null,null,
+        NVL(SUM(T.SALE_DEPART_COUNTRY),0)+NVL(SUM(T.SALE_ARRIVAL_COUNTRY),0)+ NVL(SUM(NVL(T.MAKETPLACE,0)),0) total,
+        NVL(SUM(T.SALE_DEPART_COUNTRY_B),0) SALE_DEPART_COUNTRY_B,
+        null
+        FROM VAT_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+    </select>
+
+    <!--税金测算VAT店铺维度导出-->
+    <select id="vatShopList" resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.VatShopResult"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatDetailParam">
+        SELECT T.ID,
+               T.ACTIVITY_PERIOD,
+               T.EBMS_SHOPS_NAME,
+               T.SYS_SITE,
+               T.TRANSACTION_CURRENCY_CODE,
+               NVL(T.SALE_DEPART_COUNTRY,0) + NVL(T.SALE_ARRIVAL_COUNTRY,0) AS sellerVat,
+               NVL(T.MAKETPLACE,0) AS amazonVat,
+               NVL(T.SALE_DEPART_COUNTRY_B,0) AS freeVat,
+               CASE WHEN T.GENERATE_STATUS=0 THEN '未生成'
+                    WHEN T.GENERATE_STATUS=1 THEN '已生成'
+                   END AS GENERATE_STATUS
+        FROM VAT_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+        UNION ALL
+        SELECT null,null,null,null,
+        '小计',
+        NVL(SUM(NVL(T.SALE_DEPART_COUNTRY,0) + NVL(T.SALE_ARRIVAL_COUNTRY,0)),0) SELLER_VAT,
+        NVL(SUM(NVL(T.MAKETPLACE,0)),0) AS amazonVat,
+        NVL(SUM(T.SALE_DEPART_COUNTRY_B),0) AS freeVat,
+        null
+        FROM VAT_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+        UNION ALL
+        SELECT null,null,null,null,
+        '合计',
+        NVL(SUM(NVL(T.SALE_DEPART_COUNTRY,0) + NVL(T.SALE_ARRIVAL_COUNTRY,0)),0) SELLER_VAT,
+        NVL(SUM(NVL(T.MAKETPLACE,0)),0) AS amazonVat,
+        NVL(SUM(T.SALE_DEPART_COUNTRY_B),0) AS freeVat,
+        null
+        FROM VAT_DETAIL T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+    </select>
+
+    <!--生成核对表-->
+    <update id="generateVatCheck"  parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.VatDetailParam">
+        MERGE INTO VAT_CHECK T1
+            USING (
+                SELECT T.ACTIVITY_PERIOD,
+                       T.EBMS_SHOPS_NAME,
+                       T.SYS_SITE,
+                       NVL(T.SALE_DEPART_COUNTRY,0) + NVL(T.SALE_ARRIVAL_COUNTRY,0) AS SELLER_VAT,
+                       NVL(T.MAKETPLACE,0) AS AMAZON_VAT,
+                       T.SALE_DEPART_COUNTRY_B,
+                       T.GENERATE_STATUS,
+                       T.TRANSACTION_CURRENCY_CODE FROM VAT_DETAIL T
+                WHERE T.ACTIVITY_PERIOD=#{param.activityPeriod}
+                  AND T.GENERATE_STATUS=#{param.generateStatus}) T2
+            ON (T1.ACTIVITY_PERIOD = T2.ACTIVITY_PERIOD AND T1.EBMS_SHOPS_NAME = T2.EBMS_SHOPS_NAME AND
+                T1.SYS_SITE = T2.SYS_SITE)
+            WHEN NOT MATCHED THEN
+                INSERT (T1.ACTIVITY_PERIOD, T1.EBMS_SHOPS_NAME, T1.SYS_SITE,
+                        T1.SALES_VAT_SELLER,T1.BTB_SELLER,T1.TRANSACTION_CURRENCY_CODE,T1.CREATE_PERSON_NO,T1.CREATE_PERSON_NAME) VALUES ( T2.ACTIVITY_PERIOD, T2.EBMS_SHOPS_NAME, T2.SYS_SITE
+                                                                  , T2.SELLER_VAT,T2.SALE_DEPART_COUNTRY_B,T2.TRANSACTION_CURRENCY_CODE,#{param.createPerson},#{param.createPersonName})
+    </update>
+
+</mapper>

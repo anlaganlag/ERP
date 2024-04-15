@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgCustomBoxInfoMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        C.ID,C.BOX_TYPE,C.MIN_VOLUME,C.MIN_EQ,C.MAX_VOLUME,C.MAX_EQ,C.BOX_WEIGHT,C.CREATE_TIME,C.CREATE_USER,C.UPDATE_TIME,C.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomBoxInfoParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomBoxInfoResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_CUSTOM_BOX_INFO C
+        WHERE
+            C.BOX_TYPE = '自定义箱型'
+            <if test="param.volume != null and param.volume != ''">
+                AND #{param.volume} BETWEEN C.MIN_VOLUME AND C.MAX_VOLUME
+                AND C.MIN_VOLUME =
+                (
+                    CASE WHEN C.MIN_VOLUME = #{param.volume} AND C.MIN_EQ = '0' THEN C.MIN_VOLUME + 1
+                    WHEN C.MIN_VOLUME = #{param.volume} AND C.MIN_EQ = '1' THEN C.MIN_VOLUME
+                    ELSE C.MIN_VOLUME END
+                )
+                AND C.MAX_VOLUME =
+                (
+                    CASE WHEN C.MAX_VOLUME = #{param.volume} AND C.MAX_EQ = '0' THEN C.MAX_VOLUME + 1
+                    WHEN C.MAX_VOLUME = #{param.volume} AND C.MAX_EQ = '1' THEN C.MAX_VOLUME
+                    ELSE C.MAX_VOLUME END
+                )
+            </if>
+            <if test="param.boxWeightList != null and param.boxWeightList.size() != 0">
+                AND C.BOX_WEIGHT IN
+                <foreach collection="param.boxWeightList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        ORDER BY C.MIN_VOLUME, C.MAX_VOLUME
+    </select>
+
+    <!-- 根据区间查询体积重 -->
+    <select id="selectContainVal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgCustomBoxInfoParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgCustomBoxInfoResult">
+        SELECT
+            C.*
+        FROM TG_CUSTOM_BOX_INFO C
+        WHERE
+            C.BOX_TYPE = '自定义箱型'
+            AND
+            (
+                (
+                    (#{param.minVolume} BETWEEN C.MIN_VOLUME AND C.MAX_VOLUME)
+                    AND
+                    (#{param.maxVolume} BETWEEN C.MIN_VOLUME AND C.MAX_VOLUME)
+                    AND #{param.minVolume} != #{param.maxVolume}
+                )
+                OR
+                (
+                    (#{param.minVolume} BETWEEN C.MIN_VOLUME AND C.MAX_VOLUME)
+                    AND (#{param.maxVolume} BETWEEN C.MIN_VOLUME AND C.MAX_VOLUME)
+                    AND C.MIN_VOLUME =
+                    CASE WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '0' AND #{param.minEq} = '0' THEN C.MIN_VOLUME + 0.001
+                        WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '0' AND #{param.minEq} = '1' THEN C.MIN_VOLUME + 0.001
+                        WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '1' AND #{param.minEq} = '0' THEN C.MIN_VOLUME + 0.001
+                        WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '1' AND #{param.minEq} = '1' THEN C.MIN_VOLUME END
+                )
+                OR
+                (
+                    (#{param.minVolume} BETWEEN C.MIN_VOLUME AND C.MAX_VOLUME)
+                    AND (#{param.maxVolume} BETWEEN C.MIN_VOLUME AND C.MAX_VOLUME)
+                    AND C.MAX_VOLUME =
+                    CASE WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '0' AND #{param.maxEq} = '0' THEN C.MAX_VOLUME + 0.001
+                        WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '0' AND #{param.maxEq} = '1' THEN C.MAX_VOLUME + 0.001
+                        WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '1' AND #{param.maxEq} = '0' THEN C.MAX_VOLUME + 0.001
+                        WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '1' AND #{param.maxEq} = '1' THEN C.MAX_VOLUME END
+                )
+                OR
+                (
+                    (C.MIN_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume})
+                    AND
+                    (C.MAX_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume})
+                    AND C.MIN_VOLUME != C.MAX_VOLUME
+                )
+                OR
+                (
+                    (C.MIN_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume}) AND (C.MAX_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume}) AND C.MIN_VOLUME = C.MAX_VOLUME
+                    AND C.MIN_VOLUME =
+                        CASE WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '0' AND #{param.minEq} = '0' THEN C.MIN_VOLUME + 0.001
+                        WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '0' AND #{param.minEq} = '1' THEN C.MIN_VOLUME + 0.001
+                        WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '1' AND #{param.minEq} = '0' THEN C.MIN_VOLUME + 0.001
+                        WHEN C.MIN_VOLUME = #{param.minVolume} AND C.MIN_EQ = '1' AND #{param.minEq} = '1' THEN C.MIN_VOLUME END
+                )
+                OR
+                (
+                    (C.MIN_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume}) AND (C.MAX_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume}) AND C.MIN_VOLUME = C.MAX_VOLUME
+                    AND C.MAX_VOLUME =
+                        CASE WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '0' AND #{param.maxEq} = '0' THEN C.MAX_VOLUME + 0.001
+                        WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '0' AND #{param.maxEq} = '1' THEN C.MAX_VOLUME + 0.001
+                        WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '1' AND #{param.maxEq} = '0' THEN C.MAX_VOLUME + 0.001
+                        WHEN C.MAX_VOLUME = #{param.maxVolume} AND C.MAX_EQ = '1' AND #{param.maxEq} = '1' THEN C.MAX_VOLUME END
+                )
+                OR
+                (
+                    (C.MIN_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume})
+                    AND
+                    (C.MAX_VOLUME NOT BETWEEN #{param.minVolume} AND #{param.maxVolume})
+                    AND C.MIN_VOLUME =
+                    CASE WHEN C.MIN_VOLUME = #{param.maxVolume} AND C.MIN_EQ = '0' AND #{param.maxEq} = '0' THEN C.MIN_VOLUME + 0.001
+                         WHEN C.MIN_VOLUME = #{param.maxVolume} AND C.MIN_EQ = '0' AND #{param.maxEq} = '1' THEN C.MIN_VOLUME + 0.001
+                         WHEN C.MIN_VOLUME = #{param.maxVolume} AND C.MIN_EQ = '1' AND #{param.maxEq} = '0' THEN C.MIN_VOLUME + 0.001
+                         WHEN C.MIN_VOLUME = #{param.maxVolume} AND C.MIN_EQ = '1' AND #{param.maxEq} = '1' THEN C.MIN_VOLUME
+                         WHEN C.MIN_VOLUME &lt; #{param.maxVolume} THEN C.MIN_VOLUME END
+                )
+                OR
+                (
+                    (C.MIN_VOLUME NOT BETWEEN #{param.minVolume} AND #{param.maxVolume})
+                    AND
+                    (C.MAX_VOLUME BETWEEN #{param.minVolume} AND #{param.maxVolume})
+                    AND C.MAX_VOLUME =
+                    CASE WHEN C.MAX_VOLUME = #{param.minVolume} AND C.MAX_EQ = '0' AND #{param.minEq} = '0' THEN C.MAX_VOLUME + 0.001
+                         WHEN C.MAX_VOLUME = #{param.minVolume} AND C.MAX_EQ = '0' AND #{param.minEq} = '1' THEN C.MAX_VOLUME + 0.001
+                         WHEN C.MAX_VOLUME = #{param.minVolume} AND C.MAX_EQ = '1' AND #{param.minEq} = '0' THEN C.MAX_VOLUME + 0.001
+                         WHEN C.MAX_VOLUME = #{param.minVolume} AND C.MAX_EQ = '1' AND #{param.minEq} = '1' THEN C.MAX_VOLUME
+                         WHEN C.MAX_VOLUME > #{param.minVolume} THEN C.MAX_VOLUME END
+                )
+            )
+    </select>
+
+    <!-- 箱型下拉 -->
+    <select id="boxTypeSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT C.BOX_TYPE AS code, C.BOX_TYPE AS name FROM TG_CUSTOM_BOX_INFO C
+        WHERE C.BOX_TYPE IS NOT NULL
+        GROUP BY C.BOX_TYPE
+    </select>
+</mapper>

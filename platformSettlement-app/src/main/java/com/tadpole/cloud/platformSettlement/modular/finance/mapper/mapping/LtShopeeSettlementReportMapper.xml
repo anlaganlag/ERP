@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LtShopeeSettlementReportMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtShopeeSettlementReportResult">
+        select <include refid="DETAIL_COL_NOT_MAT"/>,
+         <include refid="MAT_PROP"/>
+          from LT_SHOPEE_SETTLEMENT_REPORT A
+         LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+         ON B.MATERIAL_CODE = A.NEW_MAT_CODE
+    </select>
+
+    <select id="exportByPage" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LtShopeeSettlementReportResult">
+        select <include refid="DETAIL_COL_NOT_MAT"/>,
+        <include refid="MAT_PROP"/>
+        from LT_SHOPEE_SETTLEMENT_REPORT A
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B
+        ON B.MATERIAL_CODE = A.NEW_MAT_CODE ${ew.customSqlSegment}
+    </select>
+
+    <select id="downloadExport" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.LtShopeeSettlementReportExport">
+        select * from LT_SHOPEE_SETTLEMENT_REPORT ${ew.customSqlSegment}
+    </select>
+
+
+    <sql id ="MAT_PROP">
+         decode(B.MATERIAL_CODE,null,'0',B.CATEGORY) CATEGORY,
+         A.product_type,
+         decode(B.MATERIAL_CODE,null,'0',B.PRODUCT_NAME) PRODUCT_NAME,
+         decode(B.MATERIAL_CODE,null,'0',B.STYLE) STYLE,
+         decode(B.MATERIAL_CODE,null,'0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+         decode(B.MATERIAL_CODE,null,'0',B.DESIGN) DESIGN,
+         decode(B.MATERIAL_CODE,null,'0',B.COMPANY_BRAND) COMPANY_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.FIT_BRAND) FIT_BRAND,
+         decode(B.MATERIAL_CODE,null,'0',B.MODEL) MODEL,
+         decode(B.MATERIAL_CODE,null,'0',B.COLOR) COLOR,
+         decode(B.MATERIAL_CODE,null,'0',B.SIZES) SIZES,
+         decode(B.MATERIAL_CODE,null,'0',B.PACKING) PACKING,
+         decode(B.MATERIAL_CODE,null,'0',B.VERSION) VERSION,
+         decode(B.MATERIAL_CODE,null,'0',B.TYPE) TYPE,
+         SALES_BRAND
+    </sql>
+
+
+    <sql id="DETAIL_COL_NOT_MAT">
+    A.id,
+    A.platform,
+    A.department,
+    A.team,
+    A.new_mat_code,
+    A.order_no,
+    A.qty,
+    A.original_currency,
+    A.currency,
+    A.order_fee,
+    A.buyer_shipping_fee,
+    A.shop_voucher,
+    A.transaction_fee,
+    A.platform_fee,
+    A.service_charge,
+    A.shipping_fee_total,
+    A.customs_rate,
+    A.other_fee,
+    A.dispose_purchase_fee,
+    A.cost_usd,
+    A.cost_add_usd,
+    A.profit,
+    A.incentive_fund,
+    A.period,
+    A.shop_name,
+    A.unit_cost_cny,
+    A.tax_price_cny,
+    A.remark,
+    A.approp_amount,
+    A.approp_time,
+    A.problem_ipaid,
+    A.update_time,
+    A.update_by,
+    A.create_time,
+    A.create_by,
+    A.revenue_ration,
+    A.people_num,
+    A.people_cost,
+    A.confirm_status,
+    A.site
+    </sql>
+
+    <sql id="SHOPEE_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+    <sql id="ALLOC_STRUCTURE_CONDITION">
+        <if test="param.period != null and param.period != ''">
+            AND period  = #{param.period}
+        </if>
+    </sql>
+
+
+    <select id="mergePeople" >
+        BEGIN
+        MERGE INTO lt_shopee_settlement_report a
+        USING (SELECT t.* FROM alloc_structure t  where t.status =1) struct
+        ON (struct.period = a.period AND struct.dept3 = a.department AND struct.dept4 = a.team)
+        WHEN MATCHED THEN
+        UPDATE SET a.people_num = ROUND(NVL(struct.shopee_alloc,0),12)
+
+        WHERE a.period = #{period};
+        MERGE INTO lt_shopee_settlement_report  det
+        USING (
+            SELECT detail.id,detail.PERIOD,detail.department,detail.team,
+                   case when detail.qty &lt; 0 then 0 else   detail.qty END detailSalesVol,
+                   SUM(case when detail.qty &lt; 0 then 0 else   detail.qty END) OVER(PARTITION BY detail.PERIOD, detail.department, detail.team ) AS teamsalesVol
+                    ,rowid
+            FROM  lt_shopee_settlement_report detail) src
+        ON (det.id = src.id)
+        WHEN MATCHED THEN UPDATE set
+            det.revenue_ration = DECODE (NVL(src.teamsalesVol,0),0,0, src.detailSalesVol /src.teamsalesVol),
+            det.people_num = det.people_num * DECODE (NVL(src.teamsalesVol,0),0,0, src.detailSalesVol /src.teamsalesVol)
+                          WHERE NVL(det.confirm_status,0) != 1
+                            and det.period = #{period};
+
+        UPDATE lt_shopee_settlement_report t
+        SET t.people_cost= 0  where t.period = #{period};
+            end;
+    </select>
+
+
+    <select id="mergeQty" >
+        MERGE INTO lt_shopee_settlement_report  det
+        USING (
+        SELECT detail.id,detail.PERIOD,detail.department,detail.team,
+        case when detail.qty &lt; 0 then 0 else   detail.qty END detailSalesVol,
+        SUM(case when detail.qty &lt; 0 then 0 else   detail.qty END) OVER(PARTITION BY detail.PERIOD, detail.department, detail.team ) AS teamsalesVol
+        ,rowid
+        FROM  lt_shopee_settlement_report detail) src
+        ON (det.id = src.id)
+        WHEN MATCHED THEN UPDATE set
+        det.revenue_ration = DECODE (NVL(src.teamsalesVol,0),0,0, src.detailSalesVol /src.teamsalesVol)
+        WHERE NVL(det.confirm_status,0) != 1
+              and det.period = #{period}
+    </select>
+
+
+
+    <update id="insertStructure"  parameterType="com.tadpole.cloud.platformSettlement.modular.finance.model.params.LtRakutenSettlementReportParam">
+        <!--        删除避免重复插入 -->
+        BEGIN
+        DELETE FROM lt_shopee_settlement_report
+        <where>
+            CONFIRM_STATUS = '1'
+            <include refid="SHOPEE_CONDITION"/>
+        </where>;
+        <!--                插入架构数据-->
+        INSERT INTO
+        lt_shopee_settlement_report (PERIOD ,
+        DEPARTMENT ,
+        team,
+        REVENUE_RATION ,
+        PEOPLE_NUM,
+        CREATE_TIME ,
+        CREATE_BY)
+        SELECT
+        PERIOD ,
+        DEPT3 ,
+        dept4,
+        0 REVENUE_RATION ,
+        shopee_alloc,
+        SYSDATE ,
+        #{param.createBy}
+        FROM
+        ALLOC_STRUCTURE
+        <where>
+            STATUS = '1'
+            and shopee_alloc>0
+            <include refid="ALLOC_STRUCTURE_CONDITION"/>
+        </where>;
+
+        END;
+
+
+    </update>
+
+
+</mapper>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.ReceivableDetailMapper">
+
+    <sql id="Page_Column_List">
+        D.RECEIVABLE_ID DETIAL_ID,D.SETTLEMENT_ID,D.SETTLEMENT_NO,D.INCOME_TYPE,D.ORIGINAL_CURRENCY,D.PROCEEDS_CURRENCY,
+        D.CURRENT_RESERVE_AMOUNT,D.RECEIVE_AMOUNT,D.BALANCE,D.CREATE_AT,D.UPDATE_AT,
+        D.CREATE_BY,D.UPDATE_BY,D.ID,D.SUCCESSFUL_CHARGE,D.IS_REJECT
+,R.ID RECEIVABLE_ID,R.PLATFORM_NAME,R.SHOP_NAME,R.SITE,R.FISCAL_PERIOD
+        ,R.RECEIVABLE_AMOUNT,R.RECEIVE_AMOUNT RECEIVE_AMOUNT_TOTAL,R.TOTAL_AMOUNT,R.ENDTERM_RECEIVABLE_AMOUNT,R.INITIAL_RECEIVE_AMOUNT
+        ,R.VERIFY_BY,R.STATUS, case D.IS_REJECT when 0 then '审核'
+                    when 1 then '反审核' end IS_REJECT_TXT
+    </sql>
+
+    <!--插入应收明细主表-->
+    <update  id="generateReceivable"  useGeneratedKeys="false" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.ReceivableDetail">
+        MERGE INTO CW_RECEIVABLE_DETAIL T1
+        USING (
+            SELECT
+                #{paramCondition.platformName} AS PLATFORM_NAME,
+                #{paramCondition.shopName} AS SHOP_NAME,
+                #{paramCondition.site} AS SITE,
+                #{paramCondition.fiscalPeriod} AS FISCAL_PERIOD
+                FROM dual
+        ) T2
+        ON (T1.PLATFORM_NAME=T2.PLATFORM_NAME AND T1.SHOP_NAME=T2.SHOP_NAME AND T1.SITE=T2.SITE AND T1.FISCAL_PERIOD=T2.FISCAL_PERIOD)
+        WHEN NOT MATCHED THEN
+        INSERT (T1.PLATFORM_NAME,T1.SHOP_NAME, T1.SITE,T1.FISCAL_PERIOD) VALUES (T2.PLATFORM_NAME,T2.SHOP_NAME, T2.SITE,T2.FISCAL_PERIOD)
+    </update>
+
+    <select id="queryListPage" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.ReceivableDetail"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ReceivableDetailResult">
+
+        select <include refid="Page_Column_List"/> from CW_RECEIVABLE_DETAIL_DETAIL D right join CW_RECEIVABLE_DETAIL R on D.RECEIVABLE_ID=R.ID
+        <where>
+            <if test="paramCondition.shopName!= null and paramCondition.shopName != ''">
+                and SHOP_NAME =#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                and FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.status != null and paramCondition.status != 3">
+                and R.STATUS=0
+            </if>
+        </where>
+        order by SETTLEMENT_NO asc
+    </select>
+    <select id="list" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ReceivableDetailParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.ReceivableDetailResult">
+
+        select <include refid="Page_Column_List"/> from CW_RECEIVABLE_DETAIL_DETAIL D right join CW_RECEIVABLE_DETAIL R on D.RECEIVABLE_ID=R.ID
+        <where>
+            <if test="paramCondition.shopNames != null and paramCondition.shopNames.size>0">
+                AND SHOP_NAME IN
+                <foreach collection="paramCondition.shopNames" open="(" close=")" separator=","
+                         item="shopName">
+                    #{shopName}
+                </foreach>
+            </if>
+            <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+                AND SITE IN
+                <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+                    #{site}
+                </foreach>
+            </if>
+            <choose>
+                <when test="paramCondition.MonthRange != null and paramCondition.MonthRange.size>0">
+                        AND FISCAL_PERIOD>=#{paramCondition.MonthRange[0]}
+                        AND FISCAL_PERIOD&lt;=#{paramCondition.MonthRange[1]}
+                </when>
+                <otherwise>
+                    <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                        AND FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+                    </if>
+                </otherwise>
+            </choose>
+            <if test="paramCondition.status != null and paramCondition.status != ''">
+                and R.STATUS =#{paramCondition.status}
+            </if>
+        </where>
+        order by SHOP_NAME,SITE,FISCAL_PERIOD,SETTLEMENT_NO asc
+    </select>
+    <select id="verifyList"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.ReceivableDetailParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.ReceivableDetail">
+        select * from CW_RECEIVABLE_DETAIL WHERE 1=1
+        <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+            and PLATFORM_NAME =#{paramCondition.platformName}
+        </if>
+        <if test="paramCondition.shopNames!= null and paramCondition.shopNames.size()!=0">
+            and SHOP_NAME in (
+            <foreach collection="paramCondition.shopNames" item="shopName" index="index"
+                     separator=",">
+                #{shopName}
+            </foreach>
+            )
+        </if>
+        <if test="paramCondition.sites != null and paramCondition.sites.size()!=0">
+            and SITE in (
+            <foreach collection="paramCondition.sites" item="site" index="index"
+                     separator=",">
+                #{site}
+            </foreach>
+            )
+        </if>
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            and FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+        </if>
+        <if test="paramCondition.status != null and paramCondition.status != ''">
+            and STATUS =#{paramCondition.status}
+        </if>
+    </select>
+    <select id="getEarly" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.ReceivableDetail">
+        select *
+        FROM (select *
+              FROM CW_RECEIVABLE_DETAIL R LEFT JOIN CW_RECEIVABLE_DETAIL_DETAIL D ON  R.ID= D.RECEIVABLE_ID
+              WHERE STATUS =0 AND SETTLEMENT_ID IS NOT NULL order by FISCAL_PERIOD asc)
+        WHERE rownum=1
+    </select>
+    <select id="getEarlyCheck"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.ReceivableDetail">
+        select * from (select * from CW_RECEIVABLE_DETAIL WHERE STATUS =1 order by FISCAL_PERIOD desc) where rownum=1
+    </select>
+</mapper>

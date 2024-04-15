@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.RecomSeasonRatioMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.operationManagement.modular.stock.entity.RecomSeasonRatio">
+        <result column="MATERIAL_CODE" property="materialCode" />
+        <result column="PLATFORM" property="platform" />
+        <result column="DEPARTMENT" property="department" />
+        <result column="TEAM" property="team" />
+        <result column="AREA" property="area" />
+        <result column="ASIN" property="asin" />
+        <result column="BIZDATE" property="bizdate" />
+        <result column="PRODUCT_TYPE" property="productType" />
+        <result column="PRODUCT_NAME" property="productName" />
+        <result column="MODEL" property="model" />
+        <result column="STYLE" property="style" />
+        <result column="MONTH" property="month" />
+        <result column="SEASON_RATIO" property="seasonRatio" />
+        <result column="SEASON_ADD1_RATIO" property="seasonAdd1Ratio" />
+        <result column="SEASON_ADD2_RATIO" property="seasonAdd2Ratio" />
+        <result column="SEASON_ADD3_RATIO" property="seasonAdd3Ratio" />
+        <result column="SEASON_ADD4_RATIO" property="seasonAdd4Ratio" />
+        <result column="SEASON_ADD5_RATIO" property="seasonAdd5Ratio" />
+        <result column="SEASON_ADD6_RATIO" property="seasonAdd6Ratio" />
+        <result column="TYPE" property="type" />
+        <result column="LEV" property="lev" />
+        <result column="COLOR" property="color" />
+        <result column="SEASON" property="season" />
+        <result column="LIFECYCLE" property="lifecycle" />
+        <result column="DELIVERY_TYPE" property="deliveryType" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        MATERIAL_CODE, PLATFORM, DEPARTMENT, TEAM, AREA, ASIN, BIZDATE, PRODUCT_TYPE, PRODUCT_NAME, MODEL, STYLE, MONTH, SEASON_RATIO, SEASON_ADD1_RATIO, SEASON_ADD2_RATIO, SEASON_ADD3_RATIO, SEASON_ADD4_RATIO, SEASON_ADD5_RATIO, SEASON_ADD6_RATIO, TYPE, LEV, COLOR, SEASON, LIFECYCLE, DELIVERY_TYPE
+    </sql>
+</mapper>

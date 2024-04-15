@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgImportCompanyMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        C.ID,C.COMPANY_NAME_CN,C.COMPANY_NAME_EN,C.ADDR_CN,C.ADDR_EN,C.TAX_NUM,C.CUSTOMS_NUM,C.ARRIVAL_COUNTRY_CODE,
+        C.ARRIVAL_COUNTRY_NAME,C.INCLUDE_TAX,C.CONTACT_INFO,C.CONTRACT_NO,C.CREATE_TIME,C.CREATE_USER,C.UPDATE_TIME,C.UPDATE_USER
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgImportCompanyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgImportCompanyResult">
+        SELECT
+            CASE C.INCLUDE_TAX WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS includeTaxDesc,
+            <include refid="Base_Column_List"></include>
+        FROM TG_IMPORT_COMPANY C
+        <where>
+            <if test="param.taxNum != null and param.taxNum != ''">
+                C.TAX_NUM = #{param.taxNum}
+            </if>
+            <if test="param.customsNum != null and param.customsNum != ''">
+                AND C.CUSTOMS_NUM = #{param.customsNum}
+            </if>
+            <if test="param.includeTax != null and param.includeTax != ''">
+                AND C.INCLUDE_TAX = #{param.includeTax}
+            </if>
+            <if test="param.companyNameCnList != null and param.companyNameCnList.size() != 0">
+                AND C.COMPANY_NAME_CN IN
+                <foreach collection="param.companyNameCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.arrivalCountryCodeList != null and param.arrivalCountryCodeList.size() != 0">
+                AND C.ARRIVAL_COUNTRY_CODE IN
+                <foreach collection="param.arrivalCountryCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY C.CREATE_TIME DESC, C.ID DESC
+    </select>
+
+    <!-- 进口商名称下拉 -->
+    <select id="inCompanyNameSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT C.COMPANY_NAME_CN AS name FROM TG_IMPORT_COMPANY C
+        WHERE C.COMPANY_NAME_CN IS NOT NULL
+        GROUP BY C.COMPANY_NAME_CN
+    </select>
+
+    <!-- 实体公司下拉 -->
+    <select id="companySelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgEbmsCompanyResult">
+        SELECT
+            C.COM_NAME_CN AS companyNameCn,
+            C.COM_NAME_EN AS companyNameEn,
+            C.COM_UNI_SOC_CRE_CODE AS companyNum,
+            C.COM_ADDR_CN AS addrCn,
+            C.COM_ADDR_EN AS addrEn,
+            C.COM_CUSTOMS_NO AS customsNum,
+            C.COM_TEL
+        FROM TB_COM_ENTITY C
+        WHERE C.COM_STATE = '正常'
+        <if test="comTaxType != null and comTaxType != ''">
+            AND C.COM_TAX_TYPE = #{comTaxType}
+        </if>
+    </select>
+</mapper>

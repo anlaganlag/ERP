@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.K3PurchaseInStockOrderMapper">
+
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.K3PurchaseInStockOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.K3PurchaseInStockOrderResult">
+        SELECT  *
+        FROM K3_PURCHASE_IN_STOCK_ORDER o
+            JOIN K3_PURCHASE_IN_STOCK_ORDER_ITEM oi  ON o.F_BILL_NO=oi.F_BILL_NO
+        <where>
+
+            <if test="paramCondition.fBillNo != null and paramCondition.fBillNo != ''">
+                AND o.F_BILL_NO like '%' || #{paramCondition.fBillNo} ||'%'
+            </if>
+
+            <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+                AND o.SYNC_STATUS = #{paramCondition.syncStatus}
+            </if>
+
+            <if test="paramCondition.fStockId != null and paramCondition.fStockId != ''">
+                AND oi.F_STOCK_ID = #{paramCondition.fStockId}
+            </if>
+
+            <if test="paramCondition.fMaterialId != null and paramCondition.fMaterialId != ''">
+                AND oi.F_MATERIAL_ID like '%' || #{paramCondition.fMaterialId} ||'%'
+            </if>
+            <if test="paramCondition.fPaezBase2 != null and paramCondition.fPaezBase2 != ''">
+                AND oi.F_PAEZ_BASE2 = #{paramCondition.fPaezBase2}
+            </if>
+
+            <if test="paramCondition.startCreateTime != null and paramCondition.startCreateTime != ''">
+                AND o.SYNC_TIME &gt;= to_date(#{paramCondition.startCreateTime},'YYYY-MM-DD HH24:MI:SS')
+            </if>
+
+            <if test="paramCondition.endCreateTime != null and paramCondition.endCreateTime != ''">
+                AND o.SYNC_TIME &lt;= to_date(#{paramCondition.endCreateTime},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+            </if>
+
+        </where>
+        ORDER BY o.CREATED_TIME DESC,o.F_BILL_NO DESC,oi.F_MATERIAL_ID DESC
+    </select>
+
+
+</mapper>

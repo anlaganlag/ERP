@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.StatementVoucherMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap"
+               type="com.tadpole.cloud.platformSettlement.api.finance.model.result.VoucherDetailResult">
+        <result column="FEXPLANATION" property="FEXPLANATION"/>
+        <result column="FACCOUNTID" property="FACCOUNTID"/>
+        <result column="FCURRENCYID" property="FCURRENCYID"/>
+        <result column="FEXCHANGERATETYPE" property="FEXCHANGERATETYPE"/>
+        <result column="FEXCHANGERATE" property="FEXCHANGERATE"/>
+        <result column="FUnitId" property="FUnitId"/>
+        <result column="FPrice" property="FPrice"/>
+        <result column="FQty" property="FQty"/>
+        <result column="FAMOUNTFOR" property="FAMOUNTFOR"/>
+        <result column="FDEBIT" property="FDEBIT"/>
+        <result column="FCREDIT" property="FCREDIT"/>
+        <result column="FSettleTypeID" property="FSettleTypeID"/>
+        <result column="FSETTLENO" property="FSETTLENO"/>
+        <result column="FBUSNO" property="FBUSNO"/>
+        <result column="SHOPCODE" property="SHOPCODE"/>
+    </resultMap>
+
+    <select id="queryVoucherDetail" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementVoucher"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementVoucherDetail">
+
+        select D.* from CW_STATEMENT_VOUCHER_DETAIL D LEFT JOIN   CW_STATEMENT_VOUCHER V ON D.VOUCHER_ID=V.VOUCHER_ID
+        WHERE V.RECORD_ID=#{paramCondition.recordId}
+
+    </select>
+
+
+    <select id="voucherDetailTotal"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementVoucher"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementVoucherDetail">
+
+
+        select '合计' DIGEST,
+               (sum(case when subject_code='6001.002' then original_amount else 0 end)
+                   -sum(case when subject_code!='6001.002' then original_amount else 0 end)) ORIGINAL_AMOUNT,
+               sum(DEBIT_AMOUNT) DEBIT_AMOUNT,sum(CREDIT_AMOUNT) CREDIT_AMOUNT from CW_STATEMENT_VOUCHER_DETAIL D                                                                                       LEFT JOIN   CW_STATEMENT_VOUCHER V ON D.VOUCHER_ID=V.VOUCHER_ID
+        WHERE V.RECORD_ID=#{paramCondition.recordId}
+
+    </select>
+    <select id="getSyncDetail"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementVoucher"
+            resultMap="BaseResultMap">
+
+        select D.DIGEST FEXPLANATION,
+               D.SUBJECT_CODE FACCOUNTID,
+               D.CURRENCY FCURRENCYID,
+               'HLTX01_SYS' FEXCHANGERATETYPE,
+               D.EXCHANGE_RATE FEXCHANGERATE,
+               D.ORIGINAL_AMOUNT FAMOUNTFOR,
+               D.DEBIT_AMOUNT FDEBIT,
+               D.CREDIT_AMOUNT FCREDIT ,
+               C.SHOP_CODE SHOPCODE
+        from CW_STATEMENT_VOUCHER_DETAIL D
+                 LEFT JOIN   CW_STATEMENT_VOUCHER V ON D.VOUCHER_ID=V.VOUCHER_ID
+                 LEFT JOIN CW_SHOP_CURRENCY C ON C.SHOP=D.ACCOUNTING_DIMENSIONS
+        WHERE V.RECORD_ID=#{paramCondition.recordId}
+
+    </select>
+</mapper>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.MabangAddPurchaseOrderMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangAddPurchaseOrder">
+        <id column="ID" property="id" />
+        <result column="SUMMARY_ID" property="summaryId" />
+        <result column="ANTI_AUDIT" property="antiAudit" />
+        <result column="WAREHOUSE_NAME" property="warehouseName" />
+        <result column="PROVIDER_NAME" property="providerName" />
+        <result column="EMPLOYEE_NAME" property="employeeName" />
+        <result column="ORDER_BILL_NO" property="orderBillNo" />
+        <result column="EXPRESS_MONEY" property="expressMoney" />
+        <result column="ESTIMATED_TIME" property="estimatedTime" />
+        <result column="EXPRESS_TYPE" property="expressType" />
+        <result column="EXPRESS_ID" property="expressId" />
+        <result column="CONTENT" property="content" />
+        <result column="NOT_CALCULATE" property="notCalculate" />
+        <result column="IS_AUTO_SUBMIT_CHECK" property="isAutoSubmitCheck" />
+        <result column="GROUP_ID" property="groupId" />
+        <result column="BILL_NO" property="billNo" />
+        <result column="SPLIT_TOTAL" property="splitTotal" />
+        <result column="SPLIT_NUM" property="splitNum" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="APPROVE_DATE" property="approveDate" />
+        <result column="CANCEL_STATUS" property="cancelStatus" />
+        <result column="CANCEL_DATE" property="cancelDate" />
+        <result column="STOCK_LIST" property="stockList" />
+        <result column="IS_DELETE" property="isDelete" />
+        <result column="SYNC_TYPE" property="syncType" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="SYNC_STATUS" property="syncStatus" />
+        <result column="SYNC_SUCCESS_TIMES" property="syncSuccessTimes" />
+        <result column="SYNC_FAIL_TIMES" property="syncFailTimes" />
+        <result column="SYNC_REQUEST_MSG" property="syncRequestMsg" />
+        <result column="SYNC_RESULT_MSG" property="syncResultMsg" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, SUMMARY_ID, ANTI_AUDIT, WAREHOUSE_NAME, PROVIDER_NAME, EMPLOYEE_NAME, ORDER_BILL_NO, EXPRESS_MONEY, ESTIMATED_TIME, EXPRESS_TYPE, EXPRESS_ID, CONTENT, NOT_CALCULATE, IS_AUTO_SUBMIT_CHECK, GROUP_ID, BILL_NO, SPLIT_TOTAL, SPLIT_NUM, DOCUMENT_STATUS, CREATE_DATE, APPROVE_DATE, CANCEL_STATUS, CANCEL_DATE, STOCK_LIST, IS_DELETE, SYNC_TYPE, SYNC_TIME, SYNC_STATUS, SYNC_SUCCESS_TIMES, SYNC_FAIL_TIMES, SYNC_REQUEST_MSG, SYNC_RESULT_MSG, CREATE_TIME, UPDATE_TIME
+    </sql>
+
+    <sql id="Display_Column_List">
+        BILL_NO, APPROVE_DATE, SPLIT_NUM, WAREHOUSE_NAME, SYNC_STATUS, SYNC_TIME, GROUP_ID
+    </sql>
+
+    <sql id="List_Condition">
+
+        <if test="paramCondition != null ">
+
+            <if test="paramCondition.billNo != null and paramCondition.billNo != ''">
+                AND t.BILL_NO  like '%'|| #{paramCondition.billNo}||'%'
+            </if>
+
+            <if test="paramCondition.groupId != null and paramCondition.groupId != ''">
+                AND t.GROUP_ID like '%'||  #{paramCondition.groupId} ||'%'
+            </if>
+
+            <if test="paramCondition.warehouseName != null and paramCondition.warehouseName != ''">
+                AND t.WAREHOUSE_NAME like '%'||  #{paramCondition.warehouseName}  ||'%'
+            </if>
+
+            <if test="paramCondition.approveStartDate != null  and paramCondition.approveEndDate != null ">
+                and t.APPROVE_DATE >= #{paramCondition.approveStartDate}
+                AND t.APPROVE_DATE  &lt; #{paramCondition.approveEndDate}+1
+            </if>
+
+            <if test="paramCondition.createStartDate != null  and paramCondition.createEndDate != null ">
+                and t.CREATE_DATE >=  #{paramCondition.createStartDate}
+                AND t.CREATE_DATE  &lt; #{paramCondition.createEndDate}+1
+
+            </if>
+
+            <if test="paramCondition.syncStartDate != null  and paramCondition.syncEndDate != null ">
+                and t.SYNC_TIME >=  #{paramCondition.syncStartDate}
+                AND t.SYNC_TIME &lt; #{paramCondition.syncEndDate}+1
+            </if>
+
+            <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+                AND t.SYNC_STATUS = #{paramCondition.syncStatus}
+            </if>
+        </if>
+    </sql>
+
+
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangAddPurchaseOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangAddPurchaseOrderResult">
+        SELECT  <include refid="Display_Column_List"/> FROM MABANG_ADD_PURCHASE_ORDER t
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY APPROVE_DATE DESC,SYNC_TIME DESC
+    </select>
+
+
+    <sql id="showColumns">
+        t.ID,
+        t.BILL_NO,
+        t.APPROVE_DATE,
+        t.SPLIT_NUM,
+        t.WAREHOUSE_NAME,
+        t.SYNC_STATUS,
+        CASE t.SYNC_STATUS WHEN '0' THEN to_char('同步失败：'||t.SYNC_RESULT_MSG) ELSE '同步成功' END AS syncStatusName,
+        to_char(t.SYNC_RESULT_MSG) SYNC_RESULT_MSG,
+        t.SYNC_TIME,
+        t.GROUP_ID,
+        i.ID AS IID,
+        i.MATERIAL_CODE,
+        i.MATERIAL_NAME,
+        i.QTY,
+        'Pcs' AS PCS,
+        i.SRCSTOCK_NAME,
+        i.DESTSTOCK_NAME
+    </sql>
+    <select id="mergeList" resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangAddPurchaseOrder2Result">
+        SELECT <include refid="showColumns" /> FROM MABANG_ADD_PURCHASE_ORDER t
+        LEFT JOIN K3_TRANSFER_MABANG_ITEM i ON t.BILL_NO = i.BILL_NO AND t.GROUP_ID = i.GROUP_ID
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY APPROVE_DATE DESC,SYNC_TIME DESC
+    </select>
+</mapper>

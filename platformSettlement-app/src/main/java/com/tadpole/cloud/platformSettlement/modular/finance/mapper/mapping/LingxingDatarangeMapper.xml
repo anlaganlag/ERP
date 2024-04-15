@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LingxingDatarangeMapper">
+
+    <sql id="Page_Column_List">
+        D.ID,Y.PLATFORM_NAME as platformName,Y.SHOP_NAME as shopName,Y.SITE as site,'Date Range' as ReportType,'Standard' BILL_TYPE,D.SETTLEMENT_ID as settlementId,
+        D.SID, D.IS_TO_B, D.REPORT_DATE_MONTH, D.REPORT_INDEX, D.DATE_STR, D.DATE_LOCALE, D.DATE_ISO,
+        D.TYPE, D.TYPE_STR, D.ORDER_ID, D.SKU, D.DESCRIPTION, D.QUANTITY, D.MARKETPLACE, D.FULFILLMENT, D.ORDER_CITY, D.ORDER_STATE,
+        D.ORDER_POSTAL, D.PRODUCT_SALES, D.PRODUCT_SALES_TAX, D.SHIPPING_CREDITS, D.SHIPPING_CREDITS_TAX, D.GIFT_WRAP_CREDITS,
+        D.GIFT_WRAP_CREDITS_TAX, D.PROMOTIONAL_REBATES, D.PROMOTIONAL_REBATES_TAX, D.SALES_TAX_COLLECTED, D.MARKETPLACE_FACILITATOR_TAX,
+        D.SELLING_FEES, D.FBA_FEES, D.OTHER_TRANSACTION_FEES, D.OTHER, D.TOTAL, D.UPDATE_DATE,
+        D.DATE_TIME as dateStr,D.CURRENCY as currency,D.CREATE_DATE as createDate
+    </sql>
+
+    <sql id="List_Condition">
+        <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+            and  Y.PLATFORM_NAME=#{paramCondition.platformName}
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+            and  D.SETTLEMENT_ID=#{paramCondition.settlementId}
+        </if>
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and  Y.SHOP_NAME=#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and  Y.SITE=#{paramCondition.site}
+        </if>
+        <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+            and  D.DATE_TIME &gt;=to_date(#{paramCondition.startTime},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+        <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+            and  D.DATE_TIME &lt;=to_date(#{paramCondition.endTime},'YYYY-MM-DD HH24:MI:SS')
+        </if>
+    </sql>
+
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.LingxingDatarangeParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.LingxingDatarangeResult">
+
+            SELECT <include refid="Page_Column_List"></include> FROM CW_LINGXING_DATARANGE D
+            LEFT JOIN CW_SHOP_CURRENCY Y ON Y.SHOP_NAME=D.SHOP_NAME AND Y.SITE=D.SITE
+            AND Y.PLATFORM_NAME='Amazon'
+            <where>
+                <include refid="List_Condition"></include>
+            </where>
+            order by D.CREATE_DATE DESC
+    </select>
+
+    <select id="getShopSid" resultType="java.lang.Long">
+        SELECT SID  FROM CW_LINGXING_SHOP_INFO GROUP BY SID
+    </select>
+
+    <select id="getBankAccount" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.LingxingDatarangeParam"
+            resultType="java.lang.String">
+        SELECT SHOPCOLACCBANK+'-'+SHOPCOLACCNO FROM TBCOMSHOP
+        <where>
+                and  elePlatformName='Amazon'
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and  shopNameSimple=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and  countryCode=#{paramCondition.site}
+            </if>
+        </where>
+        GROUP BY
+            ELEPLATFORMNAME,SHOPNAMESIMPLE,COUNTRYCODE,SHOPCOLACCNO,SHOPCOLCURRENCY,SHOPCOLACCBANK
+    </select>
+
+    <select id="getSettlementIdSelect" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.LingxingDatarangeParam"
+            resultType="java.util.Map">
+        SELECT distinct SETTLEMENT_ID FROM CW_LINGXING_DATARANGE D
+        LEFT JOIN CW_SHOP_CURRENCY Y ON Y.SHOP_NAME=D.SHOP_NAME AND Y.SITE=D.SITE
+        AND Y.PLATFORM_NAME='Amazon'
+        <where>
+            <if test="paramCondition.platformName != null and paramCondition.platformName != ''">
+                and  Y.PLATFORM_NAME=#{paramCondition.platformName}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                and  Y.SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site != ''">
+                and  Y.SITE=#{paramCondition.site}
+            </if>
+        </where>
+    </select>
+
+    <!--领星生成数据写入DataRange主明细数据-->
+    <update id="lingXingToDatarange" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.SettlementReportCheck">
+        MERGE INTO CW_DATARANGE T1
+            USING (SELECT #{paramCondition.shopName} AS SHOP_NAME,#{paramCondition.site} AS SITE,#{paramCondition.settlementId} AS SETTLEMENT_ID,
+                    #{paramCondition.startTime} AS SETTLEMENT_START_DATE,#{paramCondition.endTime} AS SETTLEMENT_END_DATE,#{paramCondition.endTime} AS DEPOSIT_DATE,
+                    #{paramCondition.totalMoney} AS TOTAL_AMOUNT,#{paramCondition.originalCurrency} AS CURRENCY,#{paramCondition.createAt} AS CREATE_AT FROM DUAL) T2
+            ON (T1.SYS_SHOPS_NAME = T2.SHOP_NAME AND T1.SYS_SITE = T2.SITE AND T1.SETTLEMENT_ID = T2.SETTLEMENT_ID)
+            WHEN NOT MATCHED THEN
+                INSERT
+                    (T1.SETTLEMENT_ID,T1.SETTLEMENT_START_DATE,T1.SETTLEMENT_END_DATE,T1.DEPOSIT_DATE,T1.TOTAL_AMOUNT,T1.SYS_SITE,
+                     T1.SYS_SHOPS_NAME,T1.CURRENCY,T1.STATUS,T1.DATA_SOURCE_TYPE,T1.CREATE_TIME)
+                    VALUES
+                    (T2.SETTLEMENT_ID,T2.SETTLEMENT_START_DATE,T2.SETTLEMENT_END_DATE,T2.DEPOSIT_DATE,T2.TOTAL_AMOUNT,T2.SITE,
+                     T2.SHOP_NAME,T2.CURRENCY,1,1,T2.CREATE_AT)
+    </update>
+
+    <insert id="lingXingToDataRangeDetailComfirm" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.LingxingDatarangeParam">
+        INSERT INTO CW_DATARANGE_DETAIL_COMFIRM
+        (SETTLEMENT_ID,
+         POSTED_DATE,
+         DEPOSIT_DATE,
+         ORDER_ID,
+         SKU,
+         MARKETPLACE_NAME,
+         PLATFORM,
+         SYS_SITE,
+         SYS_SHOPS_NAME,
+         FINANCE_TYPE,
+         TRANSACTION_TYPE,
+         AMOUNT_TYPE,
+         AMOUNT_DESCRIPTION,
+         CURRENCY_CODE,
+         QUANTITY_PURCHASED,
+         AMT_SOURCE,
+         TOTAL_AMOUNT,
+         CREATE_TIME,
+         DATA_SOURCE_TYPE
+        )
+        SELECT
+            T.SETTLEMENT_ID,
+            T.POSTED_DATE,
+            T.DEPOSIT_DATE,
+            T.ORDER_ID,
+            T.SKU,
+            T.MARKETPLACE_NAME,
+            T.PLATFORM,
+            T.SYS_SITE,
+            T.SYS_SHOPS_NAME,
+            NVL(T3.FINANCIAL_CLASSIFICATION,T4.FINANCIAL_CLASSIFICATION) AS FINANCE_TYPE,
+            T.TRANSACTION_TYPE,
+            T.AMOUNT_TYPE,
+            T.AMOUNT_DESCRIPTION,
+            T.CURRENCY_CODE,
+            T.QUANTITY_PURCHASED,
+            T.AMT_SOURCE,
+            T2.TOTAL_AMOUNT,
+            T.CREATE_TIME,
+            1 AS DATA_SOURCE_TYPE
+        FROM
+            (SELECT SETTLEMENT_ID,
+                    TO_CHAR(TRUNC(DATE_TIME),'YYYYMM') AS PERIOD,
+                    DATE_TIME AS POSTED_DATE,
+                    TO_DATE('1900-1-1','yyyy-mm-dd') AS DEPOSIT_DATE,
+                    ORDER_ID,
+                    'NULL' AS ORDER_ITEM_CODE,
+                    SKU,
+                    'NULL' AS SKUCODE,
+                    'NULL' AS MERCHANT_ORDER_ID,
+                    'NULL' AS MERCHANT_ORDER_ITEM_ID,
+                    'NULL' AS MERCHANT_ADJUSTMENT_ITEM_ID,
+                    'NULL' AS SHIPMENT_ID,
+                    'NULL' AS ADJUSTMENT_ID,
+                    'NULL' AS FULFILLMENT_ID,
+                    MARKETPLACE AS MARKETPLACE_NAME,
+                    PLATFORM_NAME AS PLATFORM,
+                    SITE AS SYS_SITE,
+                    SHOP_NAME AS SYS_SHOPS_NAME,
+                    TYPE_STR AS TRANSACTION_TYPE,
+                    DESCRIPTION AS AMOUNT_DESCRIPTION,
+                    CURRENCY AS CURRENCY_CODE,
+                    QUANTITY AS QUANTITY_PURCHASED,
+                    AMOUNT_TYPE,
+                    AMOUNT AS AMT_SOURCE,
+                    'Settlement_Datarange' AS  DATA_SOURCE,
+                    CREATE_DATE AS CREATE_TIME
+             FROM 	(SELECT T.*,y.platform_name,y.original_currency
+                         FROM cw_lingxing_datarange T
+                         LEFT JOIN CW_SHOP_CURRENCY Y ON Y.SHOP_NAME=T.SHOP_NAME AND Y.SITE=T.SITE
+                         AND Y.PLATFORM_NAME='Amazon' ) T
+                 UNPIVOT
+                 ----行转列
+                      (AMOUNT FOR AMOUNT_TYPE IN
+                       (PRODUCT_SALES,
+                        PRODUCT_SALES_TAX,
+                        SHIPPING_CREDITS,
+                        SHIPPING_CREDITS_TAX,
+                        GIFT_WRAP_CREDITS,
+                        GIFT_WRAP_CREDITS_TAX,
+                        SELLING_FEES,
+                        FBA_FEES,
+                        OTHER_TRANSACTION_FEES,
+                        OTHER
+                        ))
+             WHERE NVL(AMOUNT,0)!=0) T
+                INNER JOIN CW_DATARANGE DT ON DT.SETTLEMENT_ID=T.SETTLEMENT_ID
+                LEFT JOIN
+            (SELECT
+                 SUM(TOTAL) AS TOTAL_AMOUNT,
+                 MIN(DATE_TIME) AS SETTLEMENT_START_DATE,
+                 MAX(DATE_TIME) AS SETTLEMENT_END_DATE,
+                 SETTLEMENT_ID
+             FROM cw_lingxing_datarange
+             GROUP BY
+                 SETTLEMENT_ID) T2
+            ON T.SETTLEMENT_ID=T2.SETTLEMENT_ID
+                LEFT JOIN (SELECT *  FROM CW_FINANCIAL_CLASSIFICATION WHERE STATUS=1 AND VERIFY_STATUS=1 AND CLASSIFICATION_TYPE='DataRange') T3
+                          ON UPPER(NVL(T3.AMOUNT_TYPE,0))=UPPER(NVL(T.AMOUNT_TYPE,0))
+                              AND DECODE(T3.COST_DESCRIPTION,NULL,T.AMOUNT_DESCRIPTION,T3.COST_DESCRIPTION)=T.AMOUNT_DESCRIPTION ----空值默认不做条件
+                              AND UPPER(T3.TRADE_TYPE)=UPPER(T.TRANSACTION_TYPE)
+                              AND T3.SITE=T.SYS_SITE
+                LEFT JOIN (SELECT *  FROM CW_FINANCIAL_CLASSIFICATION WHERE STATUS=1 AND VERIFY_STATUS=1 AND CLASSIFICATION_TYPE='DataRange') T4
+                          ON UPPER(T.TRANSACTION_TYPE)=UPPER(T4.TRADE_TYPE)
+                              AND UPPER(NVL(T.AMOUNT_TYPE,0))=UPPER(NVL(T4.AMOUNT_TYPE,0))
+                              AND T.AMOUNT_DESCRIPTION LIKE T4.COST_DESCRIPTION
+                              AND T.SYS_SITE=T4.SITE
+                              AND T4.CLASSIFICATION_TYPE='DataRange'
+        WHERE DT.STATUS=1  AND DT.SETTLEMENT_ID= #{paramCondition.settlementId}
+    </insert>
+
+
+</mapper>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.AmazonAdsInvoicesMapper">
+
+    <select id="selecMyPage"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.AmazonAdsInvoicesResult">
+        SELECT
+        b.account_name shopName,a.*
+        FROM Amazon_Ads_Invoices a
+        left join  amazon_seller_info b on a.seller_id=b.seller_id and a.country_code=b.country_code
+        where 1=1
+
+
+        <if test="param.accountName!= null and param.accountName.size()>0">
+            and b.account_name in
+            <foreach item="item" index="index" collection="param.accountName" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.countryCode!= null and param.countryCode.size()>0">
+            and a.country_code in
+            <foreach item="item" index="index" collection="param.countryCode" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.startDate != null and param.endDate != null and param.startDate != '' and param.endDate !='' ">
+            AND invoice_date &lt;= to_date(#{param.endDate},'yyyy-MM-dd')
+            AND invoice_date >=to_date(#{param.startDate},'yyyy-MM-dd')
+        </if>
+        order by  invoice_date desc,a.account_name,a.country_code
+    </select>
+    <select id="export"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.AmazonAdsInvoicesResult">
+        SELECT
+        b.account_name shopName,a.*
+        FROM Amazon_Ads_Invoices a
+        left join  amazon_seller_info b on a.seller_id=b.seller_id and a.country_code=b.country_code
+        where 1=1
+
+
+        <if test="param.accountName!= null and param.accountName.size()>0">
+            and b.account_name in
+            <foreach item="item" index="index" collection="param.accountName" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="param.countryCode!= null and param.countryCode.size()>0">
+            and a.country_code in
+            <foreach item="item" index="index" collection="param.countryCode" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="param.startDate != null and param.endDate != null and param.startDate != '' and param.endDate !='' ">
+            AND invoice_date &lt;= to_date(#{param.endDate},'yyyy-MM-dd')
+            AND invoice_date >=to_date(#{param.startDate},'yyyy-MM-dd')
+        </if>
+        order by  invoice_date desc,a.account_name,a.country_code
+    </select>
+</mapper>

@@ -1,0 +1,861 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgBaseProductMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Select_Column_List">
+        P.ID,P.MATERIAL_CODE,P.MAIN_MATERIAL_CODE,P.PRE_MATERIAL_CODE,P.MATERIAL_TYPE,P.PRODUCT_NAME,P.COMPANY_BRAND,P.INVOICE_PRO_NAME_CN,P.INVOICE_PRO_NAME_EN,P.CLEAR_MATERIAL_CN,P.CLEAR_MATERIAL_EN,P.CUSTOMS_CODE,P.FIT_BRAND,P.STYLE,
+        P.IS_CHARGED,P.IS_MAGNET,P.ESSENTIAL_FACTOR,P.ESSENTIAL_FACTOR_TEMP,P.AUDIT_STATUS,P.AUDIT_USER,P.AUDIT_TIME,P.ADVICE_SUPPLIER AS supplierName,P.K3_PRICE,P.INCLUDE_TAX,P.IS_MAKE_INVOICE,
+        P.TAX_REFUND,P.GROSS_PROFIT_RATE,P.GROSS_WEIGHT_ORG,P.WEIGHT_UNIT_ORG,P.DATA_TYPE,P.CREATE_TIME,P.CREATE_USER,P.UPDATE_TIME,P.UPDATE_USER,P.REMARK
+    </sql>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        P.ID,P.MATERIAL_CODE,P.MAIN_MATERIAL_CODE,P.PRE_MATERIAL_CODE,P.MATERIAL_TYPE,P.PRODUCT_NAME,P.COMPANY_BRAND,P.INVOICE_PRO_NAME_CN,P.INVOICE_PRO_NAME_EN,P.CLEAR_MATERIAL_CN,P.CLEAR_MATERIAL_EN,P.CUSTOMS_CODE,P.FIT_BRAND,P.STYLE,
+        P.IS_CHARGED,P.IS_MAGNET,P.ESSENTIAL_FACTOR,P.ESSENTIAL_FACTOR_TEMP,P.AUDIT_STATUS,P.AUDIT_USER,P.AUDIT_TIME,P.ADVICE_SUPPLIER,P.K3_PRICE,P.INCLUDE_TAX,P.IS_MAKE_INVOICE,
+        P.TAX_REFUND,P.GROSS_PROFIT_RATE,P.GROSS_WEIGHT_ORG,P.WEIGHT_UNIT_ORG,P.DATA_TYPE,P.CREATE_TIME,P.CREATE_USER,P.UPDATE_TIME,P.UPDATE_USER,P.REMARK
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgBaseProductParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductResult">
+        SELECT
+            CASE P.IS_CHARGED WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isChargedDesc,
+            CASE P.IS_MAGNET WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isMagnetDesc,
+            CASE WHEN P.AUDIT_STATUS = '1' THEN '审核通过'
+            WHEN P.AUDIT_STATUS = '0' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '0' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            WHEN P.AUDIT_STATUS = '2' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '2' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            ELSE ''
+            END AS auditStatusDesc,
+            CASE P.INCLUDE_TAX WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS includeTaxDesc,
+            CASE P.IS_MAKE_INVOICE WHEN '0' THEN '否' WHEN '1' THEN '能' ELSE '' END AS isMakeInvoiceDesc,
+            CASE WHEN P.PRE_MATERIAL_CODE IS NULL THEN P.MATERIAL_CODE ELSE P.MATERIAL_CODE || '(' || P.PRE_MATERIAL_CODE || ')' END AS materialCodeStr,
+            <include refid="Base_Select_Column_List"></include>
+        FROM TG_BASE_PRODUCT P
+        WHERE
+            P.DATA_TYPE = '0'
+            <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                AND P.MATERIAL_CODE IN
+                <foreach collection="param.materialCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productNameList != null and param.productNameList.size() != 0">
+                AND P.PRODUCT_NAME IN
+                <foreach collection="param.productNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameCnList != null and param.invoiceProNameCnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_CN IN
+                <foreach collection="param.invoiceProNameCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameEnList != null and param.invoiceProNameEnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_EN IN
+                <foreach collection="param.invoiceProNameEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialCnList != null and param.clearMaterialCnList.size() != 0">
+                AND P.CLEAR_MATERIAL_CN IN
+                <foreach collection="param.clearMaterialCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialEnList != null and param.clearMaterialEnList.size() != 0">
+                AND P.CLEAR_MATERIAL_EN IN
+                <foreach collection="param.clearMaterialEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.customsCodeList != null and param.customsCodeList.size() != 0">
+                AND P.CUSTOMS_CODE IN
+                <foreach collection="param.customsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '0'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2')
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '1'.toString()">
+                AND P.AUDIT_STATUS = #{param.auditStatus}
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '3'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2') AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL
+            </if>
+            <if test="param.adviceSupplierList != null and param.adviceSupplierList.size() != 0">
+                AND P.ADVICE_SUPPLIER IN
+                <foreach collection="param.adviceSupplierList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.includeTax != null and param.includeTax != ''">
+                AND P.INCLUDE_TAX = #{param.includeTax}
+            </if>
+            <if test="param.applyEmpty != null and param.applyEmpty == '1'.toString()">
+                AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL)
+            </if>
+            <if test="param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString()">
+                AND (P.INVOICE_PRO_NAME_EN IS NULL OR P.CLEAR_MATERIAL_EN IS NULL OR P.IS_MAGNET IS NULL)
+            </if>
+            <if test="(param.countryCodeList != null and param.countryCodeList.size() != 0) or (param.hsCodeList != null and param.hsCodeList.size() != 0)">
+                AND P.ID IN (
+                    SELECT D.PID FROM TG_BASE_PRODUCT_DETAIL D
+                    <where>
+                        <if test="param.countryCodeList != null and param.countryCodeList.size() != 0">
+                            D.COUNTRY_CODE IN
+                            <foreach collection="param.countryCodeList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                            </foreach>
+                        </if>
+                        <if test="param.hsCodeList != null and param.hsCodeList.size() != 0">
+                            AND D.HSCODE IN
+                            <foreach collection="param.hsCodeList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                            </foreach>
+                        </if>
+                    </where>
+                )
+            </if>
+            <if test="(param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString())">
+                AND P.ID IN (
+                    SELECT P.ID FROM TG_BASE_PRODUCT P
+                    LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+                    WHERE D.COUNTRY_CODE IS NULL OR D.HSCODE IS NULL
+                )
+            </if>
+        ORDER BY P.CREATE_TIME DESC, P.ID DESC
+    </select>
+
+    <!-- 导出 -->
+    <select id="export"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgBaseProductParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductResult">
+        SELECT
+            CASE P.IS_CHARGED WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isChargedDesc,
+            CASE P.IS_MAGNET WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isMagnetDesc,
+            CASE WHEN P.AUDIT_STATUS = '1' THEN '审核通过'
+            WHEN P.AUDIT_STATUS = '0' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '0' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            WHEN P.AUDIT_STATUS = '2' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '2' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            ELSE ''
+            END AS auditStatusDesc,
+            CASE P.INCLUDE_TAX WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS includeTaxDesc,
+            CASE P.IS_MAKE_INVOICE WHEN '0' THEN '否' WHEN '1' THEN '能' ELSE '' END AS isMakeInvoiceDesc,
+            CASE WHEN P.PRE_MATERIAL_CODE IS NULL THEN P.MATERIAL_CODE ELSE P.MATERIAL_CODE || '(' || P.PRE_MATERIAL_CODE || ')' END AS materialCodeStr,
+            D.COUNTRY_CODE,
+            D.COUNTRY_NAME,
+            D.HSCODE,
+            R.CHANGE_TAX_RATE,
+            R.TAX_RATE,
+            R.ADD_TAX_RATE,
+            <include refid="Base_Select_Column_List"></include>
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+        WHERE
+            P.DATA_TYPE = '0'
+            <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                AND P.MATERIAL_CODE IN
+                <foreach collection="param.materialCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productNameList != null and param.productNameList.size() != 0">
+                AND P.PRODUCT_NAME IN
+                <foreach collection="param.productNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameCnList != null and param.invoiceProNameCnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_CN IN
+                <foreach collection="param.invoiceProNameCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameEnList != null and param.invoiceProNameEnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_EN IN
+                <foreach collection="param.invoiceProNameEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialCnList != null and param.clearMaterialCnList.size() != 0">
+                AND P.CLEAR_MATERIAL_CN IN
+                <foreach collection="param.clearMaterialCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialEnList != null and param.clearMaterialEnList.size() != 0">
+                AND P.CLEAR_MATERIAL_EN IN
+                <foreach collection="param.clearMaterialEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.customsCodeList != null and param.customsCodeList.size() != 0 != ''">
+                AND P.CUSTOMS_CODE IN
+                <foreach collection="param.customsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '0'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2')
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '1'.toString()">
+                AND P.AUDIT_STATUS = #{param.auditStatus}
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '3'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2') AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL
+            </if>
+            <if test="param.adviceSupplierList != null and param.adviceSupplierList.size() != 0">
+                AND P.ADVICE_SUPPLIER IN
+                <foreach collection="param.adviceSupplierList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.includeTax != null and param.includeTax != ''">
+                AND P.INCLUDE_TAX = #{param.includeTax}
+            </if>
+            <if test="param.applyEmpty != null and param.applyEmpty == '1'.toString()">
+                AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL)
+            </if>
+            <if test="param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString()">
+                AND (P.INVOICE_PRO_NAME_EN IS NULL OR P.CLEAR_MATERIAL_EN IS NULL OR P.IS_MAGNET IS NULL)
+            </if>
+            <if test="param.countryCodeList != null and param.countryCodeList.size() != 0">
+                AND D.COUNTRY_CODE IN
+                <foreach collection="param.countryCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.hsCodeList != null and param.hsCodeList.size() != 0">
+                AND D.HSCODE IN
+                <foreach collection="param.hsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="(param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString())">
+                AND (D.COUNTRY_CODE IS NULL OR D.HSCODE IS NULL)
+            </if>
+        ORDER BY P.CREATE_TIME DESC, P.ID DESC
+    </select>
+
+    <!-- 报关产品信息导出 -->
+    <select id="exportCustomsApply"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgBaseProductParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductApplyResult">
+        SELECT
+            CASE P.IS_CHARGED WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isChargedDesc,
+            CASE P.IS_MAGNET WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isMagnetDesc,
+            CASE WHEN P.AUDIT_STATUS = '1' THEN '审核通过'
+            WHEN P.AUDIT_STATUS = '0' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '0' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            WHEN P.AUDIT_STATUS = '2' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '2' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            ELSE ''
+            END AS auditStatusDesc,
+            CASE P.INCLUDE_TAX WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS includeTaxDesc,
+            CASE P.IS_MAKE_INVOICE WHEN '0' THEN '否' WHEN '1' THEN '能' ELSE '' END AS isMakeInvoiceDesc,
+            CASE WHEN P.PRE_MATERIAL_CODE IS NULL THEN P.MATERIAL_CODE ELSE P.MATERIAL_CODE || '(' || P.PRE_MATERIAL_CODE || ')' END AS materialCodeStr,
+            <include refid="Base_Column_List"></include>
+        FROM TG_BASE_PRODUCT P
+        WHERE
+            P.DATA_TYPE = '0'
+            <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                AND P.MATERIAL_CODE IN
+                <foreach collection="param.materialCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productNameList != null and param.productNameList.size() != 0">
+                AND P.PRODUCT_NAME IN
+                <foreach collection="param.productNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameCnList != null and param.invoiceProNameCnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_CN IN
+                <foreach collection="param.invoiceProNameCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameEnList != null and param.invoiceProNameEnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_EN IN
+                <foreach collection="param.invoiceProNameEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialCnList != null and param.clearMaterialCnList.size() != 0">
+                AND P.CLEAR_MATERIAL_CN IN
+                <foreach collection="param.clearMaterialCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialEnList != null and param.clearMaterialEnList.size() != 0">
+                AND P.CLEAR_MATERIAL_EN IN
+                <foreach collection="param.clearMaterialEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.customsCodeList != null and param.customsCodeList.size() != 0 != ''">
+                AND P.CUSTOMS_CODE IN
+                <foreach collection="param.customsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '0'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2')
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '1'.toString()">
+                AND P.AUDIT_STATUS = #{param.auditStatus}
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '3'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2') AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL
+            </if>
+            <if test="param.adviceSupplierList != null and param.adviceSupplierList.size() != 0">
+                AND P.ADVICE_SUPPLIER IN
+                <foreach collection="param.adviceSupplierList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.includeTax != null and param.includeTax != ''">
+                AND P.INCLUDE_TAX = #{param.includeTax}
+            </if>
+            <if test="param.applyEmpty != null and param.applyEmpty == '1'.toString()">
+                AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL)
+            </if>
+            <if test="param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString()">
+                AND (P.INVOICE_PRO_NAME_EN IS NULL OR P.CLEAR_MATERIAL_EN IS NULL OR P.IS_MAGNET IS NULL)
+            </if>
+            <if test="(param.countryCodeList != null and param.countryCodeList.size() != 0) or (param.hsCodeList != null and param.hsCodeList.size() != 0)">
+                AND P.ID IN (
+                    SELECT D.PID FROM TG_BASE_PRODUCT_DETAIL D
+                    <where>
+                        <if test="param.countryCodeList != null and param.countryCodeList.size() != 0">
+                            D.COUNTRY_CODE IN
+                            <foreach collection="param.countryCodeList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                            </foreach>
+                        </if>
+                        <if test="param.hsCodeList != null and param.hsCodeList.size() != 0">
+                            AND D.HSCODE IN
+                            <foreach collection="param.hsCodeList" item="code" index="index" separator="," open="(" close=")">
+                                #{code}
+                            </foreach>
+                        </if>
+                    </where>
+                )
+            </if>
+            <if test="(param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString())">
+                AND P.ID IN (
+                SELECT P.ID FROM TG_BASE_PRODUCT P
+                LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+                WHERE D.COUNTRY_CODE IS NULL OR D.HSCODE IS NULL
+                )
+            </if>
+        ORDER BY P.CREATE_TIME DESC, P.ID DESC
+    </select>
+
+    <!-- 清关产品信息导出 -->
+    <select id="exportCustomsClear"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgBaseProductParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductClearResult">
+        SELECT
+            CASE P.IS_CHARGED WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isChargedDesc,
+            CASE P.IS_MAGNET WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS isMagnetDesc,
+            CASE WHEN P.AUDIT_STATUS = '1' THEN '审核通过'
+            WHEN P.AUDIT_STATUS = '0' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '0' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            WHEN P.AUDIT_STATUS = '2' AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL) THEN '未审核'
+            WHEN P.AUDIT_STATUS = '2' AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL THEN '待审核'
+            ELSE ''
+            END AS auditStatusDesc,
+            CASE P.INCLUDE_TAX WHEN '0' THEN '否' WHEN '1' THEN '是' ELSE '' END AS includeTaxDesc,
+            CASE P.IS_MAKE_INVOICE WHEN '0' THEN '否' WHEN '1' THEN '能' ELSE '' END AS isMakeInvoiceDesc,
+            CASE WHEN P.PRE_MATERIAL_CODE IS NULL THEN P.MATERIAL_CODE ELSE P.MATERIAL_CODE || '(' || P.PRE_MATERIAL_CODE || ')' END AS materialCodeStr,
+            D.COUNTRY_CODE,
+            D.COUNTRY_NAME,
+            D.HSCODE,
+            R.CHANGE_TAX_RATE,
+            R.TAX_RATE,
+            R.ADD_TAX_RATE,
+            <include refid="Base_Column_List"></include>
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+        WHERE
+            P.DATA_TYPE = '0'
+            <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                AND P.MATERIAL_CODE IN
+                <foreach collection="param.materialCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.productNameList != null and param.productNameList.size() != 0">
+                AND P.PRODUCT_NAME IN
+                <foreach collection="param.productNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameCnList != null and param.invoiceProNameCnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_CN IN
+                <foreach collection="param.invoiceProNameCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameEnList != null and param.invoiceProNameEnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_EN IN
+                <foreach collection="param.invoiceProNameEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialCnList != null and param.clearMaterialCnList.size() != 0">
+                AND P.CLEAR_MATERIAL_CN IN
+                <foreach collection="param.clearMaterialCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialEnList != null and param.clearMaterialEnList.size() != 0">
+                AND P.CLEAR_MATERIAL_EN IN
+                <foreach collection="param.clearMaterialEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.customsCodeList != null and param.customsCodeList.size() != 0 != ''">
+                AND P.CUSTOMS_CODE IN
+                <foreach collection="param.customsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '0'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2')
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '1'.toString()">
+                AND P.AUDIT_STATUS = #{param.auditStatus}
+            </if>
+            <if test="param.auditStatus != null and param.auditStatus != '' and param.auditStatus == '3'.toString()">
+                AND P.AUDIT_STATUS IN ('0', '2') AND P.CUSTOMS_CODE IS NOT NULL AND P.ESSENTIAL_FACTOR IS NOT NULL AND P.TAX_REFUND IS NOT NULL AND P.GROSS_PROFIT_RATE IS NOT NULL
+            </if>
+            <if test="param.adviceSupplierList != null and param.adviceSupplierList.size() != 0">
+                AND P.ADVICE_SUPPLIER IN
+                <foreach collection="param.adviceSupplierList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.includeTax != null and param.includeTax != ''">
+                AND P.INCLUDE_TAX = #{param.includeTax}
+            </if>
+            <if test="param.applyEmpty != null and param.applyEmpty == '1'.toString()">
+                AND (P.CUSTOMS_CODE IS NULL OR P.ESSENTIAL_FACTOR IS NULL OR P.TAX_REFUND IS NULL OR P.GROSS_PROFIT_RATE IS NULL)
+            </if>
+            <if test="param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString()">
+                AND (P.INVOICE_PRO_NAME_EN IS NULL OR P.CLEAR_MATERIAL_EN IS NULL OR P.IS_MAGNET IS NULL)
+            </if>
+            <if test="param.countryCodeList != null and param.countryCodeList.size() != 0">
+                AND D.COUNTRY_CODE IN
+                <foreach collection="param.countryCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.hsCodeList != null and param.hsCodeList.size() != 0">
+                AND D.HSCODE IN
+                <foreach collection="param.hsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="(param.clearanceEmpty != null and param.clearanceEmpty == '1'.toString())">
+                AND (D.COUNTRY_CODE IS NULL OR D.HSCODE IS NULL)
+            </if>
+        ORDER BY P.CREATE_TIME DESC, P.ID DESC
+    </select>
+
+    <!-- 报关材质下拉 -->
+    <select id="clearMaterialCnSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT P.CLEAR_MATERIAL_CN AS name FROM TG_BASE_PRODUCT P WHERE P.CLEAR_MATERIAL_CN IS NOT NULL GROUP BY P.CLEAR_MATERIAL_CN
+    </select>
+
+    <!-- 报关英文材质下拉 -->
+    <select id="clearMaterialEnSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT P.CLEAR_MATERIAL_EN AS name FROM TG_BASE_PRODUCT P WHERE P.CLEAR_MATERIAL_EN IS NOT NULL GROUP BY P.CLEAR_MATERIAL_EN
+    </select>
+
+    <!-- 清关产品合并-分页查询列表、导出 -->
+    <select id="queryMergePage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgBaseProductParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgProductMergeResult">
+        SELECT
+            D.ID AS detailId,
+            D.COUNTRY_CODE,
+            D.COUNTRY_NAME,
+            D.HSCODE,
+            R.CHANGE_TAX_RATE,
+            R.TAX_RATE,
+            R.ADD_TAX_RATE,
+            D.MERGE_STATUS,
+            D.MERGE_ID,
+            CASE D.MERGE_STATUS WHEN '0' THEN '未合并' WHEN '1' THEN '已合并' ELSE '' END AS mergeStatusDesc,
+            CASE WHEN P.PRE_MATERIAL_CODE IS NULL THEN P.MATERIAL_CODE ELSE P.MATERIAL_CODE || '(' || P.PRE_MATERIAL_CODE || ')' END AS materialCodeStr,
+            <include refid="Base_Column_List"></include>
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+        WHERE
+            ((P.DATA_TYPE = '0' AND D.MERGE_STATUS = '0') OR (P.DATA_TYPE = '1' AND D.MERGE_STATUS = '1'))
+            <if test="param.mergeStatus != null and param.mergeStatus != ''">
+                AND D.MERGE_STATUS = #{param.mergeStatus}
+            </if>
+            <if test="param.materialCodeList != null and param.materialCodeList.size() != 0">
+                AND P.MATERIAL_CODE IN
+                <foreach collection="param.materialCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameCnList != null and param.invoiceProNameCnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_CN IN
+                <foreach collection="param.invoiceProNameCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.invoiceProNameEnList != null and param.invoiceProNameEnList.size() != 0">
+                AND P.INVOICE_PRO_NAME_EN IN
+                <foreach collection="param.invoiceProNameEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialCnList != null and param.clearMaterialCnList.size() != 0">
+                AND P.CLEAR_MATERIAL_CN IN
+                <foreach collection="param.clearMaterialCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.clearMaterialEnList != null and param.clearMaterialEnList.size() != 0">
+                AND P.CLEAR_MATERIAL_EN IN
+                <foreach collection="param.clearMaterialEnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.customsCodeList != null and param.customsCodeList.size() != 0">
+                AND P.CUSTOMS_CODE IN
+                <foreach collection="param.customsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.countryCodeList != null and param.countryCodeList.size() != 0">
+                AND D.COUNTRY_CODE IN
+                <foreach collection="param.countryCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.hsCodeList != null and param.hsCodeList.size() != 0">
+                AND D.HSCODE IN
+                <foreach collection="param.hsCodeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        ORDER BY P.CREATE_TIME DESC, P.ID DESC
+    </select>
+
+    <!-- 清关产品合并-已合并产品查询 -->
+    <select id="queryAlrMergePage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgBaseProductParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgProductMergeResult">
+        SELECT
+            D.COUNTRY_CODE,
+            D.COUNTRY_NAME,
+            D.HSCODE,
+            R.CHANGE_TAX_RATE,
+            R.TAX_RATE,
+            R.ADD_TAX_RATE,
+            CASE D.MERGE_STATUS WHEN '0' THEN '未合并' WHEN '1' THEN '已合并' ELSE '' END AS mergeStatusDesc,
+            <include refid="Base_Column_List"></include>
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+        WHERE
+            P.DATA_TYPE = '0'
+            AND D.MERGE_STATUS = '1'
+            AND D.MERGE_ID = #{param.mergeId}
+        ORDER BY P.CREATE_TIME DESC, P.ID DESC
+    </select>
+
+    <!-- 清关产品合并-规则合并预览 -->
+    <select id="ruleMergePreview"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgProductMergeRuleParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgProductMergeRuleResult">
+        SELECT
+            <trim suffixOverrides=",">
+                <if test="param.invoiceProNameEn != null and param.invoiceProNameEn != ''">
+                    P.INVOICE_PRO_NAME_EN,
+                </if>
+                <if test="param.clearMaterialEn != null and param.clearMaterialEn != ''">
+                    P.CLEAR_MATERIAL_EN,
+                </if>
+                <if test="param.countryCode != null and param.countryCode != ''">
+                    D.COUNTRY_CODE,
+                    D.COUNTRY_NAME,
+                </if>
+                <if test="param.hsCode != null and param.hsCode != ''">
+                    D.HSCODE,
+                </if>
+                COUNT(1) AS groupCount,
+                LISTAGG(P.ID, ',')  WITHIN GROUP(ORDER BY D.ID) AS IDS,
+                LISTAGG(D.ID, ',')  WITHIN GROUP(ORDER BY D.ID) AS DETAIL_IDS
+            </trim>
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        WHERE D.ID IN
+            <foreach collection="param.sourceIdList" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        GROUP BY
+            <trim suffixOverrides=",">
+                <if test="param.invoiceProNameEn != null and param.invoiceProNameEn != ''">
+                    P.INVOICE_PRO_NAME_EN,
+                </if>
+                <if test="param.clearMaterialEn != null and param.clearMaterialEn != ''">
+                    P.CLEAR_MATERIAL_EN,
+                </if>
+                <if test="param.countryCode != null and param.countryCode != ''">
+                    D.COUNTRY_CODE,
+                    D.COUNTRY_NAME,
+                </if>
+                <if test="param.hsCode != null and param.hsCode != ''">
+                    D.HSCODE,
+                </if>
+            </trim>
+        HAVING count(1) > 1
+    </select>
+
+    <!--更新合并的明细状态-->
+    <update id="updateMergeProductDetailById">
+        UPDATE TG_BASE_PRODUCT_DETAIL D SET D.MERGE_STATUS = '0', D.MERGE_ID = NULL, D.UPDATE_TIME = SYSDATE, D.UPDATE_USER = #{name}
+        WHERE D.MERGE_ID = #{detailId}
+    </update>
+
+    <!-- 清关产品合并-自定义合并预览 -->
+    <select id="selectMergePreview" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgProductMergeResult">
+        SELECT
+            D.ID AS detailId,
+            D.COUNTRY_CODE,
+            D.COUNTRY_NAME,
+            D.HSCODE,
+            R.CHANGE_TAX_RATE,
+            R.TAX_RATE,
+            R.ADD_TAX_RATE,
+            D.MERGE_STATUS,
+            D.MERGE_ID,
+            CASE D.MERGE_STATUS WHEN '0' THEN '未合并' WHEN '1' THEN '已合并' ELSE '' END AS mergeStatusDesc,
+            <include refid="Base_Column_List"></include>
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        LEFT JOIN TG_CUSTOMS_TAX_RATE R ON D.COUNTRY_CODE = R.COUNTRY_CODE AND D.HSCODE = R.HSCODE
+        WHERE D.ID IN
+            <foreach collection="param" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        ORDER BY D.CREATE_TIME DESC, D.ID DESC
+    </select>
+
+    <!-- 清关产品合并-获取通关产品信息 -->
+    <select id="getProductList" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgProductMergeResult">
+        SELECT
+            P.ID,
+            P.MATERIAL_CODE,
+            D.ID AS detailId,
+            D.SITE,
+            D.SKUS,
+            D.COUNTRY_CODE
+        FROM TG_BASE_PRODUCT P
+        LEFT JOIN TG_BASE_PRODUCT_DETAIL D ON P.ID = D.PID
+        WHERE
+            D.ID IS NOT NULL
+        ORDER BY D.CREATE_TIME DESC, D.ID DESC
+    </select>
+
+    <!--获取EBMS标签管理数据-->
+    <select id="selectTbComShippingLabel"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.result.ValidateLabelResult"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.ValidateLabelResult">
+        SELECT l.shopName,
+               l.item_sku AS sku,
+               l.FNSKU,
+               l.matCode AS materialCode,
+               l.labUseState,
+               l.CountryCode AS site
+        FROM TbComShippingLable l
+        WHERE
+            l.shopName is not null
+            AND l.item_sku is not null
+            <if test="param.labUseState != null and param.labUseState != ''">
+                AND l.labUseState = #{param.labUseState}
+            </if>
+            AND l.CountryCode = #{param.site}
+            AND l.matCode = #{param.materialCode}
+    </select>
+
+    <!--查询财务结算表领星店铺数据SID-->
+    <select id="getFinanceLxSid" resultType="java.lang.String">
+        SELECT C.SID FROM CW_LINGXING_SHOP_INFO C WHERE C.SHOP_NAME = #{shopName} AND C.SITE = #{site}
+    </select>
+
+    <!--查询财务结算表领星店铺数据SID-->
+    <select id="getFinanceLxSidList" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.CwLingxingShopInfo">
+        SELECT C.* FROM CW_LINGXING_SHOP_INFO C
+    </select>
+
+    <!--获取更新产品信息-->
+    <select id="getUpdateProductInfo"
+            parameterType="java.lang.Integer"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductResult">
+        SELECT
+            '普通物料' AS MATERIAL_TYPE,
+            T1.*,
+            CASE WHEN T2.k3Price IS NULL AND T1.FGIVEAWAY = '1' THEN 0 ELSE T2.k3Price END AS k3Price
+        FROM
+        (
+            SELECT
+                P.FBILLNO AS fBillNo,
+                P.FSUPPLIERID,
+                BS.FNAME AS ADVICE_SUPPLIER,
+                D.FMATERIALID AS fMaterialId,
+                M.FNUMBER AS MATERIAL_CODE,
+                ROW_NUMBER() OVER(PARTITION BY M.FNUMBER ORDER BY P.FDATE DESC) RN,
+                BAL3.FDATAVALUE AS PRODUCT_NAME,
+                BAL1.FDATAVALUE AS COMPANY_BRAND,
+                M.F_PAEZ_TEXT AS INVOICE_PRO_NAME_CN,
+                ML.FSPECIFICATION AS FIT_BRAND,
+                M.F_PAEZ_TEXT1 AS STYLE,
+                M.F_TEXTURE AS clearMaterialCn,
+                CASE BAL2.FDATAVALUE WHEN '是' THEN '1' WHEN '否' THEN '0' ELSE '' END AS IS_CHARGED,
+                CASE BAL2.FDATAVALUE WHEN '是' THEN '1' WHEN '否' THEN '0' ELSE '否' END  AS IS_MAGNET,
+                MB.FGROSSWEIGHT AS GROSS_WEIGHT_ORG,
+                UL.FNAME AS WEIGHT_UNIT_ORG,
+                D.FGIVEAWAY
+            FROM T_PUR_POORDER P
+            LEFT JOIN T_PUR_POORDERENTRY D ON P.FID = D.FID
+            LEFT JOIN T_BD_MATERIAL M ON D.FMATERIALID = M.FMATERIALID
+            LEFT JOIN T_BD_MATERIAL_L ML ON M.FMATERIALID = ML.FMATERIALID
+            LEFT JOIN T_BD_MATERIALBASE MB ON M.FMATERIALID = MB.FMATERIALID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL1 ON M.F_BSC_BRAND = BAL1.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL2 ON M.F_CHARGED = BAL2.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL3 ON M.F_BSC_PRONAME = BAL3.FENTRYID
+            LEFT JOIN T_BD_UNIT_L UL ON MB.FWEIGHTUNITID = UL.FUNITID
+            LEFT JOIN T_BD_SUPPLIER_L BS ON P.FSUPPLIERID = BS.FSUPPLIERID
+            WHERE DATEDIFF(DAY, P.FDATE, GETDATE()) &lt;= #{day}
+        ) T1
+        LEFT JOIN
+        (
+            SELECT
+                PP.FSUPPLIERID,
+                PPE.FMATERIALID,
+                SUM(PPE.FTAXPRICE) / COUNT(1) AS k3Price,
+                SUM(PPE.FTAXPRICE) groupPrice,
+                COUNT(1) AS groupCount
+            FROM T_PUR_PRICELIST PP
+            LEFT JOIN T_PUR_PRICELISTENTRY PPE ON PP.FID = PPE.FID
+            GROUP BY PP.FSUPPLIERID, PPE.FMATERIALID
+        ) T2 ON T1.FSUPPLIERID = T2.FSUPPLIERID AND T1.fMaterialId = T2.FMATERIALID
+        WHERE T1.RN = 1
+    </select>
+
+    <!--获取更新转换物料产品信息-->
+    <select id="getUpdateChangeProductInfo" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductResult">
+        SELECT
+            '转换物料' AS MATERIAL_TYPE,
+            T1.*
+        FROM
+        (
+            SELECT
+                M.FNUMBER AS MATERIAL_CODE,
+                M1.FNUMBER AS PRE_MATERIAL_CODE,
+                E.F_BSC_PPZHMAT,
+                ROW_NUMBER() OVER(PARTITION BY M.FNUMBER ORDER BY E.FENTRYID DESC) RN,
+                BAL3.FDATAVALUE AS PRODUCT_NAME,
+                BAL1.FDATAVALUE AS COMPANY_BRAND,
+                M.F_PAEZ_TEXT AS INVOICE_PRO_NAME_CN,
+                ML.FSPECIFICATION AS FIT_BRAND,
+                M.F_PAEZ_TEXT1 AS STYLE,
+                M.F_TEXTURE AS clearMaterialCn,
+                CASE BAL2.FDATAVALUE WHEN '是' THEN '1' WHEN '否' THEN '0' ELSE '' END AS IS_CHARGED,
+                CASE BAL2.FDATAVALUE WHEN '是' THEN '1' WHEN '否' THEN '0' ELSE '否' END  AS IS_MAGNET,
+                MB.FGROSSWEIGHT AS GROSS_WEIGHT_ORG,
+                UL.FNAME AS WEIGHT_UNIT_ORG
+            FROM T_STK_MISCELLANEOUSENTRY E
+            LEFT JOIN T_BD_MATERIAL M ON E.FMATERIALID = M.FMATERIALID
+            LEFT JOIN T_BD_MATERIAL M1 ON E.F_BSC_PPZHMAT = M1.FMATERIALID
+            LEFT JOIN T_BD_MATERIAL_L ML ON M.FMATERIALID = ML.FMATERIALID
+            LEFT JOIN T_BD_MATERIALBASE MB ON M.FMATERIALID = MB.FMATERIALID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL1 ON M.F_BSC_BRAND = BAL1.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL2 ON M.F_CHARGED = BAL2.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL3 ON M.F_BSC_PRONAME = BAL3.FENTRYID
+            LEFT JOIN T_BD_UNIT_L UL ON MB.FWEIGHTUNITID = UL.FUNITID
+            WHERE E.F_BSC_PPZHMAT != 0
+        ) T1
+        WHERE T1.RN = 1
+    </select>
+
+    <!--获取更新组合物料产品信息-->
+    <select id="getUpdateGroupProductInfo" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductResult">
+        SELECT
+            '组合物料' AS MATERIAL_TYPE,
+            T1.*
+        FROM
+        (
+            SELECT
+                M.FNUMBER AS MATERIAL_CODE,
+                ROW_NUMBER() OVER(PARTITION BY M.FNUMBER ORDER BY E.FID DESC) RN,
+                BAL3.FDATAVALUE AS PRODUCT_NAME,
+                BAL1.FDATAVALUE AS COMPANY_BRAND,
+                M.F_PAEZ_TEXT AS INVOICE_PRO_NAME_CN,
+                ML.FSPECIFICATION AS FIT_BRAND,
+                M.F_PAEZ_TEXT1 AS STYLE,
+                M.F_TEXTURE AS clearMaterialCn,
+                CASE BAL2.FDATAVALUE WHEN '是' THEN '1' WHEN '否' THEN '0' ELSE '' END AS IS_CHARGED,
+                CASE BAL2.FDATAVALUE WHEN '是' THEN '1' WHEN '否' THEN '0' ELSE '否' END  AS IS_MAGNET,
+                MB.FGROSSWEIGHT AS GROSS_WEIGHT_ORG,
+                UL.FNAME AS WEIGHT_UNIT_ORG
+            FROM T_ENG_BOM E
+            LEFT JOIN T_BD_MATERIAL M ON E.FMATERIALID = M.FMATERIALID
+            LEFT JOIN T_BD_MATERIAL_L ML ON M.FMATERIALID = ML.FMATERIALID
+            LEFT JOIN T_BD_MATERIALBASE MB ON M.FMATERIALID = MB.FMATERIALID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL1 ON M.F_BSC_BRAND = BAL1.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL2 ON M.F_CHARGED = BAL2.FENTRYID
+            LEFT JOIN T_BAS_ASSISTANTDATAENTRY_L BAL3 ON M.F_BSC_PRONAME = BAL3.FENTRYID
+            LEFT JOIN T_BD_UNIT_L UL ON MB.FWEIGHTUNITID = UL.FUNITID
+        ) T1
+        WHERE T1.RN = 1
+    </select>
+
+    <!--获取物料编码对应的组合物料-->
+    <select id="getGroupMat" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgBaseProductResult">
+        SELECT
+            M.FNUMBER AS MATERIAL_CODE,
+            M1.FNUMBER AS PRE_MATERIAL_CODE
+        FROM T_ENG_BOM E
+        LEFT JOIN T_ENG_BOMCHILD EB ON E.FID = EB.FID
+        LEFT JOIN T_BD_MATERIAL M ON E.FMATERIALID = M.FMATERIALID
+        LEFT JOIN T_BD_MATERIAL M1 ON EB.FMATERIALID = M1.FMATERIALID
+        GROUP BY M.FNUMBER, M1.FNUMBER
+    </select>
+
+    <!--更新组合物料价格-->
+    <update id="updateGroupMat">
+        MERGE INTO TG_BASE_PRODUCT T1
+        USING (
+            SELECT * FROM TG_BASE_PRODUCT WHERE MATERIAL_TYPE = '普通物料'
+		) T2
+        ON (T1.PRE_MATERIAL_CODE = T2.MATERIAL_CODE)
+        WHEN MATCHED THEN
+        UPDATE SET
+            T1.ADVICE_SUPPLIER = T2.ADVICE_SUPPLIER,
+            T1.K3_PRICE = T2.K3_PRICE,
+            T1.INCLUDE_TAX = T2.INCLUDE_TAX,
+            T1.IS_MAKE_INVOICE = T2.IS_MAKE_INVOICE
+        WHERE T1.MATERIAL_TYPE = '转换物料' AND T1.PRE_MATERIAL_CODE IS NOT NULL
+    </update>
+</mapper>

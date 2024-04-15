@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.shipment.mapper.InvProductGalleryMapper">
+
+    <select id="querySkuDatalimit" parameterType="com.tadpole.cloud.operationManagement.modular.shipment.model.params.InvProductGalleryParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.entity.InvProductGallery">
+
+        SELECT
+        a.*
+        FROM
+        MCMS_BASE_DATA.INV_PRODUCT_GALLERY a
+        join MCMS_BASE_DATA.RP_MATERIAL material
+        ON a.MATERIAL_CODE = material.MATERIAL_CODE
+        WHERE
+        a.material_code IS NOT NULL
+        and a.SYS_LOGI_MODE = 'FA'
+        AND a.SYS_LABEL_TYPE in ('正常销售','清货物料','清货SKU')
+        AND a.SYS_SITE not in ('AU','SG','NL','PL','SE','TR','BE')
+        <if test="reqVO != null">
+
+            --             department
+            <if test="reqVO.department != null and reqVO.department !=''">
+                AND a.DEPARTMENT = #{reqVO.department}
+            </if>
+
+            --             Team
+           <!-- <if test="reqVO.team != null and reqVO.team !=''">
+                AND a.TEAM = #{reqVO.team}
+            </if>-->
+
+
+            --             area
+            <if test="reqVO.area != null and reqVO.area !=''">
+                AND a.AREA = #{reqVO.area}
+            </if>
+
+            <if test="reqVO.areaList != null and reqVO.areaList.size() != 0">
+                AND a.AREA IN
+                <foreach collection="reqVO.areaList" item="area" index="index" separator="," open="(" close=")">
+                    #{area}
+                </foreach>
+            </if>
+
+            --             sysShopsName
+            <if test="reqVO.sysShopsName != null and reqVO.sysShopsName !=''">
+                AND a.SYS_SHOPS_NAME = #{reqVO.sysShopsName}
+            </if>
+
+            <if test="reqVO.sysShopsNameList != null and reqVO.sysShopsNameList.size() != 0">
+                AND a.SYS_SHOPS_NAME IN
+                <foreach collection="reqVO.sysShopsNameList" item="sysShopsName" index="index" separator="," open="(" close=")">
+                    #{sysShopsName}
+                </foreach>
+            </if>
+
+            --             sysSite
+            <if test="reqVO.sysSite != null and reqVO.sysSite !=''">
+                AND a.SYS_SITE = #{reqVO.sysSite}
+            </if>
+
+            <if test="reqVO.sysSiteList != null and reqVO.sysSiteList.size() != 0">
+                AND a.SYS_SITE IN
+                <foreach collection="reqVO.sysSiteList" item="sysSite" index="index" separator="," open="(" close=")">
+                    #{sysSite}
+                </foreach>
+            </if>
+
+            --             asin
+            <if test="reqVO.asin != null and reqVO.asin !=''">
+                AND a.ASIN = #{reqVO.asin}
+            </if>
+
+            <if test="reqVO.asinList != null and reqVO.asinList.size() != 0">
+                AND a.ASIN IN
+                <foreach collection="reqVO.asinList" item="asin" index="index" separator="," open="(" close=")">
+                    #{asin}
+                </foreach>
+            </if>
+
+            --             sku
+            <if test="reqVO.sku != null and reqVO.sku !=''">
+                AND a.SKU = #{reqVO.sku}
+            </if>
+
+            <if test="reqVO.skuList != null and reqVO.skuList.size() != 0">
+                AND a.SKU IN
+                <foreach collection="reqVO.skuList" item="sku" index="index" separator="," open="(" close=")">
+                    #{sku}
+                </foreach>
+            </if>
+
+            --          物料编码
+            <if test="reqVO.materialCode != null and reqVO.materialCode !=''">
+                AND material.MATERIAL_CODE = #{reqVO.materialCode}
+            </if>
+            <if test="reqVO.materialCodeList != null and reqVO.materialCodeList.size() != 0">
+                AND material.MATERIAL_CODE IN
+                <foreach collection="reqVO.materialCodeList" item="code" index="index" separator="," open="("
+                         close=")">
+                    #{code}
+                </foreach>
+            </if>
+
+        </if>
+
+
+        <if test="reqVO.dataScopeMaterial != null and reqVO.dataScopeMaterial !=''">
+            ${reqVO.dataScopeMaterial}
+        </if>
+
+        <if test="reqVO.dataScopeArea != null and reqVO.dataScopeArea !=''">
+            ${reqVO.dataScopeArea}
+        </if>
+
+    </select>
+</mapper>

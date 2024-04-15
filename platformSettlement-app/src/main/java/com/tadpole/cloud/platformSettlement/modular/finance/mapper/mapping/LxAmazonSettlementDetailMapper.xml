@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.LxAmazonSettlementDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.platformSettlement.api.finance.entity.LxAmazonSettlementDetail">
+        <result column="SETTLEMENT_ID" property="settlementId" />
+        <result column="TRANSACTION_TYPE" property="transactionType" />
+        <result column="ORDER_ID" property="orderId" />
+        <result column="MERCHANT_ORDER_ID" property="merchantOrderId" />
+        <result column="ADJUSTMENT_ID" property="adjustmentId" />
+        <result column="SHIPMENT_ID" property="shipmentId" />
+        <result column="MARKETPLACE_NAME" property="marketplaceName" />
+        <result column="AMOUNT_TYPE" property="amountType" />
+        <result column="AMOUNT_DESCRIPTION" property="amountDescription" />
+        <result column="AMOUNT" property="amount" />
+        <result column="FULFILLMENT_ID" property="fulfillmentId" />
+        <result column="POSTED_DATE" property="postedDate" />
+        <result column="POSTED_DATE_TIME" property="postedDateTime" />
+        <result column="ORDER_ITEM_CODE" property="orderItemCode" />
+        <result column="MERCHANT_ORDER_ITEM_ID" property="merchantOrderItemId" />
+        <result column="MERCHANT_ADJUSTMENT_ITEM_ID" property="merchantAdjustmentItemId" />
+        <result column="SKU" property="sku" />
+        <result column="QUANTITY_PURCHASED" property="quantityPurchased" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+        <result column="ID" property="id" />
+        <result column="SHOP_NAME" property="shopName" />
+        <result column="SITE" property="site" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        SETTLEMENT_ID, SETTLEMENT_START_DATE, SETTLEMENT_END_DATE, DEPOSIT_DATE, TOTAL_AMOUNT, CURRENCY, TRANSACTION_TYPE, ORDER_ID, MERCHANT_ORDER_ID, ADJUSTMENT_ID, SHIPMENT_ID, MARKETPLACE_NAME, AMOUNT_TYPE, AMOUNT_DESCRIPTION, AMOUNT, FULFILLMENT_ID, POSTED_DATE, POSTED_DATE_TIME, ORDER_ITEM_CODE, MERCHANT_ORDER_ITEM_ID, MERCHANT_ADJUSTMENT_ITEM_ID, SKU, QUANTITY_PURCHASED, CREATE_TIME, UPDATE_TIME, ID, SHOP_NAME, SITE
+    </sql>
+
+    <!-- AZ结算异常监控查询映射结果 -->
+    <resultMap id="settlementResultMap" type="com.tadpole.cloud.platformSettlement.api.finance.model.result.CwLingxingSettlementResult">
+        <id column="ID" property="ID" />
+        <result column="DATE_STR" property="paymentDate" />
+        <result column="SYS_SHOPS_NAME" property="shopName" />
+        <result column="SYS_SITE" property="site" />
+        <result column="AMAZON_ORDER_ID" property="amazonOrderId" />
+        <result column="PAYMENT_AMOUNT" property="paymentAmount" />
+        <result column="SETTLEMENT_AMOUNT" property="settlementAmount" />
+        <result column="AUTUAL_SETTLEMENT_AMOUNT" property="autualSettlementAmount" />
+        <result column="SETTLEMENT_ABNORMAL" property="settlementAbnormal" />
+    </resultMap>
+
+    <select id="findPageBySpec"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementAbnormalParam"
+            resultMap="settlementResultMap">
+        SELECT
+            ID,
+            PURCHSE_DATE_STR AS DATE_STR,
+            SYS_SHOPS_NAME,
+            SYS_SITE,
+            AMAZON_ORDER_ID,
+            PAYMENT_AMOUNT,
+            SETTLEMENT_AMOUNT,
+            AUTUAL_SETTLEMENT_AMOUNT,
+            SETTLEMENT_ABNORMAL
+        FROM CW_SETTLEMENT_ABNORMAL
+        <where>
+            <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+                AND TO_DATE(PURCHSE_DATE_STR, 'YYYY-MM-DD') &gt;= TO_DATE(#{paramCondition.startTime},'YYYY-MM-DD')
+            </if>
+            <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+                AND TO_DATE(PURCHSE_DATE_STR, 'YYYY-MM-DD') &lt;= TO_DATE(#{paramCondition.endTime},'YYYY-MM-DD')
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                AND SYS_SHOPS_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site !=''">
+                AND SYS_SITE = #{paramCondition.site}
+            </if>
+            <if test="paramCondition.amazonOrderId != null and paramCondition.amazonOrderId !=''">
+                AND AMAZON_ORDER_ID = #{paramCondition.amazonOrderId}
+            </if>
+        </where>
+        ORDER BY PURCHSE_DATE_STR DESC, SYS_SHOPS_NAME, SYS_SITE, ID DESC
+    </select>
+
+    <!-- AZ结算异常数据生成（刷新） -->
+    <select id="refresh">
+        -- 默认只刷新前3个月数据
+        INSERT INTO CW_SETTLEMENT_ABNORMAL B
+        (
+            B.PURCHSE_DATE_STR,
+            B.SYS_SHOPS_NAME,
+            B.SYS_SITE,
+            B.AMAZON_ORDER_ID,
+            B.PAYMENT_AMOUNT,
+            B.SETTLEMENT_AMOUNT,
+            B.AUTUAL_SETTLEMENT_AMOUNT,
+            B.SETTLEMENT_ABNORMAL,
+            B.CREATE_TIME
+        )
+        SELECT
+            T1.purchseDateStr AS PURCHSE_DATE_STR,
+            T1.SYS_SHOPS_NAME,
+            T1.SYS_SITE,
+            T1.AMAZON_ORDER_ID,
+            T1.PAYMENT_AMOUNT,
+            NVL(T2.SETTLEMENT_AMOUNT, 0) AS SETTLEMENT_AMOUNT,
+            NVL(T3.AUTUAL_SETTLEMENT_AMOUNT, 0) AS AUTUAL_SETTLEMENT_AMOUNT,
+            '异常' AS SETTLEMENT_ABNORMAL,
+            SYSDATE
+        FROM
+        (
+            -- 正常订单
+            SELECT
+                TO_CHAR(OD.PURCHASE_DATE, 'yyyy-mm-dd') AS purchseDateStr,
+                OD.SYS_SHOPS_NAME,
+                OD.SYS_SITE,
+                OD.AMAZON_ORDER_ID,
+                CASE
+                WHEN INSTR('UK DE FR ES IT NL SE JP AU TR PL', OD.SYS_SITE) > 0
+                THEN SUM(NVL(OD.PRINCIPAL, 0) + NVL(OD.SHIPPING, 0) + NVL(OD.GIFTWRAP, 0) + NVL(OD.SHIPPING_TAX, 0) + NVL(OD.GIFTWRAP_TAX, 0) - NVL(OD.ITEM_PROMOTION_DISCOUNT, 0) - NVL(OD.SHIP_PROMOTION_DISCOUNT, 0))
+                ELSE SUM(NVL(OD.PRINCIPAL, 0) + NVL(OD.SHIPPING, 0) + NVL(OD.GIFTWRAP, 0) + NVL(OD.SHIPPING_TAX, 0) + NVL(OD.GIFTWRAP_TAX, 0) + NVL(OD.TAX, 0) - NVL(OD.ITEM_PROMOTION_DISCOUNT, 0) - NVL(OD.SHIP_PROMOTION_DISCOUNT, 0))
+                END AS PAYMENT_AMOUNT
+            FROM AMAZON_ORDERS O
+            LEFT JOIN AMAZON_ORDER_DETAIL OD ON O.AMAZON_ORDER_ID = OD.AMAZON_ORDER_ID
+            WHERE
+                O.PLATFORM = 'Amazon'
+                AND O.TYPE = 'Normal'
+                AND OD.ITEM_STATUS = 'Shipped'
+                AND NOT (O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled')
+                AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled')
+                AND NOT REGEXP_LIKE(OD.SYS_SITE, ',')
+                AND OD.PURCHASE_DATE &gt;= ADD_MONTHS(SYSDATE, -3)
+            GROUP BY
+                TO_CHAR(OD.PURCHASE_DATE, 'yyyy-mm-dd'),
+                OD.SYS_SHOPS_NAME,
+                OD.SYS_SITE,
+                OD.AMAZON_ORDER_ID
+        ) T1
+        LEFT JOIN
+        (
+            -- Date Range订单
+            SELECT
+                LD.SHOP_NAME,
+                LD.SITE,
+                LD.ORDER_ID,
+                SUM(NVL(LD.TOTAL, 0)) AS SETTLEMENT_AMOUNT
+            FROM CW_LINGXING_DATARANGE LD
+            WHERE LD.DATE_TIME &gt;= ADD_MONTHS(SYSDATE, -3)
+            GROUP BY LD.SHOP_NAME, LD.SITE, LD.ORDER_ID
+        ) T2 ON T1.SYS_SHOPS_NAME  = T2.SHOP_NAME AND T1.SYS_SITE  = T2.SITE AND T1.AMAZON_ORDER_ID  = T2.ORDER_ID
+        LEFT JOIN
+        (
+            -- Settlement订单
+            SELECT
+                SD.SYS_SHOPS_NAME,
+                SD.SYS_SITE,
+                SD.ORDER_ID,
+                SUM(NVL(SD.AMOUNT, 0)) AS AUTUAL_SETTLEMENT_AMOUNT
+            FROM CW_STATEMENT_INCOME SI
+            LEFT JOIN CW_SETTLEMENT S ON SI.SETTLEMENT_ID = S.SETTLEMENT_ID
+            LEFT JOIN CW_SETTLEMENT_DETAIL SD ON S.SETTLEMENT_ID = SD.SETTLEMENT_ID AND S.SYS_SHOPS_NAME = SD.SYS_SHOPS_NAME
+            WHERE
+                SI.REPORT_TYPE = 'Settlement'
+                AND SI.SETTLEMENT_ORDER = 0
+                AND SI.START_TIME &gt;= ADD_MONTHS(SYSDATE, -3)
+                AND S.SETTLEMENT_START_DATE &gt;= ADD_MONTHS(SYSDATE, -3)
+            GROUP BY SD.SYS_SHOPS_NAME, SD.SYS_SITE, SD.ORDER_ID
+        ) T3 ON T1.SYS_SHOPS_NAME  = T3.SYS_SHOPS_NAME AND T1.SYS_SITE  = T3.SYS_SITE AND T1.AMAZON_ORDER_ID  = T3.ORDER_ID
+        WHERE
+            NVL(T1.PAYMENT_AMOUNT, 0) != 0
+            AND (NVL(T2.SETTLEMENT_AMOUNT, 0) = 0 OR NVL(T3.AUTUAL_SETTLEMENT_AMOUNT, 0) = 0)
+    </select>
+</mapper>

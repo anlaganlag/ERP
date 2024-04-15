@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.EbmsMaterialMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, PARENT_ID, MATERIAL_CODE, MATERIAL_NAME, MAT_TRANPORT_WEIGHT_ORG, MAT_BOX_VOLUME_ORG, MATERIAL_STATUS, CREATE_TIME
+    </sql>
+
+    <!--获取EBMS物料信息-->
+    <select id="getEbmsMaterial" resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.EbmsMaterial">
+        SELECT
+            C.ID AS PARENT_ID,
+            C.MATCODE AS MATERIAL_CODE,
+            C.MATNAME AS MATERIAL_NAME,
+            C.MATTRANPORTWEIGHTORG AS MAT_TRANPORT_WEIGHT_ORG,
+            C.MATBOXVOLUMEORG AS MAT_BOX_VOLUME_ORG,
+            C.MATSTATUS AS MATERIAL_STATUS,
+            GETDATE() AS CREATE_TIME
+        FROM TBCOMMATERIEL C
+        ORDER BY C.ID
+    </select>
+</mapper>

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.sales.mapper.TargetBoardMapper">
+  <sql id="LIST_CONDITION">
+    <if test="paramCondition.year != null and paramCondition.year != ''">
+      AND T1.YEAR =#{paramCondition.year}
+    </if>
+
+    <if test="paramCondition.version != null and paramCondition.version != ''">
+      AND T1.VERSION =#{paramCondition.version}
+    </if>
+  </sql>
+
+  <select id="list"
+    parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.TargetBoardParam"
+    resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.TargetBoardResult">
+    SELECT     PLATFORM,DEPARTMENT,TEAM,SALESTARGET,SALESVOLUMETARGET,COLLECTIONTARGET,PROFITTARGET,AD, ADVERTISINGPROPORTIONBUDGET
+      FROM (SELECT PLATFORM,DEPARTMENT,TEAM,SUM(salesTarget) salesTarget, SUM(salesVolumeTarget) salesVolumeTarget,SUM(collectionTarget) collectionTarget,SUM(profitTarget) profitTarget,SUM(ad) ad,DECODE(SUM(salesVolumeTarget),0,0,SUM(ad)/SUM(salesVolumeTarget)) advertisingProportionBudget
+            FROM (<include refid="TEAM_DIMENSION"/>)
+            GROUP BY ROLLUP(PLATFORM,DEPARTMENT,TEAM)
+            ORDER BY CASE WHEN PLATFORM = 'Amazon' THEN 'A' ELSE PLATFORM END,
+                     CASE WHEN TO_NUMBER(REGEXP_SUBSTR(TRANSLATE(DEPARTMENT,'一二三四五六七八九','123456789'),'[0-9]+')) IS NOT NULL THEN TO_NUMBER(REGEXP_SUBSTR(TRANSLATE(DEPARTMENT,'一二三四五六七八九','123456789'),'[0-9]+'))
+                          WHEN DEPARTMENT IS NULL THEN 999 ELSE 99
+                     END,
+                     CASE WHEN TEAM IS NOT NULL AND TO_NUMBER(REGEXP_SUBSTR(TEAM, '[0-9]+')) IS NULL THEN 999 ELSE TO_NUMBER(REGEXP_SUBSTR(TEAM,'[0-9]+')) END
+            )
+    UNION ALL
+    <include refid = "TEAM_DIMENSION_NON_AMAZON" />
+  </select>
+
+  <select id="listSum"
+    parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.TargetBoardParam"
+    resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.TargetBoardResult">
+    SELECT    SUM(salesTarget) salesTarget,
+              SUM(salesVolumeTarget) salesVolumeTarget,
+              SUM(collectionTarget) collectionTarget,
+              SUM(profitTarget) profitTarget,
+              SUM(ad) ad,
+              DECODE(SUM(salesVolumeTarget),0,0,SUM(ad)/SUM(salesVolumeTarget)) advertisingProportionBudget
+    FROM (<include refid = "TEAM_DIMENSION" />)
+  </select>
+
+  <sql id="TEAM_DIMENSION">
+    SELECT  t1.PLATFORM,t1.DEPARTMENT,t1.TEAM,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t1.SEASON_ONE),    'Q2' , SUM(t1.SEASON_TWO),    'Q3' , SUM(t1.SEASON_THREE),    'Q4' , SUM(t1.SEASON_FOUR),    SUM(t1.SEASON_ONE+t1.SEASON_TWO+t1.SEASON_THREE+t1.SEASON_FOUR)) salesTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t2.SEASON_ONE),    'Q2' , SUM(t2.SEASON_TWO),    'Q3' , SUM(t2.SEASON_THREE),    'Q4' , SUM(t2.SEASON_FOUR),    SUM(t2.SEASON_ONE+t2.SEASON_TWO+t2.SEASON_THREE+t2.SEASON_FOUR)) salesVolumeTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t3.SEASON_ONE),    'Q2' , SUM(t3.SEASON_TWO),    'Q3' , SUM(t3.SEASON_THREE),    'Q4' , SUM(t3.SEASON_FOUR),    SUM(t3.SEASON_ONE+t3.SEASON_TWO+t3.SEASON_THREE+t3.SEASON_FOUR)) collectionTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t4.SEASON_ONE),    'Q2' , SUM(t4.SEASON_TWO),    'Q3' , SUM(t4.SEASON_THREE),    'Q4' , SUM(t4.SEASON_FOUR),    SUM(t4.SEASON_ONE+t4.SEASON_TWO+t4.SEASON_THREE+t4.SEASON_FOUR)) profitTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t5.SEASON_ONE_MONEY),    'Q2' , SUM(t5.SEASON_TWO_MONEY),    'Q3' , SUM(t5.SEASON_THREE_MONEY),    'Q4' , SUM(t5.SEASON_FOUR_MONEY),    SUM(t5.SEASON_ONE_MONEY+t5.SEASON_TWO_MONEY+t5.SEASON_THREE_MONEY+t5.SEASON_FOUR_MONEY)) ad,
+            DECODE (#{paramCondition.season}, 'Q1', DECODE(SUM(t2.SEASON_ONE),0,0,SUM(t5.SEASON_ONE_MONEY)/SUM(t2.SEASON_ONE)),    'Q2' , DECODE(SUM(t2.SEASON_TWO),0,0,SUM(t5.SEASON_TWO_MONEY)/SUM(t2.SEASON_TWO)),    'Q3' , DECODE(SUM(t2.SEASON_THREE),0,0,SUM(t5.SEASON_THREE_MONEY)/SUM(t2.SEASON_THREE)),    'Q4' , DECODE(SUM(t2.SEASON_FOUR),0,0,SUM(t5.SEASON_FOUR_MONEY)/SUM(t2.SEASON_FOUR)),    DECODE(SUM(t2.SEASON_ONE+t2.SEASON_TWO+t2.SEASON_THREE+t2.SEASON_FOUR),0,0,SUM(t5.SEASON_ONE_MONEY+t5.SEASON_TWO_MONEY+t5.SEASON_THREE_MONEY+t5.SEASON_FOUR_MONEY)/SUM(t2.SEASON_ONE+t2.SEASON_TWO+t2.SEASON_THREE+t2.SEASON_FOUR))) advertisingProportionBudget
+    FROM SALES_TARGET t1
+    FULL JOIN SALES_VOLUME_TARGET t2 ON
+          NVL(t1.PLATFORM,0) = NVL(t2.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t2.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t2.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t2.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t2.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t2.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t2.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t2.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t2.YEAR AND
+          t1.VERSION =t2.VERSION
+    FULL JOIN COLLECTION_TARGET t3 ON
+          NVL(t1.PLATFORM,0) = NVL(t3.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t3.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t3.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t3.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t3.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t3.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t3.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t3.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t3.YEAR AND
+          t1.VERSION =t3.VERSION
+    FULL JOIN PROFIT_TARGET t4 ON
+          NVL(t1.PLATFORM,0) = NVL(t4.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t4.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t4.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t4.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t4.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t4.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t4.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t4.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t4.YEAR AND
+          t1.VERSION =t4.VERSION
+    FULL JOIN ADVERTISING_BUDGET t5 ON
+          NVL(t1.PLATFORM,0) = NVL(t5.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t5.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t5.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t5.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t5.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t5.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t5.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t5.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t5.YEAR AND
+          t1.VERSION =t5.VERSION
+    <where>
+      <include refid="LIST_CONDITION"/>
+    </where>
+    GROUP BY t1.PLATFORM, t1.DEPARTMENT, t1.TEAM
+  </sql>
+
+  <sql id="TEAM_DIMENSION_NON_AMAZON">
+    SELECT '平台发展部汇总' PLATFORM,'平台发展部汇总' DEPARTMENT,'平台发展部汇总' TEAM,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t1.SEASON_ONE),    'Q2' , SUM(t1.SEASON_TWO),    'Q3' , SUM(t1.SEASON_THREE),    'Q4' , SUM(t1.SEASON_FOUR),    SUM(t1.SEASON_ONE+t1.SEASON_TWO+t1.SEASON_THREE+t1.SEASON_FOUR)) salesTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t2.SEASON_ONE),    'Q2' , SUM(t2.SEASON_TWO),    'Q3' , SUM(t2.SEASON_THREE),    'Q4' , SUM(t2.SEASON_FOUR),    SUM(t2.SEASON_ONE+t2.SEASON_TWO+t2.SEASON_THREE+t2.SEASON_FOUR)) salesVolumeTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t3.SEASON_ONE),    'Q2' , SUM(t3.SEASON_TWO),    'Q3' , SUM(t3.SEASON_THREE),    'Q4' , SUM(t3.SEASON_FOUR),    SUM(t3.SEASON_ONE+t3.SEASON_TWO+t3.SEASON_THREE+t3.SEASON_FOUR)) collectionTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t4.SEASON_ONE),    'Q2' , SUM(t4.SEASON_TWO),    'Q3' , SUM(t4.SEASON_THREE),    'Q4' , SUM(t4.SEASON_FOUR),    SUM(t4.SEASON_ONE+t4.SEASON_TWO+t4.SEASON_THREE+t4.SEASON_FOUR)) profitTarget,
+            DECODE (#{paramCondition.season}, 'Q1', SUM(t5.SEASON_ONE_MONEY),    'Q2' , SUM(t5.SEASON_TWO_MONEY),    'Q3' , SUM(t5.SEASON_THREE_MONEY),    'Q4' , SUM(t5.SEASON_FOUR_MONEY),    SUM(t5.SEASON_ONE_MONEY+t5.SEASON_TWO_MONEY+t5.SEASON_THREE_MONEY+t5.SEASON_FOUR_MONEY)) ad,
+            DECODE (#{paramCondition.season}, 'Q1', DECODE(SUM(t2.SEASON_ONE),0,0,SUM(t5.SEASON_ONE_MONEY)/SUM(t2.SEASON_ONE)),    'Q2' , DECODE(SUM(t2.SEASON_TWO),0,0,SUM(t5.SEASON_TWO_MONEY)/SUM(t2.SEASON_TWO)),    'Q3' , DECODE(SUM(t2.SEASON_THREE),0,0,SUM(t5.SEASON_THREE_MONEY)/SUM(t2.SEASON_THREE)),    'Q4' , DECODE(SUM(t2.SEASON_FOUR),0,0,SUM(t5.SEASON_FOUR_MONEY)/SUM(t2.SEASON_FOUR)),    DECODE(SUM(t2.SEASON_ONE+t2.SEASON_TWO+t2.SEASON_THREE+t2.SEASON_FOUR),0,0,SUM(t5.SEASON_ONE_MONEY+t5.SEASON_TWO_MONEY+t5.SEASON_THREE_MONEY+t5.SEASON_FOUR_MONEY)/SUM(t2.SEASON_ONE+t2.SEASON_TWO+t2.SEASON_THREE+t2.SEASON_FOUR))) advertisingProportionBudget
+FROM SALES_TARGET t1
+    FULL JOIN SALES_VOLUME_TARGET t2 ON
+          NVL(t1.PLATFORM,0) = NVL(t2.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t2.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t2.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t2.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t2.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t2.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t2.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t2.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t2.YEAR AND
+          t1.VERSION =t2.VERSION
+    FULL JOIN COLLECTION_TARGET t3 ON
+          NVL(t1.PLATFORM,0) = NVL(t3.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t3.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t3.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t3.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t3.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t3.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t3.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t3.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t3.YEAR AND
+          t1.VERSION =t3.VERSION
+    FULL JOIN PROFIT_TARGET t4 ON
+          NVL(t1.PLATFORM,0) = NVL(t4.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t4.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t4.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t4.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t4.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t4.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t4.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t4.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t4.YEAR AND
+          t1.VERSION =t4.VERSION
+    FULL JOIN ADVERTISING_BUDGET t5 ON
+          NVL(t1.PLATFORM,0) = NVL(t5.PLATFORM,0) AND
+          NVL(t1.DEPARTMENT,0) = NVL(t5.DEPARTMENT,0) AND
+          NVL(t1.TEAM,0) = NVL(t5.TEAM,0) AND
+          NVL(t1.PRODUCT_TYPE,0) = NVL(t5.PRODUCT_TYPE,0) AND
+          NVL(t1.COMPANY_BRAND,0) = NVL(t5.COMPANY_BRAND,0) AND
+          NVL(t1.SHOP_NAME,0) = NVL(t5.SHOP_NAME,0) AND
+          NVL(t1.RETRACT_LINE,0) = NVL(t5.RETRACT_LINE,0) AND
+          NVL(t1.NEWOLD_PRODUCT,0) = NVL(t5.NEWOLD_PRODUCT,0) AND
+          t1.YEAR =t5.YEAR AND
+          t1.VERSION =t5.VERSION
+    <where>
+      <include refid="LIST_CONDITION"/>
+        AND t1.PLATFORM not in ( 'Amazon','Rakuten','Walmart')
+    </where>
+  </sql>
+
+  <select id="departmentTeam" resultType="java.lang.String">
+    select distinct sysComDeptName from TbQxDept
+    UNION ALL
+    select 'B2B'
+    UNION ALL
+    select '日亚'
+    UNION ALL
+    select '乐天'
+  </select>
+
+  <select id="platformList" resultType="java.lang.String">
+    select distinct elePlatformName from TbAmazonMarketplace
+    UNION ALL
+    select 'B2B'
+    UNION ALL
+    select '日亚'
+    UNION ALL
+    select '乐天'
+
+  </select>
+
+    <select id="listInv"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.TargetBoardResult">
+      SELECT sal.PLATFORM, sal.DEPARTMENT, sal.TEAM,sal.year,sal.version,
+           inv.purbudget purchaseBudget,
+           inv.target_inventory/sal.yeartar  targetInventorySalesRatio
+      FROM (SELECT t1.PLATFORM, t1.DEPARTMENT, t1.TEAM,t1.year,t1.version,SUM(t1.season_one+t1.season_two+t1.season_three+t1.season_four) yearTar
+              FROM SALES_TARGET t1
+            <where>
+                <include refid="LIST_CONDITION"/>
+            </where>
+             GROUP BY t1.PLATFORM, t1.DEPARTMENT, t1.TEAM,t1.year,t1.version) sal
+      LEFT JOIN  (SELECT t1.PLATFORM, t1.DEPARTMENT, t1.TEAM,t1.year,t1.version,
+        decode(#{paramCondition.season}, 'Q1', SUM(t1.SEASON_ONE),    'Q2' , SUM(t1.SEASON_TWO),    'Q3' , SUM(t1.SEASON_THREE),    'Q4' , SUM(t1.SEASON_FOUR),    SUM(t1.SEASON_ONE+t1.SEASON_TWO+t1.SEASON_THREE+t1.SEASON_FOUR)) purBudget,
+        SUM(t1.TARGET_INVENTORY) TARGET_INVENTORY
+              FROM inventory_demand t1
+            <where>
+                <include refid="LIST_CONDITION"/>
+            </where>
+            GROUP BY t1.PLATFORM, t1.DEPARTMENT, t1.TEAM,t1.year,t1.version) inv
+      ON sal.platform = inv.platform
+           AND sal.department = inv.department
+           AND sal.team = inv.team
+           AND sal.year = inv.year
+           AND sal.version = inv.version
+    </select>
+</mapper>

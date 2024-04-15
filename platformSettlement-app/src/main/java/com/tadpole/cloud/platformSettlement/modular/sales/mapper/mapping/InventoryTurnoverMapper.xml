@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.sales.mapper.InventoryTurnoverMapper">
+
+    <sql id="List_Condition">
+        <if test="paramCondition.year != null and paramCondition.year != ''">
+            AND year =#{paramCondition.year}
+        </if>
+
+        <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+            AND platform IN
+            <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+                     item="platform">
+                #{platform}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+            AND (team IN
+            <foreach collection="paramCondition.teams" open="(" close=")" separator=","
+                     item="team">
+                #{team}
+            </foreach>
+            <if test="paramCondition.department != null and paramCondition.department != ''">
+                OR department like '%'||#{paramCondition.department}||'%'
+            </if>)
+        </if>
+
+        <if test="paramCondition.productTypes != null and paramCondition.productTypes.size>0">
+            AND product_type IN
+            <foreach collection="paramCondition.productTypes" open="(" close=")" separator=","
+                     item="productType">
+                #{productType}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.companyBrands != null and paramCondition.companyBrands.size>0">
+            AND company_brand IN
+            <foreach collection="paramCondition.companyBrands" open="(" close=")" separator=","
+                     item="companyBrand">
+                #{companyBrand}
+            </foreach>
+        </if>
+    </sql>
+
+    <insert id="insertBatch">
+        INSERT INTO INVENTORY_TURNOVER (IDX,
+        PLATFORM,
+        DEPARTMENT,
+        TEAM,
+        PRODUCT_TYPE,
+        COMPANY_BRAND,
+        MON1,
+        MON2,
+        MON3,
+        MON4,
+        MON5,
+        MON6,
+        MON7,
+        MON8,
+        MON9,
+        MON10,
+        MON11,
+        MON12,
+        CREATE_BY,
+        CREATE_BY_CODE,
+        CREATE_TIME,
+        CREATE_BY_DEPT)
+        SELECT 11, 'x1' FROM DUAL
+        WHERE NOT EXISTS (SELECT id1 FROM mytble WHERE id1 = 11);
+         INSERT INTO INVENTORY_TURNOVER ( IDX, PLATFORM, DEPARTMENT, TEAM, PRODUCT_TYPE, COMPANY_BRAND, MON1, MON2, MON3, MON4, MON5, MON6, MON7, MON8, MON9, MON10, MON11, MON12, CREATE_BY, CREATE_BY_CODE, CREATE_TIME, CREATE_BY_DEPT ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        MERGE INTO  INVENTORY_TURNOVER
+
+        (IDX,
+        PLATFORM,
+        DEPARTMENT,
+        TEAM,
+        PRODUCT_TYPE,
+        COMPANY_BRAND,
+        MON1,
+        MON2,
+        MON3,
+        MON4,
+        MON5,
+        MON6,
+        MON7,
+        MON8,
+        MON9,
+        MON10,
+        MON11,
+        MON12,
+        CREATE_BY,
+        CREATE_BY_CODE,
+        CREATE_TIME,
+        CREATE_BY_DEPT)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (
+            #{entity.IDX}, #{entity.PLATFORM}, #{entity.DEPARTMENT}, #{entity.TEAM}
+            #{entity.PRODUCT_TYPE}, #{entity.COMPANY_BRAND}, #{entity.MON1}, #{entity.MON2}
+            #{entity.MON3}, #{entity.MON4}, #{entity.MON5}, #{entity.MON6}
+            #{entity.MON7}, #{entity.MON8}, #{entity.MON9}, #{entity.MON10}
+            #{entity.MON11}, #{entity.MON12}, #{entity.CREATE_BY}, #{entity.CREATE_BY_CODE}
+            #{entity.CREATE_TIME}, #{entity.CREATE_BY_DEPT}
+            )
+        </foreach>
+        on duplicate key
+
+<!--        update-->
+<!--        id = values(id) , username = values(username) , password = values(password) , status = values(status)-->
+    </insert>
+
+    <update id="batchUpdateNotConfirm" parameterType="java.util.List">
+        UPDATE
+        INVENTORY_TURNOVER a
+        <set>
+            <if test="a.COMFIRM_STATUS != null and COMFIRM_STATUS >=1 ">
+
+            <trim prefix="a.mon1 = CASE" suffix="END,">
+                <foreach collection="verifyList" item="item" index="index">
+                    WHEN a.id = #{item.id} THEN #{item.mon1}
+                </foreach>
+            </trim>
+
+            </if>
+
+            <if test="a.COMFIRM_STATUS != null and COMFIRM_STATUS >=2 ">
+
+                <trim prefix="a.mon2 = CASE" suffix="END,">
+                    <foreach collection="verifyList" item="item" index="index">
+                        WHEN a.id = #{item.id} THEN #{item.mon2}
+                    </foreach>
+                </trim>
+
+            </if>
+
+
+        </set>
+        WHERE a.id IN
+        <foreach collection="verifyList" item="item" index="index" separator="," open="(" close=")">
+            #{item.id}
+        </foreach>
+        AND a.verify_status = 0
+    </update>
+
+    <update id="updateByConfirmMonth">
+        UPDATE
+        INVENTORY_TURNOVER a
+        <set>
+            <if test="paramCondition.COMFIRM_STATUS != null and paramCondition.COMFIRM_STATUS >=1 ">
+                a.mon1 = #{paramCondition.mon1}
+            </if>
+
+            <if test="paramCondition.COMFIRM_STATUS != null and paramCondition.COMFIRM_STATUS >=2 ">
+                a.mon2 = #{paramCondition.mon2}
+            </if>
+        </set>
+
+        <if test="paramCondition.id != null" >
+                <where>
+                    a.id = #{paramCondition.id}
+                </where>
+        </if>
+    </update>
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.InventoryTurnoverParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.InventoryTurnoverResult">
+        select     *    FROM INVENTORY_TURNOVER t
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.year,t.idx,t.platform,t.department,t.team,t.product_type,t.company_brand NULLS FIRST
+    </select>
+
+    <select id="confirmedMonthEmpty" resultType="java.lang.Integer">
+        SELECT 1
+        FROM INVENTORY_TURNOVER
+        WHERE decode(#{month},
+            1,        mon1,
+            2,        mon2,
+            3,        mon3,
+            4,        mon4,
+            5,        mon5,
+            6,        mon6,
+            7,        mon7,
+            8,        mon8,
+            9,        mon9,
+            10,        mon10,
+            11,        mon11,
+            12,        mon12,        '无月份值') IS NULL
+        AND  year = #{year}
+        AND  ROWNUM = 1
+    </select>
+</mapper>

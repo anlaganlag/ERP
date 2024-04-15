@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.MabangOrdersMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.MabangOrders">
+        <id column="ID" property="id"/>
+        <result column="PLATFORM_ORDER_ID" property="platformOrderId"/>
+        <result column="ORDER_STATUS" property="orderStatus"/>
+        <result column="MY_LOGISTICS_CHANNEL_ID" property="myLogisticsChannelId"/>
+        <result column="TRACK_NUMBER" property="trackNumber"/>
+        <result column="TRACK_NUMBER1" property="trackNumber1"/>
+        <result column="TRACK_NUMBER2" property="trackNumber2"/>
+        <result column="ORDER_WEIGHT" property="orderWeight"/>
+        <result column="BUYER_USER_ID" property="buyerUserId"/>
+        <result column="BUYER_NAME" property="buyerName"/>
+        <result column="SHOP_ID" property="shopId"/>
+        <result column="COMPANY_ID" property="companyId"/>
+        <result column="COUNTRY_CODE" property="countryCode"/>
+        <result column="ORDER_COST" property="orderCost"/>
+        <result column="TRANSPORT_TIME" property="transportTime"/>
+        <result column="QUICK_PICK_TIME" property="quickPickTime"/>
+        <result column="CAN_SEND" property="canSend"/>
+        <result column="CREATE_DATE" property="createDate"/>
+        <result column="IS_RETURNED" property="isReturned"/>
+        <result column="IS_REFUND" property="isRefund"/>
+        <result column="PAID_TIME" property="paidTime"/>
+        <result column="SALES_RECORD_NUMBER" property="salesRecordNumber"/>
+        <result column="ORDER_FEE" property="orderFee"/>
+        <result column="PLATFORM_ID" property="platformId"/>
+        <result column="EXPRESS_TIME" property="expressTime"/>
+        <result column="IS_UNION" property="isUnion"/>
+        <result column="IS_SPLIT" property="isSplit"/>
+        <result column="IS_RESEND" property="isResend"/>
+        <result column="HAS_GOODS" property="hasGoods"/>
+        <result column="HAS_BATTERY" property="hasBattery"/>
+        <result column="IS_SYNC_LOGISTICS_DESCR" property="isSyncLogisticsDescr"/>
+        <result column="PAYPAL_ID" property="paypalId"/>
+        <result column="IS_SYNC_LOGISTICS" property="isSyncLogistics"/>
+        <result column="IS_SYNC_PLATFORM" property="isSyncPlatform"/>
+        <result column="IS_SYNC_PLATFORM_DESCR" property="isSyncPlatformDescr"/>
+        <result column="DISTRICT" property="district"/>
+        <result column="PAYPAL_EMAIL" property="paypalEmail"/>
+        <result column="CLOSE_DATE" property="closeDate"/>
+        <result column="STREET1" property="street1"/>
+        <result column="STREET2" property="street2"/>
+        <result column="IS_VIRTUAL" property="isVirtual"/>
+        <result column="CITY" property="city"/>
+        <result column="PROVINCE" property="province"/>
+        <result column="POST_CODE" property="postCode"/>
+        <result column="PHONE1" property="phone1"/>
+        <result column="PHONE2" property="phone2"/>
+        <result column="EMAIL" property="email"/>
+        <result column="IS_NEW_ORDER" property="isNewOrder"/>
+        <result column="DOORCODE" property="doorcode"/>
+        <result column="FBA_FLAG" property="fbaFlag"/>
+        <result column="FBA_START_DATE_TIME" property="fbaStartDateTime"/>
+        <result column="FBA_END_DATE_TIME" property="fbaEndDateTime"/>
+        <result column="CARRIER_CODE" property="carrierCode"/>
+        <result column="OPER_TIME" property="operTime"/>
+        <result column="SHIPPING_SERVICE" property="shippingService"/>
+        <result column="PACKAGE_WEIGHT" property="packageWeight"/>
+        <result column="HAS_MAGNETIC" property="hasMagnetic"/>
+        <result column="HAS_POWDER" property="hasPowder"/>
+        <result column="HAS_TORT" property="hasTort"/>
+        <result column="REMARK" property="remark"/>
+        <result column="SELLER_MESSAGE" property="sellerMessage"/>
+        <result column="CURRENCY_ID" property="currencyId"/>
+        <result column="CURRENCY_RATE" property="currencyRate"/>
+        <result column="ITEM_TOTAL" property="itemTotal"/>
+        <result column="SHIPPING_FEE" property="shippingFee"/>
+        <result column="PLATFORM_FEE" property="platformFee"/>
+        <result column="SHIPPING_TOTAL_ORIGIN" property="shippingTotalOrigin"/>
+        <result column="ITEM_TOTAL_ORIGIN" property="itemTotalOrigin"/>
+        <result column="REFUND_FEE_CURRENCY_ID" property="refundFeeCurrencyId"/>
+        <result column="ORIGIN_FAX" property="originFax"/>
+        <result column="INSURANCE_FEE" property="insuranceFee"/>
+        <result column="INSURANCE_FEE_ORIGIN" property="insuranceFeeOrigin"/>
+        <result column="PAYPAL_FEE" property="paypalFee"/>
+        <result column="PAYPAL_FEE_ORIGIN" property="paypalFeeOrigin"/>
+        <result column="ITEM_TOTAL_COST" property="itemTotalCost"/>
+        <result column="SHIPPING_COST" property="shippingCost"/>
+        <result column="SHIPPING_PRE_COST" property="shippingPreCost"/>
+        <result column="PACKAGE_FEE" property="packageFee"/>
+        <result column="FBA_PER_ORDER_FULFILLMENT_FEE" property="fbaPerOrderFulfillmentFee"/>
+        <result column="FBA_COMMISSION" property="fbaCommission"/>
+        <result column="PROMOTION_AMOUNT" property="promotionAmount"/>
+        <result column="ALLIANCE_FEE_ORIGIN" property="allianceFeeOrigin"/>
+        <result column="VOUCHER_PRICE_ORIGIN" property="voucherPriceOrigin"/>
+        <result column="SUBSIDY_AMOUNT_ORIGIN" property="subsidyAmountOrigin"/>
+        <result column="COD_CHARGE" property="codCharge"/>
+        <result column="ALLIANCE_FEE" property="allianceFee"/>
+        <result column="FBA_PER_UNIT_FULFILLMENT_FEE" property="fbaPerUnitFulfillmentFee"/>
+        <result column="FBA_WEIGHT_BASED_FEE" property="fbaWeightBasedFee"/>
+        <result column="PLATFORM_FEE_ORIGIN" property="platformFeeOrigin"/>
+        <result column="VOUCHER_PRICE" property="voucherPrice"/>
+        <result column="SUBSIDY_AMOUNT" property="subsidyAmount"/>
+        <result column="IS_WMS" property="isWms"/>
+        <result column="PAY_TYPE" property="payType"/>
+        <result column="VENDOR_ID" property="vendorId"/>
+        <result column="ABNNUMBER" property="abnnumber"/>
+        <result column="COUNTRY_NAME_EN" property="countryNameEn"/>
+        <result column="COUNTRY_NAME_CN" property="countryNameCn"/>
+        <result column="SHOP_NAME" property="shopName"/>
+        <result column="MY_LOGISTICS_CHANNEL_NAME" property="myLogisticsChannelName"/>
+        <result column="MY_LOGISTICS_ID" property="myLogisticsId"/>
+        <result column="MY_LOGISTICS_NAME" property="myLogisticsName"/>
+        <result column="ERP_ORDER_ID" property="erpOrderId"/>
+        <result column="SHIPPING_WEIGHT" property="shippingWeight"/>
+        <result column="BEFORE_STATUS" property="beforeStatus"/>
+        <result column="EXTEND_ATTR" property="extendAttr"/>
+        <result column="SYNC_TYPE" property="syncType"/>
+        <result column="SYNC_TIME" property="syncTime"/>
+        <result column="SYNC_STATUS" property="syncStatus"/>
+        <result column="SYNC_SUCCESS_TIMES" property="syncSuccessTimes"/>
+        <result column="SYNC_FAIL_TIMES" property="syncFailTimes"/>
+        <result column="SYNC_RESULT_MSG" property="syncResultMsg"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="UPDATE_TIME" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Page_Column_List_OLD">
+        t.ID,
+        t.PLAT_ORD_ID,
+        t.PLATFORM_ORDER_ID,
+        t.SALES_RECORD_NUMBER,
+        t.ORDER_STATUS,
+        t.CREATE_DATE,
+        t.EXPRESS_TIME,
+        t.SHOP_ID,
+        t.SHOP_NAME,
+        t.PLATFORM_ID,
+        t.ORDER_FEE,
+        t.CURRENCY_ID,
+        t.SYNC_TIME
+    </sql>
+
+    <sql id="Page_Column_List">
+        t.ID,
+        t.PLAT_ORD_ID,
+        t.SALES_RECORD_NUMBER,
+        t.ORDER_STATUS,
+        t.CREATE_DATE,
+        t.EXPRESS_TIME,
+        t.SHOP_ID,
+        t.SHOP_NAME,
+        s.FINANCE_CODE,
+        s.ORIGINAL_FINANCE_CODE,
+        t.PLATFORM_ID,
+        t.ITEM_TOTAL_ORIGIN,
+        t.CURRENCY_ID,
+        t.SYNC_TIME,
+        d.PLATFORM_SKU,
+        d.STOCK_SKU,
+        d.PLATFORM_QUANTITY,
+        d.STOCK_WAREHOUSE_NAME,
+        STOCK_GRID, --商品仓位
+        CASE d.status WHEN '1' THEN '未付款' WHEN '2' THEN '未发货' WHEN '3' THEN '已发货' WHEN '4' THEN '已作废' ELSE '空' END STATUS --库存状态
+    </sql>
+
+
+
+    <sql id="List_Condition">
+        <if test="paramCondition.platOrdId != null and paramCondition.platOrdId != ''">
+            AND t.PLAT_ORD_ID like '%' || #{paramCondition.platOrdId} ||'%'
+        </if>
+        <if test="paramCondition.platformId != null and paramCondition.platformId != ''">
+            AND t.PLATFORM_ID = #{paramCondition.platformId}
+        </if>
+
+        <if test="paramCondition.platformIds != null and paramCondition.platformIds.size>0">
+            AND UPPER(t.PLATFORM_ID) IN
+            <foreach collection="paramCondition.platformIds" open="(" close=")" separator=","
+                     item="platformId">
+                CASE WHEN #{platformId} = 'Aliexpress' THEN '速卖通' ELSE UPPER(#{platformId}) END
+            </foreach>
+        </if>
+
+        <if test="paramCondition.platformId != null and paramCondition.platformId != ''">
+            AND upper(t.PLATFORM_ID) like '%' || upper(#{paramCondition.platformId}) ||'%'
+        </if>
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND t.SHOP_NAME like '%' || #{paramCondition.shopName} ||'%'
+        </if>
+        <if test="paramCondition.shopNames != null and paramCondition.shopNames.size>0">
+            AND t.SHOP_NAME IN
+            <foreach collection="paramCondition.shopNames" open="(" close=")" separator=","
+                     item="shopName">
+                #{shopName}
+            </foreach>
+        </if>
+        <if test="paramCondition.financeCode != null and paramCondition.financeCode != ''">
+            AND s.FINANCE_CODE like '%' || #{paramCondition.financeCode} ||'%'
+        </if>
+        <if test="paramCondition.originalFinanceCode != null and paramCondition.originalFinanceCode != ''">
+            AND s.ORIGINAL_FINANCE_CODE like '%' || #{paramCondition.originalFinanceCode} ||'%'
+        </if>
+
+        <if test="paramCondition.stockSku != null and paramCondition.stockSku != ''">
+            AND d.STOCK_SKU like '%' || #{paramCondition.stockSku} ||'%'
+        </if>
+        <if
+                test="paramCondition.expressStartTime != null  and paramCondition.expressEndTime != null ">
+            and t.express_time >= #{paramCondition.expressStartTime}
+            AND t.express_time &lt; #{paramCondition.expressEndTime}+1
+        </if>
+        <if
+                test="paramCondition.syncStartTime != null  and paramCondition.syncEndTime != null ">
+            and t.sync_time >= #{paramCondition.syncStartTime}
+            AND t.sync_time &lt; #{paramCondition.syncEndTime}+1
+        </if>
+    </sql>
+
+
+    <select id="listOld"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangOrdersParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangOrdersResult">
+        select
+        <include refid="Page_Column_List_OLD"/>
+        ,s.FINANCE_CODE ,s.ORIGINAL_FINANCE_CODE FROM MABANG_ORDERS t join mabang_shop_list s on t.shop_id = s.id
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.EXPRESS_TIME DESC
+    </select>
+
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangOrdersParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangOrdersResult">
+        SELECT t.ID,
+               t.PLAT_ORD_ID,
+               t.PLATFORM_ORDER_ID,
+               t.SALES_RECORD_NUMBER,
+               t.ORDER_STATUS,
+               t.CREATE_DATE,
+               t.EXPRESS_TIME,
+               t.SHOP_ID,
+               t.SHOP_NAME,
+               t.PLATFORM_ID,
+               t.ITEM_TOTAL_ORIGIN ORDER_FEE,
+               t.CURRENCY_ID,
+               t.SYNC_TIME,
+               s.FINANCE_CODE,
+               s.ORIGINAL_FINANCE_CODE,
+               d.PLATFORM_SKU,
+               d.STOCK_SKU,
+               d.QUANTITY,
+               d.STOCK_WAREHOUSE_NAME,
+               d.STOCK_GRID,
+               d.STATUS
+          FROM MABANG_ORDERS t
+          LEFT JOIN MABANG_ORDER_ITEM d
+            ON t.ID = d.ORIGIN_ORDER_ID
+          LEFT JOIN MABANG_SHOP_LIST s
+            ON t.SHOP_ID = s.ID
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.EXPRESS_TIME DESC
+    </select>
+
+    <select id="exportList"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangOrdersResult">
+        SELECT t.ID,
+               t.PLAT_ORD_ID,
+               t.PLATFORM_ORDER_ID,
+               t.SALES_RECORD_NUMBER,
+               DECODE(t.ORDER_STATUS,
+                      '2',
+                      '配货中',
+                      '3',
+                      '已发货',
+                      '4',
+                      '已完成',
+                      '5',
+                      '已作废',
+                      '其他') ORDER_STATUS,
+               t.CREATE_DATE,
+               t.EXPRESS_TIME,
+               t.SHOP_ID,
+               t.SHOP_NAME,
+               t.PLATFORM_ID,
+               t.ITEM_TOTAL_ORIGIN,
+               t.CURRENCY_ID,
+               t.SYNC_TIME,
+               s.FINANCE_CODE,
+               s.ORIGINAL_FINANCE_CODE,
+               d.PLATFORM_SKU,
+               d.STOCK_SKU,
+               d.QUANTITY,
+               d.STOCK_WAREHOUSE_NAME,
+               d.STOCK_GRID,
+               DECODE(d.STOCK_STATUS,
+                      '1',
+                      '自动创建',
+                      '2',
+                      '待开发',
+                      '3',
+                      '正常',
+                      '4',
+                      '清仓',
+                      '5',
+                      '停止销售',
+                      '其他') STATUS
+        FROM MABANG_ORDERS t
+          JOIN MABANG_ORDER_ITEM d
+            ON t.ID = d.ORIGIN_ORDER_ID
+          JOIN MABANG_SHOP_LIST s
+            ON t.SHOP_ID = s.ID
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.EXPRESS_TIME DESC
+    </select>
+
+
+
+    <select id="getWaitCreatePurchaseOrder"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangOrdersParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangOrdersResult">
+        SELECT t.ID,
+        t.PLAT_ORD_ID,
+        t.PLATFORM_ORDER_ID,
+        t.SALES_RECORD_NUMBER,
+        t.ORDER_STATUS,
+        t.CREATE_DATE,
+        t.EXPRESS_TIME,
+        t.SHOP_ID,
+        t.SHOP_NAME,
+        t.PLATFORM_ID,
+        t.ITEM_TOTAL_ORIGIN ORDER_FEE,
+        t.CURRENCY_ID,
+        t.SYNC_TIME,
+        s.FINANCE_CODE,
+        s.ORIGINAL_FINANCE_CODE,
+        d.PLATFORM_SKU,
+        d.STOCK_SKU,
+        d.QUANTITY,
+        d.STOCK_WAREHOUSE_NAME,
+        d.STOCK_GRID,
+        d.STATUS,
+        d.SELL_PRICE,
+        d.COST_PRICE,
+        t.REMARK
+        FROM MABANG_ORDERS t
+        JOIN MABANG_ORDER_ITEM d
+            ON t.ID = d.ORIGIN_ORDER_ID
+        JOIN MABANG_SHOP_LIST s
+            ON t.SHOP_ID = s.ID
+
+        WHERE  t.BUYER_USER_ID ='采购中心' AND  t.SHOP_NAME IN ('平台发展','BTB')  AND  t.CREATE_SALE_OUT_ORDER='8' AND d.STATUS='3' AND t.PLATFORM_ORDER_ID not in (
+            SELECT DISTINCT  F_BILL_NO  FROM K3_PURCHASE_IN_STOCK_ORDER kpiso
+        )
+        ORDER BY t.EXPRESS_TIME DESC
+    </select>
+</mapper>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.product.modular.product.mapper.RdManageUpRecordMapper">
+
+    <select id="getList"
+            resultType="com.tadpole.cloud.product.modular.product.model.result.RdManageUpRecordResult">
+        select log.* from RD_MANAGE_UP_RECORD log WHERE SYS_MODIFY_RECORD_NUM = #{paramCondition.code }
+        and SYS_TYPE= #{paramCondition.sysType } order by SYS_L_DATE desc
+    </select>
+</mapper>

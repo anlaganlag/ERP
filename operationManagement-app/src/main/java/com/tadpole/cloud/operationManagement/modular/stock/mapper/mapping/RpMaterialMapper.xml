@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.RpMaterialMapper">
+
+
+    <select id="selectCodeByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.material_code
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' || #{paramCondition.operator} || '%')
+                or TEAM_SUPERVISE like ('%' || #{paramCondition.operator} || '%')
+                or DEPT_MGR like ('%' || #{paramCondition.operator} || '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON  m.product_type = l.product_type
+        GROUP BY m.material_code
+
+    </select>
+
+    <select id="selectProductTypeByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.product_type
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.product_type
+
+    </select>
+
+    <select id="selectProductNameByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.product_name
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.product_name
+
+    </select>
+
+    <select id="selectStyleByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.style
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.style
+
+    </select>
+
+    <select id="selectMaterialByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.main_material
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.main_material
+
+    </select>
+
+
+
+    <select id="selectPatternByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.design
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.design
+
+    </select>
+
+    <select id="selectCompanyBrandByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.company_brand
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.company_brand
+
+    </select>
+
+    <select id="selectBrandByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.fit_brand
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN  mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.fit_brand
+
+    </select>
+
+    <select id="selectModelByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.model
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.model
+
+    </select>
+
+
+    <select id="selectColorByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.color
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.color
+
+    </select>
+
+
+    <select id="selectSizeByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.sizes
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.sizes
+
+    </select>
+
+    <select id="selectPackingByPerson" resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.packing
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.packing
+
+    </select>
+
+
+    <select id="selectVersionByPerson"  resultType="String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.version
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN  mcms_base_data.rp_material m ON m.product_type = l.product_type
+        GROUP BY m.version
+
+    </select>
+
+    <select id="selectStyleSecondLabelByPerson" resultType="java.lang.String"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.SysMaterialParam">
+        SELECT
+            m.style_second_label
+        FROM
+            (select product_type from product_line2
+             where OPERATOR like ('%' ||#{paramCondition.operator}|| '%')
+                or TEAM_SUPERVISE like ('%' ||#{paramCondition.operator}|| '%')
+                or DEPT_MGR like ('%' ||#{paramCondition.operator}|| '%')
+             group by product_type ) l
+                JOIN  mcms_base_data.rp_material m ON m.product_type = l.product_type
+        where m.style_second_label is not null
+        GROUP BY m.style_second_label
+    </select>
+
+    <select id="sixCodeListPage"
+            parameterType="cn.stylefeng.guns.cloud.system.api.base.model.params.WarehouseSixCodeParam"
+            resultType="cn.stylefeng.guns.cloud.system.api.base.model.result.WarehouseSixCodeResult">
+        SELECT substr(t1.fnsku,-6) sixCode,
+                t1.sku,
+                t1.sys_site site,
+                t1.sys_shops_name shopName,
+                t1.asin,
+                t1.fnsku,
+                t2.material_code,
+                t2.category,
+                t2.product_type,
+                t2.product_name,
+                t2.style,
+                t2.main_material,
+                t2.design,
+                t2.company_brand,
+                t2.fit_brand,
+                t2.model,
+                t2.color,
+                t2.sizes,
+                t2.packing,
+                t2.version,
+                t2.type
+        FROM mcms_base_data.inv_product_gallery t1
+        LEFT JOIN mcms_base_data.rp_material t2
+        ON t2.material_code=t1.material_code
+        WHERE
+            t1.fnsku IS NOT NULL
+            <if test="paramCondition.fnsku != null and paramCondition.fnsku != ''">
+                AND
+                <foreach collection="paramCondition.fnsku.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                  t1.fnsku  LIKE '%'|| #{item}
+                </foreach>
+            </if>
+    </select>
+    <select id="selectCode" resultType="java.lang.String">
+        SELECT
+            m.material_code
+        FROM
+            mcms_base_data.rp_material m
+    </select>
+</mapper>

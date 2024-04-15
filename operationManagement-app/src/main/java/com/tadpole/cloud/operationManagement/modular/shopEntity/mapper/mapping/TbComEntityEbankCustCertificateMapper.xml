@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.shopEntity.mapper.TbComEntityEbankCustCertificateMapper">
+     <select id="selectByPage" resultType="com.tadpole.cloud.operationManagement.api.shopEntity.model.result.TbComEntityEbankCustCertificateResult">
+        select * from Tb_Com_Entity_Ebank_Cust_Certificate ${ew.customSqlSegment}
+    </select>
+</mapper>

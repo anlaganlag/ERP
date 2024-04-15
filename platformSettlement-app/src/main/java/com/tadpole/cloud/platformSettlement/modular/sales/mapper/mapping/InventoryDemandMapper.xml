@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.sales.mapper.InventoryDemandMapper">
+
+    <sql id="Page_Column_List">
+        SEASON_ONE,
+        SEASON_TWO,
+        SEASON_THREE,
+        SEASON_FOUR,
+        OPENING_INVENTORY,
+        TARGET_INVENTORY,
+        TARGET_INVENTORY_SALES_RATIO,
+        CURRENCY,
+        CONFIRM_STATUS,
+        CASE CONFIRM_STATUS WHEN 1 THEN '已确认' WHEN 0 THEN '未确认' ELSE '其他' END CONFIRM_STATUS_TXT,
+        CREATE_AT,
+        CREATE_BY,
+        CONFIRM_DATE,
+        CONFIRM_BY,
+        UPDATE_AT,
+        UPDATE_BY,
+        PLATFORM,
+        ID,
+        DEPARTMENT,
+        TEAM,
+        PRODUCT_TYPE,
+        COMPANY_BRAND,
+        YEAR,
+        VERSION,
+        (SEASON_ONE+SEASON_TWO+SEASON_THREE+SEASON_FOUR) yearTarget
+    </sql>
+
+    <sql id="Group_List">
+        PLATFORM,
+        DEPARTMENT,
+        TEAM,
+        PRODUCT_TYPE,
+        YEAR,
+        VERSION
+    </sql>
+
+    <sql id="List_Sum">
+        SUM(a.SEASON_ONE + a.SEASON_TWO + a.SEASON_THREE + a.SEASON_FOUR) yearTarget,
+        SUM(a.OPENING_INVENTORY) openingInventory,
+        SUM(a.TARGET_INVENTORY) targetInventory,
+        SUM(a.SEASON_ONE) seasonOne,
+        SUM(a.SEASON_TWO) seasonTwo,
+        SUM(a.SEASON_THREE) seasonThree,
+        SUM(a.SEASON_FOUR) seasonFour,
+        SUM(a.TARGET_INVENTORY) targetInventoryTotal
+    </sql>
+
+
+    <sql id="List_Condition">
+
+        <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+            AND platform IN
+            <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+                     item="platform">
+                #{platform}
+            </foreach>
+        </if>
+        <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+            AND department IN
+            <foreach collection="paramCondition.departments" open="(" close=")" separator=","
+                     item="department">
+                #{department}
+            </foreach>
+        </if>
+        <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+            AND team IN
+            <foreach collection="paramCondition.teams" open="(" close=")" separator=","
+                     item="team">
+                #{team}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.productTypes != null and paramCondition.productTypes.size>0">
+            AND product_type IN
+            <foreach collection="paramCondition.productTypes" open="(" close=")" separator=","
+                     item="productType">
+                #{productType}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.companyBrands != null and paramCondition.companyBrands.size>0">
+            AND company_brand IN
+            <foreach collection="paramCondition.companyBrands" open="(" close=")" separator=","
+                     item="companyBrand">
+                #{companyBrand}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.year != null and paramCondition.year != ''">
+            AND year =#{paramCondition.year}
+        </if>
+
+        <if test="paramCondition.version != null and paramCondition.version != ''">
+            AND version =#{paramCondition.version}
+        </if>
+    </sql>
+
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.InventoryDemandParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.InventoryDemandResult">
+        select
+        <include refid="Page_Column_List"/>
+        from INVENTORY_DEMAND
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY ID
+
+    </select>
+
+
+    <select id="listSum"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.sales.model.params.InventoryDemandParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.sales.model.result.InventoryDemandResult">
+        SELECT
+        <include refid="List_Sum"/>
+        FROM INVENTORY_DEMAND a
+        <where>
+
+            <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+                AND a.platform IN
+                <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+                         item="platform">
+                    #{platform}
+                </foreach>
+            </if>
+            <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+                AND a.department IN
+                <foreach collection="paramCondition.departments" open="(" close=")" separator=","
+                         item="department">
+                    #{department}
+                </foreach>
+            </if>
+            <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+                AND a.team IN
+                <foreach collection="paramCondition.teams" open="(" close=")" separator=","
+                         item="team">
+                    #{team}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.productTypes != null and paramCondition.productTypes.size>0">
+                AND a.product_type IN
+                <foreach collection="paramCondition.productTypes" open="(" close=")" separator=","
+                         item="productType">
+                    #{productType}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.companyBrands != null and paramCondition.companyBrands.size>0">
+                AND a.company_brand IN
+                <foreach collection="paramCondition.companyBrands" open="(" close=")" separator=","
+                         item="companyBrand">
+                    #{companyBrand}
+                </foreach>
+            </if>
+
+            <if test="paramCondition.year != null and paramCondition.year != ''">
+                AND a.year =#{paramCondition.year}
+            </if>
+
+            <if test="paramCondition.version != null and paramCondition.version != ''">
+                AND a.version =#{paramCondition.version}
+            </if>
+        </where>
+    </select>
+
+    <select id="stockMonitorHead"
+            resultType="com.tadpole.cloud.platformSettlement.api.sales.entity.StockMonitor">
+        SELECT
+        max(invd.platform) PLATFORM_NAME,  --(1)
+        invd.department,  -- (2)
+        invd.Team,  --(3)
+        invd.product_type,  --(4)
+        invd.version DATA_VERSION, -- (5)
+        invd.year,
+        MAX(salTar.SEASON_ONE + salTar.SEASON_TWO + salTar.SEASON_THREE + salTar.SEASON_FOUR) AS YEAR_TARGET, -- 年度销量目标 (6)
+        DECODE( to_char(sysdate, 'Q') , 1 , MAX(salTar.SEASON_ONE), 2 , MAX(salTar.SEASON_TWO), 3 , MAX(salTar.SEASON_THREE) , 4, MAX (salTar.SEASON_FOUR) , '季度销量目标') QUARTER_TARGE,  -- 季度销量目标 (7)
+        MAX(invd.SEASON_ONE + invd.SEASON_TWO + invd.SEASON_THREE + invd.SEASON_FOUR) AS YEAR_PURCHASE_BUDGET, -- 年度采买预算 (8)
+--         MAX(bpurqty.YEAR_PURCHASE_NUMS) YEAR_USED_PUR_BUDGET, --年度已使用采买预算 (9)
+        0 YEAR_USED_PUR_BUDGET, --年度已使用采买预算 (9)
+        DECODE(to_char(sysdate, 'Q') , 1 , MAX(invd.SEASON_ONE) , 2 , MAX(invd.SEASON_TWO) , 3 , MAX(invd.SEASON_THREE) , 4 , MAX(invd.SEASON_FOUR) , '季度采买预算') CUR_QUARTER_PUR_BUDGET, --本季度采买预算 (10)
+--         MAX(bpurqty.quarter_purchase_nums) CUR_USED_QUARTER_PUR_BUDGET,  -- 本季度已使用采买预算 (11)
+        0 CUR_USED_QUARTER_PUR_BUDGET,  -- 本季度已使用采买预算 (11)
+        DECODE(TRUNC(to_char(SYSDATE, 'mm')),
+            1, MAX(invturn.mon1),
+            2, MAX(invturn.mon2),
+            3, MAX(invturn.mon3),
+            4, MAX(invturn.mon4),
+            5, MAX(invturn.mon5),
+            6, MAX(invturn.mon6),
+            7, MAX(invturn.mon7),
+            8, MAX(invturn.mon8),
+            9, MAX(invturn.mon9),
+            10, MAX(invturn.mon10),
+            11, MAX(invturn.mon11),
+            12, MAX(invturn.mon12), '月度周转') MON_TURN_TARGET, --月度库存周转目标 (12)
+        MAX(bteam.year_nums) YEAR_SALE_QTY,  --年度已售数量 (13)
+        MAX(bteam.cur_quarter_nums) QUARTER_SALE_QTY, --季度已售数量 (14)
+        --年度销量目标达成度 (15=13/6)
+        -- MAX(bteam.year_nums) / MAX(salTar.SEASON_ONE + salTar.SEASON_TWO + salTar.SEASON_THREE + salTar.SEASON_FOUR) YEAR_SALE_TARGET_PER,
+        DECODE( MAX(salTar.SEASON_ONE + salTar.SEASON_TWO + salTar.SEASON_THREE + salTar.SEASON_FOUR),
+                0,
+                0,
+                MAX(bteam.year_nums) / MAX(salTar.SEASON_ONE + salTar.SEASON_TWO + salTar.SEASON_THREE + salTar.SEASON_FOUR)
+        ) YEAR_SALE_TARGET_PER,
+        -- 本季度销量目标达成度 (16=14/7)
+        -- MAX(bteam.cur_quarter_nums) / DECODE(to_char(sysdate, 'Q'), 1, MAX(salTar.SEASON_ONE), 2, MAX(salTar.SEASON_TWO), 3, MAX(salTar.SEASON_THREE), 4, MAX(salTar.SEASON_FOUR)) CUR_QUARTER_SALE_TARGET_PER,
+
+        DECODE(
+                (DECODE(to_char(sysdate, 'Q'), 1, MAX(salTar.SEASON_ONE), 2, MAX(salTar.SEASON_TWO), 3, MAX(salTar.SEASON_THREE), 4, MAX(salTar.SEASON_FOUR))),
+                0,
+                0,
+                MAX(bteam.cur_quarter_nums) / DECODE(to_char(sysdate, 'Q'), 1, MAX(salTar.SEASON_ONE), 2, MAX(salTar.SEASON_TWO), 3, MAX(salTar.SEASON_THREE), 4, MAX(salTar.SEASON_FOUR))
+              )       CUR_QUARTER_SALE_TARGET_PER,
+
+        MAX(bteam.pre_stock_sale_rate) PRE_QUARTER_INV_SALE_PER, --上季度库销比 (17)
+        MAX(bteam.PRE_MONTH_STOCK_SALE_RATE) PRE_MONTH_STOCK_SALE_RATE, --上月库销比 (17)
+        MAX(bteam.LASTPRE_MONTH_STOCK_SALE_RATE) LASTPRE_MONTH_STOCK_SALE_RATE, --去年上月库销比 (17)
+        0 CUR_PUR_QTY -- 本次采买数量
+        --年度采买预算使用度 (19)
+--         MAX(bpurqty.YEAR_PURCHASE_NUMS) / MAX(invd.SEASON_ONE + invd.SEASON_TWO + invd.SEASON_THREE + invd.SEASON_FOUR) YEAR_PURCHASET_PER,
+        --本季度采买预算使用度	(20) CUR_USED_QUARTER_PUR_PER
+--         MAX(bpurqty.quarter_purchase_nums) / DECODE(to_char(sysdate, 'Q') , 1 , MAX(invd.SEASON_ONE) , 2 , MAX(invd.SEASON_TWO) , 3 , MAX(invd.SEASON_THREE) , 4 , MAX(invd.SEASON_FOUR) , '季度采买预算') CUR_USED_QUARTER_PUR_PER,
+        --本季度剩余采买预算	CUR_QUARTER_LEFT_PUR(21)
+--         DECODE(to_char(sysdate, 'Q') , 1 , MAX(invd.SEASON_ONE) , 2 , MAX(invd.SEASON_TWO) , 3 , MAX(invd.SEASON_THREE) , 4 , MAX(invd.SEASON_FOUR) , '季度采买预算') - MAX(bpurqty.quarter_purchase_nums) CUR_QUARTER_LEFT_PUR,
+        --平均每周剩余采买预算(22)	AVG_WEEK_LEFT_PUR
+--         (DECODE(to_char(sysdate, 'Q') , 1 , MAX(invd.SEASON_ONE) , 2 , MAX(invd.SEASON_TWO) , 3 , MAX(invd.SEASON_THREE) , 4 , MAX(invd.SEASON_FOUR) , '季度采买预算')
+--         - MAX(bpurqty.quarter_purchase_nums) ) * 7 / AVG_WEEK_LEFT_PUR ,
+        -- 年度剩余采买预算(24)	YEAR_LEFT_PUR_BUDGET
+--         MAX(invd.SEASON_ONE + invd.SEASON_TWO + invd.SEASON_THREE + invd.SEASON_FOUR) - MAX(bpurqty.YEAR_PURCHASE_NUMS) YEAR_LEFT_PUR_BUDGET
+
+        FROM
+        (
+            SELECT * FROM inventory_demand WHERE ID IN
+            (
+                SELECT ID FROM
+                ( SELECT platform, department, Team, product_type, MAX(ID) ID FROM inventory_demand invd WHERE
+                    invd.CONFIRM_STATUS = 1
+                    AND invd.YEAR = ( SELECT MAX(YEAR) FROM inventory_demand WHERE CONFIRM_STATUS = 1)
+                    --	    invd.VERSION = (SELECT 'V'||MAX(CAST(SUBSTR(version, 2) AS INT)) FROM inventory_demand WHERE CONFIRM_STATUS = 1)
+                    GROUP BY
+                    invd.platform,
+                    invd.department,
+                    invd.Team,
+                    invd.product_type
+                )
+
+            )
+        )invd
+        --           VERSION = (SELECT 'V'||MAX(CAST(SUBSTR(version, 2) AS INT)) FROM inventory_demand WHERE CONFIRM_STATUS = 1)
+        --           AND YEAR = (SELECT MAX(year) FROM inventory_demand WHERE CONFIRM_STATUS = 1)) invd
+        LEFT JOIN
+        (
+        SELECT platform,DEPARTMENT,TEAM, PRODUCT_TYPE, MAX(YEAR) YEAR, SUM(SEASON_ONE)SEASON_ONE ,SUM(SEASON_TWO)SEASON_TWO ,SUM(SEASON_THREE)SEASON_THREE ,SUM(SEASON_FOUR)SEASON_FOUR
+        FROM SALES_TARGET
+        WHERE YEAR = ( SELECT MAX(YEAR) FROM inventory_demand WHERE CONFIRM_STATUS = 1)
+              AND VERSION =(SELECT 'V'||MAX(CAST(SUBSTR(version, 2) AS INT)) FROM SALES_TARGET WHERE CONFIRM_STATUS = 1 and year=(SELECT MAX(YEAR) FROM SALES_TARGET WHERE CONFIRM_STATUS = 1))
+        GROUP BY
+            platform,
+            department,
+            Team,
+            product_type
+        ) salTar
+        ON ( invd.DEPARTMENT = salTar.DEPARTMENT AND invd.TEAM = salTar.TEAM AND invd.PRODUCT_TYPE = salTar.PRODUCT_TYPE AND invd.YEAR = salTar.YEAR )
+--         LEFT JOIN BACK_PURCHASEORDERS_ANALYST_T bpurqty
+--         ON (invd.PLATFORM = bpurqty.PLATFORM AND invd.DEPARTMENT = bpurqty.DEPARTMENT AND invd.TEAM = bpurqty.TEAM AND invd.PRODUCT_TYPE = bpurqty.PRODUCT_TYPE)
+        LEFT JOIN inventory_turnover invturn
+        ON ( invd.DEPARTMENT = invturn.DEPARTMENT AND invd.TEAM = invturn.TEAM AND invd.PRODUCT_TYPE = invturn.PRODUCT_TYPE AND invd.YEAR = invturn.YEAR)
+        LEFT JOIN BACK_STOCKSALE_ANALYST_T bteam
+        ON ( invd.DEPARTMENT = bteam.DEPARTMENT AND invd.TEAM = bteam.TEAM AND invd.PRODUCT_TYPE = bteam.PRODUCT_TYPE)
+        <where>
+            <if  test="dept!= null and dept!= ''">
+                AND invd.department  =#{dept}
+            </if>
+        </where>
+      GROUP BY
+--                 invd.platform,
+                invd.department,
+                invd.Team,
+                invd.product_type,
+                invd.version,
+                invd.year
+    </select>
+
+    <select id="stockMonitorHeadDept"
+            resultType="com.tadpole.cloud.platformSettlement.api.sales.entity.StockMonitor">
+        SELECT
+--        max(invd.platform) PLATFORM_NAME,  --(1)
+          invd.department,  -- (2)
+--        invd.Team,  --(3)
+--        invd.product_type,  --(4)
+          invd.version DATA_VERSION, -- (5)
+          invd.year,
+          sum(salTar.SEASON_ONE + salTar.SEASON_TWO + salTar.SEASON_THREE + salTar.SEASON_FOUR) AS YEAR_TARGET, -- 年度销量目标 (6)  155348  647118
+
+          DECODE( to_char(sysdate, 'Q') , 1 , MAX(salTar.SEASON_ONE), 2 , MAX(salTar.SEASON_TWO), 3 , MAX(salTar.SEASON_THREE) , 4, MAX (salTar.SEASON_FOUR) , '季度销量目标') QUARTER_TARGE,  -- 季度销量目标 (7)
+          SUM(invd.SEASON_ONE + invd.SEASON_TWO + invd.SEASON_THREE + invd.SEASON_FOUR) AS YEAR_PURCHASE_BUDGET, -- 年度采买预算 (8)
+          --         MAX(bpurqty.YEAR_PURCHASE_NUMS) YEAR_USED_PUR_BUDGET, --年度已使用采买预算 (9)
+          0 YEAR_USED_PUR_BUDGET, --年度已使用采买预算 (9)
+          DECODE(to_char(sysdate, 'Q') , 1 , MAX(invd.SEASON_ONE) , 2 , MAX(invd.SEASON_TWO) , 3 , MAX(invd.SEASON_THREE) , 4 , MAX(invd.SEASON_FOUR) , '季度采买预算') CUR_QUARTER_PUR_BUDGET, --本季度采买预算 (10)
+          --         MAX(bpurqty.quarter_purchase_nums) CUR_USED_QUARTER_PUR_BUDGET,  -- 本季度已使用采买预算 (11)
+          0 CUR_USED_QUARTER_PUR_BUDGET,  -- 本季度已使用采买预算 (11)
+          DECODE(TRUNC(to_char(SYSDATE, 'mm')),
+            1, MAX(invturn.mon1),
+            2, MAX(invturn.mon2),
+            3, MAX(invturn.mon3),
+            4, MAX(invturn.mon4),
+            5, MAX(invturn.mon5),
+            6, MAX(invturn.mon6),
+            7, MAX(invturn.mon7),
+            8, MAX(invturn.mon8),
+            9, MAX(invturn.mon9),
+            10, MAX(invturn.mon10),
+            11, MAX(invturn.mon11),
+            12, MAX(invturn.mon12), '月度周转') MON_TURN_TARGET, --月度库存周转目标 (12)
+        MAX(bteam.year_nums) YEAR_SALE_QTY,  --年度已售数量 (13)
+        MAX(bteam.cur_quarter_nums) QUARTER_SALE_QTY, --季度已售数量 (14)
+        --年度销量目标达成度 (15=13/6)
+        MAX(bteam.year_nums) / MAX(salTar.SEASON_ONE + salTar.SEASON_TWO + salTar.SEASON_THREE + salTar.SEASON_FOUR) YEAR_SALE_TARGET_PER,
+        -- 本季度销量目标达成度 (16=14/7)
+        MAX(bteam.cur_quarter_nums) / DECODE(to_char(sysdate, 'Q'), 1, MAX(salTar.SEASON_ONE), 2, MAX(salTar.SEASON_TWO), 3, MAX(salTar.SEASON_THREE), 4, MAX(salTar.SEASON_FOUR)) CUR_QUARTER_SALE_TARGET_PER,
+        DECODE(SUM(bteam.PRE_QUARTER_NUMS),0,0,SUM(bteam.PRE_STOCK_NUMS) /SUM(bteam.PRE_QUARTER_NUMS)) PRE_QUARTER_INV_SALE_PER, --上季度库销比 (17)
+        DECODE(SUM(bteam.PRE_MONTH_QTY),0,0,SUM(bteam.PRE_MONTH_STOCK_QTY) /SUM(bteam.PRE_MONTH_QTY)) PRE_MONTH_STOCK_SALE_RATE, --上月库销比 (17)
+        DECODE(SUM(bteam.LAST_PRE_MONTH_QTY),0,0,SUM(bteam.LASTPRE_MONTH_STOCK_QTY) /SUM(bteam.LAST_PRE_MONTH_QTY)) LASTPRE_MONTH_STOCK_SALE_RATE, --去年上月库销比 (17)
+        0 CUR_PUR_QTY -- 本次采买数量
+
+        FROM
+            (    SELECT SUM(SEASON_ONE) SEASON_ONE,SUM(SEASON_TWO) SEASON_TWO, SUM(SEASON_THREE) SEASON_THREE,SUM(SEASON_FOUR) SEASON_FOUR,
+                        SUM(OPENING_INVENTORY) OPENING_INVENTORY,SUM(TARGET_INVENTORY) TARGET_INVENTORY,MAX(DEPARTMENT) DEPARTMENT,MAX(YEAR) YEAR,MAX(VERSION) VERSION
+                 FROM inventory_demand WHERE ID IN
+                                             ( SELECT MAX(ID) ID FROM inventory_demand invd WHERE
+                                                     invd.CONFIRM_STATUS = 1
+                                                    AND DEPARTMENT =#{dept}
+                                                    AND invd.YEAR = ( SELECT MAX(YEAR) FROM inventory_demand WHERE CONFIRM_STATUS = 1)
+                                               GROUP BY
+                                                     invd.platform,
+                                                     invd.department,
+                                                     invd.Team,
+                                                     invd.product_type
+                                             )
+            )invd
+            LEFT JOIN
+            (
+                SELECT   SUM(SEASON_ONE) SEASON_ONE,SUM(SEASON_TWO) SEASON_TWO, SUM(SEASON_THREE) SEASON_THREE,SUM(SEASON_FOUR) SEASON_FOUR,MAX(DEPARTMENT) DEPARTMENT, MAX(YEAR)   YEAR
+                FROM SALES_TARGET WHERE ID IN
+                                        (SELECT MAX(ID) ID FROM SALES_TARGET WHERE
+                                                            CONFIRM_STATUS = 1
+                                                        AND DEPARTMENT =#{dept}
+                                                        AND YEAR = ( SELECT MAX(YEAR) FROM inventory_demand WHERE CONFIRM_STATUS = 1)
+                                            GROUP BY
+                                                platform,
+                                                department,
+                                                Team,
+                                                product_type
+                                        )
+            ) salTar  ON ( invd.DEPARTMENT = salTar.DEPARTMENT   AND invd.YEAR = salTar.YEAR )
+
+            LEFT JOIN inventory_turnover invturn
+                      ON ( invd.DEPARTMENT = invturn.DEPARTMENT   AND invd.YEAR = invturn.YEAR)
+            LEFT JOIN
+                    (  SELECT SUM(YEAR_NUMS) YEAR_NUMS,SUM(CUR_QUARTER_NUMS) CUR_QUARTER_NUMS, SUM(PRE_QUARTER_NUMS) PRE_QUARTER_NUMS,
+                              SUM(LAST_PRE_MONTH_QTY) LAST_PRE_MONTH_QTY,SUM(PRE_MONTH_QTY) PRE_MONTH_QTY, SUM(PRE_MONTH_STOCK_QTY) PRE_MONTH_STOCK_QTY,SUM(LASTPRE_MONTH_STOCK_QTY) LASTPRE_MONTH_STOCK_QTY,
+                              SUM(PRE_STOCK_NUMS)  PRE_STOCK_NUMS,MAX(pre_stock_sale_rate) pre_stock_sale_rate ,MAX(DEPARTMENT) DEPARTMENT, extract(year from sysdate) YEAR
+                        FROM BACK_STOCKSALE_ANALYST_T  WHERE DEPARTMENT =#{dept}
+                    )
+                bteam ON ( invd.DEPARTMENT = bteam.DEPARTMENT AND invd.YEAR = bteam.YEAR  )
+
+        WHERE  invd.department  =#{dept}
+
+        GROUP BY
+        --                 invd.platform,
+        invd.department,
+        --                invd.Team,
+        --                invd.product_type,
+        invd.version,
+        invd.year
+    </select>
+</mapper>

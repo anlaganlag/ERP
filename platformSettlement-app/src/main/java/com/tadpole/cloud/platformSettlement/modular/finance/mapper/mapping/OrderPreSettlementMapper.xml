@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.OrderPreSettlementMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        PS.ID,PS.PURCHASE_DATE,PS.AMAZON_ORDER_ID,PS.SYS_SHOPS_NAME,PS.SYS_SITE,PS.SKU,PS.MATERIAL_CODE,PS.SALES_BRAND,PS.DEPARTMENT,PS.TEAM,PS.CURRENCY,
+        PS.VOLUME_NORMAL,PS.VOLUME_REISSUE,PS.VOLUME_BILL_QUANTITY,PS.VOLUME_RETURN,PS.SALES_EXCLUDING_TAX,PS.TAX,PS.SALES_PROMOTION,PS.REFUND,PS.REFUND_PROMOTION,
+        PS.GIFTWARP_SHIPPING,PS.NET_SALES,PS.COMMISSION,PS.REFUND_COMMISSION,PS.GOODWILL,PS.AMAZON_FEES,PS.STORAGE_FEE,PS.REIMBURSEMENT,PS.OTHER,PS.WITHHELD_TAX,
+        PS.DISPOSE_FEE,PS.REMOVAL_DEAL,PS.COLLECTION,PS.ADVERTISING,PS.KINDLE_ADVERTISING_FEE,PS.OTHER_ADVERTISEMENTS,PS.BRUSHING_VALUE,PS.BRUSHING_SERVICE_CHARGE,
+        PS.COST_ACCOUNTING_FEE,PS.ADDITIONAL_COST_AMOUNT,PS.FIRST_TRIP_FEE,PS.LOCAL_LOGISTICS_FEE,PS.OVERSEAS_WAREHOUSE_FEE,PS.OVERSEA_TAX_FEE,PS.DISPOSE_PURCHASE_FEE,
+        PS.DISPOSE_LOGISTICS_FEE,PS.DOMESTIC_UNSALABLE_INVENTORY,PS.PRE_PROFIT,PS.ADVERTISING_SUBSIDY,PS.INCENTIVE_FUND,PS.PRE_PROFIT_RATE,PS.CREATE_TIME,
+        PS.CREATE_BY,PS.UPDATE_TIME,PS.UPDATE_BY
+    </sql>
+
+    <!-- 销售订单预结算列表 -->
+    <select id="queryOrderPreSettlementPage"
+        parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OrderPreSettlementParam"
+        resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OrderPreSettlementResult">
+        SELECT
+            M.CATEGORY,
+            M.PRODUCT_TYPE,
+            M.PRODUCT_NAME,
+            M.STYLE,
+            M.MAIN_MATERIAL,
+            M.DESIGN,
+            M.FIT_BRAND,
+            M.STYLE_SECOND_LABEL,
+            M.MODEL,
+            M.COMPANY_BRAND,
+            M.COLOR,
+            M.SIZES,
+            M.PACKING,
+            M.VERSION,
+            M.TYPE,
+            M.BUYER,
+            M.DEVELOPER,
+            M.ACCOUNT_DATE,
+            CASE WHEN M.ACCOUNT_DATE IS NOT NULL AND trunc(SYSDATE - M.ACCOUNT_DATE) > 365 THEN '旧品'
+                WHEN M.ACCOUNT_DATE IS NOT NULL AND  trunc(SYSDATE - M.ACCOUNT_DATE) &lt;= 365 THEN '新品'
+                ELSE '' END AS isNew,
+            CASE WHEN PS.PRE_PROFIT_RATE &gt;= RC.WARNING_RATE_PRE_SETTLEMENT/100 THEN '正常'
+                WHEN RC.WARNING_RATE_PRE_SETTLEMENT IS NULL THEN '异常'
+                ELSE '异常' END AS IS_ERROR,
+            TO_CHAR(PS.PRE_PROFIT_RATE * 100, 'FM9990.00') || '%' AS preProfitRatePercent,
+            <include refid="Base_Column_List"></include>
+        FROM CW_ORDER_PRE_SETTLEMENT PS
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON PS.MATERIAL_CODE = M.MATERIAL_CODE
+        LEFT JOIN PROFIT_RATE_CONFIG RC ON PS.DEPARTMENT = RC.DEPARTMENT AND PS.TEAM = RC.TEAM AND M.PRODUCT_TYPE = RC.PRODUCT_TYPE AND SUBSTR(PS.PURCHASE_DATE, 0, 7) = RC.VALID_DATE AND RC.PLATFORM = 'Amazon'
+        <where>
+            <if test="param.purchaseDateStart != null and param.purchaseDateStart != ''">
+                AND TO_DATE(PS.PURCHASE_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+            </if>
+            <if test="param.purchaseDateEnd != null and param.purchaseDateEnd != ''">
+                AND TO_DATE(PS.PURCHASE_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND PS.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND PS.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.departments != null and param.departments.size() != 0">
+                AND PS.DEPARTMENT IN
+                <foreach collection="param.departments" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.teams != null and param.teams.size() != 0">
+                AND PS.TEAM IN
+                <foreach collection="param.teams" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.skus != null and param.skus.size() != 0">
+                AND PS.SKU IN
+                <foreach collection="param.skus" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.isError != null and param.isError == '否'.toString()">
+                AND PS.PRE_PROFIT_RATE &gt;= RC.WARNING_RATE_PRE_SETTLEMENT/100
+            </if>
+            <if test="param.isError != null and param.isError == '是'.toString()">
+                AND (RC.WARNING_RATE_PRE_SETTLEMENT IS NULL OR PS.PRE_PROFIT_RATE &lt; RC.WARNING_RATE_PRE_SETTLEMENT/100)
+            </if>
+        </where>
+    </select>
+
+    <!-- 销售订单预结算列表汇总 -->
+    <select id="getTotalQuantity"
+        parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OrderPreSettlementParam"
+        resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OrderPreSettlementResult">
+        SELECT
+            SUM(PS.VOLUME_NORMAL) AS volumeNormal,
+            SUM(PS.VOLUME_REISSUE) AS volumeReissue,
+            SUM(PS.VOLUME_BILL_QUANTITY) AS volumeBillQuantity,
+            SUM(PS.VOLUME_RETURN) AS volumeReturn,
+            SUM(PS.SALES_EXCLUDING_TAX) AS salesExcludingTax,
+            SUM(PS.TAX) AS tax,
+            SUM(PS.SALES_PROMOTION) AS salesPromotion,
+            SUM(PS.REFUND) AS refund,
+            SUM(PS.REFUND_PROMOTION) AS refundPromotion,
+            SUM(PS.GIFTWARP_SHIPPING) AS giftWarpShipping,
+            SUM(PS.NET_SALES) AS netSales,
+            SUM(PS.COMMISSION) AS commission,
+            SUM(PS.REFUND_COMMISSION) AS refundCommission,
+            SUM(PS.GOODWILL) AS goodwill,
+            SUM(PS.AMAZON_FEES) AS amazonFees,
+            SUM(PS.STORAGE_FEE) AS storageFee,
+            SUM(PS.REIMBURSEMENT) AS reimbursement,
+            SUM(PS.OTHER) AS other,
+            SUM(PS.WITHHELD_TAX) AS withheldTax,
+            SUM(PS.DISPOSE_FEE) AS disposeFee,
+            SUM(PS.REMOVAL_DEAL) AS removalDeal,
+            SUM(PS.COLLECTION) AS collection,
+            SUM(PS.ADVERTISING) AS advertising,
+            SUM(PS.KINDLE_ADVERTISING_FEE) AS kindleAdvertisingFee,
+            SUM(PS.OTHER_ADVERTISEMENTS) AS otherAdvertisements,
+            SUM(PS.BRUSHING_VALUE) AS brushingValue,
+            SUM(PS.BRUSHING_SERVICE_CHARGE) AS brushingServiceCharge,
+            SUM(PS.COST_ACCOUNTING_FEE) AS costAccountingFee,
+            SUM(PS.ADDITIONAL_COST_AMOUNT) AS additionalCostAmount,
+            SUM(PS.FIRST_TRIP_FEE) AS firstTripFee,
+            SUM(PS.LOCAL_LOGISTICS_FEE) AS localLogisticsFee,
+            SUM(PS.OVERSEAS_WAREHOUSE_FEE) AS abroadWarehouseTaxes,
+            SUM(PS.OVERSEA_TAX_FEE) AS overseaTaxFee,
+            SUM(PS.DISPOSE_PURCHASE_FEE) AS disposePurchaseFee,
+            SUM(PS.DISPOSE_LOGISTICS_FEE) AS disposeLogisticsFee,
+            SUM(PS.DOMESTIC_UNSALABLE_INVENTORY) AS domesticUnsalableInventory,
+            SUM(PS.PRE_PROFIT) AS preProfit,
+            SUM(PS.ADVERTISING_SUBSIDY) AS advertisingSubsidy,
+            SUM(PS.INCENTIVE_FUND) AS incentiveFund,
+            SUM(PS.PRE_PROFIT_RATE) AS preProfitRate
+        FROM CW_ORDER_PRE_SETTLEMENT PS
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON PS.MATERIAL_CODE = M.MATERIAL_CODE
+        LEFT JOIN PROFIT_RATE_CONFIG RC ON PS.DEPARTMENT = RC.DEPARTMENT AND PS.TEAM = RC.TEAM AND M.PRODUCT_TYPE = RC.PRODUCT_TYPE AND SUBSTR(PS.PURCHASE_DATE, 0, 7) = RC.VALID_DATE AND RC.PLATFORM = 'Amazon'
+        <where>
+            <if test="param.purchaseDateStart != null and param.purchaseDateStart != ''">
+                AND TO_DATE(PS.PURCHASE_DATE,'yyyy-mm-dd') &gt;= TO_DATE(#{param.purchaseDateStart},'yyyy-mm-dd hh24:mi:ss')
+            </if>
+            <if test="param.purchaseDateEnd != null and param.purchaseDateEnd != ''">
+                AND TO_DATE(PS.PURCHASE_DATE,'yyyy-mm-dd') &lt;= TO_DATE(#{param.purchaseDateEnd},'yyyy-mm-dd hh24:mi:ss')
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND PS.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND PS.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.departments != null and param.departments.size() != 0">
+                AND PS.DEPARTMENT IN
+                <foreach collection="param.departments" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.teams != null and param.teams.size() != 0">
+                AND PS.TEAM IN
+                <foreach collection="param.teams" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.skus != null and param.skus.size() != 0">
+                AND PS.SKU IN
+                <foreach collection="param.skus" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.isError != null and param.isError == '否'.toString()">
+                AND PS.PRE_PROFIT_RATE &gt;= RC.WARNING_RATE_PRE_SETTLEMENT/100
+            </if>
+            <if test="param.isError != null and param.isError == '是'.toString()">
+                AND (RC.WARNING_RATE_PRE_SETTLEMENT IS NULL OR PS.PRE_PROFIT_RATE &gt; RC.WARNING_RATE_PRE_SETTLEMENT/100)
+            </if>
+        </where>
+    </select>
+
+    <!-- 刷新（生成销售订单预结算数据） -->
+    <select id="refresh">
+        -- 默认只刷新前3个月数据
+        MERGE INTO (SELECT * FROM CW_ORDER_PRE_SETTLEMENT WHERE TO_DATE(PURCHASE_DATE, 'yyyy-mm-dd') >= ADD_MONTHS(SYSDATE, -3)) B
+        USING (
+            SELECT
+                T1.PURCHASE_DATE,
+                T1.AMAZON_ORDER_ID,
+                T1.SYS_SHOPS_NAME,
+                T1.SYS_SITE,
+                T1.SKU,
+                B.MATERIAL_CODE,
+                B.SALES_BRAND,
+                B.DEPARTMENT,
+                B.TEAM,
+                'USD' AS CURRENCY,
+                T1.volumeNormal,
+                T1.volumeReissue,
+                T1.volumeBillQuantity,
+                NVL(T2.REFUND_QUANTITY, 0) AS volumeReturn,
+                T1.salesExcludingTax,
+                T1.tax,
+                T3.salesPromotion,
+                T3.refund,
+                T3.refundPromotion,
+                T3.giftWarpShipping,
+                (
+                    NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0)
+                ) AS netSales,
+                T3.commission,
+                T3.refundCommission,
+                T3.goodwill,
+                T3.amazonFees,
+                0 AS storageFee,
+                T3.reimbursement,
+                T3.other,
+                CASE WHEN T1.SYS_SITE IN('AE', 'SA') THEN -T1.tax ELSE 0 END AS withheldTax,
+                NULL AS disposeFee,
+                NULL AS removalDeal,
+                (
+                    NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0)
+                    + NVL(T3.commission, 0)
+                    + NVL(T3.refundCommission, 0)
+                    + NVL(T3.goodwill, 0)
+                    + NVL(T3.amazonFees, 0)
+                    + 0
+                    + NVL(T3.reimbursement, 0)
+                    + NVL(T3.other, 0)
+                    + CASE WHEN T1.SYS_SITE IN('AE', 'SA') THEN -T1.tax ELSE 0 END
+                ) AS collection,
+                NULL AS advertising,
+                NULL AS kindleAdvertisingFee,
+                NULL AS otherAdvertisements,
+                NULL AS brushingValue,
+                NULL AS brushingServiceCharge,
+                P.PURCHASE_UNIT_PRICE AS costAccountingFee,
+                P.ADDITIONAL_UNIT_PRICE AS additionalCostAmount,
+                P.LOGISTICS_UNIT_PRICE AS firstTripFee,
+                NULL AS localLogisticsFee,
+                NULL AS abroadWarehouseTaxes,
+                CASE WHEN T1.SYS_SITE IN('AS', 'AE') THEN
+                ROUND(
+                    (NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0))
+                        /
+                    (1 + NVL(FS.TAX_RATE, 0)) * NVL(FS.TAX_RATE, 0),
+                2)
+                ELSE NULL END AS overseaTaxFee,
+                NULL AS disposePurchaseFee,
+                NULL AS disposeLogisticsFee,
+                NULL AS domesticUnsalableInventory,
+                (
+                    (
+                        NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0)
+                        + NVL(T3.commission, 0)
+                        + NVL(T3.refundCommission, 0)
+                        + NVL(T3.goodwill, 0)
+                        + NVL(T3.amazonFees, 0)
+                        + 0
+                        + NVL(T3.reimbursement, 0)
+                        + NVL(T3.other, 0)
+                        + CASE WHEN T1.SYS_SITE IN('AE', 'SA') THEN -T1.tax ELSE 0 END
+                    )
+                    -
+                    (
+                        NVL(P.PURCHASE_UNIT_PRICE, 0) + NVL(P.ADDITIONAL_UNIT_PRICE, 0) + NVL(P.LOGISTICS_UNIT_PRICE, 0)
+                        + CASE WHEN T1.SYS_SITE IN('AS', 'AE') THEN
+                            ROUND(
+                                (NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0))
+                                /
+                                (1 + NVL(FS.TAX_RATE, 0)) * NVL(FS.TAX_RATE, 0),
+                            2)
+                            ELSE 0 END
+                    )
+                ) AS preProfit,
+                NULL AS advertisingSubsidy,
+                NULL AS incentiveFund,
+                (
+                    DECODE(
+                        NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0),
+                        0,
+                        0,
+                        ROUND(
+                            (
+                                (
+                                NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0)
+                                + NVL(T3.commission, 0)
+                                + NVL(T3.refundCommission, 0)
+                                + NVL(T3.goodwill, 0)
+                                + NVL(T3.amazonFees, 0)
+                                + 0
+                                + NVL(T3.reimbursement, 0)
+                                + NVL(T3.other, 0)
+                                + CASE WHEN T1.SYS_SITE IN('AE', 'SA') THEN -T1.tax ELSE 0 END
+                            )
+                            -
+                            (
+                                NVL(P.PURCHASE_UNIT_PRICE, 0) + NVL(P.ADDITIONAL_UNIT_PRICE, 0) + NVL(P.LOGISTICS_UNIT_PRICE, 0)
+                                + CASE WHEN T1.SYS_SITE IN('AS', 'AE') THEN
+                                    ROUND(
+                                        (NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0))
+                                        /
+                                        (1 + NVL(FS.TAX_RATE, 0)) * NVL(FS.TAX_RATE, 0),
+                                    2)
+                                    ELSE 0 END
+                            )
+                        )
+                            /
+                        (
+                            NVL(salesExcludingTax, 0) + NVL(tax, 0) + NVL(salesPromotion, 0) + NVL(refund, 0) + NVL(refundPromotion, 0) + NVL(giftWarpShipping, 0)
+                        ),
+                    2)
+                    )
+                ) AS preProfitRate
+            FROM (
+                SELECT
+                    TO_CHAR(OD.PURCHASE_DATE, 'yyyy-mm-dd') AS PURCHASE_DATE,
+                    OD.SYS_SHOPS_NAME,
+                    OD.SYS_SITE,
+                    OD.AMAZON_ORDER_ID,
+                    OD.SKU,
+                    -- 正常订单
+                    SUM(CASE WHEN O.MERCHANT_ORDER_ID IS NULL THEN OD.QUANTITY
+                    WHEN REGEXP_LIKE(O.MERCHANT_ORDER_ID,'\d{3}-\d{7}-\d{7}') THEN OD.QUANTITY END) AS volumeNormal,
+                    -- 补发货
+                    SUM(CASE WHEN O.MERCHANT_ORDER_ID LIKE 'R%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' THEN OD.QUANTITY
+                    WHEN O.MERCHANT_ORDER_ID LIKE 'B%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' THEN OD.QUANTITY
+                    WHEN O.MERCHANT_ORDER_ID LIKE 'CONSUMER%' THEN OD.QUANTITY
+                    ELSE 0 END) AS volumeReissue,
+                    -- 刷单数量
+                    SUM(CASE WHEN O.MERCHANT_ORDER_ID LIKE 'CP%' AND OD.AMAZON_ORDER_ITEM_CODE = 'SI_LEGACY_CODE' THEN OD.QUANTITY ELSE 0 END) AS volumeBillQuantity,
+                    SUM(
+                        -- 汇率转换，非USD币别且金额不为0的才转换汇率
+                        CASE WHEN OD.CURRENCY != 'USD' AND (NVL(OD.PRINCIPAL, 0) + NVL(OD.SHIPPING, 0) + NVL(OD.GIFTWRAP, 0)) != 0 THEN (NVL(OD.PRINCIPAL, 0) + NVL(OD.SHIPPING, 0) + NVL(OD.GIFTWRAP, 0)) * NVL(RE.DIRECT_RATE, 0)
+						ELSE NVL(OD.PRINCIPAL, 0) + NVL(OD.SHIPPING, 0) + NVL(OD.GIFTWRAP, 0) END
+                    ) AS salesExcludingTax,
+                    SUM(
+                        -- 汇率转换，非USD币别且金额不为0的才转换汇率
+                        CASE WHEN OD.CURRENCY != 'USD' AND (NVL(OD.TAX, 0) + NVL(OD.SHIPPING_TAX, 0) + NVL(OD.GIFTWRAP_TAX, 0)) != 0 THEN (NVL(OD.TAX, 0) + NVL(OD.SHIPPING_TAX, 0) + NVL(OD.GIFTWRAP_TAX, 0)) * NVL(RE.DIRECT_RATE, 0)
+                        ELSE NVL(OD.TAX, 0) + NVL(OD.SHIPPING_TAX, 0) + NVL(OD.GIFTWRAP_TAX, 0) END
+                    ) AS tax
+                FROM AMAZON_ORDERS O
+                LEFT JOIN AMAZON_ORDER_DETAIL OD ON OD.AMAZON_ORDER_ID = O.AMAZON_ORDER_ID
+                LEFT JOIN RP_SPOT_EXCHANGE_RATE RE ON OD.PURCHASE_DATE &gt;= RE.EFFECT_DATE AND OD.PURCHASE_DATE &lt;= RE.INEFFECTIVE_DATE
+                    AND RE.ORIGINAL_CURRENCY = OD.CURRENCY AND OD.CURRENCY != 'USD' AND RE.TARGET_CURRENCY = 'USD' AND RE.DATA_STATUS = '已审核' AND RE.FORBIDDEN_STATUS = '否'
+                WHERE
+                    OD.PLATFORM = 'Amazon'
+                    AND O.TYPE NOT IN('Packet','Destroy','Test')
+                    AND NOT (O.ORDER_STATUS = 'Cancelled' AND OD.ITEM_STATUS = 'Cancelled')
+                    AND NOT (O.SALES_CHANNEL = 'Non-Amazon' AND O.ORDER_STATUS = 'Cancelled')
+                    AND NOT (O.SALES_CHANNEL LIKE '%Marketplace%' AND O.ORDER_STATUS = 'Cancelled')
+                    AND O.MERCHANT_ORDER_ID NOT LIKE 'TP%'
+                    AND OD.AMAZON_ORDER_ITEM_CODE != 'Removal_CODE'
+                    -- 默认只刷新前3个月数据
+                    AND TO_DATE(TO_CHAR(OD.PURCHASE_DATE, 'yyyy-mm-dd'), 'yyyy-mm-dd') >= ADD_MONTHS(SYSDATE, -3)
+                GROUP BY
+                    TO_CHAR(OD.PURCHASE_DATE, 'yyyy-mm-dd'),
+                    OD.SYS_SHOPS_NAME,
+                    OD.SYS_SITE,
+                    OD.AMAZON_ORDER_ID,
+                    OD.SKU
+                ORDER BY
+                    TO_CHAR(OD.PURCHASE_DATE, 'yyyy-mm-dd') DESC,
+                    OD.SYS_SHOPS_NAME,
+                    OD.SYS_SITE
+            ) T1
+            LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY B ON T1.SYS_SHOPS_NAME = B.SYS_SHOPS_NAME AND T1.SYS_SITE = B.SYS_SITE AND T1.SKU = B.SKU
+            LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON B.MATERIAL_CODE = M.MATERIAL_CODE
+            LEFT JOIN
+            (
+                SELECT
+                    LR.SHOP_NAME,
+                    LR.SITE,
+                    LR.ORDER_ID,
+                    LR.SKU,
+                    SUM(LR.QUANTITY) AS REFUND_QUANTITY
+                FROM
+                    LX_AMAZON_REFUND_ORDERS LR
+                GROUP BY
+                    LR.SHOP_NAME, LR.SITE, LR.ORDER_ID, LR.SKU
+            ) T2 ON T2.SHOP_NAME = T1.SYS_SHOPS_NAME AND T2.SITE = T1.SYS_SITE AND T2.ORDER_ID = T1.AMAZON_ORDER_ID AND T1.SKU = T2.SKU
+            LEFT JOIN
+            (
+                SELECT
+                    TT.SHOP_NAME,
+                    TT.SITE,
+                    TT.ORDER_ID,
+                    TT.SKU,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'SALES-PRINCIPAL', TT.AMOUNT, 0)) AS salesPromotion,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'REFUND', TT.AMOUNT, 0)) AS refund,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'REFUND PROMOTION', TT.AMOUNT, 0)) AS refundPromotion,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'GIFTWARP&amp;SHIPPING', TT.AMOUNT, 0)) AS giftWarpShipping,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'COMMISSION', TT.AMOUNT, 0)) AS commission,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'REFUND COMMISSION', TT.AMOUNT, 0)) AS refundCommission,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'GOODWILL', TT.AMOUNT, 0)) AS goodwill,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'AMAZON FEE', TT.AMOUNT, 0)) AS amazonFees,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'REIMBURSEMENT', TT.AMOUNT, 0)) AS reimbursement,
+                    SUM(DECODE(TT.FINANCE_TYPE, 'OTHER', TT.AMOUNT, 0)) AS other
+                FROM
+                (
+                    SELECT
+                        T.SHOP_NAME,
+                        T.SITE,
+                        T.ORDER_ID,
+                        T.SKU,
+                        FC.FINANCIAL_CLASSIFICATION AS FINANCE_TYPE,
+                        SUM(T.AMOUNT) AS AMOUNT
+                    FROM
+                    (
+                        SELECT
+                            SHOP_NAME,
+                            SITE,
+                            ORDER_ID,
+                            SKU,
+                            TYPE_STR,
+                            DESCRIPTION,
+                            CURRENCY,
+                            QUANTITY,
+                            AMOUNT_TYPE,
+                            CASE WHEN CURRENCY = 'USD' THEN AMOUNT ELSE AMOUNT * NVL(DIRECT_RATE, 0) END AS AMOUNT
+                        FROM CW_LINGXING_DATARANGE LD
+                        LEFT JOIN RP_SPOT_EXCHANGE_RATE RE ON LD.DATE_TIME &gt;= RE.EFFECT_DATE AND LD.DATE_TIME &lt;= RE.INEFFECTIVE_DATE
+                        AND RE.ORIGINAL_CURRENCY = LD.CURRENCY AND LD.CURRENCY != 'USD' AND RE.TARGET_CURRENCY = 'USD' AND RE.DATA_STATUS = '已审核' AND RE.FORBIDDEN_STATUS = '否'
+                            UNPIVOT
+                            --列转行
+                            (
+                                AMOUNT FOR AMOUNT_TYPE IN
+                                (
+                                    PRODUCT_SALES,
+                                    PRODUCT_SALES_TAX,
+                                    SHIPPING_CREDITS,
+                                    SHIPPING_CREDITS_TAX,
+                                    GIFT_WRAP_CREDITS,
+                                    GIFT_WRAP_CREDITS_TAX,
+                                    SELLING_FEES,
+                                    FBA_FEES,
+                                    OTHER_TRANSACTION_FEES,
+                                    OTHER,
+                                    PROMOTIONAL_REBATES,
+                                    PROMOTIONAL_REBATES_TAX,
+                                    MARKETPLACE_FACILITATOR_TAX,
+                                    SALES_TAX_COLLECTED
+                                )
+                            )
+                         WHERE AMOUNT != 0
+                    ) T
+                    LEFT JOIN (SELECT * FROM CW_FINANCIAL_CLASSIFICATION WHERE STATUS = 1 AND VERIFY_STATUS = 1 AND CLASSIFICATION_TYPE = 'DataRange') FC
+                        ON UPPER(NVL(FC.AMOUNT_TYPE,0)) = UPPER(NVL(T.AMOUNT_TYPE ,0))
+                        AND DECODE(FC.COST_DESCRIPTION, NULL, T.DESCRIPTION, FC.COST_DESCRIPTION) = T.DESCRIPTION
+                        AND UPPER(FC.TRADE_TYPE) = UPPER(T.TYPE_STR)
+                        AND FC.SITE = T.SITE
+                    GROUP BY
+                        T.SHOP_NAME,
+                        T.SITE,
+                        T.ORDER_ID,
+                        T.SKU,
+                        FC.FINANCIAL_CLASSIFICATION
+                ) TT
+                GROUP BY
+                    TT.SHOP_NAME,
+                    TT.SITE,
+                    TT.ORDER_ID,
+                    TT.SKU
+            ) T3 ON T3.SHOP_NAME = T1.SYS_SHOPS_NAME AND T3.SITE = T1.SYS_SITE AND T3.ORDER_ID = T1.AMAZON_ORDER_ID AND T3.SKU = T1.SKU
+            LEFT JOIN RP_NEW_AVERAGE_PRICE P ON T1.SYS_SHOPS_NAME = P.SHOP_NAME AND T1.SYS_SITE = P.SITE AND B.MATERIAL_CODE = P.MATERIAL_CODE AND TO_CHAR(ADD_MONTHS(TO_DATE(T1.PURCHASE_DATE, 'yyyy-mm-dd'), -1), 'yyyy-mm') = P.FISCAL_PERIOD AND P.CONFIRM_STATUS = 1
+            LEFT JOIN CW_FINANCIAL_SITE FS ON FS.SITE = T1.SYS_SITE AND PLATFORM_NAME = 'Amazon'
+        ) C ON (
+            C.PURCHASE_DATE = B.PURCHASE_DATE
+            AND C.AMAZON_ORDER_ID = B.AMAZON_ORDER_ID
+            AND C.SYS_SHOPS_NAME = B.SYS_SHOPS_NAME
+            AND C.SYS_SITE = B.SYS_SITE
+            AND C.SKU = B.SKU
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+                B.MATERIAL_CODE = C.MATERIAL_CODE,
+                B.SALES_BRAND = C.SALES_BRAND,
+                B.DEPARTMENT = C.DEPARTMENT,
+                B.TEAM = C.TEAM,
+                B.CURRENCY = C.CURRENCY,
+                B.VOLUME_NORMAL = C.volumeNormal,
+                B.VOLUME_REISSUE = C.volumeReissue,
+                B.VOLUME_BILL_QUANTITY = C.volumeBillQuantity,
+                B.VOLUME_RETURN = C.volumeReturn,
+                B.SALES_EXCLUDING_TAX = C.salesExcludingTax,
+                B.TAX = C.tax,
+                B.SALES_PROMOTION = C.salesPromotion,
+                B.REFUND = C.refund,
+                B.REFUND_PROMOTION = C.refundPromotion,
+                B.GIFTWARP_SHIPPING = C.giftWarpShipping,
+                B.NET_SALES = C.netSales,
+                B.COMMISSION = C.commission,
+                B.REFUND_COMMISSION = C.refundCommission,
+                B.GOODWILL = C.goodwill,
+                B.AMAZON_FEES = C.amazonFees,
+                B.STORAGE_FEE = C.storageFee,
+                B.REIMBURSEMENT = C.reimbursement,
+                B.OTHER = C.other,
+                B.WITHHELD_TAX = C.withheldTax,
+                B.DISPOSE_FEE = C.disposeFee,
+                B.REMOVAL_DEAL = C.removalDeal,
+                B.COLLECTION = C.collection,
+                B.ADVERTISING = C.advertising,
+                B.KINDLE_ADVERTISING_FEE = C.kindleAdvertisingFee,
+                B.OTHER_ADVERTISEMENTS = C.otherAdvertisements,
+                B.BRUSHING_VALUE = C.brushingValue,
+                B.BRUSHING_SERVICE_CHARGE = C.brushingServiceCharge,
+                B.COST_ACCOUNTING_FEE = C.costAccountingFee,
+                B.ADDITIONAL_COST_AMOUNT = C.additionalCostAmount,
+                B.FIRST_TRIP_FEE = C.firstTripFee,
+                B.LOCAL_LOGISTICS_FEE = C.localLogisticsFee,
+                B.OVERSEAS_WAREHOUSE_FEE = C.abroadWarehouseTaxes,
+                B.OVERSEA_TAX_FEE = C.overseaTaxFee,
+                B.DISPOSE_PURCHASE_FEE = C.disposePurchaseFee,
+                B.DISPOSE_LOGISTICS_FEE = C.disposeLogisticsFee,
+                B.DOMESTIC_UNSALABLE_INVENTORY = C.domesticUnsalableInventory,
+                B.PRE_PROFIT = C.preProfit,
+                B.ADVERTISING_SUBSIDY = C.advertisingSubsidy,
+                B.INCENTIVE_FUND = C.incentiveFund,
+                B.PRE_PROFIT_RATE = C.preProfitRate,
+                B.UPDATE_TIME = SYSDATE
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                B.PURCHASE_DATE,
+                B.AMAZON_ORDER_ID,
+                B.SYS_SHOPS_NAME,
+                B.SYS_SITE,
+                B.SKU,
+                B.MATERIAL_CODE,
+                B.SALES_BRAND,
+                B.DEPARTMENT,
+                B.TEAM,
+                B.CURRENCY,
+                B.VOLUME_NORMAL,
+                B.VOLUME_REISSUE,
+                B.VOLUME_BILL_QUANTITY,
+                B.VOLUME_RETURN,
+                B.SALES_EXCLUDING_TAX,
+                B.TAX,
+                B.SALES_PROMOTION,
+                B.REFUND,
+                B.REFUND_PROMOTION,
+                B.GIFTWARP_SHIPPING,
+                B.NET_SALES,
+                B.COMMISSION,
+                B.REFUND_COMMISSION,
+                B.GOODWILL,
+                B.AMAZON_FEES,
+                B.STORAGE_FEE,
+                B.REIMBURSEMENT,
+                B.OTHER,
+                B.WITHHELD_TAX,
+                B.DISPOSE_FEE,
+                B.REMOVAL_DEAL,
+                B.COLLECTION,
+                B.ADVERTISING,
+                B.KINDLE_ADVERTISING_FEE,
+                B.OTHER_ADVERTISEMENTS,
+                B.BRUSHING_VALUE,
+                B.BRUSHING_SERVICE_CHARGE,
+                B.COST_ACCOUNTING_FEE,
+                B.ADDITIONAL_COST_AMOUNT,
+                B.FIRST_TRIP_FEE,
+                B.LOCAL_LOGISTICS_FEE,
+                B.OVERSEAS_WAREHOUSE_FEE,
+                B.OVERSEA_TAX_FEE,
+                B.DISPOSE_PURCHASE_FEE,
+                B.DISPOSE_LOGISTICS_FEE,
+                B.DOMESTIC_UNSALABLE_INVENTORY,
+                B.PRE_PROFIT,
+                B.ADVERTISING_SUBSIDY,
+                B.INCENTIVE_FUND,
+                B.PRE_PROFIT_RATE,
+                B.CREATE_TIME
+            )
+            VALUES(
+                C.PURCHASE_DATE,
+                C.AMAZON_ORDER_ID,
+                C.SYS_SHOPS_NAME,
+                C.SYS_SITE,
+                C.SKU,
+                C.MATERIAL_CODE,
+                C.SALES_BRAND,
+                C.DEPARTMENT,
+                C.TEAM,
+                C.CURRENCY,
+                C.volumeNormal,
+                C.volumeReissue,
+                C.volumeBillQuantity,
+                C.volumeReturn,
+                C.salesExcludingTax,
+                C.tax,
+                C.salesPromotion,
+                C.refund,
+                C.refundPromotion,
+                C.giftWarpShipping,
+                C.netSales,
+                C.commission,
+                C.refundCommission,
+                C.goodwill,
+                C.amazonFees,
+                C.storageFee,
+                C.reimbursement,
+                C.other,
+                C.withheldTax,
+                C.disposeFee,
+                C.removalDeal,
+                C.collection,
+                C.advertising,
+                C.kindleAdvertisingFee,
+                C.otherAdvertisements,
+                C.brushingValue,
+                C.brushingServiceCharge,
+                C.costAccountingFee,
+                C.additionalCostAmount,
+                C.firstTripFee,
+                C.localLogisticsFee,
+                C.abroadWarehouseTaxes,
+                C.overseaTaxFee,
+                C.disposePurchaseFee,
+                C.disposeLogisticsFee,
+                C.domesticUnsalableInventory,
+                C.preProfit,
+                C.advertisingSubsidy,
+                C.incentiveFund,
+                C.preProfitRate,
+                SYSDATE
+            )
+    </select>
+</mapper>

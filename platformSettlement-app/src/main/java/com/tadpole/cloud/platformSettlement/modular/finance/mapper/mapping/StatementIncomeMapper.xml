@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.StatementIncomeMapper">
+    <update id="updateVoucherNo"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementIncome">
+        UPDATE CW_STATEMENT_INCOME SET VOUCHER_NO=#{paramCondition.voucherNo},SYNC_STATUS= #{paramCondition.syncStatus}
+        WHERE id= #{paramCondition.id}
+
+    </update>
+
+    <!--收入记录表-->
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StatementIncomeParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.StatementIncomeResult">
+        SELECT
+            ID,
+            PLATFORM_NAME,
+            SHOP_NAME,
+            SITE,
+            SETTLEMENT_ID,
+            SETTLEMENT_ORDER,
+            REPORT_TYPE,
+            BILL_TYPE,
+            INCOME_TYPE,
+            START_TIME,
+            END_TIME,
+            FISCAL_PERIOD,
+            ORIGINAL_CURRENCY,
+            SALES_TOTAL,
+            SALES_PROMOTION,
+            REFUND_TOTAL,
+            GIFTWARP_SHIPPING,
+            ADVERTISING,
+            ADVERTISING_REFUND,
+            LIGHTNING_DEAL,
+            COMMISSION_TOTAL,
+            AMAZON_FEE_TOTAL_XPT,
+            AMAZON_FEE_TOTAL,
+            STORAGE_FEE,
+            REIMBURSEMENT,
+            OTHER,
+            OTHER_FBA_ITF,
+            GOODWILL,
+            WITHHELD_TAX,
+            PREVIOUS_RESERVE_AMOUNT,
+            CURRENT_RECEIVABLE_AMOUNT,
+            REAL_RECEIVABLE_AMOUNT,
+            SUCCESSFUL_CHARGE,
+            CHARGE_CARD,
+            CARD_CURRENCY,
+            CARD_DEDUCTION_AMOUNT,
+            CASE SYNC_STATUS WHEN 0 THEN '待刷数据'
+                WHEN 1 THEN '待确认'
+                WHEN 2 THEN '已确认'
+                WHEN 3 THEN '已同步'
+                WHEN 4 THEN '' END SYNC_STATUS,
+            REFRESH_STATUS,
+            VOUCHER_NO,
+            CREATE_AT,
+            UPDATE_AT,
+            CREATE_BY,
+            UPDATE_BY
+        FROM CW_STATEMENT_INCOME WHERE 1=1
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND shop_name=#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            AND site=#{paramCondition.site}
+        </if>
+        <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+            AND report_type=#{paramCondition.reportType}
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+            AND settlement_id LIKE '%'||#{paramCondition.settlementId}||'%'
+        </if>
+        <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+            AND start_time>=to_date(#{paramCondition.startTime},'yyyy-mm-dd')
+        </if>
+        <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+            AND end_time&lt;=to_date(#{paramCondition.endTime},'yyyy-mm-dd')
+        </if>
+        <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+            AND SYNC_STATUS= #{paramCondition.syncStatus}
+        </if>
+        <if test="paramCondition.incomeType != null and paramCondition.incomeType != ''">
+            AND INCOME_TYPE = #{paramCondition.incomeType}
+        </if>
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            AND FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+        </if>
+        <if test="paramCondition.isSuccessfulCharge != null and paramCondition.isSuccessfulCharge == true ">
+            AND SUCCESSFUL_CHARGE >0
+        </if>
+    </select>
+
+    <!--导出收入记录列表-->
+    <select id="exportStatementIncomeList" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.StatementIncomeParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.StatementIncomeResult">
+        SELECT
+            ID,
+            PLATFORM_NAME,
+            SHOP_NAME,
+            SITE,
+            SETTLEMENT_ID,
+            SETTLEMENT_ORDER,
+            REPORT_TYPE,
+            BILL_TYPE,
+            INCOME_TYPE,
+            START_TIME,
+            END_TIME,
+            FISCAL_PERIOD,
+            ORIGINAL_CURRENCY,
+            SALES_TOTAL,
+            SALES_PROMOTION,
+            REFUND_TOTAL,
+            GIFTWARP_SHIPPING,
+            ADVERTISING,
+            ADVERTISING_REFUND,
+            LIGHTNING_DEAL,
+            COMMISSION_TOTAL,
+            AMAZON_FEE_TOTAL_XPT,
+            AMAZON_FEE_TOTAL,
+            STORAGE_FEE,
+            REIMBURSEMENT,
+            OTHER,
+            OTHER_FBA_ITF,
+            GOODWILL,
+            WITHHELD_TAX,
+            PREVIOUS_RESERVE_AMOUNT,
+            REAL_RECEIVABLE_AMOUNT,
+            SUCCESSFUL_CHARGE,
+            CHARGE_CARD,
+            CARD_CURRENCY,
+            CARD_DEDUCTION_AMOUNT,
+            CASE SYNC_STATUS WHEN 0 THEN '待刷数据'
+            WHEN 1 THEN '待确认'
+            WHEN 2 THEN '已确认'
+            WHEN 3 THEN '已同步'
+            WHEN 4 THEN '' END SYNC_STATUS,
+            CURRENT_RECEIVABLE_AMOUNT,
+            VOUCHER_NO,
+            CREATE_AT,
+            UPDATE_AT,
+            CREATE_BY,
+            UPDATE_BY
+        FROM CW_STATEMENT_INCOME WHERE 1=1
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND shop_name=#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            AND site=#{paramCondition.site}
+        </if>
+        <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+            AND report_type=#{paramCondition.reportType}
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+            AND settlement_id LIKE '%'||#{paramCondition.settlementId}||'%'
+        </if>
+        <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+            AND start_time>=to_date(#{paramCondition.startTime},'yyyy-mm-dd')
+        </if>
+        <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+            AND end_time&lt;=to_date(#{paramCondition.endTime},'yyyy-mm-dd')
+        </if>
+        <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+            AND SYNC_STATUS= #{paramCondition.syncStatus}
+        </if>
+        <if test="paramCondition.incomeType != null and paramCondition.incomeType != ''">
+            AND INCOME_TYPE = #{paramCondition.incomeType}
+        </if>
+        <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+            AND FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+        </if>
+        <if test="paramCondition.isSuccessfulCharge != null and paramCondition.isSuccessfulCharge == true ">
+          AND SUCCESSFUL_CHARGE >0
+        </if>
+    </select>
+
+    <!--根据id和时间获取收入记录表信息-->
+    <select id="getConfirmIncome" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementIncome"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.StatementIncome">
+        SELECT * FROM CW_STATEMENT_INCOME i
+        WHERE i.SETTLEMENT_ID=#{paramCondition.settlementId}
+        AND to_char(i.START_TIME,'yyyy-mm')=to_char(#{paramCondition.startTime},'yyyy-mm')
+        AND to_char(i.START_TIME,'yyyy-mm')=to_char(i.END_TIME,'yyyy-mm')
+    </select>
+</mapper>

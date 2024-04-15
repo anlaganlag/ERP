@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.SettlementReportCheckMapper">
+    <!--AZ结算报告审核列表-->
+    <select id="findPageBySpec" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportCheckResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportCheckParam">
+        select  t.ORIGINAL_TASK_NAME,
+        PLATFORM_NAME,
+        SHOP_NAME,
+        SITE,
+        REPORT_TYPE,
+        BILL_TYPE,
+        SETTLEMENT_ID,
+        START_TIME,
+        END_TIME,
+        REMITTANCE_DATE,
+        REMITTANCE_ACCOUNT,
+        REMITTANCE_BANK,
+        PROCEEDS_CURRENCY,
+        REMITTANCE_MONEY,
+        ORIGINAL_CURRENCY,
+        MONEY,
+        TOTAL_MONEY,
+        VERIFY_BY,
+        CREATE_AT,
+        UPDATE_AT,
+        ID,
+        case STATUS when 0 then '未审核'
+                    when 1 then '已审核'
+                    when 2 then '已作废' else '' end STATUS
+
+        from CW_SETTLEMENT_REPORT_CHECK t where 1=1
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and t.shop_name=#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and t.site=#{paramCondition.site}
+        </if>
+        <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+            and t.report_type=#{paramCondition.reportType}
+        </if>
+        <if test="paramCondition.remittanceBank != null and paramCondition.remittanceBank != ''">
+            and t.remittance_bank=#{paramCondition.remittanceBank}
+        </if>
+        <if test="paramCondition.remittanceAccount != null and paramCondition.remittanceAccount != ''">
+            and t.remittance_account like '%'||#{paramCondition.remittanceAccount}||'%'
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+            and t.settlement_id like '%'||#{paramCondition.settlementId}||'%'
+        </if>
+        <if test="paramCondition.billType != null and paramCondition.billType != ''">
+            and t.bill_type=#{paramCondition.billType}
+        </if>
+        <if test="paramCondition.status != null and paramCondition.status != ''">
+            and t.status=#{paramCondition.status}
+        </if>
+        <if test="paramCondition.verifyBy != null and paramCondition.verifyBy != ''">
+            and t.verify_by=#{paramCondition.verifyBy}
+        </if>
+        <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+            and start_time>=to_date(#{paramCondition.startTime},'yyyy-mm-dd')
+        </if>
+        <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+            and end_time&lt;=to_date(#{paramCondition.endTime},'yyyy-mm-dd')
+        </if>
+        order by STATUS desc, ID desc
+    </select>
+
+    <!--导出AZ结算报告审核列表-->
+    <select id="exportSettlementReportCheckList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportCheckResult"
+      parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportCheckParam">
+        select  t.ORIGINAL_TASK_NAME,
+        PLATFORM_NAME,
+        SHOP_NAME,
+        SITE,
+        REPORT_TYPE,
+        BILL_TYPE,
+        SETTLEMENT_ID,
+        START_TIME,
+        END_TIME,
+        REMITTANCE_DATE,
+        REMITTANCE_ACCOUNT,
+        REMITTANCE_BANK,
+        PROCEEDS_CURRENCY,
+        REMITTANCE_MONEY,
+        ORIGINAL_CURRENCY,
+        MONEY,
+        TOTAL_MONEY,
+        VERIFY_BY,
+        CREATE_AT,
+        UPDATE_AT,
+        ID,
+        case STATUS when 0 then '未审核'
+        when 1 then '已审核'
+        when 2 then '已作废' else '' end STATUS
+
+        from CW_SETTLEMENT_REPORT_CHECK t where 1=1
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            and t.shop_name=#{paramCondition.shopName}
+        </if>
+        <if test="paramCondition.site != null and paramCondition.site != ''">
+            and t.site=#{paramCondition.site}
+        </if>
+        <if test="paramCondition.reportType != null and paramCondition.reportType != ''">
+            and t.report_type=#{paramCondition.reportType}
+        </if>
+        <if test="paramCondition.remittanceBank != null and paramCondition.remittanceBank != ''">
+            and t.remittance_bank=#{paramCondition.remittanceBank}
+        </if>
+        <if test="paramCondition.remittanceAccount != null and paramCondition.remittanceAccount != ''">
+            and t.remittance_account like '%'||#{paramCondition.remittanceAccount}||'%'
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.settlementId != ''">
+            and t.settlement_id like '%'||#{paramCondition.settlementId}||'%'
+        </if>
+        <if test="paramCondition.billType != null and paramCondition.billType != ''">
+            and t.bill_type=#{paramCondition.billType}
+        </if>
+        <if test="paramCondition.status != null and paramCondition.status != ''">
+            and t.status=#{paramCondition.status}
+        </if>
+        <if test="paramCondition.verifyBy != null and paramCondition.verifyBy != ''">
+            and t.verify_by=#{paramCondition.verifyBy}
+        </if>
+        <if test="paramCondition.startTime != null and paramCondition.startTime != ''">
+            and start_time>=CAST(#{paramCondition.startTime} AS datetime)
+        </if>
+        <if test="paramCondition.endTime != null and paramCondition.endTime != ''">
+            and end_time&lt;=CAST(#{paramCondition.endTime} AS datetime)
+        </if>
+    </select>
+
+    <!--汇款银行下拉-->
+    <select id="bankList"  resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.SettlementReportCheckResult" >
+        select  REMITTANCE_BANK
+        from CW_SETTLEMENT_REPORT_CHECK where  REMITTANCE_BANK IS NOT NULL  group by REMITTANCE_BANK
+    </select>
+
+    <!--删除对应的Settlement/Data Range明细解析数据-->
+    <delete id="deleteDataDetail" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportCheckParam">
+        <if test="paramCondition.settlementId != null and paramCondition.reportType == 'Settlement'">
+            delete from CW_SETTLEMENT_DETAIL where SETTLEMENT_ID=#{paramCondition.settlementId}
+            and SYS_SHOPS_NAME=#{paramCondition.shopName}
+            and SYS_SITE=#{paramCondition.site}
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.reportType == 'Data Range'">
+            delete from CW_DATARANGE_DTAIL where SETTLEMENT_ID=#{paramCondition.settlementId}
+            and SYS_SHOPS_NAME=#{paramCondition.shopName}
+            and SYS_SITE=#{paramCondition.site}
+            and BATCHNO=(select max(batchno) from CW_DATARANGE where SETTLEMENT_ID=#{paramCondition.settlementId})
+        </if>
+    </delete>
+
+    <!--删除对应的Settlement/Data Range汇总解析数据-->
+    <delete id="deleteData" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.SettlementReportCheckParam">
+        <if test="paramCondition.settlementId != null and paramCondition.reportType == 'Settlement'">
+            delete from CW_SETTLEMENT where SETTLEMENT_ID=#{paramCondition.settlementId}
+            and SYS_SHOPS_NAME=#{paramCondition.shopName}
+            and SYS_SITE=#{paramCondition.site}
+            and STATUS=0
+        </if>
+        <if test="paramCondition.settlementId != null and paramCondition.reportType == 'Data Range'">
+            delete from CW_DATARANGE where SETTLEMENT_ID=#{paramCondition.settlementId}
+            and SYS_SHOPS_NAME=#{paramCondition.shopName}
+            and SYS_SITE=#{paramCondition.site}
+            and STATUS=0
+            and BATCHNO=(select max(batchno) from CW_DATARANGE where SETTLEMENT_ID=#{paramCondition.settlementId})
+        </if>
+    </delete>
+
+</mapper>

@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.shipment.mapper.TrackingTransferMapper">
+
+
+    <!--获取EBMS标签管理数据-->
+    <select id="batchQueryOccupyQty" resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.OccupyQytResult">
+        SELECT
+        MAX(t.MATERIAL_CODE ) materialCode ,
+        MAX(s.TEAM) team,
+        SUM(T.APPLY_SEND_QTY) qty,
+        MAX(s.TEAM||t.MATERIAL_CODE) mergeField
+        FROM
+        TRACKING_TRANSFER t JOIN SHIPMENT_TRACKING s ON t.APPLY_BATCH_NO = s.APPLY_BATCH_NO
+        <where>
+            <if test="queryMergeFiels != null and queryMergeFiels.size() != 0">
+                AND s.TEAM || t.MATERIAL_CODE IN
+                <foreach collection="queryMergeFiels" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            AND t.APPLY_TRACK_STATUS IN (1,3,31) -- 1已通过"/"2未通过"/"3同步中"/ 31 同步成功但还为生产拣货单"
+        </where>
+        GROUP BY s.TEAM, t.MATERIAL_CODE
+    </select>
+
+    <!--获取EBMS标签管理数据-->
+    <select id="batchQueryApplyOccupyQty" resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.OccupyQytResult">
+        SELECT
+        MAX(s.MATERIAL_CODE ) materialCode ,
+        MAX(s.TEAM) team,
+        SUM(s.SEND_QTY) qty,
+        max(s.DELIVERYPOINT_NO) deliverypointNo,
+        MAX(s.TEAM || s.MATERIAL_CODE ) mergeField,
+        MAX(s.TEAM || s.MATERIAL_CODE || s.DELIVERYPOINT_NO) mergeField3
+        FROM
+        SHIPMENT_APPLY_ITEM s
+        <where>
+            s.CHECK_STATUS = 0
+            AND s.APPLY_STATUS = 1
+            <if test="queryMergeFiels != null and queryMergeFiels.size() != 0">
+                AND s.TEAM || s.MATERIAL_CODE || s.DELIVERYPOINT_NO  IN
+                <foreach collection="queryMergeFiels" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="applyBatchNo != null and applyBatchNo.size() != 0">
+                AND s.APPLY_BATCH_NO NOT IN
+                <foreach collection="applyBatchNo" item="item" index="index" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY s.TEAM, s.MATERIAL_CODE , s.DELIVERYPOINT_NO
+    </select>
+
+    <select id="erpTeamAvailableQty"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ErpTeamAvailableQytResult">
+
+        SELECT
+        a.FNAME team ,
+        c.Fnumber materialCode,
+        b.FAVAILABLESTOCKQTY qty,
+        a.FNAME+c.Fnumber mergeField
+        FROM
+        T_BD_DEPARTMENT_L a
+        join T_SCM_TEAMSTOCK b on
+        a.FDEPTID = b.FTEAMID
+        JOIN T_BD_MATERIAL c on
+        b.FMATERIALID = c.FMATERIALID
+        <where>
+            c.FUSEORGID = 1
+            <if test="mergeFiledList != null and mergeFiledList.size > 0">
+                AND a.FNAME+c.Fnumber IN
+                <foreach collection="mergeFiledList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+    <select id="erpAvailableQty"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ErpTeamAvailableQytResult">
+        SELECT * from (
+
+                          SELECT
+                              a.FNAME team ,
+                              c.Fnumber materialCode,
+                              a.FNAME+c.Fnumber  mergeField,
+                              a.FNAME+'@'+c.Fnumber +'@'+ d.DELIVERYPOINT_NO mergeField3,
+                              case when ISNULL(b.FAVAILABLESTOCKQTY,0)>ISNULL(d.FBaseQty,0) then ISNULL(d.FBaseQty,0) else ISNULL(b.FAVAILABLESTOCKQTY,0) end as qty ,
+                              d.DELIVERYPOINT_NO deliverypointNo
+                          FROM
+                              T_BD_DEPARTMENT_L a
+                                  join T_SCM_TEAMSTOCK b
+                                       on a.FDEPTID = b.FTEAMID
+                                  JOIN T_BD_MATERIAL c
+                                       on b.FMATERIALID = c.FMATERIALID
+                                  LEFT JOIN  (
+
+                                  select SUM( a.FBaseQty) FBaseQty ,b.FNUMBER MATERIAL_code,c.DELIVERYPOINT_NO
+
+                                          FROM T_STK_INVENTORY a
+                                                   JOIN  (select FMATERIALID,FNUMBER FROM  T_BD_MATERIAL )  b
+                                                         on a.FMATERIALID =b.FMATERIALID
+                                                   JOIN ( select  b.F_UNW_WAREHOUSEID,a.FNUMBER DELIVERYPOINT_NO FROM T_UNW_DELIVERYPOINT a  join T_UNW_DELIVERYPOINTENTRY b on a.FID =b.FID
+                                                           WHERE 1=1
+                                                                <if test="deliverypointNoSet != null and deliverypointNoSet.size > 0">
+                                                                    AND a.FNUMBER IN
+                                                                    <foreach collection="deliverypointNoSet" index="index" item="item" open="(" separator="," close=")">
+                                                                        #{item}
+                                                                    </foreach>
+                                                                </if>
+
+                                                        ) c
+                                                        on a.FStockId=c.F_UNW_WAREHOUSEID
+
+                                          GROUP by b.FNUMBER,c.DELIVERYPOINT_NO
+
+                              ) d
+                                             on c.Fnumber= d.MATERIAL_code
+
+
+                          WHERE
+			                c.FUSEORGID = 1
+                            <if test="teamSet != null and teamSet.size > 0">
+                                AND a.FNAME IN
+                                <foreach collection="teamSet" index="index" item="item" open="(" separator="," close=")">
+                                    #{item}
+                                </foreach>
+                            </if>
+
+                            <if test="matSet != null and matSet.size > 0">
+                                AND c.Fnumber IN
+                                <foreach collection="matSet" index="index" item="item" open="(" separator="," close=")">
+                                    #{item}
+                                </foreach>
+                            </if>
+
+                      )aa
+         WHERE 1=1
+
+        <if test="mergeFieldList != null and mergeFieldList.size > 0">
+            AND aa.mergeField3 IN
+            <foreach collection="mergeFieldList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+    </select>
+
+    <select id="erpAvailableQty2"   resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ErpTeamAvailableQytResult">
+        SELECT  aa.team,aa.materialCode,aa.mergeField,aa.mergeField3,aa.deliverypointNo,
+                -- （发货点下可用数量和Team可用库存数量取最小值） 和 （发货点可用数量减去Team待捡货数量） 比较取最小值
+                CASE WHEN  (CASE when aa.qty >aa.qty2 then aa.qty2 else aa.qty end) &lt; 0
+                then 0
+                else (CASE when aa.qty >aa.qty2 then aa.qty2 else aa.qty end)
+                end as qty
+
+        from (
+
+                          SELECT
+                              a.FNAME team ,
+                              c.Fnumber materialCode,
+                              a.FNAME + c.Fnumber  mergeField,
+                              a.FNAME + c.Fnumber + d.DELIVERYPOINT_NO mergeField3,
+                              -- 发货点下可用数量和Team可用库存数量取最小值
+                              case when ISNULL(b.FAVAILABLESTOCKQTY,0)>ISNULL(d.FBaseQty,0) then ISNULL(d.FBaseQty,0) else ISNULL(b.FAVAILABLESTOCKQTY,0) end as qty ,
+                              -- 发货点可用数量减去Team待捡货数量
+                              ISNULL(d.FBaseQty,0)-ISNULL(b.FUNPICKEDQTY,0) qty2 ,
+                              d.DELIVERYPOINT_NO deliverypointNo
+                          FROM
+                              T_BD_DEPARTMENT_L a
+                                  join T_SCM_TEAMSTOCK b
+                                       on a.FDEPTID = b.FTEAMID
+                                  JOIN T_BD_MATERIAL c
+                                       on b.FMATERIALID = c.FMATERIALID
+                                  LEFT JOIN  (
+
+                                  select SUM( a.FBaseQty) FBaseQty ,b.FNUMBER MATERIAL_code,c.DELIVERYPOINT_NO
+
+                                          FROM T_STK_INVENTORY a
+                                                   JOIN  (select FMATERIALID,FNUMBER FROM  T_BD_MATERIAL )  b
+                                                         on a.FMATERIALID =b.FMATERIALID
+                                                   JOIN ( select  b.F_UNW_WAREHOUSEID,a.FNUMBER DELIVERYPOINT_NO FROM T_UNW_DELIVERYPOINT a  join T_UNW_DELIVERYPOINTENTRY b on a.FID =b.FID
+                                                           WHERE 1=1
+                                                                <if test="deliverypointNoSet != null and deliverypointNoSet.size > 0">
+                                                                    AND a.FNUMBER IN
+                                                                    <foreach collection="deliverypointNoSet" index="index" item="item" open="(" separator="," close=")">
+                                                                        #{item}
+                                                                    </foreach>
+                                                                </if>
+
+                                                        ) c
+                                                        on a.FStockId=c.F_UNW_WAREHOUSEID
+
+                                          GROUP by b.FNUMBER,c.DELIVERYPOINT_NO
+
+                              ) d
+                                             on c.Fnumber= d.MATERIAL_code
+
+
+                          WHERE
+			                c.FUSEORGID = 1
+                            <if test="teamSet != null and teamSet.size > 0">
+                                AND a.FNAME IN
+                                <foreach collection="teamSet" index="index" item="item" open="(" separator="," close=")">
+                                    #{item}
+                                </foreach>
+                            </if>
+
+                            <if test="matSet != null and matSet.size > 0">
+                                AND c.Fnumber IN
+                                <foreach collection="matSet" index="index" item="item" open="(" separator="," close=")">
+                                    #{item}
+                                </foreach>
+                            </if>
+
+                      )aa
+         WHERE 1=1
+
+        <if test="mergeFieldList != null and mergeFieldList.size > 0">
+            AND aa.mergeField3 IN
+            <foreach collection="mergeFieldList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+
+    </select>
+
+
+
+
+    <select id="erpAvailableAllQty"   resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ErpTeamAvailableQytResult">
+                      SELECT a.FNAME team,
+                             c.Fnumber materialCode,
+                             CASE
+                               WHEN ISNULL(b.FAVAILABLESTOCKQTY, 0) > ISNULL(d.FBaseQty, 0)
+                               THEN ISNULL(d.FBaseQty, 0)
+                               ELSE ISNULL(b.FAVAILABLESTOCKQTY, 0)
+                               END AS qty,
+                               d.DELIVERYPOINT_NO deliverypointNo
+                        FROM T_BD_DEPARTMENT_L a
+                        JOIN T_SCM_TEAMSTOCK b
+                          ON a.FDEPTID = b.FTEAMID
+                        JOIN T_BD_MATERIAL c
+                          ON b.FMATERIALID = c.FMATERIALID
+                        LEFT JOIN (
+                                   SELECT SUM(a.FBaseQty) FBaseQty,
+                                          b.FNUMBER MATERIAL_code,
+                                          c.DELIVERYPOINT_NO
+                                   FROM T_STK_INVENTORY a
+                                   JOIN (SELECT FMATERIALID, FNUMBER FROM T_BD_MATERIAL) b
+                                       ON a.FMATERIALID = b.FMATERIALID
+                                   JOIN (SELECT b.F_UNW_WAREHOUSEID,
+                                                a.FNUMBER DELIVERYPOINT_NO
+                                         FROM T_UNW_DELIVERYPOINT a
+                                         JOIN T_UNW_DELIVERYPOINTENTRY b
+                                               ON a.FID = b.FID
+                                         ) c
+                                   ON a.FStockId = c.F_UNW_WAREHOUSEID
+                                   GROUP BY b.FNUMBER,c.DELIVERYPOINT_NO ) d
+                          ON c.Fnumber = d.MATERIAL_code
+                       WHERE c.FUSEORGID = 1
+                         AND a.FNAME IN
+                            <foreach collection="teamList" index="index" item="item" open="(" separator="," close=")">
+                                #{item}
+                            </foreach>
+                         AND c.Fnumber IN
+                            <foreach collection="matCodeList" index="index" item="item" open="(" separator="," close=")">
+                                #{item}
+                            </foreach>
+    </select>
+
+
+
+    <select id="toCheckQty"   resultType="java.math.BigDecimal">
+           SELECT  SUM(a.FBASEQTY) toCheckQty
+           FROM T_STK_INVENTORY a
+           JOIN (SELECT FMATERIALID, FNUMBER FROM T_BD_MATERIAL WHERE Fnumber IN
+                <foreach collection="matCodeList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>        ) b
+             ON a.FMATERIALID = b.FMATERIALID
+           JOIN (SELECT s.FSTOCKID, L.FNAME, s.FNUMBER
+                   FROM T_BD_STOCK S
+                   JOIN T_BD_STOCK_L L
+                     ON S.FSTOCKID = L.FSTOCKID
+                   WHERE fname LIKE '%待检仓%' AND S.FFORBIDSTATUS = 'A') d
+                     ON a.FStockId = d.FSTOCKID
+    </select>
+
+
+    <select id="toSendQty"   resultType="java.math.BigDecimal">
+    SELECT SUM(CASE WHEN shiping_qty IS NOT NULL THEN   NVL(shiping_qty, 0)
+             WHEN pick_qty IS NOT NULL THEN NVL(pick_qty, 0)
+             ELSE NVL(apply_send_qty, 0) END) toSendQty
+    FROM  (SELECT b.bill_no,MAX(apply_send_qty) apply_send_qty,MAX(pick_qty) pick_qty,SUM(t4.shiping_qty) shiping_qty FROM
+            (SELECT t1.bill_no,MAX(apply_send_qty) apply_send_qty,MAX(pick_qty) pick_qty
+             FROM tracking_transfer t1
+              JOIN shipment_apply_item t3
+                ON t1.bill_no = t3.bill_no
+            <where>
+                <if test="teamList != null and teamList.size > 0">
+                    AND t3.team IN
+                    <foreach collection="teamList" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="matCodeList != null and matCodeList.size > 0">
+                    AND t3.material_code IN
+                    <foreach collection="matCodeList" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="deliverypointNo != null and deliverypointNo != ''">
+                    AND t3.deliverypoint_no = #{deliverypointNo}
+                </if>
+                AND t1.check_status = 1
+                AND t1.apply_track_status in (3,4,5)
+            </where>
+             GROUP BY t1.bill_no) b
+               LEFT JOIN tracking_shipping t4
+                ON b.bill_no = t4.bill_no
+                GROUP BY b.bill_no)
+
+
+
+    </select>
+
+    <select id="transit"   resultType="map">
+       select sum(qty) qty,max(receive_qty) receive_qty,max(preArriveDate) preArriveDate from  (SELECT  t5.logistics_number ,
+                MAX(t5.logistics_send_qty) qty,
+                MAX(t4.receive_qty) receive_qty,
+                to_char(MIN(t5.PRE_ARRIVE_DATE),'YYYY/MM/DD')||'~'||to_char(MAX(t5.PRE_ARRIVE_DATE),'YYYY/MM/DD') preArriveDate
+           FROM tracking_logistics t5
+            LEFT JOIN tracking_shipping t4
+                ON t5.bill_no = t4.bill_no AND t5.SHIPPING_LIST_CODE = t4.SHIPPING_LIST_CODE
+            LEFT JOIN shipment_apply_item t3
+                ON t5.bill_no = t3.bill_no
+            LEFT JOIN TRACKING_TRANSFER t2
+                ON t5.bill_no = t2.bill_no
+         <where>
+             AND t2.apply_track_status NOT IN (8,9)
+             AND t5.logistics_number IS NOT NULL
+             AND NVL(t4.receive_qty,0) != NVL(t4.shiping_qty,0)
+
+             <if test="areaList != null and areaList.size > 0">
+                 AND t3.area IN
+                     <foreach collection="areaList" index="index" item="item" open="(" separator="," close=")">
+                         #{item}
+                     </foreach>
+             </if>
+
+             <if test="asinList != null and asinList.size > 0">
+                 AND t3.asin IN
+                 <foreach collection="asinList" index="index" item="item" open="(" separator="," close=")">
+                     #{item}
+                 </foreach>
+             </if>
+
+             <if test="teamList != null and teamList.size > 0">
+                AND t3.team IN
+                 <foreach collection="teamList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+             </if>
+
+             <if test="matCodeList != null and matCodeList.size > 0">
+                AND t3.material_code IN
+                     <foreach collection="matCodeList" index="index" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+             </if>
+
+
+             <if test="isTransit != null and isTransit">
+                AND  t5.LOGISTICS_STATE NOT IN ('物流完结','已签收','已上架')
+            </if>
+         </where>
+        GROUP BY t5.logistics_number
+        )
+
+    </select>
+
+
+    <select id="toShelveQty"   resultType="java.math.BigDecimal">
+   SELECT SUM(nvl(t4.shiping_qty,0)- nvl(t4.receive_qty,0)) to_shelve_qty
+          FROM tracking_logistics t5
+          LEFT JOIN tracking_shipping t4
+            ON t5.bill_no = t4.bill_no
+            AND t5.SHIPPING_LIST_CODE = t4.SHIPPING_LIST_CODE
+          LEFT JOIN shipment_apply_item t3
+            ON t5.bill_no = t3.bill_no
+          LEFT JOIN TRACKING_TRANSFER t2
+            ON t5.bill_no = t2.bill_no
+        <where>
+            AND t2.apply_track_status NOT IN (8,9)
+            AND t5.logistics_state IN ('物流完结','已签收','已上架')
+            AND nvl(t4.receive_qty,0) &lt;  nvl(t4.shiping_qty,0)
+            <if test="areaList != null and areaList.size > 0">
+                AND t3.area IN
+                <foreach collection="areaList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="asinList != null and asinList.size > 0">
+                AND t3.asin IN
+                <foreach collection="asinList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="teamList != null and teamList.size > 0">
+                AND t3.team IN
+                <foreach collection="teamList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="matCodeList != null and matCodeList.size > 0">
+                AND t3.material_code IN
+                <foreach collection="matCodeList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+    <select id="arrivalList"  resultType="com.tadpole.cloud.operationManagement.modular.shipment.model.result.ShipmentBoardArrivalResult">
+    SELECT t5.logistics_number,
+           max(t3.deliverypoint) deliverypoint,
+           max(t3.receive_warehouse) receive_warehouse,
+           max(t3.sys_shops_name) sys_shops_name,
+           max(t3.sys_site) sys_site,
+           max(t3.sku) sku,
+           max(t3.asin) asin,
+           max(t5.logistics_send_qty)  shiping_qty,
+           max(t4.receive_qty) receive_qty,
+           max(t5.logistics_mode) logistics_mode,
+           max(t5.logistics_send_date) logistics_send_date,
+           max(t5.pre_arrive_date) pre_arrive_date,
+           max(t5.sign_date) sign_date,
+           max(t5.remark) remark
+       FROM tracking_logistics t5
+        LEFT JOIN tracking_shipping t4
+            ON t5.bill_no = t4.bill_no AND t5.SHIPPING_LIST_CODE = t4.SHIPPING_LIST_CODE
+        LEFT JOIN shipment_apply_item t3
+            ON t5.bill_no = t3.bill_no
+        <where>
+            AND t5.logistics_number IS NOT NULL
+            <if test="areaList != null and areaList.size > 0">
+                AND t3.area IN
+                <foreach collection="areaList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="asinList != null and asinList.size > 0">
+                AND t3.asin IN
+                <foreach collection="asinList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="teamList != null and teamList.size > 0">
+                AND t3.team IN
+                <foreach collection="teamList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+
+            <if test="matCodeList != null and matCodeList.size > 0">
+                AND t3.material_code IN
+                <foreach collection="matCodeList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            AND NVL(t4.receive_qty,0) != NVL(t4.shiping_qty,0)
+        </where>
+        group by logistics_number
+        order BY sys_site ,LOGISTICS_SEND_DATE DESC
+    </select>
+    <select id="getNeedCheckTransferData"
+            resultType="com.tadpole.cloud.operationManagement.modular.shipment.entity.TrackingTransfer">
+        SELECT tt.BILL_NO , tl.SHIPMENT_ID    ,tt.SKU ,tt.SYS_SITE ,tt.ID
+        FROM  TRACKING_LOGISTICS tl JOIN TRACKING_TRANSFER tt  ON tl.BILL_NO =TT.BILL_NO
+        WHERE tt.APPLY_TRACK_STATUS =7
+          AND tl.SHIPMENT_ID  IS NOT NULL
+
+        <if test="multipleShipmentId !=null and 'true'.toString() == multipleShipmentId.toString()">
+            AND tt.BILL_NO IN (
+            SELECT DISTINCT TL.BILL_NO FROM  TRACKING_LOGISTICS tl GROUP BY TL.BILL_NO HAVING COUNT(DISTINCT  TL.SHIPMENT_ID)>1
+            )
+        </if>
+        <if test="multipleShipmentId !=null and 'false'.toString() == multipleShipmentId.toString()">
+            AND tt.BILL_NO NOT IN (
+            SELECT DISTINCT TL.BILL_NO FROM  TRACKING_LOGISTICS tl GROUP BY TL.BILL_NO HAVING COUNT(DISTINCT  TL.SHIPMENT_ID)>1
+            )
+        </if>
+
+        GROUP BY  tt.BILL_NO , tl.SHIPMENT_ID    ,tt.SKU ,tt.SYS_SITE ,tt.ID
+
+
+    </select>
+
+
+
+    <update  id="updateTransferStatus"   parameterType="java.util.List">
+        merge into TRACKING_TRANSFER  a
+            using (
+                SELECT
+                    MAX(status) status,MAX(BILL_NO) BILL_NO,MAX(ACTUAL_SEND_QTY) ACTUAL_SEND_QTY
+                FROM
+                    (
+                        SELECT
+                            NVL2(MAX(PICK_LIST_CODE) , 4, 3) status ,
+                            MAX(BILL_NO) BILL_NO,
+                            0 ACTUAL_SEND_QTY
+                        FROM TRACKING_TRANSFER
+                        WHERE
+                            <if test="billNoList != null and billNoList.size > 0">
+                                BILL_NO IN
+                                <foreach collection="billNoList" index="index" item="item" open="(" separator="," close=")">
+                                    #{item}
+                                </foreach>
+                            </if>
+                        GROUP BY BILL_NO
+                        UNION ALL (
+                            SELECT
+                                NVL2(MAX(SHIPPING_LIST_CODE), (CASE WHEN sum(NVL(RECEIVE_QTY,0)) = SUM(NVL(SHIPING_QTY,0))  THEN   8 ELSE 5 end) , 3) status ,
+                                MAX(BILL_NO) BILL_NO,
+                                SUM(SHIPING_QTY) ACTUAL_SEND_QTY
+                            FROM TRACKING_SHIPPING
+                            WHERE
+                                <if test="billNoList != null and billNoList.size > 0">
+                                    BILL_NO IN
+                                    <foreach collection="billNoList" index="index" item="item" open="(" separator="," close=")">
+                                        #{item}
+                                    </foreach>
+                                </if>
+                            GROUP BY BILL_NO
+                        )
+                        UNION ALL (
+                            SELECT
+                                MIN(
+                                        case (NVL(LOGISTICS_STATE,'没有物流状态'))
+                                            when '出口报关中' then 6
+                                            when '待发货' then 6
+                                            when '国外清关中' then  6
+                                            when '退回' then 6
+                                            when '尾程派送中' then 6
+                                            when '尾程物流中' then 6
+                                            when '物流完结' then ( CASE  WHEN SHIPMENT_ID like 'FBA%' THEN  7 ELSE 8 END )
+                                            when '已签收' then 7
+                                            when '已上架' then 7
+                                            ELSE 3 END   -- 数据状态
+                                    )  status,
+
+                                MAX(BILL_NO) BILL_NO,
+                                0 ACTUAL_SEND_QTY
+                            FROM TRACKING_LOGISTICS
+                            WHERE
+                                <if test="billNoList != null and billNoList.size > 0">
+                                    BILL_NO IN
+                                    <foreach collection="billNoList" index="index" item="item" open="(" separator="," close=")">
+                                        #{item}
+                                    </foreach>
+                                </if>
+                            GROUP BY BILL_NO
+                        )
+                    )
+                GROUP BY BILL_NO
+            ) b ON (a.BILL_NO =b.BILL_NO)
+            WHEN MATCHED THEN
+                update  set a.APPLY_TRACK_STATUS =b.status  ,  a.ACTUAL_SEND_QTY= b.ACTUAL_SEND_QTY  WHERE   a.BILL_NO =b.BILL_NO AND a.APPLY_TRACK_STATUS !=9
+    </update>
+
+</mapper>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.BaseTaxRateMapper">
+    <sql id="Page_Column_List">
+        ID,
+        SITE,
+        TAX_RATE,
+        EFFECTIVE_DATE,
+        EXPIRATION_DATE,
+        STATUS
+    </sql>
+
+<!--    站点批量模糊查询-->
+    <sql id="List_Condition">
+        IS_DELETE = 0
+        <if test="paramCondition.sites != null and paramCondition.sites.size() != 0">
+            AND
+            <foreach collection="paramCondition.sites" item="item" index="index" open="(" separator="or" close=")">
+                t.SITE LIKE '%'||#{item}||'%'
+            </foreach>
+        </if>
+        <if test="paramCondition.status != null">
+            AND t.STATUS = #{paramCondition.status}
+        </if>
+    </sql>
+
+
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.BaseTaxRateParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.BaseTaxRateResult">
+        SELECT  <include refid="Page_Column_List"/> FROM BASE_TAX_RATE t
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.SITE, t.CREATE_TIME ASC
+    </select>
+    
+<!--    <select id="queryIsGeneratedPeriod">-->
+<!--        SELECT count(1) FROM VAT_SALES_DETAIL t WHERE t.ACTIVITY_PERIOD = #{period} AND GENERATE_STATUS = ${isExists}-->
+<!--    </select>-->
+</mapper>

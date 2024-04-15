@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.BaseTaxListMapper">
+    <sql id="Page_Column_List">
+        L.ID,
+        L.COUNTRY,
+        L.ACCOUNT,
+        L.TAX_ID,
+        L.IS_TAX_ID,
+        L.TAX_ID_STATUS,
+        CASE L.IS_TAX_ID WHEN 1 THEN '是' ELSE '否' END AS isTaxNum,
+        E.COUNTRY_EN ,
+        E.COUNTRY_CN
+    </sql>
+
+
+    <sql id="List_Condition">
+        <if test="paramCondition.isTaxId != null  ">
+            and L.IS_TAX_ID = #{paramCondition.isTaxId}
+        </if>
+
+    </sql>
+
+
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.BaseTaxListParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.BaseTaxListResult">
+        SELECT <include refid="Page_Column_List"/> FROM BASE_TAX_LIST L
+        LEFT JOIN BASE_EU_COUNTRIES E ON L.COUNTRY = E.COUNTRY AND E.IS_DELETE = 0
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY L.COUNTRY
+    </select>
+</mapper>

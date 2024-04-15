@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.TgReceiveCompanyMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        C.ID,
+        C.COMPANY_NAME_CN,
+        C.ADDR_CN,
+        C.CONTACT_USER,
+        C.EMAIL,
+        C.PHONE,
+        C.CREATE_TIME,
+        C.CREATE_USER,
+        C.UPDATE_TIME,
+        C.UPDATE_USER,
+        C.COUNTRY_CODE,
+        C.STATE,
+        C.CITY,
+        C.LOG_REC_ZIP
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.TgReceiveCompanyParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.TgReceiveCompanyResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM TG_RECEIVE_COMPANY C
+        <where>
+            <if test="param.companyNameCnList != null and param.companyNameCnList.size() != 0">
+                C.COMPANY_NAME_CN IN
+                <foreach collection="param.companyNameCnList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY C.CREATE_TIME DESC, C.ID DESC
+    </select>
+
+    <!-- 获取收货公司 -->
+    <select id="getEbmsReceiveCompany" resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.TgReceiveCompany">
+        SELECT
+            C.LogRecHouseName AS COMPANY_NAME_CN,
+            CONCAT(C.logRecAddress1, C.logRecAddress2, C.logRecAddress3) AS ADDR_CN,
+            C.logRecPerson AS CONTACT_USER,
+            C.logRecPersonTel AS PHONE,
+            C.CountryCode AS COUNTRY_CODE,
+            C.State,
+            C.City,
+            C.logRecZip AS LOG_REC_ZIP
+        FROM TbLogisticsShipToRec C
+        GROUP BY C.LogRecHouseName, C.logRecAddress1, C.logRecAddress2, C.logRecAddress3, C.logRecPerson, C.logRecPersonTel, C.CountryCode, C.State, C.City, C.logRecZip
+    </select>
+
+    <!-- 收货公司名称下拉 -->
+    <select id="receiveCompanyNameSelect" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT C.COMPANY_NAME_CN AS name FROM TG_RECEIVE_COMPANY C
+        WHERE C.COMPANY_NAME_CN IS NOT NULL
+        GROUP BY C.COMPANY_NAME_CN
+    </select>
+</mapper>

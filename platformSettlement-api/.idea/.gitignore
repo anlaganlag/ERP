@@ -1,0 +1,8 @@
+# 默认忽略的文件
+/shelf/
+/workspace.xml
+/vcs.xml
+/misc.xml
+/jarRepositories.xml
+/encodings.xml
+/compiler.xml

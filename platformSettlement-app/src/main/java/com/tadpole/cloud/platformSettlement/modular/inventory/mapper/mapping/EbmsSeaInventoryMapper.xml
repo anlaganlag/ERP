@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.EbmsSeaInventoryMapper">
+
+  <!--海外仓库存列表、导出-->
+  <select id="customPageList" resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EbmsSeaInventory">
+    SELECT m.*
+    FROM EBMS_SEA_INVENTORY m
+    <where>
+      <if test="paramCondition.shopName != null and paramCondition.shopName.size>0">
+        AND m.SHOP_NAME IN
+        <foreach collection="paramCondition.shopName" open="(" close=")" separator="," item="shopName">
+          #{shopName}
+        </foreach>
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site.size>0">
+        AND m.site IN
+        <foreach collection="paramCondition.site" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size>0">
+        AND m.MATERIAL_CODE IN
+        <foreach collection="paramCondition.materialCodeList" open="(" close=")" separator="," item="item">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        AND m.BALANCE_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 - INTERVAL '1' SECOND
+      </if>
+      <choose>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+          AND m.INVENTORY_ORGANIZATION_CODE IS NULL
+        </when>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+          AND m.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+        </when>
+        <otherwise>
+        </otherwise>
+      </choose>
+    </where>
+  </select>
+
+  <!--海外仓库存列表统计数-->
+  <select id="getQty" resultType="java.lang.String">
+    SELECT SUM(NVL(m.ACCOUNT_NUMBER, 0))||','||SUM(NVL(m.COMING_NUMBER, 0))
+    FROM EBMS_SEA_INVENTORY m
+    <where>
+      <if test="paramCondition.shopName != null and paramCondition.shopName.size>0">
+        AND m.SHOP_NAME IN
+        <foreach collection="paramCondition.shopName" open="(" close=")" separator="," item="shopName">
+          #{shopName}
+        </foreach>
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site.size>0">
+        AND m.site IN
+        <foreach collection="paramCondition.site" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND m.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size>0">
+        AND m.MATERIAL_CODE IN
+        <foreach collection="paramCondition.materialCodeList" open="(" close=")" separator="," item="item">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+        AND m.BALANCE_DATE BETWEEN
+        to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+        to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 - INTERVAL '1' SECOND
+      </if>
+      <choose>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+          AND m.INVENTORY_ORGANIZATION_CODE IS NULL
+        </when>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+          AND m.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+        </when>
+        <otherwise>
+        </otherwise>
+      </choose>
+    </where>
+  </select>
+
+  <!--根据组织刷库存组织编码-->
+  <update id="refreshOrgCode">
+    MERGE INTO EBMS_SEA_INVENTORY A
+    USING (
+        SELECT
+            WC.ORGANIZATION_CODE,
+            WC.ORGANIZATION_NAME
+        FROM ERP_WAREHOUSE_CODE WC
+        GROUP BY
+            WC.ORGANIZATION_CODE,
+            WC.ORGANIZATION_NAME
+    ) C ON (A.ORG = C.ORGANIZATION_NAME)
+    WHEN MATCHED THEN
+      UPDATE SET A.INVENTORY_ORGANIZATION_CODE = C.ORGANIZATION_CODE
+      WHERE A.INVENTORY_ORGANIZATION_CODE IS NULL
+        AND A.ORG IS NOT NULL
+  </update>
+</mapper>

@@ -1,0 +1,15 @@
+/.idea
+/app-logs
+
+target
+/operationManagement-app/operationManagement-app.iml
+/supplyChain-app/supplyChain-app.iml
+/product-app/product-app.iml
+/product-api/product-api.iml
+/platformSettlement-app/platformSettlement-app.iml
+/platformSettlement-api/platformSettlement-api.iml
+/externalSystem-api/externalSystem-api.iml
+/externalSystem-app/externalSystem-app.iml
+/supplyChain-api/supplyChain-api.iml
+/operationManagement-api/operationManagement-api.iml
+/business.iml

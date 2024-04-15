@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.EndingInventoryMapper">
+  <resultMap id="BaseResultMap"
+    type="com.tadpole.cloud.platformSettlement.api.inventory.model.result.EndingInventoryErpResult">
+    <id column="FEntity" property="FEntity"/>
+    <result column="FCountQty" property="FCountQty"/>
+    <result column="MATERIAL_CODE" property="FMaterialID"/>
+    <result column="WAREHOUSE_CODE" property="FStockID"/>
+    <result column="F_REQUIRETEAM" property="F_REQUIRETEAM"/>
+  </resultMap>
+
+  <!--期末库存列表、导出-->
+  <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.EndingInventoryResult"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.EndingInventoryParam">
+    SELECT
+      d.id,
+      i.BILL_CODE,
+      i.YEAR,
+      i.MONTH,
+      i.PLATFORM,
+      i.SHOP_NAME,
+      i.SITE,
+      i.INVENTORY_ORGANIZATION_CODE,
+      d.INVENTORY_STATUS,
+      i.WAREHOUSE_NAME,
+      i.WAREHOUSE_CODE,
+      d.DEPARTMENT,
+      d.Team,
+      d.SKU,
+      d.MATERIAL_CODE,
+      d.TRANSIT_NUM,
+      d.LOGISTICS_NUM,
+      d.STOCK_NUM,
+      d.TRANSIT_NUM+d.LOGISTICS_NUM+d.STOCK_NUM ENDING_NUM,
+      CASE d.IS_CANCEL WHEN 0 THEN '未作废' WHEN 1 THEN '已作废' END IS_CANCEL,
+      CASE d.SYNC_STATUS WHEN 0 THEN '未同步' WHEN 1 THEN '已同步' END SYNC_STATUS,
+      d.UPDATE_TIME,
+      d.UPDATE_USER
+    FROM ENDING_INVENTORY_DETAIL D
+    LEFT JOIN ENDING_INVENTORY I ON I.ID=D.OUT_ID
+    <where>
+      <if test="paramCondition.billCode != null and paramCondition.billCode != ''">
+        I.BILL_CODE =#{paramCondition.billCode}
+      </if>
+      <if test="paramCondition.year != null and paramCondition.year != ''">
+        AND I.year =#{paramCondition.year}
+      </if>
+      <if test="paramCondition.years != null and paramCondition.years.size>0">
+        AND I.year IN
+        <foreach collection="paramCondition.years" open="(" close=")" separator="," item="year">
+          #{year}
+        </foreach>
+      </if>
+      <if test="paramCondition.month != null and paramCondition.month != ''">
+        AND I.month =#{paramCondition.month}
+      </if>
+      <if test="paramCondition.months != null and paramCondition.months.size>0">
+        AND I.month IN
+        <foreach collection="paramCondition.months" open="(" close=")" separator="," item="month">
+          #{month}
+        </foreach>
+      </if>
+      <if test="paramCondition.platform != null and paramCondition.platform != ''">
+        AND I.platform =#{paramCondition.platform}
+      </if>
+      <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+        AND I.platform IN
+        <foreach collection="paramCondition.platforms" open="(" close=")" separator="," item="platform">
+          #{platform}
+        </foreach>
+      </if>
+      <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+        AND I.shop_name =#{paramCondition.shopName}
+      </if>
+      <if test="paramCondition.shopNames != null and paramCondition.shopNames.size>0">
+        AND I.SHOP_NAME IN
+        <foreach collection="paramCondition.shopNames" open="(" close=")" separator="," item="shopName">
+          #{shopName}
+        </foreach>
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site != ''">
+        AND I.site =#{paramCondition.site}
+      </if>
+      <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+        AND I.site IN
+        <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+      <if test="paramCondition.department != null and paramCondition.department != ''">
+        AND D.department =#{paramCondition.department}
+      </if>
+      <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+        AND D.department IN
+        <foreach collection="paramCondition.departments" open="(" close=")" separator="," item="department">
+          #{department}
+        </foreach>
+      </if>
+      <if test="paramCondition.team != null and paramCondition.team != ''">
+        AND D.team = #{paramCondition.team}
+      </if>
+      <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+        AND D.team IN
+        <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="team">
+          #{team}
+        </foreach>
+      </if>
+      <if test="paramCondition.material != null and paramCondition.material.length>0">
+        AND D.material_code IN
+        <foreach collection="paramCondition.material" open="(" close=")" separator="," item="materialCode">
+          #{materialCode}
+        </foreach>
+      </if>
+      <if test="paramCondition.inventoryStatus != null and paramCondition.inventoryStatus !=''">
+        AND D.inventory_status =#{paramCondition.inventoryStatus}
+      </if>
+      <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+        AND D.sync_status = #{paramCondition.syncStatus}
+      </if>
+      <if test="paramCondition.syncStatuss != null and paramCondition.syncStatuss.size>0">
+        AND D.sync_status IN
+        <foreach collection="paramCondition.syncStatuss" open="(" close=")" separator="," item="syncStatus">
+          #{syncStatus}
+        </foreach>
+      </if>
+      <if test="paramCondition.sku != null and paramCondition.sku != ''">
+        AND D.sku =#{paramCondition.sku}
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND D.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.isDefect != null and paramCondition.isDefect == true ">
+        AND d.MATERIAL_CODE IS NULL
+      </if>
+      <choose>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+          AND I.INVENTORY_ORGANIZATION_CODE IS NULL
+        </when>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+          AND I.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+        </when>
+        <otherwise>
+        </otherwise>
+      </choose>
+    </where>
+    ORDER BY D.ID
+  </select>
+
+  <!--发邮件-->
+  <select id="emailList" resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.EndingInventoryResult">
+    SELECT
+      d.id,d.INVENTORY_STATUS,d.DEPARTMENT,d.SKU,d.MATERIAL_CODE,d.TRANSIT_NUM,d.LOGISTICS_NUM,d.STOCK_NUM,d.ENDING_NUM,
+      CASE d.IS_CANCEL WHEN 0 THEN '未作废' WHEN 1 THEN '已作废' END IS_CANCEL,
+      CASE d.SYNC_STATUS WHEN 0 THEN '未同步' WHEN 1 THEN '已同步' END SYNC_STATUS,
+      d.UPDATE_TIME,d.UPDATE_USER,d.TEAM,d.OUT_ID,m.BILL_CODE,m.YEAR,m.MONTH,m.PLATFORM,
+      m.SHOP_NAME,m.SITE,m.ORG,m.INVENTORY_ORGANIZATION_CODE,m.WAREHOUSE_NAME,m.WAREHOUSE_CODE
+    FROM ending_inventory_detail d
+    LEFT JOIN ending_inventory m ON d.out_id=m.id
+    WHERE
+        d.MATERIAL_CODE IS NULL
+        AND d.is_cancel = 0
+        AND d.sync_status = 0
+  </select>
+
+  <!--获取数量-->
+  <select id="getQuantity" resultType="java.lang.String"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.EndingInventoryParam">
+    SELECT
+        SUM(NVL(TRANSIT_NUM, 0)) || ',' || SUM(NVL(LOGISTICS_NUM, 0)) || ',' || SUM(NVL(STOCK_NUM, 0)) || ',' || (SUM(NVL(TRANSIT_NUM, 0))+ SUM(NVL(LOGISTICS_NUM, 0)) + SUM(NVL(STOCK_NUM, 0)))
+    FROM ENDING_INVENTORY_DETAIL D
+    LEFT JOIN ENDING_INVENTORY I ON I.ID = D.OUT_ID
+    <where>
+      <if test="paramCondition.billCode != null and paramCondition.billCode != ''">
+        I.BILL_CODE =#{paramCondition.billCode}
+      </if>
+      <if test="paramCondition.year != null and paramCondition.year != ''">
+        AND I.year =#{paramCondition.year}
+      </if>
+      <if test="paramCondition.years != null and paramCondition.years.size>0">
+        AND I.year IN
+        <foreach collection="paramCondition.years" open="(" close=")" separator="," item="year">
+          #{year}
+        </foreach>
+      </if>
+      <if test="paramCondition.month != null and paramCondition.month != ''">
+        AND I.month =#{paramCondition.month}
+      </if>
+      <if test="paramCondition.months != null and paramCondition.months.size>0">
+        AND I.month IN
+        <foreach collection="paramCondition.months" open="(" close=")" separator="," item="month">
+          #{month}
+        </foreach>
+      </if>
+      <if test="paramCondition.platform != null and paramCondition.platform != ''">
+        AND I.platform =#{paramCondition.platform}
+      </if>
+      <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+        AND I.platform IN
+        <foreach collection="paramCondition.platforms" open="(" close=")" separator="," item="platform">
+          #{platform}
+        </foreach>
+      </if>
+      <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+        AND I.shop_name =#{paramCondition.shopName}
+      </if>
+      <if test="paramCondition.shopNames != null and paramCondition.shopNames.size>0">
+        AND I.SHOP_NAME IN
+        <foreach collection="paramCondition.shopNames" open="(" close=")" separator="," item="shopName">
+          #{shopName}
+        </foreach>
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site != ''">
+        AND I.site =#{paramCondition.site}
+      </if>
+
+      <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+        AND I.site IN
+        <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+      <if test="paramCondition.department != null and paramCondition.department != ''">
+        AND D.department =#{paramCondition.department}
+      </if>
+      <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+        AND D.department IN
+        <foreach collection="paramCondition.departments" open="(" close=")" separator="," item="department">
+          #{department}
+        </foreach>
+      </if>
+      <if test="paramCondition.team != null and paramCondition.team != ''">
+        AND D.team = #{paramCondition.team}
+      </if>
+      <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+        AND D.team IN
+        <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="team">
+          #{team}
+        </foreach>
+      </if>
+      <if test="paramCondition.material != null and paramCondition.material.length>0">
+        AND D.material_code IN
+        <foreach collection="paramCondition.material" open="(" close=")" separator="," item="materialCode">
+          #{materialCode}
+        </foreach>
+      </if>
+      <if test="paramCondition.inventoryStatus != null and paramCondition.inventoryStatus !=''">
+        AND D.inventory_status =#{paramCondition.inventoryStatus}
+      </if>
+      <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+        AND D.sync_status = #{paramCondition.syncStatus}
+      </if>
+      <if test="paramCondition.syncStatuss != null and paramCondition.syncStatuss.size>0">
+        AND D.sync_status IN
+        <foreach collection="paramCondition.syncStatuss" open="(" close=")" separator=","
+          item="syncStatus">
+          #{syncStatus}
+        </foreach>
+      </if>
+      <if test="paramCondition.sku != null and paramCondition.sku != ''">
+        AND D.sku =#{paramCondition.sku}
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND D.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.isDefect != null and paramCondition.isDefect == true ">
+        AND d.MATERIAL_CODE IS NULL
+      </if>
+      <choose>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+          AND I.INVENTORY_ORGANIZATION_CODE IS NULL
+        </when>
+        <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+          AND I.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+        </when>
+        <otherwise>
+        </otherwise>
+      </choose>
+    </where>
+  </select>
+
+  <!--获取单据头数据-->
+  <select id="queryEnding"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.EndingInventoryParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventory">
+    select *
+    from ENDING_INVENTORY E
+    where E.YEAR = #{paramCondition.year}
+      and E.MONTH = #{paramCondition.month}
+  </select>
+
+  <!--获取同步ERP的明细数据-->
+  <select id="getSyncDetail"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.entity.EndingInventory"
+    resultMap="BaseResultMap">
+    select D.MATERIAL_CODE,
+           I.WAREHOUSE_CODE,
+           D.TRANSIT_NUM+D.LOGISTICS_NUM+D.STOCK_NUM FCountQty,
+           D.TEAM F_REQUIRETEAM
+    from ENDING_INVENTORY_DETAIL D
+           LEFT JOIN ENDING_INVENTORY I ON I.ID = D.OUT_ID
+    where D.OUT_ID = #{paramCondition.id}
+    and D.IS_CANCEL = 0
+    <if test="paramCondition.syncStatus != null and paramCondition.syncStatus ==0">
+      and D.SYNC_STATUS = 0
+    </if>
+  </select>
+
+  <!--批量作废-->
+  <update id="rejectBatch" parameterType="java.util.List">
+    UPDATE ENDING_INVENTORY_DETAIL a
+    SET
+      a.IS_CANCEL = 1,
+      a.UPDATE_TIME = SYSDATE,
+      <if test="paramCondition.updateUser != null and paramCondition.updateUser != ''">
+        a.UPDATE_USER = #{paramCondition.updateUser}
+      </if>
+    WHERE
+        a.id IN
+        <foreach collection="paramCondition.idList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+  </update>
+
+  <!--作废源报告monthly_inventory_history-->
+  <update id="syncReportReject"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.EndingInventoryParam">
+    UPDATE MONTHLY_INVENTORY_HISTORY r
+    SET r.VERIFY_STATUS = 2,
+        r.VERIFY_AT = SYSDATE,
+        r.UPDATE_TIME = SYSDATE,
+        r.VERIFY_BY = #{paramCondition.updateUser},
+        r.UPDATE_BY = #{paramCondition.updateUser}
+    WHERE
+        r.VERIFY_STATUS = 1
+      AND r.GENERATE_STATUS = 1
+      AND r.SKU = #{paramCondition.sku}
+      AND r.bill_Code = #{paramCondition.billCode}
+  </update>
+
+  <!--批量作废源报告：monthly_inventory_history-->
+  <update id="syncReportBatchReject" parameterType="java.util.List">
+    UPDATE MONTHLY_INVENTORY_HISTORY a
+    <set>
+      <trim prefix="a.VERIFY_STATUS = CASE" suffix="ELSE a.VERIFY_STATUS END,">
+        <foreach collection="paramCondition" item="item" index="index">
+          WHEN a.BILL_CODE = #{item.billCode}  AND  a.sku = #{item.sku} THEN 2
+        </foreach>
+      </trim>
+      <trim prefix="a.VERIFY_AT = CASE" suffix="ELSE a.VERIFY_AT END,">
+        <foreach collection="paramCondition" item="item" index="index">
+          WHEN a.BILL_CODE = #{item.billCode}  AND  a.sku = #{item.sku} THEN SYSDATE
+        </foreach>
+      </trim>
+      <trim prefix="a.VERIFY_BY = CASE" suffix="ELSE a.VERIFY_BY END,">
+        <foreach collection="paramCondition" item="item" index="index">
+          WHEN a.BILL_CODE = #{item.billCode}  AND  a.sku = #{item.sku} THEN #{item.updateUser}
+        </foreach>
+      </trim>
+    </set>
+    WHERE
+      a.VERIFY_STATUS = 1
+      AND a.GENERATE_STATUS = 1
+  </update>
+
+
+
+  <update id="updateSyncStatus">
+    UPDATE ENDING_INVENTORY
+    SET CAN_SYNC = 0
+    WHERE
+    ID IN(
+      SELECT
+        d.out_id id
+      FROM ENDING_INVENTORY_DETAIL d
+      WHERE (
+        (d.material_code IS NULL OR d.DEPARTMENT IS NULL)
+        AND d.is_cancel = 0
+      )
+      OR SYNC_STATUS=1
+      GROUP BY d.out_id
+    )
+  </update>
+
+  <select id="normalList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.EndingInventoryParam">
+    SELECT
+      d.id out_id
+    FROM ENDING_INVENTORY d
+    WHERE d.can_sync = 1
+  </select>
+</mapper>

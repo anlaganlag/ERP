@@ -1,0 +1,1389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.RemovalShipmentDetailMapper">
+
+
+  <sql id="Page_Column_List">
+    ID,
+    REQUEST_DATE,
+    ORDER_ID,
+    SHIPMENT_DATE,
+    SKU,
+    FNSKU,
+    DISPOSITION,
+    SHIPPED_QUANTITY,
+    CARRIER,
+    TRACKING_NUMBER,
+    REMOVAL_ORDER_TYPE,
+    SYS_SITE,
+    SYS_SHOPS_NAME,
+    CREATE_TIME,
+    USER_NAME,
+    SYS_SELLER_ID,
+    UPLOAD_DATE,
+    VERIFY_AT,
+    VERIFY_BY,
+    VERIFY_STATUS,
+    CREATE_AT,
+    UPDATE_BY,
+    GENERATE_STATUS,
+    BILL_CODE,
+    ORG,
+    INVENTORY_ORGANIZATION_CODE,
+    WAREHOUSE_NAME,
+    WAREHOUSE_CODE,
+    UPDATE_TIME,
+    UPLOAD_MARK,
+    ORIGINAL_TASK_NAME,
+    FILE_PATH,
+    CASE VERIFY_STATUS WHEN 1 THEN '审核通过' WHEN 0 THEN '未审核' WHEN 2 THEN '作废' ELSE '' END VERIFY_STATUS_TXT,
+    CASE GENERATE_STATUS WHEN 1 THEN '已生成' WHEN 0 THEN '未生成' ELSE '' END GENERATE_STATUS_TXT,
+    LAST_SYS_SITE
+ </sql>
+
+  <sql id="List_Condition">
+        <if test="paramCondition.sysSites != null and paramCondition.sysSites.size > 0 ">
+           AND SYS_SITE IN
+          <foreach collection="paramCondition.sysSites" open="(" close=")" separator=","
+            item="sysSite">
+            #{sysSite}
+          </foreach>
+        </if>
+
+
+    <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+      AND SYS_SHOPS_NAME IN
+      <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator=","
+        item="sysShopsName">
+        #{sysShopsName}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+      AND sku IN
+      <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+        #{sku}
+      </foreach>
+    </if>
+
+
+    <if test="paramCondition.verifyStatuss != null and paramCondition.verifyStatuss.size>0">
+      AND NVL(VERIFY_STATUS,0) IN
+      <foreach collection="paramCondition.verifyStatuss" open="(" close=")" separator=","
+        item="verifyStatus">
+        #{verifyStatus}
+      </foreach>
+    </if>
+
+    <if test="paramCondition.removalOrderTypes != null and paramCondition.removalOrderTypes.size>0">
+      AND (removal_order_type IN
+      <foreach collection="paramCondition.removalOrderTypes" open="(" close=")" separator=","
+        item="removalOrderType">
+        #{removalOrderType}
+      </foreach>
+      <if test="paramCondition.removalOrderTypes.contains('其他')">
+        OR removal_order_type NOT IN  ('Return','Disposal','Liquidations','Grade and Relist')
+      </if>)
+    </if>
+
+
+
+
+    <if test="paramCondition.generateStatuss != null and paramCondition.generateStatuss.size>0">
+      AND NVL(GENERATE_STATUS,0) IN
+      <foreach collection="paramCondition.generateStatuss" open="(" close=")" separator=","
+        item="generateStatus">
+        #{generateStatus}
+      </foreach>
+    </if>
+
+
+    <if
+      test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+      and SHIPMENT_DATE BETWEEN
+      to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+      to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+    </if>
+
+    <if   test="paramCondition.uploadMark != null and paramCondition.uploadMark != ''">
+      AND UPLOAD_MARK =#{paramCondition.uploadMark}
+    </if>
+
+
+    <if   test="paramCondition.removalOrderType != null and paramCondition.removalOrderType != ''">
+      AND REMOVAL_ORDER_TYPE =#{paramCondition.removalOrderType}
+    </if>
+
+
+    <if
+      test="paramCondition.orderId != null and paramCondition.orderId != ''">
+      AND ORDER_ID =#{paramCondition.orderId}
+    </if>
+    <choose>
+      <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode == '空'.toString()">
+          AND INVENTORY_ORGANIZATION_CODE IS NULL
+      </when>
+      <when test="paramCondition.inventoryOrganizationCode != null and paramCondition.inventoryOrganizationCode != '' and paramCondition.inventoryOrganizationCode != '空'.toString()">
+          AND INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      </when>
+      <otherwise>
+      </otherwise>
+    </choose>
+  </sql>
+
+  <select id="getMaterial"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalShipmentDetailParam"
+    resultType="java.lang.String">
+    SELECT a.MATERIAL_CODE
+    FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY a
+    where a.SKU = #{paramCondition.sku}
+      AND a.SYS_SITE = #{paramCondition.sysSite}
+      AND a.SYS_SHOPS_NAME = #{paramCondition.sysShopsName }
+  </select>
+
+  <select id="orgList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalShipmentDetailParam">
+    SELECT m.*
+    FROM REMOVAL_SHIPMENT_DETAIL m
+    WHERE (m.INVENTORY_ORGANIZATION_CODE IS NULL OR M.WAREHOUSE_CODE IS NULL)
+  </select>
+
+
+  <update id="orgBatch" parameterType="java.util.List">
+    UPDATE
+    REMOVAL_SHIPMENT_DETAIL a
+    <set>
+      <trim prefix="a.org = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.org}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.INVENTORY_ORGANIZATION_CODE = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.inventoryOrganizationCode}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.WAREHOUSE_NAME = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.warehouseName}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.WAREHOUSE_CODE = CASE" suffix="END,">
+        <foreach collection="verifyList" item="item" index="index">
+          WHEN a.id = #{item.id} THEN #{item.warehouseCode}
+        </foreach>
+      </trim>
+    </set>
+    WHERE a.id IN
+    <foreach collection="verifyList" item="item" index="index" separator="," open="(" close=")">
+      #{item.id}
+    </foreach>
+
+  </update>
+
+
+
+
+  <update id="verifyUpdateBatch" parameterType="java.util.List">
+    UPDATE
+    REMOVAL_SHIPMENT_DETAIL  a
+    SET
+    a.VERIFY_AT = SYSDATE,
+    a.UPDATE_TIME = SYSDATE,
+    a.VERIFY_BY = #{paramCondition.verifyBy},
+    a.UPDATE_BY = #{paramCondition.updateBy},
+    a.VERIFY_STATUS = 1
+    <where>
+      <include refid="List_Condition"/>
+      AND NVL(a.VERIFY_STATUS,0) = 0
+      AND NVL(a.GENERATE_STATUS,0) = 0
+      AND a.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+      AND a.WAREHOUSE_CODE IS NOT NULL
+      AND a.BILL_CODE IS NULL
+    </where>
+
+  </update>
+
+  <update id="rejectBatch" parameterType="java.util.List">
+    UPDATE  REMOVAL_SHIPMENT_DETAIL a
+    SET
+    a.VERIFY_AT = SYSDATE,
+    a.UPDATE_TIME = SYSDATE,
+    <if test="paramCondition.verifyBy != null and paramCondition.verifyBy != ''">
+      a.VERIFY_BY = #{paramCondition.verifyBy},
+    </if>
+    <if test="paramCondition.updateBy != null and paramCondition.updateBy != ''">
+      a.UPDATE_BY = #{paramCondition.updateBy},
+    </if>
+    a.VERIFY_STATUS = 2
+    <where>
+      <if test="paramCondition.idList != null and paramCondition.idList.size>0">
+        and a.id IN
+        <foreach collection="paramCondition.idList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+      AND NVL(a.verify_status,0) = 0
+      AND NVL(a.generate_status,0) = 0
+    </where>
+  </update>
+
+    <!--更新Removal Shipment Detail生成状态-->
+  <update id="updateSrcDetailList">
+    UPDATE REMOVAL_SHIPMENT_DETAIL
+    SET BILL_CODE       = #{paramCondition.billCode},
+        GENERATE_STATUS = 1,
+        UPDATE_TIME     = SYSDATE,
+        UPDATE_BY       = #{paramCondition.updateBy}
+    WHERE NVL(GENERATE_STATUS,0) = 0
+      AND NVL(VERIFY_STATUS,1) = 1
+      AND SHIPMENT_DATE >= TO_DATE(#{paramCondition.shipmentStartDate}, 'YYYY-MM-DD HH24:MI:SS')
+      AND SHIPMENT_DATE &lt;= TO_DATE(#{paramCondition.shipmentEndDate}, 'YYYY-MM-DD HH24:MI:SS')
+      AND SYS_SHOPS_NAME = #{paramCondition.sysShopsName}
+      AND INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      AND SYS_SITE = #{paramCondition.sysSite}
+  </update>
+
+  <!--刷listings-->
+  <update id="updateDetailList">
+    MERGE INTO (
+        SELECT * FROM DISPOSE_REMOVE_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL)
+    ) d
+    USING MCMS_BASE_DATA.INV_PRODUCT_GALLERY g
+    ON (UPPER(d.sku) = UPPER(g.sku) AND d.site = g.SYS_SITE AND d.shop_name = g.SYS_SHOPS_NAME)
+    WHEN MATCHED THEN
+    UPDATE
+      SET d.department = g.department,
+      d.team = g.team,
+      d.material_code = g.material_code
+  </update>
+
+    <!--刷存档listings-->
+  <update id="updateFileDetailList">
+    MERGE INTO (
+        SELECT * FROM DISPOSE_REMOVE_DETAIL WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL )
+    ) D
+    USING (
+        SELECT
+          SKU,
+          SYS_SITE,
+          SYS_SHOPS_NAME,
+          MATERIAL_CODE,
+          DEPARTMENT,
+          TEAM,
+          LAST_UPDATE_DATE
+        FROM (
+            SELECT
+              SKU,
+              SYS_SITE,
+              SYS_SHOPS_NAME,
+              MATERIAL_CODE,
+              DEPARTMENT,
+              TEAM,
+              LAST_UPDATE_DATE,
+              ROW_NUMBER() OVER(PARTITION BY SKU, SYS_SITE, SYS_SHOPS_NAME  ORDER BY LAST_UPDATE_DATE DESC) AS rn
+            FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE
+        ) t
+        WHERE t.rn = 1
+    ) G
+    ON (UPPER(D.sku) = UPPER(G.sku) AND D.SITE = G.SYS_SITE AND D.SHOP_NAME = G.SYS_SHOPS_NAME)
+    WHEN MATCHED THEN
+    UPDATE
+      SET D.DEPARTMENT    = G.DEPARTMENT,
+      D.TEAM          = G.TEAM,
+      D.MATERIAL_CODE = G.MATERIAL_CODE
+  </update>
+
+  <!--Removal Shipment Detail查询列表-->
+  <select id="customPageList" resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemovalShipmentDetailResult">
+    SELECT
+        <include refid="Page_Column_List"/>
+    FROM REMOVAL_SHIPMENT_DETAIL
+    <where>
+      <include refid="List_Condition"/>
+    </where>
+    ORDER BY ID
+  </select>
+
+  <!--Removal Shipment Detail获取数量-->
+  <select id="getQuantity" resultType="java.lang.String">
+    SELECT
+        SUM(DECODE(REMOVAL_ORDER_TYPE, 'Disposal', SHIPPED_QUANTITY, 0)) || ',' ||
+        SUM(DECODE(REMOVAL_ORDER_TYPE, 'Return', SHIPPED_QUANTITY, 0)) || ',' ||
+        SUM(DECODE(REMOVAL_ORDER_TYPE, 'Liquidations', SHIPPED_QUANTITY, 0)) || ',' ||
+        SUM(DECODE(REMOVAL_ORDER_TYPE, 'Grade and Relist', SHIPPED_QUANTITY, 0))|| ',' ||
+        SUM(CASE WHEN REMOVAL_ORDER_TYPE NOT IN ('Disposal','Return','Liquidations','Grade and Relist') THEN SHIPPED_QUANTITY ELSE 0 END) || ',' ||
+        SUM(SHIPPED_QUANTITY)
+    FROM REMOVAL_SHIPMENT_DETAIL
+    <where>
+        <include refid="List_Condition"/>
+    </where>
+  </select>
+
+    <!--获取销毁移除列表单据头数据-->
+  <select id="getListHeader" resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.RemovalShipmentDetailResult">
+    SELECT TO_CHAR(TO_DATE(#{paramCondition.shipmentDate}, 'YYYYMM'), 'YYYY') YEAR,
+           TO_CHAR(TO_DATE(#{paramCondition.shipmentDate}, 'YYYYMM'), 'MM') MONTH,
+           'Amazon' PLATFORM,
+           t.SYS_SHOPS_NAME,
+           t.SYS_SITE,
+           t.ORG,
+           t.INVENTORY_ORGANIZATION_CODE,
+           t.WAREHOUSE_NAME,
+           t.WAREHOUSE_CODE
+    FROM REMOVAL_SHIPMENT_DETAIL  t
+    WHERE
+        t.SHIPMENT_DATE >= TO_DATE(#{paramCondition.shipmentStartDate}, 'YYYY-MM-DD HH24:MI:SS')
+        AND t.SHIPMENT_DATE &lt;= TO_DATE(#{paramCondition.shipmentEndDate}, 'YYYY-MM-DD HH24:MI:SS')
+        AND t.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+        AND t.SYS_SHOPS_NAME IS NOT NULL
+        AND t.SYS_SITE IS NOT NULL
+        AND NVL(t.GENERATE_STATUS,0) = 0
+        AND NVL(t.VERIFY_STATUS,0) = 1
+    GROUP BY
+        t.SYS_SHOPS_NAME,
+        t.SYS_SITE,
+        t.ORG,
+        t.INVENTORY_ORGANIZATION_CODE,
+        t.WAREHOUSE_NAME,
+        t.WAREHOUSE_CODE
+  </select>
+
+    <!--获取销毁移除列表明细数据-->
+  <select id="getDetailList" resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.DisposeRemoveDetail">
+    SELECT SKU,
+           SYS_SHOPS_NAME SHOP_NAME,
+           SYS_SITE       SITE,
+           CASE REMOVAL_ORDER_TYPE WHEN 'Disposal' THEN SUM(SHIPPED_QUANTITY) ELSE 0 END DISPOSE_AMOUNT,
+           CASE REMOVAL_ORDER_TYPE WHEN 'Return'   THEN SUM(SHIPPED_QUANTITY) ELSE 0 END REMOVE_AMOUNT,
+           0              IS_CANCEL,
+           0              SYNC_STATUS,
+           sysDate        UPDATE_AT
+    FROM REMOVAL_SHIPMENT_DETAIL t
+    WHERE
+      t.SHIPMENT_DATE >= TO_DATE(#{paramCondition.shipmentStartDate}, 'YYYY-MM-DD HH24:MI:SS')
+      AND t.SHIPMENT_DATE &lt;= TO_DATE(#{paramCondition.shipmentEndDate}, 'YYYY-MM-DD HH24:MI:SS')
+      AND t.SYS_SHOPS_NAME = #{paramCondition.sysShopsName}
+      AND t.SYS_SITE = #{paramCondition.sysSite}
+      AND t.INVENTORY_ORGANIZATION_CODE = #{paramCondition.inventoryOrganizationCode}
+      AND t.REMOVAL_ORDER_TYPE IN ('Disposal','Return')
+      AND NVL(t.GENERATE_STATUS,0) = 0
+      AND NVL(t.VERIFY_STATUS,0) = 1
+    GROUP BY SKU, SYS_SHOPS_NAME, SYS_SITE,REMOVAL_ORDER_TYPE
+  </select>
+
+
+    <select id="assignMaterialList" parameterType="java.util.List"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.ZZDistributeMcms">
+    SELECT t.INVENTORY_ORGANIZATION_CODE shop_code,d.material_code FROM dispose_remove t JOIN
+    dispose_remove_detail d ON t.id = d.out_id
+    <where>
+      <if test="detailIdList != null and detailIdList.size>0">
+        d.id IN
+        <foreach collection="detailIdList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+    </where>
+    </select>
+
+    <!--销毁移除跟踪列表、导出-->
+    <select id="trackPageList"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalShipmentDetailParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.DisposeRemoveTrackDTO">
+        SELECT
+            TO_CHAR(D.ORDER_APPLY_DATE, 'YYYY-MM') AS fiscalPeriod,
+            D.PLATFORM,
+            D.SHOP_NAME AS shopName,
+            D.SITE ,
+            D.DEPARTMENT,
+            D.TEAM,
+            D.ASIN,
+            D.FNSKU,
+            D.SKU,
+            D.MATERIAL_CODE AS materialCode,
+            D.ORDER_APPLY_DATE AS orderApplyDate,
+            D.ORDER_ID AS orderId,
+            D.ORDER_TYPE AS orderType,
+            D.ORDER_STATUS AS orderStatus,
+            NVL(D.APPLY_AMOUNT, 0) AS applyAmount,
+            NVL(D.CANCEL_AMOUNT, 0) AS cancelAmount,
+            NVL(D.ORDER_DISPOSED_AMOUNT, 0) AS orderDisposedAmount,
+            NVL(D.ORDER_SHIPPED_AMOUNT, 0) AS orderShippedAmount,
+            NVL(D.DISPOSE_AMOUNT, 0) AS disposeAmount,
+            NVL(D.REMOVE_AMOUNT, 0) AS removeAmount,
+            D.ID,
+            D.UPDATE_TIME AS updateTime,
+            D.UPDATE_BY AS updateBy,
+            TO_CHAR(D.A_UPLOAD_DATE, 'YYYY-MM-DD') AS shipmentDateStr,
+            TO_CHAR(D.B_UPLOAD_DATE, 'YYYY-MM-DD') AS orderDateStr,
+            M.PRODUCT_TYPE AS productType,
+            M.CATEGORY,
+            M.PRODUCT_NAME AS productName,
+            M.STYLE,
+            M.MAIN_MATERIAL AS mainMaterial,
+            M.DESIGN,
+            M.COMPANY_BRAND AS companyBrand,
+            M.FIT_BRAND AS fitBrand,
+            M.MODEL,
+            M.COLOR,
+            M.SIZES,
+            M.PACKING,
+            M.VERSION,
+            M.TYPE,
+            M.STYLE_SECOND_LABEL AS styleSecondLabel,
+            NVL(D.APPLY_AMOUNT, 0) - NVL(D.CANCEL_AMOUNT, 0) - NVL(D.ORDER_DISPOSED_AMOUNT, 0) - NVL(D.ORDER_SHIPPED_AMOUNT, 0) AS surplusAmount,
+            D.REMOVAL_FEE AS destroyFee,
+            D.CURRENCY AS currency
+        FROM DISPOSE_REMOVE_TRACK D
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON D.MATERIAL_CODE = M.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+                AND D.SHOP_NAME IN
+                <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="shopName">
+                    #{shopName}
+                </foreach>
+            </if>
+            <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+                AND D.SITE IN
+                <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+                    #{site}
+                </foreach>
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND D.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+            <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+                AND D.DEPARTMENT IN
+                <foreach collection="paramCondition.departments" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+                AND D.TEAM IN
+                <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderTypes != null and paramCondition.orderTypes.size>0">
+                AND D.ORDER_TYPE IN
+                <foreach collection="paramCondition.orderTypes" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderType != null and paramCondition.orderType =='空'.toString()">
+                OR D.ORDER_TYPE IS NULL
+            </if>
+            <if test="paramCondition.orderStatuss != null and paramCondition.orderStatuss.size>0">
+                AND D.ORDER_STATUS IN
+                <foreach collection="paramCondition.orderStatuss" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderStatus != null and paramCondition.orderStatus =='空'.toString()">
+                OR D.ORDER_STATUS IS NULL
+            </if>
+            <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+                AND D.ORDER_ID=#{paramCondition.orderId}
+            </if>
+            <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+                AND D.ORDER_APPLY_DATE BETWEEN
+                to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+                to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 - INTERVAL '1' SECOND
+            </if>
+            <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size>0">
+                AND D.MATERIAL_CODE IN
+                <foreach collection="paramCondition.materialCodeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size>0">
+                AND M.PRODUCT_TYPE IN
+                <foreach collection="paramCondition.productTypeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productNameList != null and paramCondition.productNameList.size>0">
+                AND M.PRODUCT_NAME IN
+                <foreach collection="paramCondition.productNameList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.styleList != null and paramCondition.styleList.size>0">
+                AND M.STYLE IN
+                <foreach collection="paramCondition.styleList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY D.ID, D.B_UPLOAD_DATE DESC, D.A_UPLOAD_DATE DESC
+    </select>
+
+    <!--销毁移除跟踪表获取汇总数量-->
+    <select id="getTrackQuantity"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalShipmentDetailParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.DisposeRemoveTrackTotalResult">
+      SELECT
+        SUM(NVL(D.APPLY_AMOUNT, 0)) AS applyAmount,
+        SUM(NVL(D.ORDER_DISPOSED_AMOUNT, 0)) AS orderDisposedAmount,
+        SUM(NVL(D.ORDER_SHIPPED_AMOUNT, 0)) AS orderShippedAmount,
+        SUM(NVL(D.CANCEL_AMOUNT, 0)) AS cancelAmount,
+        SUM(NVL(D.APPLY_AMOUNT, 0)) - SUM(NVL(D.ORDER_DISPOSED_AMOUNT, 0)) - SUM(NVL(D.ORDER_SHIPPED_AMOUNT, 0)) - SUM(NVL(D.CANCEL_AMOUNT, 0)) AS surplusAmount,
+        SUM(NVL(D.DISPOSE_AMOUNT, 0)) AS disposeAmount,
+        SUM(NVL(D.REMOVE_AMOUNT, 0)) AS removeAmount
+      FROM DISPOSE_REMOVE_TRACK D
+      LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON D.MATERIAL_CODE = M.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size>0">
+                AND D.SHOP_NAME IN
+                <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="shopName">
+                    #{shopName}
+                </foreach>
+            </if>
+            <if test="paramCondition.sysSites != null and paramCondition.sysSites.size>0">
+                AND D.SITE IN
+                <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="site">
+                    #{site}
+                </foreach>
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+                AND D.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+            <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+                AND D.DEPARTMENT IN
+                <foreach collection="paramCondition.departments" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+                AND D.TEAM IN
+                <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderTypes != null and paramCondition.orderTypes.size>0">
+                AND D.ORDER_TYPE IN
+                <foreach collection="paramCondition.orderTypes" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderType != null and paramCondition.orderType =='空'.toString()">
+                OR D.ORDER_TYPE IS NULL
+            </if>
+            <if test="paramCondition.orderStatuss != null and paramCondition.orderStatuss.size>0">
+                AND D.ORDER_STATUS IN
+                <foreach collection="paramCondition.orderStatuss" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.orderStatus != null and paramCondition.orderStatus =='空'.toString()">
+                OR D.ORDER_STATUS IS NULL
+            </if>
+            <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+                AND D.ORDER_ID=#{paramCondition.orderId}
+            </if>
+            <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+                and D.ORDER_APPLY_DATE BETWEEN
+                to_date(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+                to_date(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+            </if>
+            <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size>0">
+                AND D.MATERIAL_CODE IN
+                <foreach collection="paramCondition.materialCodeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size>0">
+                AND M.PRODUCT_TYPE IN
+                <foreach collection="paramCondition.productTypeList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.productNameList != null and paramCondition.productNameList.size>0">
+                AND M.PRODUCT_NAME IN
+                <foreach collection="paramCondition.productNameList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="paramCondition.styleList != null and paramCondition.styleList.size>0">
+                AND M.STYLE IN
+                <foreach collection="paramCondition.styleList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!--订单类型下拉-->
+    <select id="orderTypeSelect" resultType="java.util.Map">
+        SELECT ORDER_TYPE FROM DISPOSE_REMOVE_TRACK GROUP BY ORDER_TYPE ORDER BY ORDER_TYPE DESC
+    </select>
+
+    <!--订单状态下拉-->
+    <select id="orderStatusSelect" resultType="java.util.Map">
+        SELECT ORDER_STATUS FROM DISPOSE_REMOVE_TRACK GROUP BY ORDER_STATUS ORDER BY ORDER_STATUS DESC
+    </select>
+
+    <!--销毁移除跟踪表刷移除货件表数据-->
+    <update id="updateRemovalShipmentToTrace" parameterType="java.util.Date">
+        MERGE INTO DISPOSE_REMOVE_TRACK T1
+        USING (
+            SELECT
+                'AMAZON' PLATFORM,
+                U.SYS_SHOPS_NAME,
+                U.LAST_SYS_SITE,
+                U.SKU,
+                U.FNSKU,
+                U.REQUEST_DATE_UTC,
+                U.ORDER_ID,
+                U.REMOVAL_ORDER_TYPE,
+                MAX(U.UPLOAD_DATE) AS UPLOAD_DATE,
+                SUM(CASE WHEN U.REMOVAL_ORDER_TYPE = 'Disposal' THEN U.SHIPPED_QUANTITY ELSE 0 END) AS DISPOSE_AMOUNT,
+                SUM(CASE WHEN U.REMOVAL_ORDER_TYPE = 'Return' THEN U.SHIPPED_QUANTITY ELSE 0 END) AS REMOVE_AMOUNT
+            FROM REMOVAL_SHIPMENT_DETAIL U
+            WHERE U.REMOVAL_ORDER_TYPE IN ('Disposal', 'Return')
+                AND U.REQUEST_DATE_UTC IS NOT NULL
+                AND U.UPLOAD_DATE >= #{startDate}
+                AND U.UPLOAD_DATE &lt;= #{endDate}
+            GROUP BY
+                U.SYS_SHOPS_NAME,
+                U.LAST_SYS_SITE,
+                U.SKU,
+                U.FNSKU,
+                U.REQUEST_DATE_UTC,
+                U.ORDER_ID,
+                U.REMOVAL_ORDER_TYPE
+        ) T2
+        ON (
+            T2.SYS_SHOPS_NAME = T1.SHOP_NAME
+            AND T2.LAST_SYS_SITE = T1.SITE
+            AND T2.SKU = T1.SKU
+            AND T2.FNSKU = T1.FNSKU
+            AND T2.REQUEST_DATE_UTC = T1.ORDER_APPLY_DATE_UTC
+            AND T2.ORDER_ID = T1.ORDER_ID
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+                T1.REMOVE_AMOUNT = T2.REMOVE_AMOUNT,
+                T1.DISPOSE_AMOUNT = T2.DISPOSE_AMOUNT,
+                T1.A_UPLOAD_DATE = T2.UPLOAD_DATE
+    </update>
+
+    <!--销毁移除跟踪表刷每月移除订单表数据-->
+    <update id="updateRemovalDetailToTrace" parameterType="java.util.Date">
+        MERGE INTO DISPOSE_REMOVE_TRACK T1
+            USING (
+				SELECT
+                    T.PLATFORM,
+                    T.SYS_SHOPS_NAME,
+                    T.SYS_SITE,
+                    T.SKU,
+                    T.FNSKU,
+                    T.REQUEST_DATE_UTC,
+                    T.ORDER_ID,
+                    T.ORDER_TYPE,
+                    T.ORDER_STATUS,
+                    T.CURRENCY,
+                    SUM(T.REMOVAL_FEE) AS REMOVAL_FEE,
+                    SUM(T.REQUESTED_QUANTITY) AS APPLY_AMOUNT,
+                    SUM(T.CANCELLED_QUANTITY) AS CANCEL_AMOUNT,
+                    SUM(T.DISPOSED_QUANTITY) AS ORDER_DISPOSED_AMOUNT,
+                    SUM(T.SHIPPED_QUANTITY) AS ORDER_SHIPPED_AMOUNT,
+                    MAX(T.UPLOAD_DATE) AS UPLOAD_DATE,
+                    MAX(T.REQUEST_DATE) AS REQUEST_DATE
+				FROM
+				(
+					SELECT
+                        'AMAZON' PLATFORM,
+                        Y.SYS_SHOPS_NAME,
+                        Y.SYS_SITE,
+                        Y.SKU,
+                        Y.FNSKU,
+                        Y.REQUEST_DATE,
+                        Y.ORDER_ID,
+                        Y.ORDER_TYPE,
+                        Y.ORDER_STATUS,
+                        Y.CURRENCY,
+                        Y.UPLOAD_DATE,
+                        Y.REQUEST_DATE_UTC,
+                        SUM(NVL(Y.REMOVAL_FEE, 0)) AS REMOVAL_FEE,
+                        SUM(NVL(Y.REQUESTED_QUANTITY, 0)) AS REQUESTED_QUANTITY,
+                        SUM(NVL(Y.CANCELLED_QUANTITY, 0)) AS CANCELLED_QUANTITY,
+                        SUM(NVL(Y.DISPOSED_QUANTITY, 0)) AS DISPOSED_QUANTITY,
+                        SUM(NVL(Y.SHIPPED_QUANTITY, 0)) AS SHIPPED_QUANTITY,
+                        ROW_NUMBER() OVER(PARTITION BY Y.SYS_SHOPS_NAME,Y.SYS_SITE,Y.SKU,Y.FNSKU,Y.REQUEST_DATE_UTC,Y.ORDER_ID,Y.UPLOAD_DATE ORDER BY Y.UPLOAD_DATE DESC) RN
+					FROM REMOVAL_ORDER_DETAIL Y
+                    WHERE
+                        Y.UPLOAD_DATE >= #{startDate}
+                        AND Y.UPLOAD_DATE &lt;= #{endDate}
+                        AND Y.ORDER_TYPE IN('Return', 'Disposal')
+                        AND Y.GENERATE_XHYCGZB = '0'
+                        AND Y.REQUEST_DATE_UTC IS NOT NULL
+                    GROUP BY
+                        Y.SYS_SHOPS_NAME,
+                        Y.SYS_SITE,
+                        Y.SKU,
+                        Y.FNSKU,
+                        Y.REQUEST_DATE,
+                        Y.ORDER_ID,
+                        Y.ORDER_TYPE,
+                        Y.ORDER_STATUS,
+                        Y.CURRENCY,
+                        Y.UPLOAD_DATE,
+                        Y.REQUEST_DATE_UTC
+				) T WHERE T.RN = 1
+				GROUP BY
+                    T.PLATFORM,
+                    T.SYS_SHOPS_NAME,
+                    T.SYS_SITE,
+                    T.SKU,
+                    T.FNSKU,
+                    T.REQUEST_DATE_UTC,
+                    T.ORDER_ID,
+                    T.ORDER_TYPE,
+                    T.ORDER_STATUS,
+                    T.CURRENCY
+				ORDER BY T.REQUEST_DATE_UTC
+            ) T2
+            ON (
+                T2.SYS_SHOPS_NAME = T1.SHOP_NAME
+                AND NVL(T2.SYS_SITE, 0) = NVL(T1.SITE, 0)
+                AND T2.SKU = T1.SKU
+                AND T2.FNSKU = T1.FNSKU
+                AND T2.REQUEST_DATE_UTC = T1.ORDER_APPLY_DATE_UTC
+                AND T2.ORDER_ID = T1.ORDER_ID
+            )
+            WHEN MATCHED THEN
+                UPDATE SET
+                    T1.ORDER_STATUS = T2.ORDER_STATUS,
+                    T1.APPLY_AMOUNT = T2.APPLY_AMOUNT,
+                    T1.CANCEL_AMOUNT = T2.CANCEL_AMOUNT,
+                    T1.ORDER_DISPOSED_AMOUNT = T2.ORDER_DISPOSED_AMOUNT,
+                    T1.ORDER_SHIPPED_AMOUNT = T2.ORDER_SHIPPED_AMOUNT,
+                    T1.REMOVAL_FEE = T2.REMOVAL_FEE,
+                    T1.CURRENCY = T2.CURRENCY,
+                    T1.B_UPLOAD_DATE = T2.UPLOAD_DATE
+            WHEN NOT MATCHED THEN
+                INSERT(
+                    T1.PLATFORM,
+                    T1.SHOP_NAME,
+                    T1.SITE,
+                    T1.SKU,
+                    T1.FNSKU,
+                    T1.ORDER_APPLY_DATE,
+                    T1.ORDER_ID,
+                    T1.ORDER_TYPE,
+                    T1.ORDER_STATUS,
+                    T1.APPLY_AMOUNT,
+                    T1.CANCEL_AMOUNT,
+                    T1.ORDER_DISPOSED_AMOUNT,
+                    T1.ORDER_SHIPPED_AMOUNT,
+                    T1.B_UPLOAD_DATE,
+                    T1.REMOVAL_FEE,
+                    T1.CURRENCY,
+                    T1.CREATE_TIME,
+                    T1.ORDER_APPLY_DATE_UTC
+                )
+                VALUES
+                (
+                    T2.PLATFORM,
+                    T2.SYS_SHOPS_NAME,
+                    T2.SYS_SITE,
+                    T2.SKU,
+                    T2.FNSKU,
+                    T2.REQUEST_DATE,
+                    T2.ORDER_ID,
+                    T2.ORDER_TYPE,
+                    T2.ORDER_STATUS,
+                    T2.APPLY_AMOUNT,
+                    T2.CANCEL_AMOUNT,
+                    T2.ORDER_DISPOSED_AMOUNT,
+                    T2.ORDER_SHIPPED_AMOUNT,
+                    T2.UPLOAD_DATE,
+                    T2.REMOVAL_FEE,
+                    T2.CURRENCY,
+                    SYSDATE,
+                    T2.REQUEST_DATE_UTC
+                )
+    </update>
+
+    <!--销毁移除跟踪表反向推导每月移除订单表数据，删除无效数据-->
+    <delete id="deleteDisposeRemoveTrack">
+        DELETE DISPOSE_REMOVE_TRACK DRT WHERE DRT.ID IN
+        (
+            SELECT T7.id FROM (
+                SELECT T4.* FROM
+                (
+                    SELECT T1.SHOP_NAME, '0' AS SITE, T1.SKU, T1.FNSKU, T1.ORDER_APPLY_DATE_UTC, T1.ORDER_ID, COUNT(1)
+                    FROM DISPOSE_REMOVE_TRACK T1
+                    WHERE T1.SITE IS NULL GROUP BY T1.SHOP_NAME, T1.SKU, T1.FNSKU, T1.ORDER_APPLY_DATE_UTC, T1.ORDER_ID
+                ) T4
+                LEFT JOIN (
+                    SELECT
+                        T3.SYS_SHOPS_NAME AS SHOP_NAME,
+                        T3.SYS_SITE AS SITE,
+                        T3.SKU,
+                        T3.FNSKU,
+                        T3.REQUEST_DATE_UTC AS ORDER_APPLY_DATE_UTC,
+                        T3.ORDER_ID
+                    FROM
+                    (
+                        SELECT
+                            T2.SYS_SHOPS_NAME,
+                            T2.SYS_SITE,
+                            T2.SKU,
+                            T2.FNSKU,
+                            T2.REQUEST_DATE_UTC,
+                            T2.ORDER_ID,
+                            T2.ID,
+                            ROW_NUMBER() OVER(PARTITION BY T2.SYS_SHOPS_NAME, T2.SYS_SITE, T2.SKU, T2.FNSKU, T2.REQUEST_DATE_UTC, T2.ORDER_ID, T2.UPLOAD_DATE ORDER BY T2.UPLOAD_DATE DESC) RN
+                        FROM REMOVAL_ORDER_DETAIL T2
+                        WHERE
+                            T2.REQUEST_DATE_UTC IS NOT NULL
+                            AND T2.ORDER_TYPE IN('Return', 'Disposal')
+                    ) T3 WHERE T3.RN = 1
+                    GROUP BY
+                        T3.SYS_SHOPS_NAME,
+                        T3.SYS_SITE,
+                        T3.SKU,
+                        T3.FNSKU,
+                        T3.REQUEST_DATE_UTC,
+                        T3.ORDER_ID
+                ) T5
+                ON T4.SHOP_NAME = T5.SHOP_NAME
+                AND T4.SITE = NVL(T5.SITE, 0)
+                AND T4.SKU = T5.SKU
+                AND T4.FNSKU = T5.FNSKU
+                AND T4.ORDER_APPLY_DATE_UTC = T5.ORDER_APPLY_DATE_UTC
+                AND T4.ORDER_ID = T5.ORDER_ID
+                WHERE T5.SHOP_NAME IS NULL
+            ) T6
+            LEFT JOIN
+            (
+                SELECT * FROM DISPOSE_REMOVE_TRACK WHERE SITE IS NULL
+            ) T7
+            ON (
+                T6.SHOP_NAME = T7.SHOP_NAME
+                AND T6.SITE = NVL(T7.SITE, 0)
+                AND T6.SKU = T7.SKU
+                AND T6.FNSKU = T7.FNSKU
+                AND T6.ORDER_APPLY_DATE_UTC = T7.ORDER_APPLY_DATE_UTC
+                AND T6.ORDER_ID = T7.ORDER_ID
+            )
+        )
+    </delete>
+
+    <!--销毁移除跟踪表刷listing-->
+    <update id="updateTrackList">
+        MERGE INTO (
+            SELECT * FROM DISPOSE_REMOVE_TRACK WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL)
+        ) d
+        USING MCMS_BASE_DATA.INV_PRODUCT_GALLERY g
+        ON (
+            UPPER(d.sku) = UPPER(g.sku)
+            AND d.site = g.SYS_SITE
+            AND d.shop_name = g.SYS_SHOPS_NAME
+        )
+        WHEN MATCHED THEN
+        UPDATE SET
+            d.department = g.department,
+            d.team = g.team,
+            d.material_code = g.material_code
+    </update>
+
+    <!--销毁移除跟踪表刷listing(存档)-->
+    <update id="updateFileTrackList">
+        MERGE INTO (
+            SELECT * FROM DISPOSE_REMOVE_TRACK WHERE (DEPARTMENT IS NULL OR TEAM IS NULL OR MATERIAL_CODE IS NULL)
+        ) d
+        USING
+        (
+            SELECT * FROM
+            (
+                select g.*, ROW_NUMBER() OVER(PARTITION BY g.SYS_SHOPS_NAME, g.SYS_SITE, g.SKU ORDER BY g.LAST_UPDATE_DATE DESC) RN from MCMS_BASE_DATA.INV_PRODUCT_GALLERY_FILE g
+            ) WHERE RN = 1
+        ) g
+        ON (
+            UPPER(d.SKU) = UPPER(g.SKU)
+            AND d.SITE = g.SYS_SITE
+            AND d.SHOP_NAME = g.SYS_SHOPS_NAME
+        )
+        WHEN MATCHED THEN
+        UPDATE SET
+            d.DEPARTMENT = g.DEPARTMENT,
+            d.TEAM = g.TEAM,
+            d.MATERIAL_CODE = g.MATERIAL_CODE
+    </update>
+
+    <!--更新移除订单表生成销毁移除跟踪表状态-->
+    <update id="updateRemovalDetailStatus" parameterType="java.util.Date">
+        UPDATE REMOVAL_ORDER_DETAIL SET GENERATE_XHYCGZB = '1'
+        WHERE
+            UPLOAD_DATE >= #{startDate}
+            AND UPLOAD_DATE &lt;= #{endDate}
+            AND ORDER_TYPE IN('Return', 'Disposal')
+            AND GENERATE_XHYCGZB = '0'
+            AND REQUEST_DATE_UTC IS NOT NULL
+    </update>
+
+    <!--刷新RemovalShipmentDetail站点-->
+    <update id="refreshSite">
+        MERGE INTO (SELECT * FROM REMOVAL_SHIPMENT_DETAIL WHERE VERIFY_STATUS = 0) D
+        USING (
+            SELECT
+                SKU,
+                SYS_SHOPS_NAME,
+                ORDER_ID,
+                FNSKU,
+                MAX(SYS_SITE) SYS_SITE
+            FROM REMOVAL_ORDER_DETAIL
+            GROUP BY
+                SKU,
+                SYS_SHOPS_NAME,
+                ORDER_ID,
+                FNSKU
+        ) G ON (D.SKU = G.SKU AND D.SYS_SHOPS_NAME = G.SYS_SHOPS_NAME AND D.ORDER_ID=G.ORDER_ID AND D.FNSKU = G.FNSKU)
+        WHEN MATCHED THEN
+            UPDATE SET
+                D.SYS_SITE = G.SYS_SITE,
+                D.ORG = NULL,
+                D.WAREHOUSE_NAME = NULL,
+                D.WAREHOUSE_CODE = NULL,
+                D.INVENTORY_ORGANIZATION_CODE = NULL
+            WHERE D.SYS_SITE != G.SYS_SITE
+    </update>
+
+    <!-- 生成销毁移除成本月分摊 -->
+    <select id="generateRemovalShipmentMonShare"
+            parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.RemovalShipmentDetailParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.RemovalShipmentCostMonthlyShare">
+        SELECT
+            'USD' AS currency,
+            #{userName} AS createBy,
+            R.REQUEST_DATE AS requestDate,
+            R.ORDER_ID AS orderId,
+            CASE SUBSTR(R.ORDER_ID, 0, 1) WHEN 'F' THEN '移除至服务商' WHEN 'H' THEN '移除至海外仓' WHEN 'T' THEN '销毁特殊申请' WHEN 'Z' THEN '销毁正常申请' ELSE R.REMOVAL_ORDER_TYPE END AS orderType,
+            CONCAT(TO_CHAR(R.SHIPMENT_DATE, 'yyyy-mm'), '-01 00:00:00') AS startDate,
+            R.SYS_SHOPS_NAME AS sysShopsName,
+            R.SYS_SITE AS sysSite,
+            R.SKU,
+            B.MATERIAL_CODE AS materialCode,
+            B.SALES_BRAND AS salesBrand,
+            B.DEPARTMENT,
+            B.TEAM,
+            M.PRODUCT_TYPE AS productType,
+            R.SHIPPED_QUANTITY,
+            P.PURCHASE_UNIT_PRICE,
+            P.LOGISTICS_UNIT_PRICE,
+            RE.DIRECT_RATE,
+            NVL(R.SHIPPED_QUANTITY * P.PURCHASE_UNIT_PRICE * RE.DIRECT_RATE, 0) AS allSharePurchaseCost,-- 销毁成本采购成本总分摊额：销毁数量 * 单位采购成本 * 人民币转换美金汇率
+            NVL(R.SHIPPED_QUANTITY * P.LOGISTICS_UNIT_PRICE * RE.DIRECT_RATE, 0) AS allShareLogisticsCost,-- 销毁成本头程物流成本总分摊额：销毁数量 * 单位头程物流成本 * 人民币转换美金汇率
+            NVL(R.SHIPPED_QUANTITY * P.PURCHASE_UNIT_PRICE * RE.DIRECT_RATE, 0) AS notSharePurchaseCost,-- 销毁成本采购成本剩余分摊额初始金额：销毁数量 * 单位采购成本 * 人民币转换美金汇率
+            NVL(R.SHIPPED_QUANTITY * P.LOGISTICS_UNIT_PRICE * RE.DIRECT_RATE, 0) AS notShareLogisticsCost-- 销毁成本头程物流成本剩余分摊额初始金额：销毁数量 * 单位头程物流成本 * 人民币转换美金汇率
+        FROM REMOVAL_SHIPMENT_DETAIL R
+        LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY B ON R.SYS_SHOPS_NAME = B.SYS_SHOPS_NAME AND R.SYS_SITE = B.SYS_SITE AND R.SKU = B.SKU
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON B.MATERIAL_CODE = M.MATERIAL_CODE
+        LEFT JOIN ${rpNewAveragePrice} P ON R.SYS_SHOPS_NAME = P.SHOP_NAME AND R.SYS_SITE = P.SITE AND B.MATERIAL_CODE = P.MATERIAL_CODE AND TO_CHAR(R.SHIPMENT_DATE, 'yyyy-mm') = P.FISCAL_PERIOD AND P.CONFIRM_STATUS = 1
+        LEFT JOIN ${rpSpotExchangeRate} RE ON R.SHIPMENT_DATE &gt;= RE.EFFECT_DATE AND R.SHIPMENT_DATE &lt;= RE.INEFFECTIVE_DATE
+            AND RE.ORIGINAL_CURRENCY = 'CNY' AND RE.TARGET_CURRENCY = 'USD' AND RE.DATA_STATUS = '已审核' AND RE.FORBIDDEN_STATUS = '否'
+        WHERE
+            R.VERIFY_STATUS = 0
+            AND R.GENERATE_STATUS = 0
+            AND R.REMOVAL_ORDER_TYPE = 'Disposal'
+            AND R.INVENTORY_ORGANIZATION_CODE IS NOT NULL
+            AND R.WAREHOUSE_CODE IS NOT NULL
+            AND R.BILL_CODE IS NULL
+
+            /*单条*/
+            <!--<if test="paramCondition.sysShopsName != null and paramCondition.sysShopsName != ''">
+                AND R.SYS_SHOPS_NAME = #{paramCondition.sysShopsName}
+            </if>
+            <if test="paramCondition.sysSite != null and paramCondition.sysSite != ''">
+                AND R.SYS_SITE = #{paramCondition.sysSite}
+            </if>-->
+            <if test="paramCondition.id != null and paramCondition.id != ''">
+                AND R.ID = #{paramCondition.id}
+            </if>
+
+            /*批量*/
+            <if test="paramCondition.sysShopsNames != null and paramCondition.sysShopsNames.size > 0">
+                AND R.SYS_SHOPS_NAME IN
+                <foreach collection="paramCondition.sysShopsNames" open="(" close=")" separator="," item="sysShopsName">
+                    #{sysShopsName}
+                </foreach>
+            </if>
+            <if test="paramCondition.sysSites != null and paramCondition.sysSites.size > 0 ">
+                AND R.SYS_SITE IN
+                <foreach collection="paramCondition.sysSites" open="(" close=")" separator="," item="sysSite">
+                    #{sysSite}
+                </foreach>
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size > 0">
+                AND R.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+            <if test="paramCondition.startDate != null and paramCondition.startDate != '' and paramCondition.endDate != null and paramCondition.endDate != ''">
+                AND R.SHIPMENT_DATE BETWEEN
+                TO_DATE(#{paramCondition.startDate},'YYYY-MM-DD HH24:MI:SS') AND
+                TO_DATE(#{paramCondition.endDate},'YYYY-MM-DD HH24:MI:SS')+1 -interval '1' SECOND
+            </if>
+            <if test="paramCondition.orderId != null and paramCondition.orderId != ''">
+                AND R.ORDER_ID =#{paramCondition.orderId}
+            </if>
+    </select>
+
+    <!--刷组织名称（Amazon_账号_站点）和仓库组织名称（Amazon_账号_站点_仓库）-->
+    <update id="addOrgName" >
+        UPDATE REMOVAL_SHIPMENT_DETAIL A
+        SET A.org = 'Amazon_' || A.SYS_SHOPS_NAME || '_' ||A.SYS_SITE,
+        A.warehouse_name = 'Amazon_' || A.SYS_SHOPS_NAME || '_' ||A.SYS_SITE || '_仓库'
+        WHERE (A.org IS NULL OR A.warehouse_name IS NULL)
+        AND A.SYS_SHOPS_NAME IS NOT NULL
+        AND A.SYS_SITE IS NOT NULL
+    </update>
+
+    <!--根据组织刷库存组织编码-->
+    <update id="refreshOrgCode">
+        MERGE INTO REMOVAL_SHIPMENT_DETAIL A
+        USING (
+            SELECT
+                wc.ORGANIZATION_CODE,
+                wc.ORGANIZATION_NAME
+            FROM erp_warehouse_code wc
+            GROUP BY
+                wc.ORGANIZATION_CODE,
+                wc.ORGANIZATION_NAME
+        ) C ON (A.ORG = C.ORGANIZATION_NAME)
+        WHEN MATCHED THEN
+        UPDATE SET A.INVENTORY_ORGANIZATION_CODE = C.ORGANIZATION_CODE
+        WHERE A.INVENTORY_ORGANIZATION_CODE IS NULL
+            AND A.ORG IS NOT NULL
+    </update>
+
+    <!--根据仓库组织名称获取仓库组织编码-->
+    <update id="refreshWareOrgCode">
+        MERGE INTO REMOVAL_SHIPMENT_DETAIL A
+        USING (
+            SELECT
+                wc.ORGANIZATION_CODE,
+                wc.ORGANIZATION_NAME
+            FROM erp_warehouse_code wc
+            GROUP BY
+                wc.ORGANIZATION_CODE,
+                wc.ORGANIZATION_NAME
+        ) C ON (A.WAREHOUSE_NAME = C.ORGANIZATION_NAME)
+        WHEN MATCHED THEN
+        UPDATE
+            SET A.WAREHOUSE_CODE = C.ORGANIZATION_CODE
+            WHERE A.WAREHOUSE_CODE IS NULL
+                AND A.WAREHOUSE_NAME IS NOT NULL
+    </update>
+
+    <!--获取FBA退海外仓数据,DE改为UK：20230615海外仓V1.6-->
+    <select id="generateInWarehouseByFBA" resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.OverseasInWarehouseFBAResult">
+        SELECT
+            R.ID AS PARENT_ID,
+            'Amazon' AS PLATFORM,
+            R.SYS_SHOPS_NAME,
+            DECODE(R.SYS_SITE, 'DE', 'UK', R.SYS_SITE) AS SYS_SITE,
+            '亚马逊仓发海外仓' AS OPERATE_TYPE,
+            R.SHIPPED_QUANTITY AS SHOULD_INVENTORY_QUANTITY,
+            '1' AS SKU_NUM,
+            '亚马逊仓' AS OUT_WAREHOUSE_NAME,
+            '待签收' AS CONFIRM_STATUS,
+            R.FNSKU,
+            R.SKU,
+            R.SHIPPED_QUANTITY AS QUANTITY,
+            B.MATERIAL_CODE,
+            R.CARRIER AS LOGISTICS_COMPANY,
+            R.TRACKING_NUMBER AS LOGISTICS_NUM,
+            R.SHIPMENT_DATE,
+            B.DEPARTMENT,
+            B.TEAM
+        FROM REMOVAL_SHIPMENT_DETAIL R
+        LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY B ON R.SYS_SHOPS_NAME = B.SYS_SHOPS_NAME AND DECODE(R.SYS_SITE, 'DE', 'UK', R.SYS_SITE) = B.SYS_SITE AND R.SKU = B.SKU
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL M ON B.MATERIAL_CODE = M.MATERIAL_CODE
+        WHERE
+            R.GENERATE_HWC = '0'
+            AND R.REMOVAL_ORDER_TYPE = 'Return'
+            AND R.SYS_SITE IS NOT NULL
+        ORDER BY R.SHIPMENT_DATE DESC
+    </select>
+
+    <!--更新入库海外仓状态-->
+    <update id="updateGenerateHwc">
+        UPDATE REMOVAL_SHIPMENT_DETAIL R
+            SET R.GENERATE_HWC = '1'
+            WHERE
+                R.GENERATE_HWC = '0'
+                AND R.REMOVAL_ORDER_TYPE = 'Return'
+                AND R.SYS_SITE IS NOT NULL
+                AND R.ID IN
+                <foreach collection="params" open="(" close=")" separator="," item="id">
+                    #{id}
+                </foreach>
+    </update>
+
+    <!--每天定时获取Removal Shipment Detail数据-->
+    <update id="generateRemovalShipmentDetail">
+        MERGE INTO REMOVAL_SHIPMENT_DETAIL A
+        USING (
+            SELECT
+                B.REQUEST_DATE,
+                B.ORDER_ID,
+                B.SHIPMENT_DATE,
+                B.SKU,
+                B.FNSKU,
+                B.DISPOSITION,
+                B.SHIPPED_QUANTITY,
+                B.CARRIER,
+                B.TRACKING_NUMBER,
+                B.REMOVAL_ORDER_TYPE,
+                B.SYS_SITE,
+                B.SYS_SHOPS_NAME,
+                B.CREATE_TIME,
+                B.USER_NAME,
+                B.SYS_SELLER_ID,
+                B.UPLOAD_DATE,
+                B.UPLOAD_MARK,
+                B.ORIGINAL_TASK_NAME,
+                B.FILE_PATH,
+                B.REQUEST_DATE_UTC,
+                B.SHIPMENT_DATE_UTC
+            FROM REMOVAL_SHIPMENT_DETAIL_PARSE B WHERE SHIPMENT_DATE > TRUNC(SYSDATE - 120)
+        ) C ON (
+            A.REQUEST_DATE_UTC = C.REQUEST_DATE_UTC
+            AND A.ORDER_ID = C.ORDER_ID
+            AND A.SHIPMENT_DATE_UTC = C.SHIPMENT_DATE_UTC
+            AND A.SKU = C.SKU
+            AND A.FNSKU = C.FNSKU
+            AND A.DISPOSITION = C.DISPOSITION
+            AND A.SHIPPED_QUANTITY = C.SHIPPED_QUANTITY
+        )
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                A.REQUEST_DATE,
+                A.ORDER_ID,
+                A.SHIPMENT_DATE,
+                A.SKU,
+                A.FNSKU,
+                A.DISPOSITION,
+                A.SHIPPED_QUANTITY,
+                A.CARRIER,
+                A.TRACKING_NUMBER,
+                A.REMOVAL_ORDER_TYPE,
+                A.SYS_SITE,
+                A.SYS_SHOPS_NAME,
+                A.CREATE_TIME,
+                A.USER_NAME,
+                A.SYS_SELLER_ID,
+                A.UPLOAD_DATE,
+                A.UPLOAD_MARK,
+                A.ORIGINAL_TASK_NAME,
+                A.FILE_PATH,
+                A.REQUEST_DATE_UTC,
+                A.SHIPMENT_DATE_UTC
+             )
+            VALUES
+            (
+                C.REQUEST_DATE,
+                C.ORDER_ID,
+                C.SHIPMENT_DATE,
+                C.SKU,
+                C.FNSKU,
+                C.DISPOSITION,
+                C.SHIPPED_QUANTITY,
+                C.CARRIER,
+                C.TRACKING_NUMBER,
+                C.REMOVAL_ORDER_TYPE,
+                C.SYS_SITE,
+                C.SYS_SHOPS_NAME,
+                C.CREATE_TIME,
+                C.USER_NAME,
+                C.SYS_SELLER_ID,
+                C.UPLOAD_DATE,
+                C.UPLOAD_MARK,
+                C.ORIGINAL_TASK_NAME,
+                C.FILE_PATH,
+                C.REQUEST_DATE_UTC,
+                C.SHIPMENT_DATE_UTC
+             )
+    </update>
+
+    <!--把remove shipment detail解析出来的站点赋值给LAST_SYS_SITE-->
+    <update id="updateShipmentLastSysSite">
+        UPDATE REMOVAL_SHIPMENT_DETAIL R SET R.LAST_SYS_SITE = R.SYS_SITE WHERE R.SYS_SITE IS NOT NULL AND R.LAST_SYS_SITE IS NULL
+    </update>
+
+    <!--取RemovalOrderDetail更新RemovalShipmentDetail的站点-->
+    <update id="updateShipmentDetailSite" parameterType="java.util.Date">
+        MERGE INTO (
+            SELECT
+                *
+            FROM REMOVAL_SHIPMENT_DETAIL
+            WHERE REQUEST_DATE_UTC IS NOT NULL
+                AND UPLOAD_DATE >= #{startDate}
+                AND UPLOAD_DATE &lt;= #{endDate}
+        ) T1
+        USING (
+            SELECT
+                T.SYS_SHOPS_NAME,
+                LISTAGG(T.SYS_SITE, ',')  WITHIN GROUP(ORDER BY T.REQUEST_DATE_UTC) AS SYS_SITE,
+                T.SKU,
+                T.FNSKU,
+                T.REQUEST_DATE_UTC,
+                T.ORDER_ID,
+                T.ORDER_TYPE,
+                T.DISPOSITION
+            FROM
+            (
+                SELECT
+                    Y.SYS_SHOPS_NAME,
+                    Y.SYS_SITE,
+                    Y.SKU,
+                    Y.FNSKU,
+                    Y.REQUEST_DATE_UTC,
+                    Y.ORDER_ID,
+                    Y.ORDER_TYPE,
+                    Y.DISPOSITION,
+                    Y.UPLOAD_DATE,
+                    ROW_NUMBER() OVER(PARTITION BY Y.SYS_SHOPS_NAME,Y.SYS_SITE,Y.SKU,Y.FNSKU,Y.REQUEST_DATE_UTC,Y.ORDER_ID,Y.ORDER_TYPE,Y.DISPOSITION ORDER BY Y.UPLOAD_DATE DESC) RN
+                FROM REMOVAL_ORDER_DETAIL Y
+                WHERE
+                    Y.REQUEST_DATE_UTC IS NOT NULL
+                GROUP BY
+                    Y.SYS_SHOPS_NAME,
+                    Y.SYS_SITE,
+                    Y.SKU,
+                    Y.FNSKU,
+                    Y.REQUEST_DATE_UTC,
+                    Y.ORDER_ID,
+                    Y.ORDER_TYPE,
+                    Y.DISPOSITION,
+                    Y.UPLOAD_DATE
+			) T WHERE T.RN = 1
+            GROUP BY
+                T.SYS_SHOPS_NAME,
+                T.SKU,
+                T.FNSKU,
+                T.REQUEST_DATE_UTC,
+                T.ORDER_ID,
+                T.ORDER_TYPE,
+                T.DISPOSITION
+        ) T2 ON
+        (
+            T1.SYS_SHOPS_NAME = T2.SYS_SHOPS_NAME
+            AND T1.SKU = T2.SKU
+            AND T1.FNSKU = T2.FNSKU
+            AND T1.REQUEST_DATE_UTC = T2.REQUEST_DATE_UTC
+            AND T1.ORDER_ID = T2.ORDER_ID
+            AND T1.REMOVAL_ORDER_TYPE = T2.ORDER_TYPE
+            AND T1.DISPOSITION = T2.DISPOSITION
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+                T1.LAST_SYS_SITE = T2.SYS_SITE
+            WHERE NVL(T2.SYS_SITE, 0) != '0' AND NVL(T1.LAST_SYS_SITE, 0) != NVL(T2.SYS_SITE, 0)
+    </update>
+
+    <!--获取销毁移除跟踪表刷移除货件表多站点数据-->
+    <select id="getMoreSiteTrace" resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.DisposeRemoveTrackResult">
+        SELECT
+            T3.ID,
+            T3.UNI_KEY,
+            T3.GROUP_KEY,
+            T3.ORDER_DISPOSED_AMOUNT,
+            T3.ORDER_SHIPPED_AMOUNT,
+            T3.DISPOSE_AMOUNT,
+            T3.REMOVE_AMOUNT,
+            T3.LAST_SYS_SITE,
+            T3.UPLOAD_DATE,
+            T3.NUM_ABS
+        FROM
+        (
+
+            SELECT
+                T1.ID,
+                T1.SHOP_NAME || '_' || T1.SITE || '_' || T1.SKU || '_' || T1.FNSKU || '_' || T1.ORDER_APPLY_DATE_UTC || '_' || T1.ORDER_ID AS UNI_KEY,
+                T1.SHOP_NAME || '_' || T1.SKU || '_' || T1.FNSKU || '_' || T1.ORDER_APPLY_DATE_UTC || '_' || T1.ORDER_ID AS GROUP_KEY,
+                T1.ORDER_DISPOSED_AMOUNT,
+                T1.ORDER_SHIPPED_AMOUNT,
+                T2.DISPOSE_AMOUNT,
+                T2.REMOVE_AMOUNT,
+                T2.LAST_SYS_SITE,
+                T2.UPLOAD_DATE,
+                ABS(
+                    CASE WHEN T1.ORDER_DISPOSED_AMOUNT = 0 THEN T1.ORDER_SHIPPED_AMOUNT - T2.REMOVE_AMOUNT
+                    WHEN T1.ORDER_SHIPPED_AMOUNT = 0 THEN T1.ORDER_DISPOSED_AMOUNT - T2.DISPOSE_AMOUNT
+                    END
+                ) AS NUM_ABS
+            FROM (
+                SELECT
+                    'AMAZON' PLATFORM,
+                    U.SYS_SHOPS_NAME,
+                    U.LAST_SYS_SITE,
+                    U.SKU,
+                    U.FNSKU,
+                    U.REQUEST_DATE_UTC,
+                    U.ORDER_ID,
+                    U.REMOVAL_ORDER_TYPE,
+                    MAX(U.UPLOAD_DATE) AS UPLOAD_DATE,
+                    SUM(CASE WHEN U.REMOVAL_ORDER_TYPE = 'Disposal' THEN U.SHIPPED_QUANTITY ELSE 0 END) AS DISPOSE_AMOUNT,
+                    SUM(CASE WHEN U.REMOVAL_ORDER_TYPE = 'Return' THEN U.SHIPPED_QUANTITY ELSE 0 END) AS REMOVE_AMOUNT
+                FROM REMOVAL_SHIPMENT_DETAIL U
+                WHERE U.REMOVAL_ORDER_TYPE IN ('Disposal', 'Return')
+                    AND U.REQUEST_DATE_UTC IS NOT NULL
+                    AND INSTR(U.LAST_SYS_SITE, ',') > 0
+                GROUP BY
+                    U.SYS_SHOPS_NAME,
+                    U.LAST_SYS_SITE,
+                    U.SKU,
+                    U.FNSKU,
+                    U.REQUEST_DATE_UTC,
+                    U.ORDER_ID,
+                    U.REMOVAL_ORDER_TYPE
+            ) T2
+            LEFT JOIN DISPOSE_REMOVE_TRACK T1
+            ON (
+                T2.SYS_SHOPS_NAME = T1.SHOP_NAME
+                AND T2.SKU = T1.SKU
+                AND T2.FNSKU = T1.FNSKU
+                AND T2.REQUEST_DATE_UTC = T1.ORDER_APPLY_DATE_UTC
+                AND T2.ORDER_ID = T1.ORDER_ID
+            )
+            WHERE T1.SITE IS NOT NULL
+            ORDER BY
+                T2.SYS_SHOPS_NAME,
+                T2.LAST_SYS_SITE,
+                T2.SKU,
+                T2.FNSKU,
+                T2.REQUEST_DATE_UTC,
+                T2.ORDER_ID,
+                T2.REMOVAL_ORDER_TYPE
+        ) T3
+        GROUP BY
+            T3.ID,
+            T3.UNI_KEY,
+            T3.GROUP_KEY,
+            T3.ORDER_DISPOSED_AMOUNT,
+            T3.ORDER_SHIPPED_AMOUNT,
+            T3.DISPOSE_AMOUNT,
+            T3.REMOVE_AMOUNT,
+            T3.LAST_SYS_SITE,
+            T3.UPLOAD_DATE,
+            T3.NUM_ABS
+        ORDER BY T3.NUM_ABS
+    </select>
+</mapper>

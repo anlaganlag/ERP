@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.k3.mapper.TranferApplyMapper">
+     <select id="getBscId" resultType="java.lang.String">
+         select
+             DISTINCT  CAST(b.FID AS VARCHAR(100))+'&amp;'+ CAST(b.FENTRYID AS VARCHAR(100))+'&amp;'+ CAST(a.FSALEORGID AS VARCHAR(100))
+         from
+             t_Sal_CustMatMapping A
+                 LEFT JOIN t_Sal_CustMatMappingEntry B ON
+                 A.FID = B.FID
+                 LEFT JOIN T_BD_CUSTOMER_L C ON
+                 A.FCUSTOMERID = C.FCUSTID
+         WHERE A.FDOCUMENTSTATUS='A'
+           AND B.FEFFECTIVE='1'
+           AND C.FNAME = #{orgName}
+           AND FCUSTMATNO = #{sku}
+    </select>
+
+</mapper>

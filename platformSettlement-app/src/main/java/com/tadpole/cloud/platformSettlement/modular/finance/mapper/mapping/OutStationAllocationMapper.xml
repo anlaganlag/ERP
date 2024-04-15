@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.OutStationAllocationMapper">
+    <!--更新结算报告-->
+    <update id="updateToReport" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OutStationAllocationParam">
+        MERGE INTO RP_SETTLEMENT_REPORT T1
+        USING (SELECT * FROM RP_OUT_STATION_ALLOCATION WHERE id = #{paramCondition.id}) T2
+        ON (
+            T1.FISCAL_PERIOD = T2.FISCAL_PERIOD
+            AND T1.REPORT_TYPE = T2.REPORT_TYPE
+            AND T1.INCOME_TYPE = T2.INCOME_TYPE
+            AND T1.SHOP_NAME = T2.SHOP_NAME
+            AND T1.SITE = T2.SITE
+            AND T1.SKU = T2.SKU
+            AND T1.DEPARTMENT = T2.DEPARTMENT
+            AND T1.TEAM = T2.TEAM
+            AND T1.MATERIAL_CODE = T2.MATERIAL_CODE
+                and NVL(T1.PRODUCT_TYPE, '0') = case T2.MATERIAL_CODE
+                                                    when '0' then NVL(T2.PRODUCT_TYPE, '0') else NVL(T1.PRODUCT_TYPE, '0') end
+        )
+        WHEN NOT MATCHED THEN
+            INSERT(
+                T1.FISCAL_PERIOD,
+                T1.REPORT_TYPE,
+                T1.INCOME_TYPE,
+                T1.SHOP_NAME,
+                T1.SITE,
+                T1.SKU,
+                T1.DEPARTMENT,
+                T1.TEAM,
+                T1.MATERIAL_CODE,
+                T1.PRODUCT_TYPE,
+                T1.SALES_BRAND,
+                T1.COST_AUXILIARY_DESCRIPTION,
+                T1.VOLUME_BILL_QUANTITY,
+                T1.OTHER_ADVERTISEMENTS,
+                T1.BRUSHING_VALUE,
+                T1.BRUSHING_SERVICE_CHARGE,
+                T1.LOCAL_LOGISTICS_FEE,
+                T1.OVERSEAS_WAREHOUSE_FEE,
+                T1.DISPOSE_PURCHASE_FEE,
+                T1.DISPOSE_LOGISTICS_FEE,
+                T1.DOMESTIC_UNSALABLE_INVENTORY,
+                T1.MOLD_OPENING_COST
+            )
+            VALUES(
+                T2.FISCAL_PERIOD,
+                T2.REPORT_TYPE,
+                T2.INCOME_TYPE,
+                T2.SHOP_NAME,
+                T2.SITE,
+                T2.SKU,
+                T2.DEPARTMENT,
+                T2.TEAM,
+                T2.MATERIAL_CODE,
+                NVL(T2.PRODUCT_TYPE,'0'),
+                T2.SALES_BRAND,
+                T2.COST_AUXILIARY_DESCRIPTION,
+                T2.VOLUME_BILL_QUANTITY,
+                T2.OTHER_ADVERTISEMENTS,
+                T2.BRUSHING_VALUE,
+                T2.BRUSHING_SERVICE_CHARGE,
+                T2.LOCAL_LOGISTICS_FEE,
+                T2.OVERSEAS_WAREHOUSE_FEE,
+                T2.DISPOSE_PURCHASE_FEE,
+                T2.DISPOSE_LOGISTICS_FEE,
+                T2.DOMESTIC_UNSALABLE_INVENTORY,
+                T2.MOLD_OPENING_COST
+            )
+            WHEN MATCHED THEN
+                UPDATE SET
+                    T1.VOLUME_BILL_QUANTITY= T1.VOLUME_BILL_QUANTITY + T2.VOLUME_BILL_QUANTITY ,
+                    T1.OTHER_ADVERTISEMENTS= T1.OTHER_ADVERTISEMENTS + T2.OTHER_ADVERTISEMENTS,
+                    T1.BRUSHING_VALUE= T1.BRUSHING_VALUE + T2.BRUSHING_VALUE,
+                    T1.BRUSHING_SERVICE_CHARGE= T1.BRUSHING_SERVICE_CHARGE + T2.BRUSHING_SERVICE_CHARGE,
+                    T1.LOCAL_LOGISTICS_FEE= T1.LOCAL_LOGISTICS_FEE + T2.LOCAL_LOGISTICS_FEE,
+                    T1.OVERSEAS_WAREHOUSE_FEE= T1.OVERSEAS_WAREHOUSE_FEE + T2.OVERSEAS_WAREHOUSE_FEE,
+                    T1.DISPOSE_PURCHASE_FEE= T1.DISPOSE_PURCHASE_FEE + T2.DISPOSE_PURCHASE_FEE,
+                    T1.DISPOSE_LOGISTICS_FEE= T1.DISPOSE_LOGISTICS_FEE + T2.DISPOSE_LOGISTICS_FEE,
+                    T1.DOMESTIC_UNSALABLE_INVENTORY= T1.DOMESTIC_UNSALABLE_INVENTORY + T2.DOMESTIC_UNSALABLE_INVENTORY,
+                    T1.MOLD_OPENING_COST= T1.MOLD_OPENING_COST + T2.MOLD_OPENING_COST,
+                    T1.COST_AUXILIARY_DESCRIPTION= T1.COST_AUXILIARY_DESCRIPTION || ',' || T2.COST_AUXILIARY_DESCRIPTION
+    </update>
+
+    <!--批量确认-->
+    <update id="updateToReportBatch"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OutStationAllocationParam">
+        MERGE INTO RP_SETTLEMENT_REPORT T1
+        USING (
+            SELECT
+                FISCAL_PERIOD,
+                REPORT_TYPE,
+                INCOME_TYPE,
+                SHOP_NAME,
+                SITE,
+                SKU,
+                DEPARTMENT,
+                TEAM,
+                MATERIAL_CODE,
+                COST_AUXILIARY_DESCRIPTION,
+                PRODUCT_TYPE,
+                MAX(SALES_BRAND) SALES_BRAND,
+                SUM(VOLUME_BILL_QUANTITY) VOLUME_BILL_QUANTITY,
+                SUM(OTHER_ADVERTISEMENTS) OTHER_ADVERTISEMENTS,
+                SUM(BRUSHING_VALUE) BRUSHING_VALUE,
+                SUM(BRUSHING_SERVICE_CHARGE) BRUSHING_SERVICE_CHARGE,
+                SUM(LOCAL_LOGISTICS_FEE) LOCAL_LOGISTICS_FEE,
+                SUM(OVERSEAS_WAREHOUSE_FEE) OVERSEAS_WAREHOUSE_FEE,
+                SUM(DISPOSE_PURCHASE_FEE) DISPOSE_PURCHASE_FEE,
+                SUM(DISPOSE_LOGISTICS_FEE) DISPOSE_LOGISTICS_FEE,
+                SUM(DOMESTIC_UNSALABLE_INVENTORY) DOMESTIC_UNSALABLE_INVENTORY,
+                SUM(MOLD_OPENING_COST) MOLD_OPENING_COST
+            FROM RP_OUT_STATION_ALLOCATION
+            WHERE
+                CONFIRM_STATUS =0
+                AND FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+                AND SHOP_NAME=#{paramCondition.shopName}
+                <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+                    AND SITE IN
+                    <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+                        #{site}
+                    </foreach>
+                </if>
+            GROUP BY
+                FISCAL_PERIOD,
+                REPORT_TYPE,
+                INCOME_TYPE,
+                SHOP_NAME,
+                SITE,
+                SKU,
+                DEPARTMENT,
+                TEAM,
+                MATERIAL_CODE,
+                COST_AUXILIARY_DESCRIPTION,
+                PRODUCT_TYPE
+        ) T2
+        ON (
+            T1.FISCAL_PERIOD = T2.FISCAL_PERIOD
+            AND T1.REPORT_TYPE = T2.REPORT_TYPE
+            AND T1.INCOME_TYPE = T2.INCOME_TYPE
+            AND T1.SHOP_NAME = T2.SHOP_NAME
+            AND T1.SITE = T2.SITE
+            AND T1.SKU = T2.SKU
+            AND T1.DEPARTMENT = T2.DEPARTMENT
+            AND T1.TEAM = T2.TEAM
+            AND T1.MATERIAL_CODE = T2.MATERIAL_CODE
+        and NVL(T1.PRODUCT_TYPE, '0') = case T2.MATERIAL_CODE
+        when '0' then NVL(T2.PRODUCT_TYPE, '0') else NVL(T1.PRODUCT_TYPE, '0') end)
+        WHEN NOT MATCHED THEN
+            INSERT(
+                T1.FISCAL_PERIOD,
+                T1.REPORT_TYPE,
+                T1.INCOME_TYPE,
+                T1.SHOP_NAME,
+                T1.SITE,
+                T1.SKU,
+                T1.DEPARTMENT,
+                T1.TEAM,
+                T1.MATERIAL_CODE,
+                T1.PRODUCT_TYPE,
+                T1.SALES_BRAND,
+                T1.COST_AUXILIARY_DESCRIPTION,
+                T1.VOLUME_BILL_QUANTITY,
+                T1.OTHER_ADVERTISEMENTS,
+                T1.BRUSHING_VALUE,
+                T1.BRUSHING_SERVICE_CHARGE,
+                T1.LOCAL_LOGISTICS_FEE,
+                T1.OVERSEAS_WAREHOUSE_FEE,
+                T1.DISPOSE_PURCHASE_FEE,
+                T1.DISPOSE_LOGISTICS_FEE,
+                T1.DOMESTIC_UNSALABLE_INVENTORY,
+                T1.MOLD_OPENING_COST
+            )
+            VALUES(
+                T2.FISCAL_PERIOD,
+                T2.REPORT_TYPE,
+                T2.INCOME_TYPE,
+                T2.SHOP_NAME,
+                T2.SITE,
+                T2.SKU,
+                T2.DEPARTMENT,
+                T2.TEAM,
+                T2.MATERIAL_CODE,
+                NVL(T2.PRODUCT_TYPE,'0'),
+                T2.SALES_BRAND,
+                T2.COST_AUXILIARY_DESCRIPTION,
+                T2.VOLUME_BILL_QUANTITY,
+                T2.OTHER_ADVERTISEMENTS,
+                T2.BRUSHING_VALUE,
+                T2.BRUSHING_SERVICE_CHARGE,
+                T2.LOCAL_LOGISTICS_FEE,
+                T2.OVERSEAS_WAREHOUSE_FEE,
+                T2.DISPOSE_PURCHASE_FEE,
+                T2.DISPOSE_LOGISTICS_FEE,
+                T2.DOMESTIC_UNSALABLE_INVENTORY,
+                T2.MOLD_OPENING_COST
+            )
+        WHEN MATCHED THEN
+            UPDATE SET
+                T1.VOLUME_BILL_QUANTITY= T1.VOLUME_BILL_QUANTITY + T2.VOLUME_BILL_QUANTITY ,
+                T1.OTHER_ADVERTISEMENTS= T1.OTHER_ADVERTISEMENTS + T2.OTHER_ADVERTISEMENTS,
+                T1.BRUSHING_VALUE= T1.BRUSHING_VALUE + T2.BRUSHING_VALUE,
+                T1.BRUSHING_SERVICE_CHARGE= T1.BRUSHING_SERVICE_CHARGE + T2.BRUSHING_SERVICE_CHARGE,
+                T1.LOCAL_LOGISTICS_FEE= T1.LOCAL_LOGISTICS_FEE + T2.LOCAL_LOGISTICS_FEE,
+                T1.OVERSEAS_WAREHOUSE_FEE= T1.OVERSEAS_WAREHOUSE_FEE + T2.OVERSEAS_WAREHOUSE_FEE,
+                T1.DISPOSE_PURCHASE_FEE= T1.DISPOSE_PURCHASE_FEE + T2.DISPOSE_PURCHASE_FEE,
+                T1.DISPOSE_LOGISTICS_FEE= T1.DISPOSE_LOGISTICS_FEE + T2.DISPOSE_LOGISTICS_FEE,
+                T1.DOMESTIC_UNSALABLE_INVENTORY= T1.DOMESTIC_UNSALABLE_INVENTORY + T2.DOMESTIC_UNSALABLE_INVENTORY,
+                T1.MOLD_OPENING_COST= T1.MOLD_OPENING_COST + T2.MOLD_OPENING_COST,
+                T1.COST_AUXILIARY_DESCRIPTION= T1.COST_AUXILIARY_DESCRIPTION || ',' || T2.COST_AUXILIARY_DESCRIPTION
+    </update>
+
+    <!--站外分摊汇总列表、导出-->
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OutStationAllocationParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OutStationAllocationResult">
+        SELECT
+            t.ID,
+            t.FISCAL_PERIOD,
+            t.REPORT_TYPE,
+            t.INCOME_TYPE,
+            t.SHOP_NAME,
+            t.SITE,
+            t.ACCOUNTING_CURRENCY,
+            t.SKU,
+            t.DEPARTMENT,
+            t.TEAM,
+            t.SALES_BRAND,
+            t.MATERIAL_CODE,
+            t.COST_AUXILIARY_DESCRIPTION,
+            t.VOLUME_BILL_QUANTITY,
+            t.OTHER_ADVERTISEMENTS,
+            t.BRUSHING_VALUE,
+            t.BRUSHING_SERVICE_CHARGE,
+            t.LOCAL_LOGISTICS_FEE,
+            t.OVERSEAS_WAREHOUSE_FEE,
+            t.DISPOSE_PURCHASE_FEE,
+            t.DISPOSE_LOGISTICS_FEE,
+            t.DOMESTIC_UNSALABLE_INVENTORY,
+            t.MOLD_OPENING_COST,
+            t.CONFIRM_DATE,
+            t.CONFIRM_BY,
+            CASE t.CONFIRM_STATUS WHEN 0 THEN '未确认'
+            WHEN 1 THEN '已确认' END CONFIRM_STATUS_TXT,
+            t.CONFIRM_STATUS,
+            t.CREATE_BY,
+            t.CREATE_AT,
+            DECODE(t.material_code,'0',t.PRODUCT_TYPE,B.PRODUCT_TYPE) PRODUCT_TYPE,
+            DECODE(t.material_code,'0','0',B.CATEGORY) CATEGORY,
+            DECODE(t.material_code,'0','0',B.PRODUCT_NAME) PRODUCT_NAME,
+            DECODE(t.material_code,'0','0',B.STYLE) STYLE,
+            DECODE(t.material_code,'0','0',B.MAIN_MATERIAL) MAIN_MATERIAL,
+            DECODE(t.material_code,'0','0',B.DESIGN) DESIGN,
+            DECODE(t.material_code,'0','0',B.COMPANY_BRAND) COMPANY_BRAND,
+            DECODE(t.material_code,'0','0',B.FIT_BRAND) FIT_BRAND,
+            DECODE(t.material_code,'0','0',B.MODEL) MODEL,
+            DECODE(t.material_code,'0','0',B.COLOR) COLOR,
+            DECODE(t.material_code,'0','0',B.SIZES) SIZES,
+            DECODE(t.material_code,'0','0',B.PACKING) PACKING,
+            DECODE(t.material_code,'0','0',B.VERSION) VERSION,
+            DECODE(t.material_code,'0','0',B.TYPE) TYPE,
+            DECODE(t.material_code,'0','0',B.BUYER) BUYER,
+            DECODE(t.material_code,'0','0',B.DEVELOPER) DEVELOPER,
+            DECODE(t.material_code,'0','0',to_char(B.ACCOUNT_DATE,'yyyy-mm-dd')) ACCOUNT_DATE,
+            DECODE(t.material_code,'0','0',B.STYLE_SECOND_LABEL) STYLE_SECOND_LABEL
+        FROM RP_OUT_STATION_ALLOCATION t
+        LEFT JOIN MCMS_BASE_DATA.RP_MATERIAL B ON B.MATERIAL_CODE=t.MATERIAL_CODE
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod!=''">
+                AND t.FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType!=''">
+                AND t.report_type =#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                AND SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site!=''">
+                AND t.SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department !=''">
+                AND DEPARTMENT=#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team !=''">
+                AND TEAM=#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus!=''">
+                AND t.CONFIRM_STATUS =#{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                AND t.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!--根据条件查询数据-->
+    <select id="queryConfirm" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OutStationAllocationParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OutStationAllocationParam">
+        SELECT id FROM RP_OUT_STATION_ALLOCATION t
+        WHERE
+            t.CONFIRM_STATUS = 0
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod != ''">
+                AND t.FISCAL_PERIOD = #{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+                AND t.SHOP_NAME = #{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.sites != null and paramCondition.sites.size()>0">
+                AND t.SITE  IN
+                <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+                    #{site}
+                </foreach>
+            </if>
+    </select>
+
+    <!--获取汇总数量-->
+    <select id="getQuantity" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.OutStationAllocationParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.OutStationAllocationResult">
+        SELECT
+            SUM(t.VOLUME_BILL_QUANTITY) VOLUME_BILL_QUANTITY,
+            SUM(t.OTHER_ADVERTISEMENTS) OTHER_ADVERTISEMENTS,
+            SUM(t.BRUSHING_VALUE) BRUSHING_VALUE,
+            SUM(t.BRUSHING_SERVICE_CHARGE) BRUSHING_SERVICE_CHARGE,
+            SUM(t.LOCAL_LOGISTICS_FEE) LOCAL_LOGISTICS_FEE,
+            SUM(t.OVERSEAS_WAREHOUSE_FEE) OVERSEAS_WAREHOUSE_FEE,
+            SUM(t.DISPOSE_PURCHASE_FEE) DISPOSE_PURCHASE_FEE,
+            SUM(t.DISPOSE_LOGISTICS_FEE) DISPOSE_LOGISTICS_FEE,
+            SUM(t.DOMESTIC_UNSALABLE_INVENTORY) DOMESTIC_UNSALABLE_INVENTORY,
+            SUM(t.MOLD_OPENING_COST) MOLD_OPENING_COST
+        FROM RP_OUT_STATION_ALLOCATION t
+        <where>
+            <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod!=''">
+                AND t.FISCAL_PERIOD =#{paramCondition.fiscalPeriod}
+            </if>
+            <if test="paramCondition.reportType != null and paramCondition.reportType!=''">
+                AND t.report_type =#{paramCondition.reportType}
+            </if>
+            <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+                AND SHOP_NAME=#{paramCondition.shopName}
+            </if>
+            <if test="paramCondition.site != null and paramCondition.site!=''">
+                AND t.SITE =#{paramCondition.site}
+            </if>
+            <if test="paramCondition.department != null and paramCondition.department !=''">
+                AND DEPARTMENT=#{paramCondition.department}
+            </if>
+            <if test="paramCondition.team != null and paramCondition.team !=''">
+                AND TEAM=#{paramCondition.team}
+            </if>
+            <if test="paramCondition.confirmStatus != null and paramCondition.confirmStatus!=''">
+                AND t.CONFIRM_STATUS =#{paramCondition.confirmStatus}
+            </if>
+            <if test="paramCondition.skus != null and paramCondition.skus.size()>0">
+                AND t.SKU IN
+                <foreach collection="paramCondition.skus" open="(" close=")" separator=","
+                         item="sku">
+                    #{sku}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!--批量更新导入站外费用分摊表-->
+    <update id="saveOrUpdateBatchOSA"  parameterType="java.util.List">
+        MERGE INTO RP_OUT_STATION_ALLOCATION A
+        USING (
+            <foreach collection="dataList" index="index" item="item" open="" close="" separator="UNION ALL" >
+                SELECT
+                    #{item.fiscalPeriod, jdbcType = VARCHAR} AS FISCAL_PERIOD,
+                    #{item.shopName, jdbcType = VARCHAR} AS SHOP_NAME,
+                    #{item.site, jdbcType = VARCHAR} AS SITE,
+                    #{item.accountingCurrency, jdbcType = VARCHAR} AS ACCOUNTING_CURRENCY,
+                    #{item.sku, jdbcType = VARCHAR} AS SKU,
+                    #{item.department, jdbcType = VARCHAR} AS DEPARTMENT,
+                    #{item.team, jdbcType = VARCHAR} AS TEAM,
+                    #{item.materialCode, jdbcType = VARCHAR} AS MATERIAL_CODE,
+                    #{item.productType, jdbcType = VARCHAR} AS PRODUCT_TYPE,
+                    #{item.salesBrand, jdbcType = VARCHAR} AS SALES_BRAND,
+                    #{item.costAuxiliaryDescription, jdbcType = VARCHAR} AS COST_AUXILIARY_DESCRIPTION,
+                    #{item.volumeBillQuantity, jdbcType = DECIMAL} AS VOLUME_BILL_QUANTITY,
+                    #{item.otherAdvertisements, jdbcType = DECIMAL} AS OTHER_ADVERTISEMENTS,
+                    #{item.brushingValue, jdbcType = DECIMAL} AS BRUSHING_VALUE,
+                    #{item.brushingServiceCharge, jdbcType = DECIMAL} AS BRUSHING_SERVICE_CHARGE,
+                    #{item.localLogisticsFee, jdbcType = DECIMAL} AS LOCAL_LOGISTICS_FEE,
+                    #{item.overseasWarehouseFee, jdbcType = DECIMAL} AS OVERSEAS_WAREHOUSE_FEE,
+                    #{item.domesticUnsalableInventory, jdbcType = DECIMAL} AS DOMESTIC_UNSALABLE_INVENTORY,
+                    #{item.moldOpeningCost, jdbcType = DECIMAL} AS MOLD_OPENING_COST,
+                    #{item.createBy, jdbcType = TIMESTAMP} AS CREATE_BY,
+                    #{item.createAt, jdbcType = VARCHAR} AS CREATE_AT,
+                    #{item.updateUser, jdbcType = VARCHAR} AS UPDATE_USER
+                FROM DUAL
+            </foreach>
+        ) B ON (
+            A.FISCAL_PERIOD = B.FISCAL_PERIOD
+            AND A.SHOP_NAME = B.SHOP_NAME
+            AND A.SITE = B.SITE
+            AND A.ACCOUNTING_CURRENCY = B.ACCOUNTING_CURRENCY
+            AND A.SKU = B.SKU
+            AND A.DEPARTMENT = B.DEPARTMENT
+            AND A.TEAM = B.TEAM
+            AND A.MATERIAL_CODE = B.MATERIAL_CODE
+            AND A.PRODUCT_TYPE = B.PRODUCT_TYPE
+        )
+        WHEN MATCHED THEN
+            UPDATE SET
+                A.COST_AUXILIARY_DESCRIPTION = DECODE(B.COST_AUXILIARY_DESCRIPTION, NULL, A.COST_AUXILIARY_DESCRIPTION, B.COST_AUXILIARY_DESCRIPTION),
+                A.VOLUME_BILL_QUANTITY = DECODE(B.VOLUME_BILL_QUANTITY, NULL, A.VOLUME_BILL_QUANTITY, B.VOLUME_BILL_QUANTITY),
+                A.OTHER_ADVERTISEMENTS = DECODE(B.OTHER_ADVERTISEMENTS, NULL, A.OTHER_ADVERTISEMENTS, B.OTHER_ADVERTISEMENTS),
+                A.BRUSHING_VALUE = DECODE(B.BRUSHING_VALUE, NULL, A.BRUSHING_VALUE, B.BRUSHING_VALUE),
+                A.BRUSHING_SERVICE_CHARGE = DECODE(B.BRUSHING_SERVICE_CHARGE, NULL, A.BRUSHING_SERVICE_CHARGE, B.BRUSHING_SERVICE_CHARGE),
+                A.LOCAL_LOGISTICS_FEE = DECODE(B.LOCAL_LOGISTICS_FEE, NULL, A.LOCAL_LOGISTICS_FEE, B.LOCAL_LOGISTICS_FEE),
+                A.OVERSEAS_WAREHOUSE_FEE = DECODE(B.OVERSEAS_WAREHOUSE_FEE, NULL, A.OVERSEAS_WAREHOUSE_FEE, B.OVERSEAS_WAREHOUSE_FEE),
+                A.DOMESTIC_UNSALABLE_INVENTORY = DECODE(B.DOMESTIC_UNSALABLE_INVENTORY, NULL, A.DOMESTIC_UNSALABLE_INVENTORY, B.DOMESTIC_UNSALABLE_INVENTORY),
+                A.MOLD_OPENING_COST = DECODE(B.MOLD_OPENING_COST, NULL, A.MOLD_OPENING_COST, B.MOLD_OPENING_COST),
+                A.UPDATE_TIME = SYSDATE,
+                A.UPDATE_USER = B.UPDATE_USER
+            WHERE A.CONFIRM_STATUS = 0
+        WHEN NOT MATCHED THEN
+            INSERT
+            (
+                A.FISCAL_PERIOD,
+                A.SHOP_NAME,
+                A.SITE,
+                A.ACCOUNTING_CURRENCY,
+                A.SKU,
+                A.DEPARTMENT,
+                A.TEAM,
+                A.MATERIAL_CODE,
+                A.PRODUCT_TYPE,
+                A.SALES_BRAND,
+                A.COST_AUXILIARY_DESCRIPTION,
+                A.VOLUME_BILL_QUANTITY,
+                A.OTHER_ADVERTISEMENTS,
+                A.BRUSHING_VALUE,
+                A.BRUSHING_SERVICE_CHARGE,
+                A.LOCAL_LOGISTICS_FEE,
+                A.OVERSEAS_WAREHOUSE_FEE,
+                A.DOMESTIC_UNSALABLE_INVENTORY,
+                A.MOLD_OPENING_COST,
+                A.CREATE_BY,
+                A.CREATE_AT,
+                A.DATA_SOURCE
+            )
+            VALUES(
+                B.FISCAL_PERIOD,
+                B.SHOP_NAME,
+                B.SITE,
+                B.ACCOUNTING_CURRENCY,
+                B.SKU,
+                B.DEPARTMENT,
+                B.TEAM,
+                B.MATERIAL_CODE,
+                B.PRODUCT_TYPE,
+                B.SALES_BRAND,
+                B.COST_AUXILIARY_DESCRIPTION,
+                NVL(B.VOLUME_BILL_QUANTITY, 0),
+                NVL(B.OTHER_ADVERTISEMENTS, 0),
+                NVL(B.BRUSHING_VALUE, 0),
+                NVL(B.BRUSHING_SERVICE_CHARGE, 0),
+                NVL(B.LOCAL_LOGISTICS_FEE, 0),
+                NVL(B.OVERSEAS_WAREHOUSE_FEE, 0),
+                NVL(B.DOMESTIC_UNSALABLE_INVENTORY, 0),
+                NVL(B.MOLD_OPENING_COST, 0),
+                B.CREATE_BY,
+                B.CREATE_AT,
+                1
+            )
+    </update>
+</mapper>

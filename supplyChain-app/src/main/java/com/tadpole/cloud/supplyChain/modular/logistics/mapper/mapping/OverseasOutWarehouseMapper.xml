@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.OverseasOutWarehouseMapper">
+
+    <sql id="List_Condition">
+
+        <choose>
+            <when test ="param.outOrders != null and param.outOrders.size() != 0" >
+                AND T.OUT_ORDER IN
+                <foreach collection="param.outOrders" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="param.outOrder != null and param.outOrder != ''">
+                    AND T.OUT_ORDER = #{param.outOrder}
+                </if>
+            </otherwise>
+        </choose>
+
+
+        <if test="param.platforms != null and param.platforms.size() != 0">
+            AND T.PLATFORM IN
+            <foreach collection="param.platforms" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+            AND T.SYS_SHOPS_NAME IN
+            <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.sysSites != null and param.sysSites.size() != 0">
+            AND T.SYS_SITE IN
+            <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.operateTypes != null and param.operateTypes.size() != 0">
+            AND T.OPERATE_TYPE IN
+            <foreach collection="param.operateTypes" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        <if test="param.outWarehouseNames != null and param.outWarehouseNames.size() != 0">
+            AND T.OUT_WAREHOUSE_NAME IN
+            <foreach collection="param.outWarehouseNames" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+
+        <trim prefix="AND  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.inWarehouseNames != null and param.inWarehouseNames.size() != 0 ">
+                    T.IN_WAREHOUSE_NAME IN
+                    <foreach collection="param.inWarehouseNames" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="param.inWarehouseName =='空'.toString()">
+                    OR T.IN_WAREHOUSE_NAME IS NULL
+                </if>
+            </trim>
+        </trim>
+
+        <trim prefix="AND  (" suffix=")" >
+            <trim  suffixOverrides="OR">
+                <if test="param.logisticsStatusList != null and param.logisticsStatusList.size() != 0 ">
+                    T.LOGISTICS_STATUS IN
+                    <foreach collection="param.logisticsStatusList" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                </if>
+                <if test="param.logisticsStatus =='空'.toString()">
+                    OR T.LOGISTICS_STATUS IS NULL
+                </if>
+            </trim>
+        </trim>
+        <if test="param.checkReason != null and param.checkReason != ''">
+            AND T.REMARK LIKE CONCAT(CONCAT('%', #{param.checkReason}), '%')
+        </if>
+    </sql>
+
+    <!-- 海外仓出库管理分页查询列表 -->
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasOutWarehouseParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasOutWarehouseResult">
+        SELECT T.ID,
+               T.PARENT_ID,
+               T.OUT_ORDER,
+               T.PLATFORM,
+               T.SYS_SHOPS_NAME,
+               T.SYS_SITE,
+               T.OPERATE_TYPE,
+               T.SHOULD_OUT_QUANTITY,
+               T.SKU_NUM,
+               T.TOTAL_PACKAGE_NUM,
+               T.OUT_WAREHOUSE_NAME,
+               T.IN_WAREHOUSE_NAME,
+               T.LOGISTICS_STATUS,
+               T.LOGISTICS_TIME,
+               T.LOGISTICS_USER,
+               T.REMARK,
+               T.CREATE_TIME,
+               T.CREATE_USER,
+               T.UPDATE_TIME,
+               T.UPDATE_USER,
+               CASE WHEN T.SYNC_ERP_STATUS='-1' THEN '推送失败'
+               WHEN T.SYNC_ERP_STATUS='1' THEN '推送成功'
+               WHEN T.SYNC_ERP_STATUS='4' THEN '审核失败' END SYNC_ERP_STATUS
+        FROM OVERSEAS_OUT_WAREHOUSE T
+        <where>
+            <include refid="List_Condition" />
+
+        </where>
+        ORDER BY T.CREATE_TIME DESC
+    </select>
+
+    <!-- 海外仓出库管理查询列表数据汇总 -->
+    <select id="queryPageTotal" parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasOutWarehouseParam"
+            resultType="java.math.BigDecimal">
+        SELECT
+        SUM(NVL(T.SHOULD_OUT_QUANTITY, 0)) AS shouldOutQuantityTotal
+        FROM OVERSEAS_OUT_WAREHOUSE T
+        <where>
+            <include refid="List_Condition" />
+        </where>
+    </select>
+
+    <select id="list"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasOutWarehouseDetailParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasOutWarehouseDetailResult">
+        SELECT O.ID,
+               O.OUT_ORDER,
+               O.PACKAGE_BAR_CODE,
+               O.PACKAGE_NUM,
+               O.PACKAGE_NUM_NAME,
+               O.FN_SKU,
+               O.SKU,
+               O.QUANTITY,
+               O.MATERIAL_CODE,
+               O.DEPARTMENT,
+               O.TEAM,
+               O.NEEDS_USER,
+               O.LOGISTICS_COMPANY,
+               O.LOGISTICS_NUM,
+               O.CREATE_TIME,
+               O.CREATE_USER,
+               O.UPDATE_TIME,
+               O.UPDATE_USER FROM OVERSEAS_OUT_WAREHOUSE_DETAIL O
+        <where>
+            <if test="param.outOrder != null and param.outOrder != ''">
+                AND O.OUT_ORDER = #{param.outOrder}
+            </if>
+            <if test="param.packageBarCode != null and param.packageBarCode != ''">
+                AND O.PACKAGE_BAR_CODE= #{param.packageBarCode}
+            </if>
+            <if test="param.sku != null and param.sku != ''">
+                AND O.SKU= #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND O.MATERIAL_CODE= #{param.materialCode}
+            </if>
+        </where>
+
+    </select>
+
+    <!--海外仓出库管理导出-->
+    <select id="allList"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasOutWarehouseParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.ExportOverseasOutWarehouseResult">
+        SELECT
+            T.ID,
+            T.PARENT_ID,
+            T.OUT_ORDER,
+            T.PLATFORM,
+            T.SYS_SHOPS_NAME,
+            T.SYS_SITE,
+            T.OPERATE_TYPE,
+            T.SHOULD_OUT_QUANTITY,
+            T.SKU_NUM,
+            T.TOTAL_PACKAGE_NUM,
+            T.OUT_WAREHOUSE_NAME,
+            T.IN_WAREHOUSE_NAME,
+            T.LOGISTICS_STATUS,
+            T.LOGISTICS_TIME,
+            T.LOGISTICS_USER,
+            T.REMARK,
+            T.CREATE_TIME,
+            T.CREATE_USER,
+            T.UPDATE_TIME,
+            T.UPDATE_USER,
+            CASE WHEN T.SYNC_ERP_STATUS='-1' THEN '推送失败'
+            WHEN T.SYNC_ERP_STATUS='1' THEN '推送成功'
+            WHEN T.SYNC_ERP_STATUS='4' THEN '审核失败'
+            END SYNC_ERP_STATUS,
+            O.PACKAGE_BAR_CODE,
+            O.PACKAGE_NUM,
+            O.PACKAGE_NUM_NAME,
+            O.FN_SKU,
+            O.SKU,
+            O.QUANTITY,
+            O.MATERIAL_CODE,
+            O.DEPARTMENT,
+            O.TEAM,
+            O.NEEDS_USER,
+            O.LOGISTICS_COMPANY,
+            O.LOGISTICS_NUM,
+            O.CREATE_TIME,
+            O.CREATE_USER,
+            O.UPDATE_TIME,
+            O.UPDATE_USER
+        FROM OVERSEAS_OUT_WAREHOUSE T
+        LEFT JOIN
+        OVERSEAS_OUT_WAREHOUSE_DETAIL O
+        ON O.OUT_ORDER=T.OUT_ORDER
+        <where>
+            <include refid="List_Condition" />
+            <if test="param.packageBarCode != null and param.packageBarCode != ''">
+                AND O.PACKAGE_BAR_CODE= #{param.packageBarCode}
+            </if>
+            <if test="param.sku != null and param.sku != ''">
+                AND O.SKU= #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND O.MATERIAL_CODE= #{param.materialCode}
+            </if>
+        </where>
+        ORDER BY T.CREATE_TIME DESC
+    </select>
+
+
+
+</mapper>

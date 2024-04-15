@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.DisposeRemoveMapper">
+  <resultMap id="BaseResultMap"
+    type="com.tadpole.cloud.platformSettlement.api.inventory.model.result.ErpAdjustResult">
+    <result column="FMATERIALID" property="FMATERIALID"/>
+    <result column="FUnitID" property="FUnitID"/>
+    <result column="FQty" property="FQty"/>
+    <result column="FSTOCKID" property="FSTOCKID"/>
+    <result column="FOwnerIdHead" property="FOwnerIdHead"/>
+    <result column="FOWNERTYPEID" property="FOWNERTYPEID"/>
+    <result column="FOWNERID" property="FOWNERID"/>
+    <result column="FSTOCKSTATUSID" property="FSTOCKSTATUSID"/>
+    <result column="FKEEPERTYPEID" property="FKEEPERTYPEID"/>
+    <result column="FKEEPERID" property="FKEEPERID"/>
+    <result column="F_REQUIRETEAM" property="F_REQUIRETEAM"/>
+    <result column="warehouse_name" property="warehouse_name"/>
+    <result column="ORG" property="org"/>
+  </resultMap>
+
+  <select id="customPageList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.DisposeRemoveResult"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.DisposeRemoveParam">
+
+
+    SELECT
+      n.id,n.out_id,
+      m.BILL_CODE,m.YEAR,m.MONTH,m.PLATFORM,m.SHOP_NAME,m.SITE,m.INVENTORY_ORGANIZATION_CODE,m.WAREHOUSE_NAME,m.WAREHOUSE_CODE,
+      n.DEPARTMENT,n.TEAM,n.SKU,n.MATERIAL_CODE,n.DISPOSE_AMOUNT,n.REMOVE_AMOUNT,
+      CASE n.IS_CANCEL WHEN 0 THEN '未作废' WHEN 1 THEN '已作废' END IS_CANCEL,
+      CASE n.SYNC_STATUS WHEN 0 THEN '未同步' WHEN 1 THEN '已同步' END SYNC_STATUS,
+      n.inventory_status
+    FROM DISPOSE_REMOVE m JOIN
+    DISPOSE_REMOVE_DETAIL n ON n.out_id = m.id
+    <where>
+      <if test="paramCondition.billCode != null and paramCondition.billCode != ''">
+        m.BILL_CODE =#{paramCondition.billCode}
+      </if>
+      <if test="paramCondition.year != null and paramCondition.year != ''">
+        and m.year =#{paramCondition.year}
+      </if>
+      <if test="paramCondition.month != null and paramCondition.month != ''">
+        and m.month =#{paramCondition.month}
+      </if>
+      <if test="paramCondition.platform != null and paramCondition.platform != ''">
+        and m.platform =#{paramCondition.platform}
+      </if>
+      <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+        and m.shop_name =#{paramCondition.shopName}
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site != ''">
+        and m.site =#{paramCondition.site}
+      </if>
+      <if test="paramCondition.department != null and paramCondition.department != ''">
+        and n.department =#{paramCondition.department}
+      </if>
+      <if test="paramCondition.team != null and paramCondition.team != ''">
+        and n.team = #{paramCondition.team}
+      </if>
+      <if test="paramCondition.material != null and paramCondition.material.length>0">
+        and n.material_code in
+        <foreach collection="paramCondition.material" open="(" close=")" separator=","
+          item="materialCode">
+          #{materialCode}
+        </foreach>
+      </if>
+      <if test="paramCondition.inventoryStatus != null and paramCondition.inventoryStatus !=''">
+        and n.inventory_status =#{paramCondition.inventoryStatus}
+      </if>
+      <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+        and n.sync_status = #{paramCondition.syncStatus}
+      </if>
+      <if test="paramCondition.sku != null and paramCondition.sku != ''">
+        and n.sku =#{paramCondition.sku}
+      </if>
+      <if test="paramCondition.years != null and paramCondition.years.size>0">
+        AND m.year IN
+        <foreach collection="paramCondition.years" open="(" close=")" separator="," item="year">
+          #{year}
+        </foreach>
+      </if>
+      <if test="paramCondition.months != null and paramCondition.months.size>0">
+        AND m.month IN
+        <foreach collection="paramCondition.months" open="(" close=")" separator="," item="month">
+          #{month}
+        </foreach>
+      </if>
+      <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+        AND m.platform IN
+        <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+          item="platform">
+          #{platform}
+        </foreach>
+      </if>
+      <if test="paramCondition.shopNames != null and paramCondition.shopNames.size>0">
+        AND m.SHOP_NAME IN
+        <foreach collection="paramCondition.shopNames" open="(" close=")" separator=","
+          item="shopName">
+          #{shopName}
+        </foreach>
+      </if>
+      <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+        AND m.site IN
+        <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+      <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+        AND n.department IN
+        <foreach collection="paramCondition.departments" open="(" close=")" separator=","
+          item="department">
+          #{department}
+        </foreach>
+      </if>
+      <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+        AND n.team IN
+        <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="team">
+          #{team}
+        </foreach>
+      </if>
+      <if test="paramCondition.syncStatuss != null and paramCondition.syncStatuss.size>0">
+        AND n.sync_status IN
+        <foreach collection="paramCondition.syncStatuss" open="(" close=")" separator=","
+          item="syncStatus">
+          #{syncStatus}
+        </foreach>
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND n.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.isDefect != null and paramCondition.isDefect == true ">
+        AND n.MATERIAL_CODE is null
+      </if>
+    </where>
+  </select>
+
+
+  <select id="emailList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.result.DisposeRemoveResult">
+    select
+      d.id,d.INVENTORY_STATUS,d.DEPARTMENT,d.SKU,d.MATERIAL_CODE,d.DISPOSE_AMOUNT,d.REMOVE_AMOUNT,
+      case d.IS_CANCEL when 0 then '未作废' when 1 then '已作废' end IS_CANCEL,
+      case d.SYNC_STATUS when 0 then '未同步' when 1 then '已同步' end SYNC_STATUS
+      ,d.UPDATE_AT,d.UPDATE_BY,d.TEAM,d.OUT_ID,m.BILL_CODE,m.YEAR,m.MONTH,m.PLATFORM
+      ,m.SHOP_NAME,m.SITE,m.ORG,m.INVENTORY_ORGANIZATION_CODE,m.WAREHOUSE_NAME,m.WAREHOUSE_CODE
+
+    from DISPOSE_REMOVE_DETAIL d
+           LEFT JOIN DISPOSE_REMOVE m ON d.out_id=m.id
+    where  d.MATERIAL_CODE is null and d.is_cancel = 0 AND d.sync_status =0
+
+
+  </select>
+
+
+  <select id="getQuantity" resultType="java.lang.String"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.DisposeRemoveParam">
+    SELECT
+      sum(DISPOSE_AMOUNT)||','||
+      sum(REMOVE_AMOUNT)
+    FROM DISPOSE_REMOVE m JOIN
+    DISPOSE_REMOVE_DETAIL n ON n.out_id = m.id
+    <where>
+      <if test="paramCondition.billCode != null and paramCondition.billCode != ''">
+        m.BILL_CODE =#{paramCondition.billCode}
+      </if>
+      <if test="paramCondition.year != null and paramCondition.year != ''">
+        and m.year =#{paramCondition.year}
+      </if>
+      <if test="paramCondition.month != null and paramCondition.month != ''">
+        and m.month =#{paramCondition.month}
+      </if>
+      <if test="paramCondition.platform != null and paramCondition.platform != ''">
+        and m.platform =#{paramCondition.platform}
+      </if>
+      <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+        and m.shop_name =#{paramCondition.shopName}
+      </if>
+      <if test="paramCondition.site != null and paramCondition.site != ''">
+        and m.site =#{paramCondition.site}
+      </if>
+      <if test="paramCondition.department != null and paramCondition.department != ''">
+        and n.department =#{paramCondition.department}
+      </if>
+      <if test="paramCondition.team != null and paramCondition.team != ''">
+        and n.team = #{paramCondition.team}
+      </if>
+      <if test="paramCondition.material != null and paramCondition.material.length>0">
+        and n.material_code in
+        <foreach collection="paramCondition.material" open="(" close=")" separator=","
+          item="materialCode">
+          #{materialCode}
+        </foreach>
+      </if>
+      <if test="paramCondition.inventoryStatus != null and paramCondition.inventoryStatus !=''">
+        and n.inventory_status =#{paramCondition.inventoryStatus}
+      </if>
+      <if test="paramCondition.syncStatus != null and paramCondition.syncStatus != ''">
+        and n.sync_status = #{paramCondition.syncStatus}
+      </if>
+      <if test="paramCondition.sku != null and paramCondition.sku != ''">
+        and n.sku =#{paramCondition.sku}
+      </if>
+      <if test="paramCondition.years != null and paramCondition.years.size>0">
+        AND m.year IN
+        <foreach collection="paramCondition.years" open="(" close=")" separator="," item="year">
+          #{year}
+        </foreach>
+      </if>
+      <if test="paramCondition.months != null and paramCondition.months.size>0">
+        AND m.month IN
+        <foreach collection="paramCondition.months" open="(" close=")" separator="," item="month">
+          #{month}
+        </foreach>
+      </if>
+      <if test="paramCondition.platforms != null and paramCondition.platforms.size>0">
+        AND m.platform IN
+        <foreach collection="paramCondition.platforms" open="(" close=")" separator=","
+          item="platform">
+          #{platform}
+        </foreach>
+      </if>
+      <if test="paramCondition.shopNames != null and paramCondition.shopNames.size>0">
+        AND m.SHOP_NAME IN
+        <foreach collection="paramCondition.shopNames" open="(" close=")" separator=","
+          item="shopName">
+          #{shopName}
+        </foreach>
+      </if>
+      <if test="paramCondition.sites != null and paramCondition.sites.size>0">
+        AND m.site IN
+        <foreach collection="paramCondition.sites" open="(" close=")" separator="," item="site">
+          #{site}
+        </foreach>
+      </if>
+      <if test="paramCondition.departments != null and paramCondition.departments.size>0">
+        AND n.department IN
+        <foreach collection="paramCondition.departments" open="(" close=")" separator=","
+          item="department">
+          #{department}
+        </foreach>
+      </if>
+      <if test="paramCondition.teams != null and paramCondition.teams.size>0">
+        AND n.team IN
+        <foreach collection="paramCondition.teams" open="(" close=")" separator="," item="team">
+          #{team}
+        </foreach>
+      </if>
+      <if test="paramCondition.syncStatuss != null and paramCondition.syncStatuss.size>0">
+        AND n.sync_status IN
+        <foreach collection="paramCondition.syncStatuss" open="(" close=")" separator=","
+          item="syncStatus">
+          #{syncStatus}
+        </foreach>
+      </if>
+      <if test="paramCondition.skus != null and paramCondition.skus.size>0">
+        AND n.sku IN
+        <foreach collection="paramCondition.skus" open="(" close=")" separator="," item="sku">
+          #{sku}
+        </foreach>
+      </if>
+      <if test="paramCondition.isDefect != null and paramCondition.isDefect == true ">
+        AND n.MATERIAL_CODE is null
+      </if>
+    </where>
+  </select>
+
+  <select id="getSyncList"
+    parameterType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.DisposeRemoveParam"
+    resultMap="BaseResultMap">
+    select d.MATERIAL_CODE               FMaterialId,
+           'Pcs'                         FUnitID,
+           sum(d.DISPOSE_AMOUNT)          FQty,
+           m.WAREHOUSE_CODE              FSTOCKID,
+           m.WAREHOUSE_CODE              FOwnerIdHead,
+           '业务组织'                        FOWNERTYPEID,
+           m.WAREHOUSE_CODE              FOWNERID,
+           m.warehouse_name, m.org,
+           'KCZT01_SYS'                  FSTOCKSTATUSID,
+           '业务组织'                        FKEEPERTYPEID,
+           m.INVENTORY_ORGANIZATION_CODE FKEEPERID,
+           '002'                         FOWNERID,
+           '002'                         FKEEPERID,
+           d.team                        F_REQUIRETEAM
+    from DISPOSE_REMOVE_DETAIL d
+           LEFT JOIN DISPOSE_REMOVE m ON d.out_id = m.id
+    WHERE m.id = #{ paramCondition.outId}
+      and d.IS_CANCEL = 0
+    <if test="paramCondition.syncStatus != null and paramCondition.syncStatus ==0">
+      and d.SYNC_STATUS =0
+    </if>
+      and d.DISPOSE_AMOUNT > 0
+    group by m.INVENTORY_ORGANIZATION_CODE, m.WAREHOUSE_CODE, d.MATERIAL_CODE, m.WAREHOUSE_NAME,
+             d.team,m.WAREHOUSE_NAME,m.ORG
+  </select>
+
+
+  <update id="rejectBatch" parameterType="java.util.List">
+    UPDATE
+    DISPOSE_REMOVE_DETAIL a
+    SET
+    a.IS_CANCEL = 1,
+    a.UPDATE_AT = SYSDATE,
+
+    <if test="paramCondition.updateBy != null and paramCondition.updateBy != ''">
+      a.UPDATE_BY = #{paramCondition.updateBy}
+    </if>
+    <where>
+      <if test="paramCondition.idList != null and paramCondition.idList.size>0">
+        and a.id IN
+        <foreach collection="paramCondition.idList" open="(" close=")" separator="," item="id">
+          #{id}
+        </foreach>
+      </if>
+    </where>
+  </update>
+
+
+
+  <update id="syncReportReject">
+
+    MERGE INTO remove_main_detial d
+      USING (SELECT b.id
+             FROM remove_main a
+                    JOIN remove_main_detial b ON a.id = b.main_id
+             WHERE 1 = 1
+               and b.VERIFY_STATUS = 1
+               and b.GENERATE_STATUS = 1
+               and a.SKU = #{paramCondition.sku}
+               and b.BILL_CODE = #{paramCondition.billCode}
+      ) h
+      ON (d.id = h.id)
+      WHEN MATCHED THEN   UPDATE
+      SET d.VERIFY_STATUS = 2,
+          d.VERIFY_AT = SYSDATE,
+          d.UPDATE_TIME = SYSDATE,
+          d.VERIFY_BY = #{paramCondition.updateBy},
+          d.UPDATE_BY = #{paramCondition.updateBy}
+
+
+  </update>
+  <update id="syncReportBatchReject"
+    parameterType="java.util.List">
+    MERGE INTO remove_main_detial a
+    USING (SELECT b.id,a.sku
+    FROM remove_main a
+    JOIN remove_main_detial b ON a.id = b.main_id
+    WHERE  b.VERIFY_STATUS = 1
+    and b.GENERATE_STATUS = 1
+    ) h
+
+    ON (a.id = h.id)
+    WHEN MATCHED THEN   UPDATE
+
+    <set>
+      <trim prefix="a.VERIFY_STATUS = CASE" suffix="ELSE a.VERIFY_STATUS END,">
+
+      <foreach collection="paramCondition" item="item" index="index">
+          WHEN a.BILL_CODE = #{item.billCode}  and  h.sku = #{item.sku} THEN 2
+        </foreach>
+      </trim>
+      <trim prefix="a.VERIFY_AT = CASE" suffix="ELSE a.VERIFY_AT END,">
+
+      <foreach collection="paramCondition" item="item" index="index">
+          WHEN a.BILL_CODE = #{item.billCode}  and  h.sku = #{item.sku} THEN SYSDATE
+        </foreach>
+      </trim>
+
+      <trim prefix="a.VERIFY_BY = CASE" suffix="ELSE a.VERIFY_BY END,">
+
+      <foreach collection="paramCondition" item="item" index="index">
+          WHEN a.BILL_CODE = #{item.billCode}  and  h.sku = #{item.sku} THEN #{item.updateBy}
+        </foreach>
+      </trim>
+
+      <trim prefix="a.UPDATE_BY = CASE" suffix="ELSE a.UPDATE_BY END,">
+
+      <foreach collection="paramCondition" item="item" index="index">
+          WHEN a.BILL_CODE = #{item.billCode}  and  h.sku = #{item.sku} THEN #{item.updateBy}
+        </foreach>
+      </trim>
+    </set>
+
+  </update>
+
+
+
+
+
+  <update id="updateSyncStatus">
+    update DISPOSE_REMOVE
+    set CAN_SYNC=0 WHERE CAN_SYNC=1 AND ID  IN
+                         ( select
+                             d.out_id id from DISPOSE_REMOVE_DETAIL d
+                           where  ((d.material_code is null or d.DEPARTMENT is null)
+                             and d.is_cancel = 0 and DISPOSE_AMOUNT > 0) or (SYNC_STATUS=1 and DISPOSE_AMOUNT > 0) group by d.out_id)
+  </update>
+  <update id="updateCanSyncNormal">
+    update DISPOSE_REMOVE
+    set CAN_SYNC=1 WHERE CAN_SYNC=0 AND ID NOT IN
+                         ( select
+                             d.out_id id from DISPOSE_REMOVE_DETAIL d
+                           where  ((d.material_code is null or d.DEPARTMENT is null)
+                             and d.is_cancel = 0  and DISPOSE_AMOUNT > 0) or (SYNC_STATUS=1 and DISPOSE_AMOUNT > 0) group by d.out_id)
+  </update>
+  <select id="normalList"
+    resultType="com.tadpole.cloud.platformSettlement.api.inventory.model.params.DisposeRemoveParam">
+    select
+      d.id out_id
+    from DISPOSE_REMOVE d where  d.can_sync=1
+  </select>
+
+
+</mapper>

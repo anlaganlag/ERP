@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.PmcVerifInfoMapper">
+
+    <select id="querypmcVerifList" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.PmcVerifInfoParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.PmcVerifInfoResult">
+
+        SELECT a.* ,
+        CASE a.BILL_TYPE
+        WHEN 'JJBH' THEN '紧急备货'
+        WHEN 'XPBH' THEN '新品备货'
+        WHEN 'XMBH' THEN '项目备货'
+        WHEN 'RCBH' THEN '日常备货'
+        ELSE '其他' END billTypeName
+        FROM  STOCK_PMC_VERIF_INFO a where 1 = 1
+
+        <if test="reqVO != null">
+
+            <if test="reqVO.billType != null and reqVO.billType !=''">
+                AND a.BILL_TYPE = #{reqVO.billType}
+            </if>
+
+            <if test="reqVO.materialCode != null and reqVO.materialCode !=''">
+                AND a.MATERIAL_CODE = #{reqVO.materialCode}
+            </if>
+
+            <if test="reqVO.verifResult != null and reqVO.verifResult !=''">
+                AND a.VERIF_RESULT = #{reqVO.verifResult}
+            </if>
+
+            <if test="reqVO.matstylesecondlabel != null and reqVO.matstylesecondlabel !=''">
+                AND a.MATSTYLESECONDLABEL = #{reqVO.matstylesecondlabel}
+            </if>
+
+        </if>
+
+    </select>
+
+
+
+    <select id="queryList" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.PmcVerifInfoParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.PmcVerifInfoResult">
+
+        SELECT
+        MAX(DEPARTMENT)  DEPARTMENT  ,
+        MAX(TEAM)  TEAM  ,
+        MAX(MATERIAL_CODE)  MATERIAL_CODE  ,
+        MAX (PRODUCT_TYPE) PRODUCT_TYPE,
+        MAX (PRODUCT_NAME) PRODUCT_NAME,
+        MAX (MODEL) MODEL ,
+        MAX (MINPOQTY) MINPOQTY,
+        MAX (MINPOQTY_NOTES) MINPOQTY_NOTES,
+        MAX (SPELL_ORDERNUM ) SPELL_ORDERNUM ,
+        MAX (SPELL_ORDERNUM_REMARK ) SPELL_ORDERNUM_REMARK ,
+        MAX(MATSTYLESECONDLABEL) MATSTYLESECONDLABEL ,
+        MAX(BILL_TYPE) BILL_TYPE ,
+--             按备货类型字段BILL_TYPE排序，然后拼接申请人名，并以逗号分隔，然后正则截取第一个人名
+        regexp_substr(XMLAGG(XMLPARSE(CONTENT APPLY_PERSON||',') ORDER BY INSTR('XPBH,JJBH,XMBH,RCBH',BILL_TYPE)).GetClobVal(),'[^,]+',1,1)  APPLY_PERSON ,
+
+        CASE WHEN max(BILL_TYPE) = min(BILL_TYPE) THEN (
+                                                            CASE MAX(BILL_TYPE)
+                                                            WHEN 'JJBH' THEN '紧急备货'
+                                                            WHEN 'XPBH' THEN '新品备货'
+                                                            WHEN 'XMBH' THEN '项目备货'
+                                                            WHEN 'RCBH' THEN '日常备货'
+                                                            ELSE '其他' END
+                                                        )
+        ELSE '混合备货'  END billTypeName,
+
+        SUM(
+            CASE BILL_TYPE
+            WHEN 'JJBH' THEN 1
+            ELSE 0 END
+        ) COUNT_JJBH,
+
+        SUM(QTY) QTY, --待处理
+        MIN (OPER_EXPECTED_DATE) OPER_EXPECTED_DATE,--待处理
+        MAX( ORDER_LAST_TIME) ORDER_LAST_TIME, --待处理
+        MAX(ADVICE_SUPPLIER) ADVICE_SUPPLIER , -- 建议供应商
+        MAX(PURCHASE_PERSON)  PURCHASE_PERSON, --采购人员
+        MAX(MAT_CONTROL_PERSON)  MAT_CONTROL_PERSON, --物控专员
+        MAX(INCLUDE_TAX) INCLUDE_TAX,-- 是否含税
+        MAX(CREATE_ORDER_TYPE) CREATE_ORDER_TYPE, -- 下单方式
+        COUNT(1) mergeCount, -- 合并数量
+        MAX(TEAM  || MATERIAL_CODE ) mergeGroupField,
+        MAX(MATERIAL_PROPERTIES) MATERIAL_PROPERTIES,
+        MAX(MAT_MODE_SPEC) MAT_MODE_SPEC,
+        LISTAGG(NVL(REMARK,''), '-') WITHIN GROUP ( ORDER BY ID) REMARK_MERGE
+        FROM STOCK_PMC_VERIF_INFO
+        WHERE VERIF_RESULT=0
+
+        <if test="materialCode != null and materialCode !=''">
+            AND MATERIAL_CODE = #{materialCode}
+        </if>
+
+        <if test="materialCodeList != null and materialCodeList.size() != 0">
+            AND MATERIAL_CODE IN
+            <foreach collection="materialCodeList" item="materialCode" index="index" separator=","
+                     open="(" close=")">
+                #{materialCode}
+            </foreach>
+        </if>
+
+        GROUP BY  DEPARTMENT||TEAM||MATERIAL_CODE
+
+        <choose>
+            <when test="appQtyLessMoqQty">
+                HAVING  SUM(QTY) &lt; max(MINPOQTY)
+            </when>
+        </choose>
+        <choose>
+            <when test="appQtyMoreEqMoqQty">
+                HAVING  SUM(QTY) &gt;= MAX(MINPOQTY)
+            </when>
+        </choose>
+
+    </select>
+
+
+    <select id="autoAnalyze" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.PmcAutoAnalyzeParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.PmcAutoAnalyzeResult">
+        SELECT
+            f.FID AS  k3orderId, -- k3订单id,
+            f.MATERIAL_CODE AS materialCode,
+            f.team AS team,
+            f.FTAXRATE AS taxRate, -- 税率,
+            a.FBILLNO AS  billNo ,-- k3单据编号,
+	        b.FNUMBER AS adviceSupplierId ,-- 供应编号,
+	        c.FNAME AS adviceSupplier, -- 供应商,
+	        d.FNUMBER AS purchasePersonId ,-- 采购员工号,
+	        e.FNAME AS purchasePerson, -- 采购员,
+            hr.FNAME AS matControlPerson, -- 物控专员
+            f.FNOTE AS note, -- 备注,
+	        a.FCREATEDATE AS orderLastTime, -- 创建时间
+            f.team + f.MATERIAL_CODE AS mergeGroupField -- 合并字段
+        FROM
+            (--找出最近下单的单号
+                        SELECT
+                        ab.FNUMBER MATERIAL_CODE,
+                        ac.FNAME as team,
+                        MAX(a.FID) FID ,
+                        MAX(a.FNOTE) FNOTE,
+                        MAX(aa.FTAXRATE) FTAXRATE
+                        FROM
+                        t_PUR_POOrder o
+                        LEFT JOIN  t_PUR_POOrderEntry a on o.FID = a.FID
+                        LEFT JOIN t_PUR_POOrderEntry_F aa ON a.FID= aa.FID
+                        LEFT JOIN T_BD_MATERIAL ab on a.FMATERIALID =ab.FMATERIALID
+                        LEFT JOIN T_BD_DEPARTMENT_L ac on a.F_PAEZ_BASE=ac.FDEPTID
+                        WHERE
+                        o.FDOCUMENTSTATUS ='C'  AND ab.FUSEORGID = 100269
+
+                        GROUP BY ac.FNAME, ab.FNUMBER
+
+
+            ) f
+                LEFT JOIN t_PUR_POOrder a ON a.FID = f.FID
+                LEFT JOIN T_BD_SUPPLIER b ON b.FSUPPLIERID= a.FSUPPLIERID
+                LEFT JOIN T_BD_SUPPLIER_L c ON c.FSUPPLIERID= a.FSUPPLIERID
+                LEFT JOIN V_BD_BUYER d ON d.FID= a.FPURCHASERID
+                LEFT JOIN T_BD_STAFF_L e ON e.FSTAFFID= d.FSTAFFID
+                LEFT JOIN T_HR_EMPINFO_L hr ON b.F_BSC_BASE=hr.FID
+
+
+        WHERE 1=1 and a.FDOCUMENTSTATUS ='C'
+        <if test="team != null and team.size() != 0">
+            AND f.team IN
+            <foreach collection="team" item="tm" index="index" separator="," open="("
+                     close=")">
+                #{tm}
+            </foreach>
+        </if>
+
+        <if test="materialCode != null and materialCode.size() != 0">
+            AND  f.MATERIAL_CODE IN
+            <foreach collection="materialCode" item="mtc" index="index" separator="," open="("
+                     close=")">
+                #{mtc}
+            </foreach>
+        </if>
+        ORDER BY
+            a.FCREATEDATE DESC
+
+    </select>
+
+
+
+
+    <select id="mergeDetails" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.PmcVerifInfoParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.PmcVerifInfoResult">
+        SELECT
+        b.CREATE_TIME AS deptApplyDate,
+        b.VERIF_PERSON_NAME AS operVerifPerson,
+        b.VERIF_REASON AS operVerifReason ,
+        a.*,
+        CASE a.BILL_TYPE
+            WHEN 'JJBH' THEN '紧急备货'
+            WHEN 'XPBH' THEN '新品备货'
+            WHEN 'XMBH' THEN '项目备货'
+            WHEN 'RCBH' THEN '日常备货'
+            ELSE '其他' END billTypeName
+        FROM
+        ( SELECT * FROM STOCK_PMC_VERIF_INFO  WHERE VERIF_RESULT =0 AND  DEPARTMENT=#{department} AND  TEAM=#{team} AND MATERIAL_CODE=#{materialCode} ) a   -- PURCHASE_ORDER_ID
+        LEFT JOIN (SELECT * FROM STOCK_VERIF_INFO_RECORD WHERE VERIF_BIZ_TYPE ='10' ) b ON a.PURCHASE_ORDER_ID=b.PURCHASE_ORDER_ID
+
+    </select>
+
+
+
+    <select id="autoAnalyzeByMat" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.PmcAutoAnalyzeParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.PmcAutoAnalyzeResult">
+
+        SELECT
+        a.FID AS  k3orderId, -- k3订单id,
+        f.MATERIAL_CODE AS materialCode,
+        ''  team,
+        0 taxRate, -- 税率,
+        a.FBILLNO AS  billNo ,-- k3单据编号,
+        b.FNUMBER AS adviceSupplierId ,-- 供应编号
+        c.FNAME AS adviceSupplier, -- 供应商
+        d.FNUMBER AS purchasePersonId ,-- 采购员工号
+        e.FNAME AS purchasePerson, -- 采购员
+        hr.FNAME matControlPerson, -- 物控专员
+        ''  note, -- 备注,
+        a.FCREATEDATE AS orderLastTime, -- 创建时间
+        f.MATERIAL_CODE AS mergeGroupField -- 合并字段
+        FROM
+        (--找出最近下单的单号
+                SELECT
+                MAX(ab.FNUMBER) MATERIAL_CODE,
+                MAX(a.FID) FID
+                FROM
+                t_PUR_POOrder o
+                LEFT JOIN  t_PUR_POOrderEntry a on o.FID = a.FID
+                LEFT JOIN T_BD_MATERIAL ab on a.FMATERIALID =ab.FMATERIALID
+                WHERE
+                o.FDOCUMENTSTATUS ='C'
+                AND ab.FUSEORGID = 100269
+                <if test="materialCode != null and materialCode.size() != 0">
+                    AND  ab.FNUMBER IN
+                    <foreach collection="materialCode" item="mtc" index="index" separator="," open="("
+                             close=")">
+                        #{mtc}
+                    </foreach>
+                </if>
+                GROUP BY   ab.FNUMBER
+        ) f
+        LEFT JOIN t_PUR_POOrder a ON a.FID = f.FID
+        LEFT JOIN T_BD_SUPPLIER b ON b.FSUPPLIERID= a.FSUPPLIERID
+        LEFT JOIN T_BD_SUPPLIER_L c ON c.FSUPPLIERID= a.FSUPPLIERID
+        LEFT JOIN V_BD_BUYER d ON d.FID= a.FPURCHASERID
+        LEFT JOIN T_BD_STAFF_L e ON e.FSTAFFID= d.FSTAFFID
+        LEFT JOIN T_HR_EMPINFO_L hr  on b.F_BSC_BASE=hr.FID
+        ORDER BY
+        a.FCREATEDATE DESC
+    </select>
+
+
+
+    <select id="planApprovedOrder" parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.PmcVerifInfoParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.PmcVerifInfoResult">
+        SELECT
+        PURCHASE_ORDER_ID AS purchaseOrderId,
+        DEPARTMENT,
+        TEAM,
+        MATERIAL_CODE,
+        CASE
+        BILL_TYPE
+        WHEN 'JJBH' THEN '紧急备货'
+        WHEN 'XPBH' THEN '新品备货'
+        WHEN 'XMBH' THEN '项目备货'
+        WHEN 'RCBH' THEN '日常备货'
+        ELSE '其他'
+        END billTypeName,
+        qty,
+        CASE
+        VERIF_RESULT
+        WHEN '0' THEN '待PMC审核'
+        WHEN '1' THEN 'PMC审核通过'
+        WHEN '2' THEN 'PMC审核不通过'
+        ELSE '其他'
+        END VERIF_RESULT,
+        VERIF_PERSON_NAME,
+        VERIF_DATE,
+        APPLY_PERSON,
+        create_time
+        FROM
+        STOCK_PMC_VERIF_INFO
+        WHERE   DEPARTMENT=#{department} AND  TEAM=#{team} AND MATERIAL_CODE=#{materialCode}
+            AND CREATE_TIME &gt;= #{createTimeStart}
+            AND CREATE_TIME &lt;=  #{createTimeEnd}
+    </select>
+
+    <select id="getMatControlPersonBySupplier"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.SupplierInfoResult">
+        SELECT DISTINCT b.FNUMBER AS supplierCode,
+        c.FNAME   AS supplierName,
+        hr.FNAME  AS matControlPerson
+        FROM T_BD_SUPPLIER b
+        LEFT JOIN T_BD_SUPPLIER_L c
+        ON b.FSUPPLIERID = c.FSUPPLIERID
+        LEFT JOIN T_HR_EMPINFO_L hr
+        ON b.F_BSC_BASE = hr.FID
+        <where>
+            b.FNUMBER IS NOT NULL  AND b.FNUMBER !=''
+            AND c.FNAME IS NOT NULL AND c.FNAME !=''
+            <if test="supplier != null and supplier != ''">
+                AND c.FNAME = #{supplier}
+            </if>
+
+            <if test="supplierCode != null and supplierCode != ''">
+                AND b.FNUMBER = #{supplierCode}
+            </if>
+        </where>
+        ORDER BY b.FNUMBER
+    </select>
+
+</mapper>

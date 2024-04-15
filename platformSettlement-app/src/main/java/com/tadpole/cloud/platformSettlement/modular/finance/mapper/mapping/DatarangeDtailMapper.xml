@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.DatarangeDtailMapper">
+    <select id="getDatarangeList" resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.DatarangeResult"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeParam">
+            SELECT * FROM CW_DATARANGE WHERE STATUS IN(1,2)
+    </select>
+
+    <!--获取刷取财务分类未成功的Datarange数据-->
+    <select id="getDatarangeDtailList" resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.DatarangeDtail"
+            parameterType="java.lang.String">
+            SELECT * FROM CW_DATARANGE_DETAIL_COMFIRM WHERE SETTLEMENT_ID=#{settlementId} and (FINANCE_TYPE is null or FINANCE_TYPE='')
+    </select>
+
+    <update id="refreshDifference" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeDtailParam">
+               UPDATE cw_datarange_dtail t SET t.difference = t.total-(t.product_sales + t.product_sales_tax + t.shipping_credits + t.shipping_credits_tax + t.gift_wrap_credits + t.gift_wrap_credits_tax +  t.amazon_point_fee + t.promotional_rebate + t.promotional_rebate_tax +
+               t.marketplace_withheld_tax + t.selling_fees +  t.fba_fees + t.other_transaction_fees + t.other) where t.SETTLEMENT_ID= #{paramCondition.settlementId}
+    </update>
+    <insert id="InsertDataRangeDetailComfirm"
+            parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeDtailParam">
+            INSERT INTO CW_DATARANGE_DETAIL_COMFIRM
+            (
+                PARENT_ID,
+                SETTLEMENT_ID,
+                POSTED_DATE,
+                DEPOSIT_DATE,
+                ORDER_ID,
+                SKU,
+                MARKETPLACE_NAME,
+                PLATFORM,
+                SYS_SITE,
+                SYS_SHOPS_NAME,
+                FINANCE_TYPE,
+                TRANSACTION_TYPE,
+                AMOUNT_TYPE,
+                AMOUNT_DESCRIPTION,
+                CURRENCY_CODE,
+                QUANTITY_PURCHASED,
+                AMT_SOURCE,
+                TOTAL_AMOUNT,
+                CREATE_TIME,
+                BATCHNO,
+                GROUP_TOTAL_QUANTITY
+            )
+            SELECT
+               T.ID,
+               T.SETTLEMENT_ID,
+               T.POSTED_DATE,
+               T.DEPOSIT_DATE,
+               T.ORDER_ID,
+               T.SKU,
+               T.MARKETPLACE_NAME,
+               T.PLATFORM,
+               T.SYS_SITE,
+               T.SYS_SHOPS_NAME,
+               NVL(T3.FINANCIAL_CLASSIFICATION,T4.FINANCIAL_CLASSIFICATION) AS FINANCE_TYPE,
+               T.TRANSACTION_TYPE,
+               T.AMOUNT_TYPE,
+               T.AMOUNT_DESCRIPTION,
+               T.CURRENCY_CODE,
+               T.QUANTITY_PURCHASED,
+               T.AMT_SOURCE,
+               T2.TOTAL_AMOUNT,
+               T.CREATE_TIME,
+               T.BATCHNO,
+               CASE WHEN T5.GROUP_TOTAL_QUANTITY IS NULL THEN T.QUANTITY_PURCHASED ELSE T5.GROUP_TOTAL_QUANTITY END AS GROUP_TOTAL_QUANTITY
+            FROM
+            (
+                SELECT
+                    ID,
+                    SETTLEMENT_ID,
+                    TO_CHAR(TRUNC(DATE_TIME),'YYYYMM') AS PERIOD,
+                    DATE_TIME AS POSTED_DATE,
+                    TO_DATE('1900-1-1','yyyy-mm-dd') AS DEPOSIT_DATE,
+                    ORDER_ID,
+                    'NULL' AS ORDER_ITEM_CODE,
+                    SKU,
+                    'NULL' AS SKUCODE,
+                    'NULL' AS MERCHANT_ORDER_ID,
+                    'NULL' AS MERCHANT_ORDER_ITEM_ID,
+                    'NULL' AS MERCHANT_ADJUSTMENT_ITEM_ID,
+                    'NULL' AS SHIPMENT_ID,
+                    'NULL' AS ADJUSTMENT_ID,
+                    'NULL' AS FULFILLMENT_ID,
+                    MARKETPLACE AS MARKETPLACE_NAME,
+                    PLATFORM,
+                    SYS_SITE,
+                    SYS_SHOPS_NAME,
+                    TYPE AS TRANSACTION_TYPE,
+                    DESCRIPTION AS AMOUNT_DESCRIPTION,
+                    CURRENCY AS CURRENCY_CODE,
+                    QUANTITY AS QUANTITY_PURCHASED,
+                    AMOUNT_TYPE,
+                    AMOUNT AS AMT_SOURCE,
+                    'Settlement_Datarange' AS  DATA_SOURCE,
+                    CREATE_TIME,
+                    BATCHNO
+                FROM CW_DATARANGE_DTAIL T
+                -- 列转行
+                UNPIVOT
+                (
+                    AMOUNT FOR AMOUNT_TYPE IN(
+                        PRODUCT_SALES,
+                        PRODUCT_SALES_TAX,
+                        SHIPPING_CREDITS,
+                        SHIPPING_CREDITS_TAX,
+                        GIFT_WRAP_CREDITS,
+                        GIFT_WRAP_CREDITS_TAX,
+                        AMAZON_POINT_FEE,
+                        PROMOTIONAL_REBATE,
+                        PROMOTIONAL_REBATE_TAX,
+                        MARKETPLACE_WITHHELD_TAX,
+                        SELLING_FEES,
+                        FBA_FEES,
+                        OTHER_TRANSACTION_FEES,
+                        OTHER,
+                        DIFFERENCE
+                    )
+                )
+                WHERE NVL(AMOUNT,0)!=0
+            ) T
+            INNER JOIN CW_DATARANGE DT ON DT.SETTLEMENT_ID=T.SETTLEMENT_ID AND DT.BATCHNO=T.BATCHNO
+            LEFT JOIN
+            (
+                SELECT
+                    SUM(TOTAL) AS TOTAL_AMOUNT,
+                    MIN(DATE_TIME) AS SETTLEMENT_START_DATE,
+                    MAX(DATE_TIME) AS SETTLEMENT_END_DATE,
+                    SETTLEMENT_ID,
+                    BATCHNO
+                FROM CW_DATARANGE_DTAIL
+                GROUP BY
+                    SETTLEMENT_ID,BATCHNO
+            ) T2 ON T.SETTLEMENT_ID=T2.SETTLEMENT_ID AND T.BATCHNO=T2.BATCHNO
+            LEFT JOIN (
+                SELECT *  FROM CW_FINANCIAL_CLASSIFICATION WHERE STATUS=1 AND VERIFY_STATUS=1 AND CLASSIFICATION_TYPE='DataRange'
+            ) T3 ON UPPER(NVL(T3.AMOUNT_TYPE,0))=UPPER(NVL(T.AMOUNT_TYPE,0))
+                 AND DECODE(T3.COST_DESCRIPTION,NULL,T.AMOUNT_DESCRIPTION,T3.COST_DESCRIPTION)=T.AMOUNT_DESCRIPTION ----空值默认不做条件
+                 AND UPPER(T3.TRADE_TYPE)=UPPER(T.TRANSACTION_TYPE)
+                 AND T3.SITE=T.SYS_SITE
+            LEFT JOIN (
+                SELECT *  FROM CW_FINANCIAL_CLASSIFICATION WHERE STATUS=1 AND VERIFY_STATUS=1 AND CLASSIFICATION_TYPE='DataRange'
+            ) T4 ON UPPER(T.TRANSACTION_TYPE)=UPPER(T4.TRADE_TYPE)
+                 AND UPPER(NVL(T.AMOUNT_TYPE,0))=UPPER(NVL(T4.AMOUNT_TYPE,0))
+                 AND T.AMOUNT_DESCRIPTION LIKE T4.COST_DESCRIPTION
+                 AND T.SYS_SITE=T4.SITE
+                 AND T4.CLASSIFICATION_TYPE='DataRange'
+            LEFT JOIN (
+                SELECT
+                    D.SETTLEMENT_ID,
+                    D.DATE_TIME,
+                    D.TYPE,
+                    D.ORDER_ID,
+                    D.SKU,
+                    D.PLATFORM,
+                    D.SYS_SHOPS_NAME,
+                    D.SYS_SITE,
+                    SUM(D.QUANTITY) GROUP_TOTAL_QUANTITY
+                FROM CW_DATARANGE_DTAIL D
+                GROUP BY
+                    D.SETTLEMENT_ID,
+                    D.DATE_TIME,
+                    D.TYPE,
+                    D.ORDER_ID,
+                    D.SKU,
+                    D.PLATFORM,
+                    D.SYS_SHOPS_NAME,
+                    D.SYS_SITE
+			) T5 ON T5.SETTLEMENT_ID = T.SETTLEMENT_ID
+                AND T5.DATE_TIME = T.POSTED_DATE
+                AND T5.ORDER_ID = T.ORDER_ID
+                AND T5.SKU = T.SKU
+                AND T5.PLATFORM = T.PLATFORM
+                AND T5.SYS_SHOPS_NAME = T.SYS_SHOPS_NAME
+                AND T5.SYS_SITE = T.SYS_SITE
+                AND T5.TYPE = T.TRANSACTION_TYPE
+            WHERE DT.STATUS=1 AND DT.SETTLEMENT_ID= #{paramCondition.settlementId} AND T.BATCHNO=#{paramCondition.batchNo}
+    </insert>
+
+    <!--刷新财务分类金额-->
+    <update id="RefreshFinancialClass" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeDtailParam">
+        UPDATE CW_DATARANGE_DETAIL_COMFIRM T SET
+             T.SALES_PROMOTION=CASE WHEN T.FINANCE_TYPE='SALES PROMOTION' THEN T.AMT_SOURCE ELSE 0 END,
+             T.COMMISSION=CASE WHEN T.FINANCE_TYPE='COMMISSION' THEN T.AMT_SOURCE ELSE 0 END,
+             T.PREVIOUS_RESERVE_AMOUNT=CASE WHEN T.FINANCE_TYPE='PREVIOUS RESERVE AMOUNT' THEN T.AMT_SOURCE ELSE 0 END,
+             T.REFUND_COMMISSION=CASE WHEN T.FINANCE_TYPE='REFUND COMMISSION' THEN T.AMT_SOURCE ELSE 0 END,
+             T.DISPOSAL_FEE=CASE WHEN T.FINANCE_TYPE='DISPOSAL FEE' THEN T.AMT_SOURCE ELSE 0 END,
+             T.LONG_TERM_STORAGE_FEE=CASE WHEN T.FINANCE_TYPE='LONG-TERM STORAGE FEE' THEN T.AMT_SOURCE ELSE 0 END,
+             T.GOOD_WILL=CASE WHEN T.FINANCE_TYPE='GOODWILL' THEN T.AMT_SOURCE ELSE 0 END,
+             T.MONEY_TRANSFER=CASE WHEN T.FINANCE_TYPE='MONEY TRANSFER' THEN T.AMT_SOURCE ELSE 0 END,
+             T.REFUND_PROMOTION=CASE WHEN T.FINANCE_TYPE='REFUND PROMOTION' THEN T.AMT_SOURCE ELSE 0 END,
+             T.ADVERTISING=CASE WHEN T.FINANCE_TYPE='ADVERTISING' THEN T.AMT_SOURCE ELSE 0 END,
+             T.AMAZON_FEE=CASE WHEN T.FINANCE_TYPE='AMAZON FEE' THEN T.AMT_SOURCE ELSE 0 END,
+             T.SALES_TAX=CASE WHEN T.FINANCE_TYPE='SALES-TAX' THEN T.AMT_SOURCE ELSE 0 END,
+             T.SALES_OTHER=CASE WHEN T.FINANCE_TYPE='SALES-OTHER' THEN T.AMT_SOURCE ELSE 0 END,
+             T.REIMBURSEMENT=CASE WHEN T.FINANCE_TYPE='REIMBURSEMENT' THEN T.AMT_SOURCE ELSE 0 END,
+             T.OTHER=CASE WHEN T.FINANCE_TYPE='OTHER' THEN T.AMT_SOURCE ELSE 0 END,
+             T.GIFTWARP_SHIPPING=CASE WHEN T.FINANCE_TYPE='GIFTWARP'||CHR(38)||'SHIPPING' THEN T.AMT_SOURCE ELSE 0 END,
+             T.CURRENT_RESERVE_AMOUNT=CASE WHEN T.FINANCE_TYPE='CURRENT RESERVE AMOUNT' THEN T.AMT_SOURCE ELSE 0 END,
+             T.STORAGE_FEE=CASE WHEN T.FINANCE_TYPE='STORAGE FEE' THEN T.AMT_SOURCE ELSE 0 END,
+             T.REFUND=CASE WHEN T.FINANCE_TYPE='REFUND' THEN T.AMT_SOURCE ELSE 0 END,
+             T.WITHHELD_TAX=CASE WHEN T.FINANCE_TYPE='WITHHELD_TAX' THEN T.AMT_SOURCE ELSE 0 END,
+             T.UNSUCCESSFUL_TRANSFER=CASE WHEN T.FINANCE_TYPE='UNSUCCESSFUL TRANSFER' THEN T.AMT_SOURCE ELSE 0 END,
+             T.REMOVAL_FEE=CASE WHEN T.FINANCE_TYPE='REMOVAL FEE' THEN T.AMT_SOURCE ELSE 0 END,
+             T.SALES_PRINCIPAL=CASE WHEN T.FINANCE_TYPE='SALES-PRINCIPAL' THEN T.AMT_SOURCE ELSE 0 END,
+             T.LIGHTNING_DEAL_FEE=CASE WHEN T.FINANCE_TYPE='LIGHTNING DEAL FEE' THEN T.AMT_SOURCE ELSE 0 END,
+             T.SUCCESSFUL_CHARGE=CASE WHEN T.FINANCE_TYPE='SUCCESSFUL CHARGE' THEN T.AMT_SOURCE ELSE 0 END
+        WHERE T.SETTLEMENT_ID= #{paramCondition.settlementId} AND T.BATCHNO=#{paramCondition.batchNo}
+    </update>
+
+    <!--更新Datarange状态为行转列：2-->
+    <update id="UpdateStatus" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeParam">
+            UPDATE CW_DATARANGE SET STATUS=#{paramCondition.status}  WHERE  SETTLEMENT_ID= #{paramCondition.settlementId} AND BATCHNO=#{paramCondition.batchNo}
+    </update>
+
+    <!--未刷成功的分类写入分类表-->
+    <insert id="InsertFinancialClass" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeDtailParam">
+        INSERT INTO CW_FINANCIAL_CLASSIFICATION
+        (COST_NAME, TRADE_TYPE, AMOUNT_TYPE, COST_DESCRIPTION,CLASSIFICATION_TYPE,SITE)
+        SELECT
+            DISTINCT A.TRANSACTION_TYPE || A.AMOUNT_TYPE ||
+            A.AMOUNT_DESCRIPTION COST_NAME,
+            A.TRANSACTION_TYPE TRADE_TYPE,
+            A.AMOUNT_TYPE AMOUNT_TYPE,
+            A.AMOUNT_DESCRIPTION COST_DESCRIPTION,
+            'DataRange' CLASSIFICATION_TYPE,
+            A.SYS_SITE SITE
+        FROM CW_DATARANGE_DETAIL_COMFIRM A
+        LEFT JOIN CW_FINANCIAL_CLASSIFICATION B
+        ON NVL(B.TRADE_TYPE,'0')=NVL(A.TRANSACTION_TYPE,'0')
+            AND UPPER(B.AMOUNT_TYPE)=UPPER(A.AMOUNT_TYPE) AND NVL(B.COST_DESCRIPTION,'0')=NVL(A.AMOUNT_DESCRIPTION,'0')
+            AND B.CLASSIFICATION_TYPE='DataRange'
+        WHERE
+            A.SETTLEMENT_ID= #{paramCondition.settlementId} AND
+            (A.FINANCE_TYPE IS NULL AND B.AMOUNT_TYPE IS NULL)
+    </insert>
+
+    <!--Datarange刷财务分类明细-->
+    <update id="FillFinancialClass" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeDtailParam">
+        MERGE INTO CW_DATARANGE_DETAIL_COMFIRM T
+        USING (
+            SELECT
+                Y.TRADE_TYPE,
+                Y.AMOUNT_TYPE,
+                Y.COST_DESCRIPTION,
+                Y.FINANCIAL_CLASSIFICATION
+            FROM CW_FINANCIAL_CLASSIFICATION Y
+            WHERE CLASSIFICATION_TYPE = 'DataRange'
+                AND VERIFY_STATUS=1
+                AND STATUS=1
+            GROUP BY Y.TRADE_TYPE,
+                Y.AMOUNT_TYPE,
+                Y.COST_DESCRIPTION,
+                Y.FINANCIAL_CLASSIFICATION
+        ) U
+        ON (
+            UPPER(NVL(T.TRANSACTION_TYPE,'0'))=UPPER(NVL(U.TRADE_TYPE,'0'))
+            AND UPPER(T.AMOUNT_TYPE)=UPPER(U.AMOUNT_TYPE)
+            AND NVL(T.AMOUNT_DESCRIPTION,'0') LIKE NVL(U.COST_DESCRIPTION,'0') || '%'
+        )
+        WHEN MATCHED THEN
+            UPDATE SET T.FINANCE_TYPE=U.FINANCIAL_CLASSIFICATION
+            WHERE (T.FINANCE_TYPE is null or T.FINANCE_TYPE='')
+    </update>
+
+    <!--Datarange刷特殊财务分类更新-->
+    <update id="SpecialFinancialClass" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.DatarangeDtailParam">
+        UPDATE CW_DATARANGE_DETAIL_COMFIRM A
+        SET FINANCE_TYPE =
+            CASE WHEN (A.TRANSACTION_TYPE IS NULL AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION LIKE 'Save%') THEN 'SALES PROMOTION'
+                WHEN (A.TRANSACTION_TYPE='Lightning Deal Fee' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES') THEN 'LIGHTNING DEAL FEE'
+                WHEN (A.TRANSACTION_TYPE = 'Blitzangebotsgebühr' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION LIKE 'Deals%') THEN 'ADVERTISING'
+                WHEN (A.TRANSACTION_TYPE = '数量限定タイムセール手数料' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES' AND (A.AMOUNT_DESCRIPTION  LIKE 'タイムセール%' OR A.AMOUNT_DESCRIPTION  LIKE '促%' OR A.AMOUNT_DESCRIPTION  LIKE '数量限定タイムセール%')) THEN 'ADVERTISING'
+                WHEN (A.TRANSACTION_TYPE = 'Tarifa de Oferta flash' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION  LIKE 'Lightning Deal%') THEN 'ADVERTISING'
+                WHEN (A.TRANSACTION_TYPE = 'Tariffa dell’Offerta Lampo' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION  LIKE 'Lightning Deal%') THEN 'ADVERTISING'
+                WHEN (A.TRANSACTION_TYPE = 'other' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION  LIKE 'Early Reviewer Program fee%') THEN 'OTHER'
+                WHEN (A.TRANSACTION_TYPE = 'Order' AND A.AMOUNT_TYPE = 'GIFT_WRAP_CREDITS_TAX') THEN 'GIFTWARP'||CHR(38)||'SHIPPING'
+                WHEN (A.TRANSACTION_TYPE = 'Order' AND A.AMOUNT_TYPE = 'MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE = 'Order' AND A.AMOUNT_TYPE = 'PRODUCT_SALES_TAX') THEN 'SALES-TAX'
+                WHEN (A.TRANSACTION_TYPE = 'Order' AND A.AMOUNT_TYPE = 'SHIPPING_CREDITS_TAX') THEN 'GIFTWARP'||CHR(38)||'SHIPPING'
+                WHEN (A.TRANSACTION_TYPE = 'Refund' AND A.AMOUNT_TYPE = 'MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE = 'Refund' AND A.AMOUNT_TYPE = 'PRODUCT_SALES_TAX') THEN 'SALES-TAX'
+                WHEN (A.TRANSACTION_TYPE = 'Refund' AND A.AMOUNT_TYPE = 'SHIPPING_CREDITS_TAX') THEN 'GIFTWARP'||CHR(38)||'SHIPPING'
+                WHEN (A.TRANSACTION_TYPE = 'Service Fee' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION='Cost of Advertising') THEN 'ADVERTISING'
+                WHEN (A.TRANSACTION_TYPE = 'Debt' AND A.AMOUNT_TYPE = 'OTHER' AND A.AMOUNT_DESCRIPTION LIKE 'amzn1%') THEN 'PREVIOUS RESERVE AMOUNT'
+                WHEN (A.TRANSACTION_TYPE = 'Skuld' AND A.AMOUNT_TYPE = 'OTHER' AND A.AMOUNT_DESCRIPTION LIKE 'amzn1%') THEN 'REIMBURSEMENT'
+                WHEN (A.TRANSACTION_TYPE = 'Erstattung' AND A.AMOUNT_TYPE = 'MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE = 'Erstattung' AND A.AMOUNT_TYPE  IS NULL AND A.AMOUNT_DESCRIPTION LIKE 'Sparen%') THEN 'SALES PROMOTION'
+                WHEN (A.TRANSACTION_TYPE IS NULL AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION LIKE 'Sparen%') THEN 'SALES PROMOTION'
+                WHEN (A.TRANSACTION_TYPE IS NULL AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION LIKE 'Économisez%') THEN 'SALES PROMOTION'
+                WHEN (A.TRANSACTION_TYPE='Tarif de la Vente Flash' AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES') THEN 'SALES PROMOTION'
+                WHEN (A.TRANSACTION_TYPE='Anpassung' AND A.AMOUNT_TYPE='OTHER' AND A.AMOUNT_DESCRIPTION LIKE 'Versand durch Amazon Erstattung für Lagerbestand - Allgemeine Anpassung') THEN 'REIMBURSEMENT'
+                WHEN (A.TRANSACTION_TYPE='Bestelling' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Deal Fee' AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION = 'Deals') THEN 'OTHER'
+                WHEN (A.TRANSACTION_TYPE='Remboursement' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Refund_Retrocharge' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX' AND A.AMOUNT_DESCRIPTION = 'MarketplaceFacilitator') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Rimborso' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Tariffa dell’Offerta Lampo' AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES') THEN 'LIGHTNING DEAL FEE'
+                WHEN (A.TRANSACTION_TYPE='Saldo descubierto' AND A.AMOUNT_TYPE='OTHER') THEN 'PREVIOUS RESERVE AMOUNT'
+                WHEN (A.TRANSACTION_TYPE='Zamówienie' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='FBA 在庫関連の手数料' AND A.AMOUNT_TYPE='OTHER' AND A.AMOUNT_DESCRIPTION = 'FBAパートナーキャリアの配送料') THEN 'STORAGE FEE'
+                WHEN (A.TRANSACTION_TYPE='Order_Retrocharge' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Terugbetaling' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Tarifa de Oferta flash' AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES' AND A.AMOUNT_DESCRIPTION LIKE 'Deals%') THEN 'LIGHTNING DEAL FEE'
+                WHEN (A.TRANSACTION_TYPE='Liquidations' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Liquidations' AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES') THEN 'AMAZON FEE'
+                WHEN (A.TRANSACTION_TYPE='Liquidations' AND A.AMOUNT_TYPE='PRODUCT_SALES') THEN 'SALES-PRINCIPAL'
+                WHEN (A.TRANSACTION_TYPE='Order_Retrocharge' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Refund_Retrocharge' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Zwrot kosztów' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Terugbetaling' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Blitzangebotsgebühr' AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES') THEN 'LIGHTNING DEAL FEE'
+                WHEN (A.TRANSACTION_TYPE='Deal Fee' AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES') THEN 'OTHER'
+                WHEN (A.TRANSACTION_TYPE IS NULL AND A.AMOUNT_TYPE='OTHER_TRANSACTION_FEES') THEN 'SALES PROMOTION'
+                WHEN (A.TRANSACTION_TYPE='Transfer' AND A.AMOUNT_TYPE='OTHER' AND A.AMOUNT_DESCRIPTION LIKE 'To your account ending in%') THEN 'MONEY TRANSFER'
+                WHEN (A.TRANSACTION_TYPE='Refund' AND A.AMOUNT_TYPE='GIFT_WRAP_CREDITS_TAX') THEN 'GIFTWARP' ||CHR(38)|| 'SHIPPING'
+                WHEN (A.TRANSACTION_TYPE='Refund' AND A.AMOUNT_TYPE='GIFT_WRAP_CREDITS') THEN 'GIFTWARP' ||CHR(38)|| 'SHIPPING'
+                WHEN (A.TRANSACTION_TYPE='Pedido' AND A.AMOUNT_TYPE='MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Pedido' AND A.AMOUNT_TYPE='PRODUCT_SALES_TAX') THEN 'SALES-TAX'
+                WHEN (A.TRANSACTION_TYPE='Para İadesi' AND A.AMOUNT_TYPE = 'FBA_FEES') THEN 'AMAZON FEE'
+                WHEN (A.TRANSACTION_TYPE='Para İadesi' AND A.AMOUNT_TYPE = 'PRODUCT_SALES') THEN 'REFUND'
+                WHEN (A.TRANSACTION_TYPE='Para İadesi' AND A.AMOUNT_TYPE = 'SELLING_FEES') THEN 'REFUND COMMISSION'
+                WHEN (A.TRANSACTION_TYPE='Para İadesi' AND A.AMOUNT_TYPE = 'SHIPPING_CREDITS') THEN 'GIFTWARP&amp;SHIPPING'
+                WHEN (A.TRANSACTION_TYPE='Sipariş' AND A.AMOUNT_TYPE = 'FBA_FEES') THEN 'AMAZON FEE'
+                WHEN (A.TRANSACTION_TYPE='Sipariş' AND A.AMOUNT_TYPE = 'PRODUCT_SALES') THEN 'SALES-PRINCIPAL'
+                WHEN (A.TRANSACTION_TYPE='Sipariş' AND A.AMOUNT_TYPE = 'SELLING_FEES') THEN 'COMMISSION'
+                WHEN (A.TRANSACTION_TYPE='Sipariş' AND A.AMOUNT_TYPE = 'SHIPPING_CREDITS') THEN 'GIFTWARP&amp;SHIPPING'
+                WHEN (A.TRANSACTION_TYPE='Commande' AND A.AMOUNT_TYPE = 'FBA_FEES') THEN 'AMAZON FEE'
+                WHEN (A.TRANSACTION_TYPE='Commande' AND A.AMOUNT_TYPE = 'PRODUCT_SALES') THEN 'SALES-PRINCIPAL'
+                WHEN (A.TRANSACTION_TYPE='Commande' AND A.AMOUNT_TYPE = 'SELLING_FEES') THEN 'COMMISSION'
+                WHEN (A.TRANSACTION_TYPE='Commande' AND A.AMOUNT_TYPE = 'SHIPPING_CREDITS') THEN 'GIFTWARP&amp;SHIPPING'
+                WHEN (A.TRANSACTION_TYPE='Remboursement' AND A.AMOUNT_TYPE = 'PRODUCT_SALES') THEN 'REFUND'
+                WHEN (A.TRANSACTION_TYPE='Remboursement' AND A.AMOUNT_TYPE = 'SELLING_FEES') THEN 'REFUND COMMISSION'
+                WHEN (A.TRANSACTION_TYPE='Remboursement' AND A.AMOUNT_TYPE = 'SHIPPING_CREDITS') THEN 'GIFTWARP&amp;SHIPPING'
+                WHEN (A.TRANSACTION_TYPE='Remboursement' AND A.AMOUNT_TYPE = 'FBA_FEES') THEN 'AMAZON FEE'
+                WHEN (A.TRANSACTION_TYPE='Överföring' AND A.AMOUNT_TYPE = 'OTHER') THEN 'MONEY TRANSFER'
+                WHEN (A.TRANSACTION_TYPE='Liquidationen' AND A.AMOUNT_TYPE = 'OTHER_TRANSACTION_FEES') THEN 'AMAZON FEE'
+                WHEN (A.TRANSACTION_TYPE='Liquidationen' AND A.AMOUNT_TYPE = 'PRODUCT_SALES') THEN 'SALES-PRINCIPAL'
+                WHEN (A.TRANSACTION_TYPE='Verbindlichkeit' AND A.AMOUNT_TYPE = 'OTHER') THEN 'OTHER'
+                WHEN (A.TRANSACTION_TYPE='Transfer' AND A.AMOUNT_TYPE = 'OTHER') THEN 'MONEY TRANSFER'
+                WHEN (A.TRANSACTION_TYPE='注文' AND A.AMOUNT_TYPE = 'MARKETPLACE_WITHHELD_TAX') THEN 'WITHHELD_TAX'
+                WHEN (A.TRANSACTION_TYPE='Przelew' AND A.AMOUNT_TYPE = 'OTHER') THEN 'MONEY TRANSFER'
+                WHEN (A.AMOUNT_TYPE='OTHER' AND A.AMOUNT_DESCRIPTION LIKE 'Save%') THEN 'SALES PROMOTION'
+                END
+        WHERE (A.FINANCE_TYPE is null or A.FINANCE_TYPE = '')
+    </update>
+
+</mapper>

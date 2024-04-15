@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.LsBtbLogisticsNoMapper">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        A.ID,A.SHIPMENT_NUM,A.PLATFORM,A.SYS_SHOPS_NAME,A.SYS_SITE,A.SHIPMENT_WAREHOUSE,A.LOGISTICS_NO,A.LC_CODE,LP_CODE,LP_NAME,A.LP_SIMPLE_NAME,A.SHIPMENT_DATE,
+        A.SIGN_DATE,A.SIGN_USER,A.IS_CUSTOMS,A.CUSTOMS_COMPANY,A.IS_DEFER,A.LSP_NUM,A.COUNTRY_AREA_NAME,A.RECEIVE_COUNTRY_NAME_CN,A.RECEIVE_COUNTRY_NAME_EN,
+        A.RECEIVE_COUNTRY_CODE,A.BUYER_NAME,A.PHONE1,A.CITY,A.PROVINCE,A.STREET1,A.STREET2,A.POST_CODE,A.FREIGHT_COMPANY,A.TRANSPORT_TYPE,A.LOGISTICS_CHANNEL,
+        A.ORDER_TYPE,A.GOODS_PROPERTY,A.CONFIRM_FEE_TYPE,A.CONFIRM_COUNT_FEE,A.LOGISTICS_CURRENCY,A.HAS_TAX,A.SHIPMENT_UNIT,A.SHIPMENT_QUANTITY,A.WEIGHT,
+        A.VOLUME,A.UNIT_PRICE,A.OIL_FEE,A.BUSY_SEASON_FEE,A.OTHERS_FEE,A.OTHERS_FEE_REMARK,A.CUSTOMS_FEE,A.CLEAR_CUSTOMS_FEE,A.TAX_FEE,A.REMARK,A.TOTAL_FEE,
+        A.PREDICT_UNIT_PRICE,A.PREDICT_LOGISTICS_FEE,A.PREDICT_OIL_FEE,A.PREDICT_BUSY_SEASON_FEE,A.PREDICT_OTHERS_FEE,A.PREDICT_CUSTOMS_FEE,A.PREDICT_CLEAR_CUSTOMS_FEE,
+        A.PREDICT_TAX_FEE,A.PREDICT_TOTAL_FEE,A.LOGISTICS_STATUS,A.SHIPMENT_TYPE,A.CREATE_TIME,A.CREATE_USER,A.UPDATE_TIME,A.UPDATE_USER,A.PREDICT_FEE_TYPE,A.PREDICT_COUNT_FEE
+    </sql>
+
+    <!-- btb物流跟踪报告查询条件 -->
+    <sql id="queryBtbListCondition">
+        <where>
+            A.SHIPMENT_TYPE = '物流部发货'
+            <if test="param.platformList != null and param.platformList.size() != 0">
+                AND A.PLATFORM IN
+                <foreach collection="param.platformList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNameList != null and param.sysShopsNameList.size() != 0">
+                AND A.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND A.LOGISTICS_NO IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND A.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND A.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentWarehouseList != null and param.shipmentWarehouseList.size() != 0">
+                AND A.SHIPMENT_WAREHOUSE IN
+                <foreach collection="param.shipmentWarehouseList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                AND A.SHIPMENT_NUM IN
+                <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND A.SHIPMENT_DATE &gt;= to_date(#{param.shipmentStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND A.SHIPMENT_DATE &lt;= to_date(#{param.shipmentEndDate},'YYYY-MM-DD')
+            </if>
+        </where>
+    </sql>
+
+    <!-- ebms物流跟踪报告查询条件 -->
+    <sql id="queryEbmsListCondition">
+        <where>
+            <if test="param.platformList != null and param.platformList.size() != 0">
+                AND headRoute.ElePlatformName IN
+                <foreach collection="param.platformList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNameList != null and param.sysShopsNameList.size() != 0">
+                AND headRoute.ShopNameSimple IN
+                <foreach collection="param.sysShopsNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND headRoute.CountryCode IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND headRoute.lhrOddNumb IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentIdList != null and param.shipmentIdList.size() != 0">
+                AND T2.ShipmentID IN
+                <foreach collection="param.shipmentIdList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND headRoute.logTraMode1 IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND headRoute.logTraMode2 IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentWarehouseList != null and param.shipmentWarehouseList.size() != 0">
+                AND T3.ComWarehouseName IN
+                <foreach collection="param.shipmentWarehouseList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                AND headRoute.lhrCode IN
+                <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND DATEDIFF(DAY,  #{param.shipmentStartDate}, headRoute.LhrSendGoodDate) >= 0
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND DATEDIFF(DAY, headRoute.LhrSendGoodDate, #{param.shipmentEndDate}) >= 0
+            </if>
+        </where>
+    </sql>
+
+    <!-- 分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsBtbLogisticsNoParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsBtbLogisticsNoResult">
+        SELECT
+            <include refid="Base_Column_List"></include>
+        FROM LS_BTB_LOGISTICS_NO A
+        <where>
+            <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                AND A.SHIPMENT_NUM IN
+                <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.platformList != null and param.platformList.size() != 0">
+                AND A.PLATFORM IN
+                <foreach collection="param.platformList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNameList != null and param.sysShopsNameList.size() != 0">
+                AND A.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND A.LOGISTICS_NO IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND A.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND A.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsChannelList != null and param.logisticsChannelList.size() != 0">
+                AND A.LOGISTICS_CHANNEL IN
+                <foreach collection="param.logisticsChannelList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lpSimpleNameList != null and param.lpSimpleNameList.size() != 0">
+                AND A.LP_SIMPLE_NAME IN
+                <foreach collection="param.lpSimpleNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lpNameList != null and param.lpNameList.size() != 0">
+                AND A.LP_NAME IN
+                <foreach collection="param.lpNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.createUserList != null and param.createUserList.size() != 0">
+                AND A.CREATE_USER IN
+                <foreach collection="param.createUserList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsStatus != null and param.logisticsStatus != ''">
+                AND A.LOGISTICS_STATUS = #{param.logisticsStatus}
+            </if>
+            <if test="param.shipmentType != null and param.shipmentType != ''">
+                AND A.SHIPMENT_TYPE = #{param.shipmentType}
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND A.SHIPMENT_DATE &gt;= to_date(#{param.shipmentStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND A.SHIPMENT_DATE &lt;= to_date(#{param.shipmentEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signStartDate != null and param.signStartDate != ''">
+                AND A.SIGN_DATE &gt;= to_date(#{param.signStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signEndDate != null and param.signEndDate != ''">
+                AND A.SIGN_DATE &lt;= to_date(#{param.signEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.orderNoList != null and param.orderNoList.size() != 0">
+                AND A.SHIPMENT_NUM IN
+                (
+                    SELECT D.SHIPMENT_NUM FROM LS_BTB_LOGISTICS_NO_DETAIL D
+                    WHERE D.ORDER_NO IN
+                    <foreach collection="param.orderNoList" item="code" index="index" separator="," open="(" close=")">
+                        #{code}
+                    </foreach>
+                )
+            </if>
+        </where>
+        ORDER BY A.ID DESC
+    </select>
+
+    <!-- 导出 -->
+    <select id="export"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsBtbLogisticsNoParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsBtbLogisticsNoResult">
+        SELECT
+            D.ORDER_NO,
+            <include refid="Base_Column_List"></include>
+        FROM LS_BTB_LOGISTICS_NO A
+        LEFT JOIN LS_BTB_LOGISTICS_NO_DETAIL D ON A.SHIPMENT_NUM = D.SHIPMENT_NUM
+        <where>
+            <if test="param.shipmentNumList != null and param.shipmentNumList.size() != 0">
+                AND A.SHIPMENT_NUM IN
+                <foreach collection="param.shipmentNumList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.platformList != null and param.platformList.size() != 0">
+                AND A.PLATFORM IN
+                <foreach collection="param.platformList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNameList != null and param.sysShopsNameList.size() != 0">
+                AND A.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSiteList != null and param.sysSiteList.size() != 0">
+                AND A.SYS_SITE IN
+                <foreach collection="param.sysSiteList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsNoList != null and param.logisticsNoList.size() != 0">
+                AND A.LOGISTICS_NO IN
+                <foreach collection="param.logisticsNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.freightCompanyList != null and param.freightCompanyList.size() != 0">
+                AND A.FREIGHT_COMPANY IN
+                <foreach collection="param.freightCompanyList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.transportTypeList != null and param.transportTypeList.size() != 0">
+                AND A.TRANSPORT_TYPE IN
+                <foreach collection="param.transportTypeList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsChannelList != null and param.logisticsChannelList.size() != 0">
+                AND A.LOGISTICS_CHANNEL IN
+                <foreach collection="param.logisticsChannelList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lpSimpleNameList != null and param.lpSimpleNameList.size() != 0">
+                AND A.LP_SIMPLE_NAME IN
+                <foreach collection="param.lpSimpleNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.lpNameList != null and param.lpNameList.size() != 0">
+                AND A.LP_NAME IN
+                <foreach collection="param.lpNameList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.createUserList != null and param.createUserList.size() != 0">
+                AND A.CREATE_USER IN
+                <foreach collection="param.createUserList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.logisticsStatus != null and param.logisticsStatus != ''">
+                AND A.LOGISTICS_STATUS = #{param.logisticsStatus}
+            </if>
+            <if test="param.shipmentType != null and param.shipmentType != ''">
+                AND A.SHIPMENT_TYPE = #{param.shipmentType}
+            </if>
+            <if test="param.shipmentStartDate != null and param.shipmentStartDate != ''">
+                AND A.SHIPMENT_DATE &gt;= to_date(#{param.shipmentStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.shipmentEndDate != null and param.shipmentEndDate != ''">
+                AND A.SHIPMENT_DATE &lt;= to_date(#{param.shipmentEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signStartDate != null and param.signStartDate != ''">
+                AND A.SIGN_DATE &gt;= to_date(#{param.signStartDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.signEndDate != null and param.signEndDate != ''">
+                AND A.SIGN_DATE &lt;= to_date(#{param.signEndDate},'YYYY-MM-DD')
+            </if>
+            <if test="param.orderNoList != null and param.orderNoList.size() != 0">
+                AND D.ORDER_NO IN
+                <foreach collection="param.orderNoList" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY A.ID DESC, D.ID ASC
+    </select>
+
+    <!-- BTB物流跟踪报表分页查询列表 -->
+    <select id="queryBtbPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsTrackReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsTrackReportResult">
+        SELECT
+            C.ORDERNOS,
+            DECODE(A.SIGN_DATE, NULL, NULL, ROUND(TO_NUMBER(A.SIGN_DATE - A.SHIPMENT_DATE))) AS diffDay,
+            DECODE(A.PREDICT_UNIT_PRICE, 0, NULL, '系统预估') AS predictUnitPriceType,
+            <include refid="Base_Column_List"></include>
+        FROM LS_BTB_LOGISTICS_NO A
+        LEFT JOIN
+        (
+            SELECT
+                B.SHIPMENT_NUM,
+                LISTAGG(B.ORDER_NO, ',')  WITHIN GROUP(ORDER BY B.SHIPMENT_NUM) AS orderNos
+            FROM
+            (
+                SELECT
+                    D.SHIPMENT_NUM,
+                    D.ORDER_NO
+                FROM LS_BTB_LOGISTICS_NO_DETAIL D
+                GROUP BY D.SHIPMENT_NUM,D.ORDER_NO
+            ) B GROUP BY B.SHIPMENT_NUM
+        ) C ON A.SHIPMENT_NUM = C.SHIPMENT_NUM
+        <include refid="queryBtbListCondition"></include>
+        ORDER BY A.SHIPMENT_DATE
+    </select>
+
+    <!-- EBMS物流跟踪报表分页查询列表 -->
+    <select id="queryEbmsPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsTrackReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsTrackReportResult">
+        SELECT
+            headRoute.LhrSendGoodDate AS shipmentDate,
+            headRoute.ElePlatformName AS platform,
+            headRoute.ShopNameSimple AS sysShopsName,
+            headRoute.CountryCode AS sysSite,
+            headRoute.LcCode AS lcCode,
+            T4.lpName AS lpName,
+            case headRoute.logpIsEntry when 1 then '是' when 0 then '否' end AS isCustoms,
+            case headRoute.logpIsIncTax when 1 then '是' when 0 then '否' end AS hasTax,
+            headRoute.logTraMode1 AS freightCompany,
+            headRoute.logTraMode2 AS transportType,
+            headRoute.logSeaTraRoute AS logisticsChannel,
+            headRoute.logRedOrBlueList AS orderType,
+            headRoute.lhrCode AS shipmentNum,
+            headRoute.lhrOddNumb AS logisticsNo,
+            headRoute.lhrOutGoodNum AS shipmentUnit,
+            headRoute.lhrOutGoodWeight AS weight,
+            headRoute.lhrLogFeeWeight AS predictCountFee,
+            headRoute.lhrLogTimeCount AS diffDay,
+            T1.PackCode AS orderNos,
+            T2.ShipmentID AS shipmentId,
+            send.Quantity AS shipmentQuantity,
+            headRoute.packStoreHouseName AS receiveWarehouse,
+            endRoute.LerSignDate AS signDate,
+            headRoute.logIsDeferred AS isDefer,
+            T3.ComWarehouseName AS shipmentWarehouse,
+            headRoute.lhrNote AS remark,
+            endRoute.LerPreChargType AS predictFeeType,
+            headRoute.LhrPreLogUnitPrice AS predictUnitPrice,
+            headRoute.LhrPreLogUnitPriceType AS predictUnitPriceType,
+            headRoute.LhrPreLogFuelFee AS predictOilFee,
+            headRoute.LhrPreLogBusySeasonAddFee AS predictBusySeasonFee,
+            headRoute.LhrPreLogAddAndSundryFee AS predictOthersFee,
+            headRoute.LhrPreLogAddAndSundryFeeRemark AS othersFeeRemark,
+            headRoute.LhrPreLogCustDlearanceFee AS predictCustomsFee,
+            headRoute.LhrPreLogCustClearanceFee AS predictClearCustomsFee,
+            endRoute.LerPreLogTaxFee AS predictTaxFee,
+            endRoute.LerPreLogFeeTotal AS predictTotalFee,
+            endRoute.LerPreLogFeeTotalManual AS totalFee
+        FROM TbLogisticsListToHeadRoute headRoute
+        LEFT JOIN TbLogisticsListToEndRoute endRoute ON headRoute.LhrCode=endRoute.LhrCode AND headRoute.LhrOddNumb=endRoute.LhrOddNumb
+        LEFT JOIN (
+            SELECT routeDet.LhrCode,SUM(listDet2.Quantity) Quantity
+            FROM TbLogisticsListToHeadRouteDet routeDet
+            JOIN TbLogisticsPackingListDet2 listDet2 ON routeDet.PackCode=listDet2.packCode AND routeDet.PackDetBoxNum = listDet2.packDetBoxNum
+            GROUP BY routeDet.LhrCode
+        ) send  ON headRoute.LhrCode=send.LhrCode
+        LEFT JOIN (
+            SELECT B.LhrCode,LEFT(PackCodeList,LEN(PackCodeList)-1) AS PackCode
+            FROM (
+                SELECT LhrCode,
+                (
+                    SELECT PackCode+',' FROM (SELECT LhrCode,PackCode FROM TbLogisticsListToHeadRouteDet GROUP BY LhrCode,PackCode) M
+                    WHERE LhrCode=A.LhrCode
+                    FOR XML PATH('')
+                ) AS PackCodeList
+                FROM (SELECT LhrCode,PackCode FROM TbLogisticsListToHeadRouteDet GROUP BY LhrCode,PackCode) A
+                GROUP BY LhrCode
+            ) B
+        ) T1 ON headRoute.LhrCode=T1.LhrCode
+        LEFT JOIN (
+            SELECT B.LhrCode,LEFT(ShipmentIDList,LEN(ShipmentIDList)-1) AS ShipmentID FROM (
+                SELECT LhrCode,
+                (SELECT ShipmentID+',' FROM (SELECT LhrCode,ShipmentID FROM TbLogisticsListToHeadRouteDet WHERE ShipmentID IS NOT NULL GROUP BY LhrCode,ShipmentID) M WHERE LhrCode=A.LhrCode FOR XML PATH('')) AS ShipmentIDList
+                FROM (SELECT LhrCode,ShipmentID FROM TbLogisticsListToHeadRouteDet WHERE ShipmentID IS NOT NULL GROUP BY LhrCode,ShipmentID) A
+                GROUP BY LhrCode
+            ) B
+        ) T2 ON headRoute.LhrCode = T2.LhrCode
+        LEFT JOIN (
+            SELECT T.LhrCode,pack.ComWarehouseName
+            FROM TbLogisticsListToHeadRouteDet T JOIN TbLogisticsPackingList pack ON T.PackCode=pack.packCode
+            GROUP BY T.LhrCode,pack.ComWarehouseName
+        ) T3 ON T1.LhrCode=T3.LhrCode
+        JOIN TbLogisticsProvider T4 ON headRoute.LpCode = T4.lpCode
+        <include refid="queryEbmsListCondition"></include>
+        ORDER BY headRoute.LhrSendGoodDate
+    </select>
+
+    <!-- BTB物流跟踪报表查询列表 -->
+    <select id="queryBtbList"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsTrackReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsTrackReportResult">
+        SELECT
+            C.ORDERNOS,
+            DECODE(A.SIGN_DATE, NULL, NULL, ROUND(TO_NUMBER(A.SIGN_DATE - A.SHIPMENT_DATE))) AS diffDay,
+            DECODE(A.PREDICT_UNIT_PRICE, 0, NULL, '系统预估') AS predictUnitPriceType,
+            <include refid="Base_Column_List"></include>
+        FROM LS_BTB_LOGISTICS_NO A
+        LEFT JOIN
+        (
+        SELECT
+            B.SHIPMENT_NUM,
+            LISTAGG(B.ORDER_NO, ',')  WITHIN GROUP(ORDER BY B.SHIPMENT_NUM) AS orderNos
+            FROM
+            (
+                SELECT
+                    D.SHIPMENT_NUM,
+                    D.ORDER_NO
+                FROM LS_BTB_LOGISTICS_NO_DETAIL D
+                GROUP BY D.SHIPMENT_NUM,D.ORDER_NO
+            ) B GROUP BY B.SHIPMENT_NUM
+        ) C ON A.SHIPMENT_NUM = C.SHIPMENT_NUM
+        <include refid="queryBtbListCondition"></include>
+        ORDER BY A.SHIPMENT_DATE
+    </select>
+
+    <!-- EBMS物流跟踪报表查询列表 -->
+    <select id="queryEbmsList"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.LsLogisticsTrackReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.LsLogisticsTrackReportResult">
+        SELECT
+            headRoute.LhrSendGoodDate AS shipmentDate,
+            headRoute.ElePlatformName AS platform,
+            headRoute.ShopNameSimple AS sysShopsName,
+            headRoute.CountryCode AS sysSite,
+            headRoute.LcCode AS lcCode,
+            T4.lpName AS lpName,
+            case headRoute.logpIsEntry when 1 then '是' when 0 then '否' end AS isCustoms,
+            case headRoute.logpIsIncTax when 1 then '是' when 0 then '否' end AS hasTax,
+            headRoute.logTraMode1 AS freightCompany,
+            headRoute.logTraMode2 AS transportType,
+            headRoute.logSeaTraRoute AS logisticsChannel,
+            headRoute.logRedOrBlueList AS orderType,
+            headRoute.lhrCode AS shipmentNum,
+            headRoute.lhrOddNumb AS logisticsNo,
+            headRoute.lhrOutGoodNum AS shipmentUnit,
+            headRoute.lhrOutGoodWeight AS weight,
+            headRoute.lhrLogFeeWeight AS predictCountFee,
+            headRoute.lhrLogTimeCount AS diffDay,
+            T1.PackCode AS orderNos,
+            T2.ShipmentID AS shipmentId,
+            send.Quantity AS shipmentQuantity,
+            headRoute.packStoreHouseName AS receiveWarehouse,
+            endRoute.LerSignDate AS signDate,
+            headRoute.logIsDeferred AS isDefer,
+            T3.ComWarehouseName AS shipmentWarehouse,
+            headRoute.lhrNote AS remark,
+            endRoute.LerPreChargType AS predictFeeType,
+            headRoute.LhrPreLogUnitPrice AS predictUnitPrice,
+            headRoute.LhrPreLogUnitPriceType AS predictUnitPriceType,
+            headRoute.LhrPreLogFuelFee AS predictOilFee,
+            headRoute.LhrPreLogBusySeasonAddFee AS predictBusySeasonFee,
+            headRoute.LhrPreLogAddAndSundryFee AS predictOthersFee,
+            headRoute.LhrPreLogAddAndSundryFeeRemark AS othersFeeRemark,
+            headRoute.LhrPreLogCustDlearanceFee AS predictCustomsFee,
+            headRoute.LhrPreLogCustClearanceFee AS predictClearCustomsFee,
+            endRoute.LerPreLogTaxFee AS predictTaxFee,
+            endRoute.LerPreLogFeeTotal AS predictTotalFee,
+            endRoute.LerPreLogFeeTotalManual AS totalFee
+        FROM TbLogisticsListToHeadRoute headRoute
+        LEFT JOIN TbLogisticsListToEndRoute endRoute ON headRoute.LhrCode=endRoute.LhrCode AND headRoute.LhrOddNumb=endRoute.LhrOddNumb
+        LEFT JOIN (
+            SELECT routeDet.LhrCode,SUM(listDet2.Quantity) Quantity
+            FROM TbLogisticsListToHeadRouteDet routeDet
+            JOIN TbLogisticsPackingListDet2 listDet2 ON routeDet.PackCode=listDet2.packCode AND routeDet.PackDetBoxNum = listDet2.packDetBoxNum
+            GROUP BY routeDet.LhrCode
+        ) send  ON headRoute.LhrCode=send.LhrCode
+        LEFT JOIN (
+            SELECT B.LhrCode,LEFT(PackCodeList,LEN(PackCodeList)-1) AS PackCode
+            FROM (
+                SELECT LhrCode,
+                (
+                    SELECT PackCode+',' FROM (SELECT LhrCode,PackCode FROM TbLogisticsListToHeadRouteDet GROUP BY LhrCode,PackCode) M
+                    WHERE LhrCode=A.LhrCode
+                    FOR XML PATH('')
+                ) AS PackCodeList
+                FROM (SELECT LhrCode,PackCode FROM TbLogisticsListToHeadRouteDet GROUP BY LhrCode,PackCode) A
+                GROUP BY LhrCode
+            ) B
+        ) T1 ON headRoute.LhrCode=T1.LhrCode
+        LEFT JOIN (
+            SELECT B.LhrCode,LEFT(ShipmentIDList,LEN(ShipmentIDList)-1) AS ShipmentID FROM (
+            SELECT LhrCode,
+            (SELECT ShipmentID+',' FROM (SELECT LhrCode,ShipmentID FROM TbLogisticsListToHeadRouteDet WHERE ShipmentID IS NOT NULL GROUP BY LhrCode,ShipmentID) M WHERE LhrCode=A.LhrCode FOR XML PATH('')) AS ShipmentIDList
+            FROM (SELECT LhrCode,ShipmentID FROM TbLogisticsListToHeadRouteDet WHERE ShipmentID IS NOT NULL GROUP BY LhrCode,ShipmentID) A
+            GROUP BY LhrCode
+            ) B
+        ) T2 ON headRoute.LhrCode = T2.LhrCode
+        LEFT JOIN (
+            SELECT T.LhrCode,pack.ComWarehouseName
+            FROM TbLogisticsListToHeadRouteDet T JOIN TbLogisticsPackingList pack ON T.PackCode=pack.packCode
+            GROUP BY T.LhrCode,pack.ComWarehouseName
+        ) T3 ON T1.LhrCode=T3.LhrCode
+        JOIN TbLogisticsProvider T4 ON headRoute.LpCode = T4.lpCode
+        <include refid="queryEbmsListCondition"></include>
+        ORDER BY headRoute.LhrSendGoodDate
+    </select>
+
+    <!-- BTB发货仓下拉 -->
+    <select id="btbShipmentWarehouseList" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT DISTINCT A.SHIPMENT_WAREHOUSE AS name FROM LS_BTB_LOGISTICS_NO A WHERE A.SHIPMENT_TYPE = '物流部发货' AND A.SHIPMENT_WAREHOUSE IS NOT NULL
+    </select>
+
+    <!-- EBMS发货仓下拉 -->
+    <select id="ebmsShipmentWarehouseList" resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.BaseSelectResult">
+        SELECT DISTINCT A.ComWarehouseName AS name FROM TbLogisticsPackingList A
+    </select>
+
+</mapper>

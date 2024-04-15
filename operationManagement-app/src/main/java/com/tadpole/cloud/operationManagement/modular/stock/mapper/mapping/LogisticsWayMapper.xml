@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.LogisticsWayMapper">
+    <sql id="Page_Column_List">
+        l.ID,
+        l.MATERIAL_CODE,
+        l.AREA,
+        l.WAY,
+        l.CREATE_BY,
+        l.UPDATE_BY,
+        l.CREATE_TIME,
+        l.UPDATE_TIME,
+        m.CATEGORY,
+        m.PRODUCT_TYPE,
+        m.PRODUCT_NAME,
+        m.STYLE,
+        m.MAIN_MATERIAL,
+        m.DESIGN,
+        m.COMPANY_BRAND,
+        m.FIT_BRAND,
+        m.MODEL,
+        m.COLOR,
+        m.SIZES,
+        m.PACKING,
+        m.VERSION,
+        m.TYPE,
+        m.BUYER,
+        m.DEVELOPER,
+        m.FIRST_ORDER_DATE,
+        m.VOLUME,
+        m.NETWEIGHT,
+        m.GROSSWEIGHT,
+        m.STYLE_SECOND_LABEL,
+        m.ACCOUNT_DATE,
+        m.LOGISTICS_MODE,
+        m.MATERIAL_NAME,
+        m.SEASON_LABEL,
+        m.FESTIVAL_LABEL
+    </sql>
+
+    <sql id="List_Condition">
+        <if test="paramCondition.spu != null and paramCondition.spu != ''">
+            AND m.SPU = #{paramCondition.spu}
+        </if>
+
+        <if test="paramCondition.productTypeList != null and paramCondition.productTypeList.size() > 0">
+            AND m.PRODUCT_TYPE IN
+            <foreach collection="paramCondition.productTypeList" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.materialCodeList != null and paramCondition.materialCodeList.size() > 0 ">
+            AND
+            <foreach collection="paramCondition.materialCodeList " item="item" index="index" open="(" separator="or" close=")">
+                l.MATERIAL_CODE LIKE '%'||#{item}||'%'
+            </foreach>
+        </if>
+
+        <if test="paramCondition.areaList != null and paramCondition.areaList.size() > 0">
+            AND l.AREA IN
+            <foreach collection="paramCondition.areaList" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="paramCondition.wayList != null and paramCondition.wayList.size() > 0">
+            AND l.WAY IN
+            <foreach collection="paramCondition.wayList" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </sql>
+
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.operationManagement.modular.stock.model.params.LogisticsWayParam"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.LogisticsWayResult">
+        SELECT <include refid="Page_Column_List"/>
+        FROM LOGISTICS_WAY l
+        LEFT JOIN mcms_base_data.rp_material@mc_dblink m ON l.material_code = m.material_code
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY CREATE_TIME ASC
+    </select>
+</mapper>

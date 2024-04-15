@@ -1,0 +1,9 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: bsc-cloud-product
+  servlet:
+    multipart:
+      max-file-size: 51200000000     # 文件上传大小限制为500MB
+      max-request-size: 51200000000  # 请求大小限制为500MB

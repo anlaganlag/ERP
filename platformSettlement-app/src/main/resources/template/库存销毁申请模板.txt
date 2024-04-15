@@ -1,0 +1,44 @@
+MerchantRemovalOrderID	FBSC05A001	
+RemovalDisposition	Disposal	
+AddressName		
+AddressFieldOne		
+AddressFieldTwo		
+AddressFieldThree		
+AddressCity		
+AddressCountryCode	JP	
+AddressStateOrRegion		
+AddressPostalCode		
+ContactPhoneNumber		
+ShippingNotes		
+		
+MerchantSKU	SellableQuantity	UnsellableQuantity
+AT-itags21-YT-DanEr2p-2105F-bkred-fA	50	0
+AT-itags21-YT-DanEr2p-2105F-bkblu-fA	50	0
+RAT-PadKB+Ms-ShanX-201022F-DTMbk-fA	1	0
+RAT-PadKB+Ms-ShanX-201022F-cat-fA	8	0
+AT-AirPodsPr2-Case-GJFT-0310F-bk-fA	40	0
+RAT-Crtn-MBFlowr-210112F-cof-fA	25	0
+AT-LX-TabP11Pr-ZBGSP-2p-0112F-clr-fA	50	0
+AT-itags21-GJCT-2p-2105F-bkidg-fA	35	0
+AT-itags21-RYLeather-2105F-grnylo-fA	41	0
+AT-itags21-RYLeather-2105F-bkbk-fA	50	0
+AT-itags21-YTGJCase-2104F-bluAgrn-fA	50	0
+AT-itags21-YTGJCase-2104F-BSGrnPnk-fA	50	0
+atic-iP109-CXZJ-201119F-BWbk-fA	80	0
+atic-iP109-CXZJ-201119F-BWMGblu-fA	80	0
+atic-iP109-CXZJ-201119F-BWgrn-fA	80	0
+AT-iPr11-21-3ZBT-210202F-grn-fA	38	0
+AT-iPr11-21-3ZBCtpu-210202F-bk-fA	80	0
+AT-iPr11-21-3ZBCtpu-210202F-grn-fA	80	0
+AT-iPr11-21-3ZBCtpu-210202F-rgld-fA	44	0
+ATiC-Case-iP65-HXWen-3He1-190813F-bk-fA	5	0
+ATiC-iP65-Hand-CKZJ-190830F-DgryOrg-fA	4	0
+atic-NSJustDance-Band2p-1204F-bkblu-fA	11	0
+ATiC-NSLite-Case2-GJ-191204F-XDgry-fA	37	0
+RAT-NS-CaseCapGSP-200909F-pnkppl-fA	19	0
+RAT-NS-CaseCapGSP-200909F-blugrn-fA	48	0
+RAT-PS5-GJCase-Cap-201021F-red-fA	70	0
+RAT-PS5-ChargeStand-201029F-wht-fA	100	0
+AT-PS5-TP5-0521Chgr-201215F-bk-fA	50	0
+AT-PS5-ChrgStd-TVX0613-210119F-bk-fA	22	0
+TomTom-Chgr-Adventurer-170620F-bk-fA	4	0

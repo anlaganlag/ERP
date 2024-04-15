@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.vat.mapper.BaseExchangeRateMapper">
+    <sql id="Page_Column_List">
+        ID,
+        EXCHANGE_RATE_PERIOD,
+        EXCHANGE_RATE_DATE,
+        TARGET_CURRENCY,
+        ORIGINAL_CURRENCY,
+        EXCHANGE_RATE,
+        IS_DELETE,
+        VERSION_NUMBER
+    </sql>
+
+
+    <sql id="List_Condition">
+        IS_DELETE = 0
+        <if test="paramCondition.exchangeRateDateM != null  and paramCondition.exchangeRateDateM !=''">
+            and TRUNC(EXCHANGE_RATE_DATE,'mm') = to_date(#{paramCondition.exchangeRateDateM},'YYYY-MM')
+        </if>
+        <if test="paramCondition.originalCurrency != null and paramCondition.originalCurrency != ''">
+            and ORIGINAL_CURRENCY = #{paramCondition.originalCurrency}
+        </if>
+        <if test="paramCondition.targetCurrency != null and paramCondition.targetCurrency != ''">
+            AND TARGET_CURRENCY = #{paramCondition.targetCurrency}
+        </if>
+
+<!--        <if test="paramCondition.operCategory != null and paramCondition.operCategory != ''">-->
+<!--            AND oper_category like '%'||#{paramCondition.operCategory}||'%'-->
+<!--        </if>-->
+    </sql>
+
+
+    <select id="queryListPage"
+            parameterType="com.tadpole.cloud.platformSettlement.modular.vat.model.params.BaseExchangeRateParam"
+            resultType="com.tadpole.cloud.platformSettlement.modular.vat.model.result.BaseExchangeRateResult">
+        select <include refid="Page_Column_List"/>  FROM BASE_EXCHANGE_RATE t
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        order by EXCHANGE_RATE_PERIOD desc
+    </select>
+
+    <select id="queryOriginalCurrency" resultType="String">
+        SELECT DISTINCT ORIGINAL_CURRENCY FROM BASE_EXCHANGE_RATE WHERE IS_DELETE = 0
+    </select>
+
+    <select id="queryTargetCurrency" resultType="String">
+        SELECT DISTINCT TARGET_CURRENCY FROM BASE_EXCHANGE_RATE WHERE IS_DELETE = 0
+    </select>
+
+</mapper>

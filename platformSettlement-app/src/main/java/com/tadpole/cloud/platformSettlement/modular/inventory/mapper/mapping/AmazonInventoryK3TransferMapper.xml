@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.inventory.mapper.AmazonInventoryK3TransferMapper">
+
+    <select id="getK3Transfer"
+            resultType="com.tadpole.cloud.platformSettlement.api.inventory.entity.AmazonInventoryK3Transfer">
+        --统计规则：以“调入仓库”对应报表的店铺维度，统计调拨方向为“普通”的“调拨数量”减掉调拨方向为“退货”的“调拨数量”
+        -- 国内发FBA
+        --普通	GENERAL	1
+        --退货	RETURN	2
+        SELECT
+
+        t5.fnumber sku,t5.F_STATION site,
+        sum(case when  t1.FTransferDirect='GENERAL'then  t2.FQty else -t2.FQty end) qty,
+        t3.FNAME warehouseName ,t4.FNUMBER materialCode
+        FROM T_STK_STKTRANSFERIN t1
+        join T_STK_STKTRANSFERINENTRY t2 on t1.FID=t2.FID
+        join T_BD_STOCK_L t3 on  t2.FDestStockId=t3.FSTOCKID
+        join T_BD_MATERIAL t4 on t2.FMATERIALID=t4.FMATERIALID
+        left join T_V_SAL_CUSTMATMAPPING  t5 on t2.F_BSC_BASE=t5.FID
+        where 1=1
+        and t1.FDATE &lt; #{endDate} and t1.FDATE>= #{startDate}
+        and t1.FTransferBizType='OverOrgTransfer' --调拨类型-跨组织调拨
+        and  FOBJECTTYPEID='STK_TransferDirect'  --直接调拨单
+        and t3.FNAME like 'Amazon%'
+        group by t3.FNAME,t4.FNUMBER, t5.fnumber,t5.F_STATION
+
+    </select>
+</mapper>

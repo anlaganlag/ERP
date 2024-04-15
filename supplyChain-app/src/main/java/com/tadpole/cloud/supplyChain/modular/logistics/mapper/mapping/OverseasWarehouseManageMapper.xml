@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.supplyChain.modular.logistics.mapper.OverseasWarehouseManageMapper">
+
+    <resultMap id="BaseResultMap"
+               type="com.tadpole.cloud.platformSettlement.api.inventory.model.result.SalesOutErpResult">
+        <id column="FEntity" property="FEntity"/>
+        <result column="MATERIAL_CODE" property="FCustMatID"/>
+        <result column="SKU" property="F_Customer_SKU"/>
+        <result column="MATERIAL_CODE" property="FMaterialID"/>
+        <result column="UNIT" property="FUnitID"/>
+        <result column="SALES_STOCKOUT_AMOUNT" property="FRealQty"/>
+        <result column="BUSINESS" property="FOwnerTypeID"/>
+        <result column="WAREHOUSE_CODE" property="FStockID"/>
+        <result column="SALES_STOCKOUT_AMOUNT" property="FSALBASEQTY"/>
+        <result column="SALES_STOCKOUT_AMOUNT" property="FPRICEBASEQTY"/>
+        <result column="SALES_STOCKOUT_AMOUNT" property="FBASEUNITQTY"/>
+        <result column="F_BSC_Team" property="F_BSC_Team"/>
+        <result column="WAREHOUSE_NAME" property="WAREHOUSE_NAME"/>
+        <result column="REMARK1" property="F_BSC_SubRemark1"/>
+    </resultMap>
+
+    <!-- 海外仓库存管理分页查询列表 -->
+    <select id="queryPage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseManageParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseManageResult">
+        SELECT
+            O.ID,
+            O.PLATFORM,
+            O.SYS_SHOPS_NAME,
+            O.SYS_SITE,
+            O.WAREHOUSE_NAME,
+            O.FN_SKU,
+            O.SKU,
+            O.MATERIAL_CODE,
+            O.COME_QUANTITY,
+            O.INVENTORY_QUANTITY,
+            O.CREATE_TIME,
+            O.CREATE_USER,
+            O.UPDATE_TIME,
+            O.UPDATE_USER,
+            G.DEPARTMENT,
+            G.TEAM
+        FROM OVERSEAS_WAREHOUSE_MANAGE O
+        LEFT JOIN MCMS_BASE_DATA.INV_PRODUCT_GALLERY G
+        ON (O.SYS_SHOPS_NAME = G.SYS_SHOPS_NAME AND O.SYS_SITE = G.SYS_SITE AND UPPER(O.SKU) = UPPER(G.SKU))
+        <where>
+            <if test="param.sku != null and param.sku != ''">
+                AND O.SKU = #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND O.MATERIAL_CODE = #{param.materialCode}
+            </if>
+            <if test="param.platforms != null and param.platforms.size() != 0">
+                AND O.PLATFORM IN
+                <foreach collection="param.platforms" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND O.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND O.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.warehouseNames != null and param.warehouseNames.size() != 0">
+                AND O.WAREHOUSE_NAME IN
+                <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sixCode != null and param.sixCode != ''">
+                AND
+                <foreach collection="param.sixCode.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                    O.FN_SKU  LIKE '%'|| #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY O.CREATE_TIME DESC
+    </select>
+
+    <!-- 海外仓管理分页查询列表数据汇总 -->
+    <select id="queryPageTotal"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OverseasWarehouseManageParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OverseasWarehouseManageTotalResult">
+        SELECT
+            SUM(NVL(O.COME_QUANTITY, 0)) AS comeQuantityTotal,
+            SUM(NVL(O.INVENTORY_QUANTITY, 0)) AS inventoryQuantityTotal
+        FROM OVERSEAS_WAREHOUSE_MANAGE O
+        <where>
+            <if test="param.sku != null and param.sku != ''">
+                AND O.SKU = #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND O.MATERIAL_CODE = #{param.materialCode}
+            </if>
+            <if test="param.platforms != null and param.platforms.size() != 0">
+                AND O.PLATFORM IN
+                <foreach collection="param.platforms" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND O.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND O.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.warehouseNames != null and param.warehouseNames.size() != 0">
+                AND O.WAREHOUSE_NAME IN
+                <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sixCode != null and param.sixCode != ''">
+                AND
+                <foreach collection="param.sixCode.split(',')" item="item" index="index" open="(" separator=" or " close=")">
+                    O.FN_SKU  LIKE '%'|| #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!--获取EBMS标签管理数据-->
+    <select id="selectTbComShippingLabel"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.ValidateLabelParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.ValidateLabelResult">
+        SELECT l.shopName,
+               l.item_sku AS sku,
+               l.FNSKU,
+               l.matCode  AS materialCode
+        FROM TbComShippingLable l
+        WHERE l.labUseState = '启用'
+          AND l.shopName = #{param.shopName}
+          AND l.item_sku = #{param.sku}
+          AND l.FNSKU LIKE CONCAT('%', #{param.fnSku})
+    </select>
+
+    <!--校验K3标签-->
+    <select id="validateK3Label"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.ValidateLabelParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.ValidateLabelResult">
+        SELECT
+            d.FNAME AS shopName,
+            e.FNUMBER AS materialCode,
+            c.FCUSTMATNO AS sku,
+            c.F_FNSKU AS FNSKU
+        FROM t_Sal_CustMatMapping b
+        LEFT JOIN t_Sal_CustMatMappingEntry c ON b.FID =c.FID
+        LEFT JOIN T_BD_CUSTOMER_L d ON b.FCUSTOMERID =d.FCUSTID
+        LEFT JOIN T_BD_MATERIAL e on c.FMATERIALID =e.FMATERIALID
+        WHERE c.FEFFECTIVE='1'
+            AND d.FNAME IS NOT NULL
+            AND e.FNUMBER IS NOT NULL
+            AND c.FCUSTMATNO IS NOT NULL
+            AND c.F_FNSKU IS NOT NULL
+            AND len(c.F_FNSKU) > 1
+            AND d.FNAME = #{param.shopName}
+            AND c.FCUSTMATNO = #{param.sku}
+            AND c.F_FNSKU = #{param.fnSku}
+        GROUP BY d.FNAME, e.FNUMBER, c.FCUSTMATNO, c.F_FNSKU
+    </select>
+
+    <!--获取EBMS标签管理数据-->
+    <select id="warehouseNameBySiteSelect" resultType="java.util.Map">
+        SELECT
+        w.owName,
+        w.countryCode,
+        w.owState,
+        w.elePlatformName
+        FROM TbComOverseasWarehouse w
+        <where>
+            <if test="owState != null and owState != ''">
+                AND w.owState = #{owState}
+            </if>
+            <if test="site != null and site != ''">
+                AND w.countryCode = #{site}
+            </if>
+            <if test="warehouseName != null and warehouseName != ''">
+                AND w.owName = #{warehouseName}
+            </if>
+        </where>
+    </select>
+
+    <!--获取ERP乐天事业部和team信息-->
+    <select id="selectRakutenTeam"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.CustomerMaterialInfoParam"
+            resultType="java.lang.String">
+        SELECT dl.FNAME team
+        FROM t_Sal_CustMatMappingEntry e
+             LEFT JOIN t_Sal_CustMatMapping m ON e.fid = m.fid
+             LEFT JOIN T_BD_MATERIAL mt ON mt.FMATERIALID = e.FMATERIALID
+             LEFT JOIN T_BD_CUSTOMER c ON c.FCUSTID = m.FCUSTOMERID and c.FUSEORGID = 100269
+             LEFT JOIN T_BD_CUSTOMER_L cl on cl.FCUSTID = c.FCUSTID
+             LEFT JOIN T_BD_DEPARTMENT_L dl on dl.FDEPTID = m.F_BSC_TEAM
+        WHERE
+          e.F_BSC_operate = '1'
+          and cl.FNAME LIKE 'Rakuten%'
+          and cl.FNAME = #{param.shopName}
+          and (mt.FNUMBER = #{param.materialCode}
+            or e.F_FNSKU = #{param.materialCode})
+        GROUP BY cl.FNAME, dl.FNAME
+    </select>
+
+    <!--同步乐天出库记录明细-->
+    <select id="getSyncList" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+            T.WAREHOUSE_NAME AS WAREHOUSE_CODE,
+            CONCAT(T.OUT_ORDER, T.REMARK) AS REMARK1,
+            T.MATERIAL_CODE,
+            T.CHANGE_INVENTORY_QUANTITY AS SALES_STOCKOUT_AMOUNT,
+            T.WAREHOUSE_NAME AS WAREHOUSE_NAME,
+            T.TEAM AS F_BSC_Team,
+            'Pcs' AS UNIT,
+            '业务组织' AS BUSINESS
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD T
+        WHERE
+            T.ID IN
+            <foreach collection="idList" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+            AND T.OUT_ORG = #{outOrg}
+    </select>
+
+    <!--待同步乐天出库单号信息-->
+    <select id="getSyncRecordList" parameterType="java.util.List"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.entity.OverseasWarehouseManageRecord">
+        SELECT
+            T.OUT_ORG
+        FROM OVERSEAS_WAREHOUSE_MANAGE_RECORD T
+        WHERE T.OPERATE_TYPE = #{operateType}
+        <if test="idList != null and idList.size > 0">
+            AND T.ID IN
+            <foreach collection="idList" item="code" index="index" separator="," open="(" close=")">
+                #{code}
+            </foreach>
+        </if>
+        GROUP BY T.OUT_ORG
+    </select>
+
+    <!-- 库存产品重量体积报表查询列表、导出 -->
+    <select id="queryOwVolumePage"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.OwVolumeReportParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.result.OwVolumeReportResult">
+        SELECT
+            O.ID,
+            O.PLATFORM,
+            O.SYS_SHOPS_NAME,
+            O.SYS_SITE,
+            O.WAREHOUSE_NAME,
+            O.FN_SKU,
+            O.SKU,
+            O.MATERIAL_CODE,
+            O.INVENTORY_QUANTITY,
+            CASE WHEN M.MAT_TRANPORT_WEIGHT_ORG IS NULL THEN NULL ELSE M.MAT_TRANPORT_WEIGHT_ORG / 1000 END AS MAT_TRANPORT_WEIGHT_ORG,
+            CASE WHEN M.MAT_BOX_VOLUME_ORG IS NULL THEN NULL ELSE M.MAT_BOX_VOLUME_ORG / 1000000 END AS MAT_BOX_VOLUME_ORG,
+            CASE WHEN M.MAT_TRANPORT_WEIGHT_ORG IS NULL THEN NULL ELSE NVL(M.MAT_TRANPORT_WEIGHT_ORG, 0) * O.INVENTORY_QUANTITY / 1000 END AS totalMatTranportWeightOrg,
+            CASE WHEN M.MAT_BOX_VOLUME_ORG IS NULL THEN NULL ELSE NVL(M.MAT_BOX_VOLUME_ORG, 0) * O.INVENTORY_QUANTITY  / 1000000 END AS totalMatBoxVolumeOrg
+        FROM OVERSEAS_WAREHOUSE_MANAGE O
+        LEFT JOIN EBMS_MATERIAL M ON O.MATERIAL_CODE = M.MATERIAL_CODE
+        <where>
+            <if test="param.sku != null and param.sku != ''">
+                AND O.SKU = #{param.sku}
+            </if>
+            <if test="param.materialCode != null and param.materialCode != ''">
+                AND O.MATERIAL_CODE = #{param.materialCode}
+            </if>
+            <if test="param.platforms != null and param.platforms.size() != 0">
+                AND O.PLATFORM IN
+                <foreach collection="param.platforms" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysShopsNames != null and param.sysShopsNames.size() != 0">
+                AND O.SYS_SHOPS_NAME IN
+                <foreach collection="param.sysShopsNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.sysSites != null and param.sysSites.size() != 0">
+                AND O.SYS_SITE IN
+                <foreach collection="param.sysSites" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.warehouseNames != null and param.warehouseNames.size() != 0">
+                AND O.WAREHOUSE_NAME IN
+                <foreach collection="param.warehouseNames" item="code" index="index" separator="," open="(" close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="param.fnSku != null and param.fnSku != ''">
+                AND O.FN_SKU = #{param.fnSku}
+            </if>
+        </where>
+        ORDER BY O.CREATE_TIME DESC
+    </select>
+
+    <!--根据账号、站点、sku获取事业部和Team-->
+    <select id="getInvProductGallery"
+            parameterType="com.tadpole.cloud.supplyChain.api.logistics.model.params.InvProductGalleryParam"
+            resultType="com.tadpole.cloud.supplyChain.api.logistics.model.params.InvProductGalleryParam">
+        SELECT
+            g.SYS_SHOPS_NAME,
+            g.SYS_SITE,
+            g.SKU,
+            g.DEPARTMENT,
+            g.TEAM
+        FROM MCMS_BASE_DATA.INV_PRODUCT_GALLERY g
+        WHERE
+            g.SYS_SHOPS_NAME = #{param.sysShopsName}
+            AND g.SYS_SITE = #{param.sysSite}
+            AND g.SKU = #{param.sku}
+    </select>
+</mapper>

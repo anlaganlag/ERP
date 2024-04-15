@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.operationManagement.modular.stock.mapper.SpecialApplyInfoHistoryMapper">
+
+    <select id="recordSpecialHisList"
+            resultType="com.tadpole.cloud.operationManagement.modular.stock.model.result.OperApplyInfoResult">
+        select *  from special_apply_info_history    t
+        <where>
+            AND t.team_verif_no IN
+            <foreach collection="reqV0" item="item" index="index" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.K3TransferMabangSummaryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tadpole.cloud.externalSystem.modular.mabang.entity.K3TransferMabangSummary">
+        <id column="ID" property="id" />
+        <result column="BILL_NO" property="billNo" />
+        <result column="TRANSFER_DIRECTION" property="transferDirection" />
+        <result column="MIXED_BUSINESS" property="mixedBusiness" />
+        <result column="SPLIT_TOTAL" property="splitTotal" />
+        <result column="SPLIT_TOTAL_PURCHASE_ORDER" property="splitTotalPurchaseOrder" />
+        <result column="SPLIT_TOTAL_ALLOCATION_WAREHOU" property="splitTotalAllocationWarehou" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" />
+        <result column="CREATE_DATE" property="createDate" />
+        <result column="APPROVE_DATE" property="approveDate" />
+        <result column="CANCEL_STATUS" property="cancelStatus" />
+        <result column="CANCEL_DATE" property="cancelDate" />
+        <result column="ANTI_AUDIT" property="antiAudit" />
+        <result column="ANTI_AUDIT_ACTION" property="antiAuditAction" />
+        <result column="IS_DELETE" property="isDelete" />
+        <result column="SYNC_TYPE" property="syncType" />
+        <result column="SYNC_TIME" property="syncTime" />
+        <result column="SYNC_STATUS" property="syncStatus" />
+        <result column="SYNC_RESULT_MSG" property="syncResultMsg" />
+        <result column="CREATE_TIME" property="createTime" />
+        <result column="UPDATE_TIME" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ID, BILL_NO, TRANSFER_DIRECTION, MIXED_BUSINESS, SPLIT_TOTAL, SPLIT_TOTAL_PURCHASE_ORDER, SPLIT_TOTAL_ALLOCATION_WAREHOU, DOCUMENT_STATUS, CREATE_DATE, APPROVE_DATE, CANCEL_STATUS, CANCEL_DATE, ANTI_AUDIT, ANTI_AUDIT_ACTION, IS_DELETE, SYNC_TYPE, SYNC_TIME, SYNC_STATUS,SYNC_RESULT_MSG, CREATE_TIME, UPDATE_TIME
+    </sql>
+</mapper>

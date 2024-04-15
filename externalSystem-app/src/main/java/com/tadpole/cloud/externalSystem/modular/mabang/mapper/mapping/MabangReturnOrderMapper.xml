@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.externalSystem.modular.mabang.mapper.MabangReturnOrderMapper">
+
+
+    <sql id="List_Condition">
+        <if test="paramCondition.platOrdId != null and paramCondition.platOrdId != ''">
+            AND t.PLAT_ORD_ID like '%' || #{paramCondition.platOrdId} ||'%'
+        </if>
+        <if test="paramCondition.status != null and paramCondition.status != ''">
+            AND t.status like '%' || #{paramCondition.status} ||'%'
+        </if>
+        <if test="paramCondition.statuss != null and paramCondition.statuss.size>0">
+            AND t.status IN
+            <foreach collection="paramCondition.statuss" open="(" close=")" separator=","
+                     item="status">
+                CASE  #{status} WHEN '待处理' THEN '1'
+                                WHEN '已退款' THEN '2'
+                                WHEN '已完成' THEN '4'
+                                WHEN '已重发' THEN '3'
+                                WHEN '已作废' THEN '5'  ELSE #{status} END
+            </foreach>
+        </if>
+        <if
+                test="paramCondition.createDateStart != null and paramCondition.createDateStart != '' and paramCondition.createDateEnd != null and paramCondition.createDateEnd != ''">
+            and t.CREATE_DATE BETWEEN
+            to_date(#{paramCondition.createDateStart},'YYYY-MM-DD') AND
+            to_date(#{paramCondition.createDateEnd},'YYYY-MM-DD')+1 -interval '1' SECOND
+        </if>
+        <if
+                test="paramCondition.createTimeStart != null and paramCondition.createTimeStart != '' and paramCondition.createTimeEnd != null and paramCondition.createTimeEnd != ''">
+            and t.CREATE_TIME BETWEEN
+            to_date(#{paramCondition.createTimeStart},'YYYY-MM-DD') AND
+            to_date(#{paramCondition.createTimeEnd},'YYYY-MM-DD')+1 -interval '1' SECOND
+        </if>
+        <if test="paramCondition.platformId != null and paramCondition.platformId != ''">
+            AND upper(t.PLATFORM_ID) like '%' || upper(#{paramCondition.platformId}) ||'%'
+        </if>
+
+        <if test="paramCondition.platformIds != null and paramCondition.platformIds.size>0">
+            AND t.PLATFORM_ID IN
+            <foreach collection="paramCondition.platformIds" open="(" close=")" separator=","
+                     item="platformId">
+                #{platformId}
+            </foreach>
+        </if>
+        <if test="paramCondition.shopName != null and paramCondition.shopName != ''">
+            AND t.SHOP_NAME like '%' || #{paramCondition.shopName} ||'%'
+        </if>
+        <if test="paramCondition.countryCode != null and paramCondition.countryCode != ''">
+            AND t.COUNTRY_CODE like '%' || #{paramCondition.countryCode} ||'%'
+        </if>
+        <if test="paramCondition.shopNames != null and paramCondition.shopNames.size>0">
+            AND t.SHOP_NAME IN
+            <foreach collection="paramCondition.shopNames" open="(" close=")" separator=","
+                     item="shopName">
+                #{shopName}
+            </foreach>
+        </if>
+        <if test="paramCondition.countryCodes != null and paramCondition.countryCodes.size>0">
+            AND t.COUNTRY_CODE IN
+            <foreach collection="paramCondition.countryCodes" open="(" close=")" separator=","
+                     item="countryCode">
+                #{countryCode}
+            </foreach>
+        </if>
+        <if test="paramCondition.financeCode != null and paramCondition.financeCode != ''">
+            AND s.FINANCE_CODE like '%' || #{paramCondition.financeCode} ||'%'
+        </if>
+        <if test="paramCondition.originalFinanceCode != null and paramCondition.originalFinanceCode != ''">
+            AND s.ORIGINAL_FINANCE_CODE like '%' || #{paramCondition.originalFinanceCode} ||'%'
+        </if>
+
+        <if test="paramCondition.stocksku != null and paramCondition.stocksku != ''">
+            AND d.stocksku like '%' || #{paramCondition.stocksku} ||'%'
+        </if>
+    </sql>
+
+    <sql id="Page_Column_List">
+        t.PLAT_ORD_ID,
+        t.STATUS,
+        CASE  TO_CHAR(t.STATUS)
+        WHEN  '1' THEN '待处理'
+        WHEN  '2' THEN '已退款'
+        WHEN  '3' THEN '已完成'
+        WHEN  '4' THEN '已重发'
+        WHEN  '5' THEN '已作废' ELSE '其他' END statusTxt,
+        t.CREATE_DATE,
+        s.PLATFORM_NAME PLATFORM_ID,
+        t.SHOP_ID,
+        t.SHOP_NAME,
+        t.PAID_TIME,
+        t.EXPRESS_TIME,
+        t.SALES_RECORD_NUMBER,
+        t.ORDER_FEE,
+        t.ORDER_WEIGHT,
+        t.MY_LOGISTICS_CHANNEL_ID,
+        t.MY_LOGISTICS_CHANNEL_NAME,
+        t.MY_LOGISTICS_ID,
+        t.MY_LOGISTICS_NAME,
+        t.TRACK_NUMBER,
+        t.TYPE,
+        t.COUNTRY_CODE,
+        t.COUNTRY_NAME_EN,
+        t.COUNTRY_NAME_CN,
+        t.BUYER_USER_ID,
+        t.BUYER_NAME,
+        t.EMPLOYEE_ID,
+        t.EMPLOYEE_NAME,
+        t.REMARK,
+        t.REFUND_TIME,
+        t.IN_TIME,
+        t.CURRENCY_ID,
+        t.CURRENCY_RATE,
+        t.RETURN_TRACKNUMBER,
+        t.RETURN_TYPE,
+        t.CREATE_SALE_RETURN_ORDER,
+        t.SYNC_TYPE,
+        t.SYNC_TIME,
+        t.SYNC_STATUS,
+        t.SYNC_SUCCESS_TIMES,
+        t.SYNC_FAIL_TIMES,
+        t.SYNC_RESULT_MSG,
+        t.CREATE_TIME,
+        t.UPDATE_TIME,
+        s.FINANCE_CODE,
+        s.ORIGINAL_FINANCE_CODE,
+        d.stocksku,
+        d.title,
+        d.quantity1,
+        d.stockwarehousename,
+        CASE TO_CHAR(d.status)   WHEN '1' THEN '待处理'
+                        WHEN '2' THEN '验货入库'
+                        WHEN '3' THEN '自然耗损' ELSE TO_CHAR(d.status) END instatus
+    </sql>
+
+
+
+    <select id="listBySpec"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangReturnOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangReturnOrderResult">
+        SELECT                 <include refid="Page_Column_List"/>
+        FROM mabang_return_order t
+        JOIN mabang_return_order_item d ON t.plat_ord_id = d.plat_ord_id
+        JOIN MABANG_SHOP_LIST s ON t.SHOP_ID = s.ID
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.EXPRESS_TIME DESC
+    </select>
+
+    <select id="exportList"
+            parameterType="com.tadpole.cloud.externalSystem.modular.mabang.model.params.MabangReturnOrderParam"
+            resultType="com.tadpole.cloud.externalSystem.modular.mabang.model.result.MabangReturnOrderResult">
+        SELECT                 <include refid="Page_Column_List"/>
+        FROM mabang_return_order t
+        JOIN mabang_return_order_item d ON t.plat_ord_id = d.plat_ord_id
+        JOIN MABANG_SHOP_LIST s ON t.SHOP_ID = s.ID
+        <where>
+            <include refid="List_Condition"/>
+        </where>
+        ORDER BY t.EXPRESS_TIME DESC
+    </select>
+
+
+    <select id="queryPlatformNames" resultType="java.lang.String">
+        SELECT DISTINCT PLATFORM_ID
+        FROM MABANG_RETURN_ORDER
+        WHERE PLATFORM_ID IS NOT NULL
+        ORDER BY PLATFORM_ID
+    </select>
+
+
+    <select id="queryShopName" resultType="java.lang.String">
+        SELECT DISTINCT SHOP_NAME
+        FROM MABANG_RETURN_ORDER
+        WHERE SHOP_NAME IS NOT NULL
+        ORDER BY SHOP_NAME
+    </select>
+    <select id="getStatusSelect" resultType="java.lang.String">
+        SELECT '待处理' STATUS FROM DUAL
+        UNION
+        SELECT '已退款' STATUS FROM DUAL
+        UNION
+        SELECT '已重发' STATUS FROM DUAL
+        UNION
+        SELECT '已完成' STATUS FROM DUAL
+        UNION
+        SELECT '已作废' STATUS FROM DUAL
+    </select>
+
+
+</mapper>

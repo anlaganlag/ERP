@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tadpole.cloud.platformSettlement.modular.finance.mapper.PaymentConfirmHandlingMapper">
+    <update id="updateVoucherNo" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.PaymentConfirmHandling">
+        UPDATE CW_PAYMENT_CONFIRM_HANDLING SET VOUCHER_NO=#{paramCondition.voucherNo},SYNC_STATUS= #{paramCondition.syncStatus}
+        WHERE id= #{paramCondition.id}
+    </update>
+
+    <select id="findPageBySpec" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.PaymentConfirmHandlingParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.PaymentConfirmHandlingResult">
+        select ID,
+   PLATFORM_NAME,
+   SHOP_NAME,SITE,  REPORT_TYPE,   BILL_TYPE,   SETTLEMENT_ID,   START_TIME,
+   END_TIME,   ORIGINAL_CURRENCY,   DEPOSIT_DATE,   DEPOSIT_BANK,   DEPOSIT_ACCOUNT,   AMOUNT,   TOTAL_AMOUNT,   PROCEEDS_CURRENCY,   SETTLEMENT_RATE,
+   RECEIVE_ORIGINAL_AMOUNT,   RECEIVE_AMOUNT,   COLLECTION_BANK,   COLLECTION_ACCOUNT,
+   IS_RECEIVE_AMOUNT,   RECEIVE_DATE,   FISCAL_PERIOD,     VOUCHER_NO,   COMFIRM_BY,
+   VERIFY_BY,   CREATE_AT,   UPDATE_AT,   CREATE_BY,UPDATE_BY,PAYMENT_TYPE,
+   case SYNC_STATUS when 0 then '未同步'
+                    when 1 then '已同步'
+                    when 2 then '同步失败' end SYNC_STATUS,
+   case VERIFY_STATUS when 0 then '待确认'
+                    when 1 then '已确认'
+                    when 2 then '已审核'
+                    when 3 then '未通过' end VERIFY_STATUS from CW_PAYMENT_CONFIRM_HANDLING
+    where 1=1
+    <if test="paramCondition.shopName != null and paramCondition.shopName !=''">
+        and SHOP_NAME=#{paramCondition.shopName}
+    </if>
+    <if test="paramCondition.site != null and paramCondition.site !=''">
+        and SITE=#{paramCondition.site}
+    </if>
+    <if test="paramCondition.collectionBank != null and paramCondition.collectionBank !=''">
+            and COLLECTION_BANK=#{paramCondition.collectionBank}
+    </if>
+    <if test="paramCondition.collectionAccount != null and paramCondition.collectionAccount !=''">
+            and COLLECTION_ACCOUNT=#{paramCondition.collectionAccount}
+    </if>
+    <if test="paramCondition.settlementId != null and paramCondition.settlementId !=''">
+            and SETTLEMENT_ID=#{paramCondition.settlementId}
+    </if>
+    <if test="paramCondition.verifyStatus != null and paramCondition.verifyStatus !=''">
+            and VERIFY_STATUS=#{paramCondition.verifyStatus}
+   </if>
+   <if test="paramCondition.isReceiveAmount !=null and paramCondition.isReceiveAmount.size >0">
+       and IS_RECEIVE_AMOUNT in (
+       <foreach collection="paramCondition.isReceiveAmount" item="isReceiveAmount" index="index" separator=",">
+           #{isReceiveAmount}
+       </foreach>
+       )
+   </if>
+   <if test="paramCondition.syncStatus != null and paramCondition.syncStatus !=''">
+            and SYNC_STATUS=#{paramCondition.syncStatus}
+   </if>
+   <if test="paramCondition.fiscalPeriod != null and paramCondition.fiscalPeriod !=''">
+            and FISCAL_PERIOD=#{paramCondition.fiscalPeriod}
+   </if>
+   <if test="paramCondition.paymentType != null and paramCondition.paymentType !=''">
+            and PAYMENT_TYPE=#{paramCondition.paymentType}
+   </if>
+    <if test="paramCondition.receiveAmount != null">
+            and RECEIVE_AMOUNT=#{paramCondition.receiveAmount}
+    </if>
+  </select>
+
+
+  <select id="exportPaymentConfirmHandlingList" parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.PaymentConfirmHandlingParam"
+    resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.PaymentConfirmHandlingResult">
+    select ID,
+           PLATFORM_NAME,
+           SHOP_NAME,SITE,  REPORT_TYPE,   BILL_TYPE,   SETTLEMENT_ID,   START_TIME,
+           END_TIME,   ORIGINAL_CURRENCY,   DEPOSIT_DATE,   DEPOSIT_BANK,   DEPOSIT_ACCOUNT,   AMOUNT,   TOTAL_AMOUNT,   PROCEEDS_CURRENCY,   SETTLEMENT_RATE,
+           RECEIVE_ORIGINAL_AMOUNT,   RECEIVE_AMOUNT,   COLLECTION_BANK,   COLLECTION_ACCOUNT,
+           IS_RECEIVE_AMOUNT,   RECEIVE_DATE,   FISCAL_PERIOD,     VOUCHER_NO,   COMFIRM_BY,
+           VERIFY_BY,   CREATE_AT,   UPDATE_AT,   CREATE_BY,UPDATE_BY,PAYMENT_TYPE,
+           case SYNC_STATUS when 0 then '未同步'
+                            when 1 then '已同步'
+                            when 2 then '同步失败' end SYNC_STATUS,
+           case VERIFY_STATUS when 0 then '待确认'
+                              when 1 then '已确认'
+                              when 2 then '已审核'
+                              when 3 then '未通过' end VERIFY_STATUS from CW_PAYMENT_CONFIRM_HANDLING
+
+  </select>
+
+
+
+    <select id="getBank"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.PaymentConfirmHandlingParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.model.result.PaymentConfirmHandlingResult">
+
+        select shopColAccBank COLLECTION_BANK from TbComShop where shopColAccBank is not null group by shopColAccBank
+
+    </select>
+    <select id="getSubjectByBank"  parameterType="com.tadpole.cloud.platformSettlement.api.finance.model.params.PaymentConfirmHandlingParam"
+            resultType="com.tadpole.cloud.platformSettlement.api.finance.entity.BankSubjectCodeMcms">
+
+
+        SELECT * from bank_subject_code_mcms where FNUMBER=#{paramCondition.collectionAccount}
+    </select>
+    <select id="erpVoucherNo" parameterType="com.tadpole.cloud.platformSettlement.api.finance.entity.PaymentConfirmHandling"
+            resultType="java.lang.String">
+
+        select  FVOUCHERGROUPNO from T_GL_VOUCHER WHERE FVOUCHERID in (select top 10 FVOUCHERID from T_GL_VOUCHERENTRY
+        where FEXPLANATION LIKE '%销售回款%' and FEXPLANATION LIKE  CONCAT('%',#{paramCondition.settlementId},'%') )
+    </select>
+
+</mapper>
